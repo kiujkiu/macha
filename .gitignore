@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+
+# temp/zoom/scratch files generated during drawing iterations
+_*.png
+_*.py
+*_zoom.png
+*.NEW.pdf
