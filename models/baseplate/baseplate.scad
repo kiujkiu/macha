@@ -11,12 +11,15 @@ m3_diam         = 3.2;
 cb_diam         = 7;      // M3 沉孔直径
 cb_depth        = 2;      // M3 沉孔深（自底面向上）
 
+center_cb_diam  = 12;     // 中央沉孔直径
+center_cb_depth = 1;      // 中央沉孔深（自顶面向下）
+
 boss_od         = 65;
 boss_id         = 55;
 boss_h          = 23;
 
-notch_a_start   = 80;
-notch_a_end     = 100;
+notch_a_start   = 75;
+notch_a_end     = 105;
 notch_h         = 8;
 
 // derived
@@ -40,6 +43,9 @@ module baseplate() {
                 translate([sx * m3_side/2, sy * m3_side/2, -1])
                     cylinder(h = cb_depth + 1, d = cb_diam, $fn = 48);
             }
+            // 中央 Φ12 沉孔 — 自顶面向下 1mm
+            translate([0, 0, base_thick - center_cb_depth])
+                cylinder(h = center_cb_depth + 1, d = center_cb_diam, $fn = 64);
         }
         // === boss with notch only on the boss ===
         translate([0, 0, base_thick]) difference() {

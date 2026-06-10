@@ -4,10 +4,10 @@
 // 0 deg = +X axis):
 //
 //   Feature 1 - Base annulus:
-//       ID 60, OD 170, height 5  (Z = 0 .. 5)
+//       ID 60, OD 170, height 3.5  (Z = 0 .. 3.5)
 //       Notch cutout: remove the band r > 40 (Phi > 80),
 //                     angles -45 deg .. -40 deg,
-//                     Z = 2.5 .. 5
+//                     Z = 1.5 .. 3.5  (notch depth 2mm)
 //
 //   Feature 2 - 16 Phi3.2 M3 through-holes:
 //       PCD Phi70  x 8 holes  (R = 35)
@@ -15,7 +15,7 @@
 //       angles = 22.5 + k * 45  for k = 0..7
 //
 //   Feature 3 - Outer rim boss:
-//       ID 165, OD 170 (2.5 mm wall), height 5.5  (Z = 5 .. 10.5)
+//       ID 165, OD 170 (2.5 mm wall), height 5.5  (Z = 3.5 .. 9.0)
 //       Two angular cutouts (boss only):
 //           -5 deg .. 0 deg
 //           -45 deg .. -40 deg
@@ -23,12 +23,12 @@
 // ===== Parameters =====
 BASE_ID = 60.0;
 BASE_OD = 170.0;
-BASE_H  = 5.0;
+BASE_H  = 3.5;
 
 NOTCH_R_MIN = 40.0;
 NOTCH_A_S   = -45.0;
 NOTCH_A_E   = -40.0;
-NOTCH_Z_S   = 2.5;
+NOTCH_Z_S   = 1.5;
 NOTCH_Z_E   = BASE_H;
 
 RIM_ID = 165.0;
@@ -40,7 +40,7 @@ RIM_CUT1_A_E =  0.0;
 RIM_CUT2_A_S = -45.0;
 RIM_CUT2_A_E = -40.0;
 
-TOTAL_H = BASE_H + RIM_H;   // 10.5
+TOTAL_H = BASE_H + RIM_H;   // 9.0
 
 M3_DIAM     = 3.2;
 INNER_PCD_R = 35.0;          // Phi 70

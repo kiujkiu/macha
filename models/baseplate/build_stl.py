@@ -7,11 +7,13 @@ Features:
   - 4 × M3 (Φ3.2) center mounting holes on a square with diagonal 25 mm
        (square side ≈ 17.68 mm, hole positions (±8.84, ±8.84))
   - 4 × Φ7 counterbores at the M3 hole positions, open downward from Z = 0
-       up to depth 3.5 mm (for M3 socket cap heads to recess from below)
+       up to depth 2 mm (for M3 socket cap heads to recess from below)
+  - Central Φ12 counterbore (1 mm deep) at origin, open downward from the
+       top face of the base (Z = BASE_THICK .. BASE_THICK - 1)
   - Annular boss centered on origin, sitting on top of base:
        OD 65, ID 55, height 23 mm  (Z = 5 .. 28)
-  - Notch in boss wall: angular range 35°–55°, heights 0–8 mm of boss
-       (= Z = 5 .. 13 absolute), full radial cut through the boss wall
+  - Notch in boss wall: angular range 75°–105° (30° wide), heights 0–8 mm
+       of boss (= Z = 5 .. 13 absolute), full radial cut through the boss wall
 
 Final orientation: length axes are X and Y (base sides), boss axis is +Z (up).
 """
@@ -35,12 +37,16 @@ M3_DIAM         = 3.2
 CB_DIAM         = 7.0                        # M7 counterbore diameter
 CB_DEPTH        = 2.0                        # counterbore depth (from bottom)
 
+# Central Φ12 counterbore (top-face pocket, e.g. shaft/bearing seat)
+CENTER_CB_DIAM  = 12.0
+CENTER_CB_DEPTH = 1.0
+
 BOSS_OD = 65.0
 BOSS_ID = 55.0
 BOSS_H  = 23.0
 
-NOTCH_A_START = 80.0
-NOTCH_A_END   = 100.0
+NOTCH_A_START = 75.0
+NOTCH_A_END   = 105.0
 NOTCH_H       = 8.0
 NOTCH_R       = BOSS_OD / 2 + 2.0
 NOTCH_SEG     = 24
@@ -71,6 +77,12 @@ for sx in (-1, 1):
         cb = m3d.Manifold.cylinder(cb_h, CB_DIAM / 2, CB_DIAM / 2, 48, False)
         cb = cb.translate((sx * m3_hp, sy * m3_hp, -1.0))
         base = base - cb
+
+# Central Φ12 counterbore, open downward from the top face of the base
+ccb_h = CENTER_CB_DEPTH + 1.0   # +1 mm overhang above the top face for clean CSG
+ccb = m3d.Manifold.cylinder(ccb_h, CENTER_CB_DIAM / 2, CENTER_CB_DIAM / 2, 64, False)
+ccb = ccb.translate((0.0, 0.0, BASE_THICK - CENTER_CB_DEPTH))
+base = base - ccb
 
 # ===== Annular boss =====
 boss_outer = m3d.Manifold.cylinder(BOSS_H, BOSS_OD / 2, BOSS_OD / 2, 96, False)
@@ -103,7 +115,7 @@ tris  = np.asarray(mesh.tri_verts)
 
 out = Path(__file__).with_name("baseplate.stl")
 with out.open("wb") as f:
-    f.write(b"POV3D baseplate 100^2x5 / 4xM6 / 4xM3+CB / boss65-55 H23 / notch".ljust(80, b" "))
+    f.write(b"POV3D baseplate".ljust(80, b" "))
     f.write(struct.pack("<I", len(tris)))
     for t in tris:
         v0, v1, v2 = verts[t[0]], verts[t[1]], verts[t[2]]

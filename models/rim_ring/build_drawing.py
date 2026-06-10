@@ -10,7 +10,7 @@ Views:
                                   and angle labels (-45 deg, -40 deg, -5 deg,
                                   0 deg).
   2) SECTION A-A (1:1) - cut along +X axis (0 deg / 180 deg). Shows stepped
-                          profile: base annulus 5mm, rim boss 5.5mm on top.
+                          profile: base annulus 3.5mm, rim boss 5.5mm on top.
                           PCD155 holes at t=+/-77.5 (Phi3.2 through).
                           PCD70 holes are NOT on the X axis after the 22.5 deg
                           rotation, so they only show in the top view.
@@ -25,13 +25,13 @@ from fpdf import FPDF
 # ===== Geometry (must match build_stl.py / rim_ring.scad) =====
 BASE_ID  = 60.0
 BASE_OD  = 170.0
-BASE_H   = 5.0
+BASE_H   = 3.5
 
 NOTCH_R_MIN = 40.0          # Phi 80
 NOTCH_A_S   = -45.0
 NOTCH_A_E   = -40.0
-NOTCH_Z_S   = 2.5
-NOTCH_Z_E   = BASE_H        # 5
+NOTCH_Z_S   = 1.5
+NOTCH_Z_E   = BASE_H        # 3.5
 
 RIM_ID = 165.0
 RIM_OD = 170.0
@@ -42,7 +42,7 @@ RIM_CUT1_A_E =  0.0
 RIM_CUT2_A_S = -45.0
 RIM_CUT2_A_E = -40.0
 
-TOTAL_H = BASE_H + RIM_H    # 10.5
+TOTAL_H = BASE_H + RIM_H    # 9.0
 
 M3_DIAM    = 3.2
 INNER_PCD_R = 35.0          # Phi 70
@@ -80,8 +80,8 @@ R_NOTCH = NOTCH_R_MIN        # 40
 # Z levels
 Z0 = 0.0
 Z_NOTCH = NOTCH_Z_S          # 2.5
-Z1 = BASE_H                   # 5
-Z2 = TOTAL_H                  # 10.5
+Z1 = BASE_H                   # 3.5
+Z2 = TOTAL_H                  # 9.0
 
 # ===== PDF setup =====
 PAGE_W, PAGE_H = 420.0, 297.0

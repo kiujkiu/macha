@@ -5,13 +5,13 @@ Geometry (all mm, axis along +Z, base bottom at Z=0; CCW positive angles,
 0 deg = +X axis):
 
   Feature 1 - Base annulus:
-      ID 60, OD 170, height 5  (Z = 0 .. 5)
+      ID 60, OD 170, height 3.5  (Z = 0 .. 3.5)
       Notch cutout: remove the band r > 40 (Phi > 80),
                     angles -45 deg .. -40 deg,
-                    Z = 2.5 .. 5
-      Result: inner ring r in [30, 40] is full 5mm tall everywhere;
-              outer ring r in [40, 85] is 5mm tall everywhere except in
-              the -45..-40 deg wedge where only the bottom 2.5mm remains.
+                    Z = 1.5 .. 3.5  (notch depth 2mm)
+      Result: inner ring r in [30, 40] is full 3.5mm tall everywhere;
+              outer ring r in [40, 85] is 3.5mm tall everywhere except in
+              the -45..-40 deg wedge where only the bottom 1.5mm remains.
 
   Feature 2 - 16 Phi3.2 M3 through-holes:
       PCD Phi70  (R = 35)  x 8 holes
@@ -20,12 +20,12 @@ Geometry (all mm, axis along +Z, base bottom at Z=0; CCW positive angles,
       Through the full Z range. No counterbores.
 
   Feature 3 - Outer rim boss:
-      ID 165, OD 170 (2.5 mm wall), height 5.5  (Z = 5 .. 10.5)
+      ID 165, OD 170 (2.5 mm wall), height 5.5  (Z = 3.5 .. 9.0)
       Two angular cutouts (boss only):
           - 5 deg .. 0 deg   (5 deg-wide gap straddling +X axis)
           - 45 deg .. -40 deg (aligned with Feature-1 notch)
 
-Total part height: 10.5 mm.
+Total part height: 9.0 mm.
 Print orientation: flat on bed, base down.
 """
 import math
@@ -39,19 +39,19 @@ import manifold3d as m3d
 # Base annulus
 BASE_ID = 60.0
 BASE_OD = 170.0
-BASE_H  = 5.0           # Z = 0 .. 5
+BASE_H  = 3.5           # Z = 0 .. 3.5
 
 # Notch in base (outer band only, top half)
 NOTCH_R_MIN = 40.0      # Phi 80
 NOTCH_A_S   = -45.0     # deg
 NOTCH_A_E   = -40.0     # deg
-NOTCH_Z_S   = 2.5       # Z lower
+NOTCH_Z_S   = 1.5       # Z lower (notch depth = BASE_H - NOTCH_Z_S = 2.0)
 NOTCH_Z_E   = BASE_H    # Z upper
 
 # Outer rim boss
 RIM_ID  = 165.0
 RIM_OD  = 170.0
-RIM_H   = 5.5           # Z = BASE_H .. BASE_H + RIM_H = 5 .. 10.5
+RIM_H   = 5.5           # Z = BASE_H .. BASE_H + RIM_H = 3.5 .. 9.0
 
 # Rim-boss angular cutouts (boss only)
 RIM_CUT1_A_S = -5.0
@@ -59,7 +59,7 @@ RIM_CUT1_A_E =  0.0
 RIM_CUT2_A_S = -45.0
 RIM_CUT2_A_E = -40.0
 
-TOTAL_H = BASE_H + RIM_H   # 10.5
+TOTAL_H = BASE_H + RIM_H   # 9.0
 
 # 16 Phi3.2 M3 through-holes
 M3_DIAM = 3.2
@@ -148,7 +148,7 @@ verts = np.asarray(mesh.vert_properties)[:, :3]
 tris  = np.asarray(mesh.tri_verts)
 
 out = Path(__file__).with_name("rim_ring.stl")
-_header = b"POV3D rim_ring OD170 ID60 H10.5"
+_header = b"POV3D rim_ring"
 assert len(_header) <= 80, f"STL header too long: {len(_header)} bytes"
 with out.open("wb") as f:
     f.write(_header.ljust(80, b" "))

@@ -23,11 +23,13 @@ M3_SIDE    = M3_DIAG / math.sqrt(2)
 M3_DIAM    = 3.2
 CB_DIAM    = 7.0
 CB_DEPTH   = 2.0
+CENTER_CB_DIAM  = 12.0
+CENTER_CB_DEPTH = 1.0
 BOSS_OD    = 65.0
 BOSS_ID    = 55.0
 BOSS_H     = 23.0
-NOTCH_A_S  = 80.0
-NOTCH_A_E  = 100.0
+NOTCH_A_S  = 75.0
+NOTCH_A_E  = 105.0
 NOTCH_H    = 8.0
 
 # Section A-A: cut along the +Y axis (passes through notch bisector at 90°).
@@ -35,6 +37,7 @@ NOTCH_H    = 8.0
 T_BASE = BASE_SIDE / 2    # 50 — half-width along Y
 T_BO   = BOSS_OD / 2      # 32.5
 T_BI   = BOSS_ID / 2      # 27.5
+T_CCB  = CENTER_CB_DIAM / 2  # 6 — half-width of central counterbore
 
 # ===== PDF setup =====
 PAGE_W, PAGE_H = 420.0, 297.0
@@ -144,7 +147,7 @@ _w(0.3)
 pdf.rect(5, 5, PAGE_W - 10, PAGE_H - 10, style="D")
 text(PAGE_W/2, 14, "POV 3D 底盘  Baseplate", size=TXT_T, anchor="middle")
 text(PAGE_W/2, 19.5,
-     f"100×100×{BASE_THICK:g} / 4×M6 角孔 / 4×M3 中心孔 + Φ{CB_DIAM:g} 沉孔 / 凸台 Φ65/55 H23 / 槽口 80°–100° H8",
+     f"100×100×{BASE_THICK:g} / 4×M6 角孔 / 4×M3 中心孔 + Φ{CB_DIAM:g} 沉孔 / 中央 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g} 沉孔(顶) / 凸台 Φ65/55 H23 / 槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° H{NOTCH_H:g}",
      size=TXT_I, anchor="middle")
 
 # ===== TOP VIEW (1:1) =====
@@ -206,6 +209,10 @@ for sx in (-1, 1):
 ccx, ccy = tv(0, 0)
 pdf.circle(ccx, ccy, BOSS_OD/2, style="D")
 pdf.circle(ccx, ccy, BOSS_ID/2, style="D")
+
+# Central Φ12 counterbore — visible from top (recessed into base top face,
+# inside the boss cavity). Solid circle.
+pdf.circle(ccx, ccy, CENTER_CB_DIAM/2, style="D")
 
 # Notch (hidden from above — boss top covers it). Show as dashed radial lines.
 pdf.set_dash_pattern(dash=2.0, gap=1.0); _w(HID_W)
@@ -286,6 +293,18 @@ text(lx + 8, ly - 1,
      f"4 × Φ{M3_DIAM:g} 通孔 + Φ{CB_DIAM:g}×{CB_DEPTH:g} 沉孔 (底面)",
      size=TXT_D, anchor="start")
 
+# Central CB callout: leader from CB edge at ~-45° (lower-right), text on the
+# right side below the M3 callout.
+ccb_a = math.radians(-45)
+ccb_x = ccx + (CENTER_CB_DIAM/2) * math.cos(ccb_a)
+ccb_y = ccy - (CENTER_CB_DIAM/2) * math.sin(ccb_a)
+lx, ly = tv(82, -12)
+pdf.line(ccb_x, ccb_y, lx, ly)
+pdf.line(lx, ly, lx + 8, ly)
+text(lx + 8, ly - 1,
+     f"中央 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g} 沉孔 (顶面)",
+     size=TXT_D, anchor="start")
+
 # Boss callout — UPPER LEFT, leader from boss outer at 135°
 bx, by = tv(BOSS_OD/2 * math.cos(math.radians(135)),
             BOSS_OD/2 * math.sin(math.radians(135)))
@@ -323,16 +342,18 @@ text(sa_t_zero_x, 78,
 _w(GEOM_W)
 # Bottom edge (z=0): full span, no cutouts
 line(*sa(-T_BASE, 0), *sa(T_BASE, 0), GEOM_W)
-# Top edge (z=BASE_THICK): broken only where the LEFT boss wall covers it
-# (right boss wall is removed by notch at this Z, so base top is visible there)
-z_top_cuts = [(-T_BO, -T_BI)]
-t_prev = -T_BASE
-for cl, cr in z_top_cuts:
-    if cl > t_prev:
-        line(*sa(t_prev, BASE_THICK), *sa(cl, BASE_THICK), GEOM_W)
-    t_prev = max(t_prev, cr)
-if T_BASE > t_prev:
-    line(*sa(t_prev, BASE_THICK), *sa(T_BASE, BASE_THICK), GEOM_W)
+# Top edge (z=BASE_THICK): broken where the LEFT boss wall covers it AND
+# where the central Φ12 counterbore dips 1 mm into the top face.
+# Right boss wall is removed by notch at this Z, so base top is visible there.
+line(*sa(-T_BASE, BASE_THICK), *sa(-T_BO, BASE_THICK), GEOM_W)
+# (gap from -T_BO to -T_BI: hidden under left boss wall)
+line(*sa(-T_BI,  BASE_THICK), *sa(-T_CCB, BASE_THICK), GEOM_W)
+# Central CB step: down at -T_CCB, floor at z=BASE_THICK-CENTER_CB_DEPTH, up at +T_CCB
+line(*sa(-T_CCB, BASE_THICK), *sa(-T_CCB, BASE_THICK - CENTER_CB_DEPTH), GEOM_W)
+line(*sa(-T_CCB, BASE_THICK - CENTER_CB_DEPTH),
+     *sa( T_CCB, BASE_THICK - CENTER_CB_DEPTH), GEOM_W)
+line(*sa( T_CCB, BASE_THICK - CENTER_CB_DEPTH), *sa( T_CCB, BASE_THICK), GEOM_W)
+line(*sa( T_CCB, BASE_THICK), *sa( T_BASE, BASE_THICK), GEOM_W)
 
 # Base left & right edges (z=0 to BASE_THICK)
 line(*sa(-T_BASE, 0), *sa(-T_BASE, BASE_THICK), GEOM_W)
@@ -383,6 +404,12 @@ hdim(sa(-T_BI, 0)[0], sa(T_BI, 0)[0],
 hdim(sa(-T_BO, 0)[0], sa(T_BO, 0)[0],
      sa(0, BASE_THICK + BOSS_H)[1],
      sa(0, BASE_THICK + BOSS_H)[1] - DIM_O3, f"Φ{BOSS_OD:g}")
+
+# Central Φ12 × 1mm CB — inline dim inside the boss inner cavity
+# (yg at base top = step; yd ~10mm above, well below boss-top dim stack at y=137)
+hdim(sa(-T_CCB, 0)[0], sa(T_CCB, 0)[0],
+     sa(0, BASE_THICK)[1], sa(0, BASE_THICK + 10)[1],
+     f"Φ{CENTER_CB_DIAM:g} mm × 深 {CENTER_CB_DEPTH:g} mm")
 
 # Bottom dim: base side
 hdim(sa(-T_BASE, 0)[0], sa(T_BASE, 0)[0],
@@ -463,7 +490,7 @@ text(tb_x + 4, tb_y + 6,
 text(tb_x + tb_w - 4, tb_y + 6,
      "投影 1st-angle  /  比例 1:1 (俯, 剖)", size=TXT_I, anchor="end")
 text(tb_x + 4, tb_y + 14.5,
-     f"100×100×{BASE_THICK:g} / 4×M6 / 4×M3+Φ7×{CB_DEPTH:g} 沉孔 / 凸台 Φ65/Φ55 H23 / 槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° H{NOTCH_H:g}  /  单位 mm",
+     f"100×100×{BASE_THICK:g} / 4×M6 / 4×M3+Φ7×{CB_DEPTH:g} 沉孔 / 中央 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g} 沉孔(顶) / 凸台 Φ65/Φ55 H23 / 槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° H{NOTCH_H:g}  /  单位 mm",
      size=TXT_I, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 14.5,
      "2026-06-04  /  POV3D / models / baseplate / baseplate.stl",
