@@ -22,12 +22,12 @@ LEG_B = 70.0     # short-leg outer length (along Z) — was 60, +10 to reach rim
 WIDTH = 90.0     # width (along Y) — was 80
 THICK = 4.0      # plate thickness
 
-# 2 triangular gussets (加强筋) on the inside of the L. Each gusset is a
+# 3 triangular gussets (加强筋) on the inside of the L. Each gusset is a
 # right triangle in the XZ plane with vertices (THICK, THICK), (LEG_A, THICK),
 # (THICK, LEG_B), extruded along Y by GUSSET_WIDTH.
 GUSSET_WIDTH       = 5.0
-# 2 gussets: at the 2 Y edges only (middle removed per spec)
-GUSSET_Y_POSITIONS = [GUSSET_WIDTH/2, WIDTH - GUSSET_WIDTH/2]  # 2.5, 87.5
+# 3 gussets: at the 2 Y edges + middle (middle re-added 2026-06-11)
+GUSSET_Y_POSITIONS = [GUSSET_WIDTH/2, WIDTH/2, WIDTH - GUSSET_WIDTH/2]  # 2.5, 45, 87.5
 
 # M3 through-holes on the horizontal-leg top face. Three pairs, each pair
 # centered on the Y midline (Y = WIDTH/2 = 45). All hleg-top features
@@ -35,7 +35,7 @@ GUSSET_Y_POSITIONS = [GUSSET_WIDTH/2, WIDTH - GUSSET_WIDTH/2]  # 2.5, 87.5
 # so they sit ~30 mm farther from the vleg back face.
 #   Pair A: X = 125,            spacing 20  → (125, 35)  (125, 55)
 #   Pair B: X = 125 + 66 = 191, spacing 20  → (191, 35)  (191, 55)
-#   Pair C: X = 38,             spacing 70  → (38, 10)   (38, 80)
+#   Pair C: X = 38,             spacing 67  → (38, 11.5) (38, 78.5)
 HLEG_FEAT_X_SHIFT = 30.0
 M3_DIAM       = 3.2
 M3_SEG        = 24
@@ -45,37 +45,17 @@ M3_SPACING_A  = 20.0
 M3_X_B        = M3_X_A + 66.0                # 191
 M3_SPACING_B  = 20.0
 M3_X_C        = HLEG_FEAT_X_SHIFT + 8.0      # 38
-M3_SPACING_C  = 70.0
+M3_SPACING_C  = 67.0   # was 70; +1 bottom-shift → actual hole c-to-c 68
 
 # The 3 BOTTOM holes (one per pair, the +Y side) are shifted (+1 X, +1 Y)
 # relative to the symmetric mid-line position. So the pair is no longer
-# strictly collinear in X.
+# strictly collinear in X. Pair C's bottom hole gets an EXTRA +1 Y
+# (2026-06-12) → it sits at Y = 80.5, actual pair c-to-c 69.
 SHIFT_BOT_X   = 1.0
 SHIFT_BOT_Y   = 1.0
+EXTRA_BOT_Y_C = 1.0
 
-# 4 corner features on the 170×90 horizontal-leg top face. Each one has:
-#   - Φ7 × 2 mm tall boss added on top of hleg
-#   - M3 (Φ3.2) through-hole through boss + hleg (total height 6 mm)
-#   - Φ4.2 × 4 mm deep counterbore opening from the BOTTOM face up (= depth
-#     equals hleg thickness, so the counterbore reaches the boss bottom)
-# Placed at the corners of a 49 × 58 mm rectangle (X × Y) centered on the
-# centroid of the 4 left-side M3 holes (pairs C + A): center = (52, 45.5).
-CORNER_M3_DIAM   = 3.2
-CORNER_BOSS_DIAM = 7.0
-CORNER_BOSS_H    = 2.0
-CORNER_CB_DIAM   = 4.2
-CORNER_CB_DEPTH  = 4.0
-CORNER_RECT_X    = 49.0
-CORNER_RECT_Y    = 58.0
-CORNER_CX        = (M3_X_C + (M3_X_C + SHIFT_BOT_X) + M3_X_A + (M3_X_A + SHIFT_BOT_X)) / 4
-CORNER_CY        = ((M3_Y_CENTER - M3_SPACING_C/2) + (M3_Y_CENTER + M3_SPACING_C/2 + SHIFT_BOT_Y)
-                    + (M3_Y_CENTER - M3_SPACING_A/2) + (M3_Y_CENTER + M3_SPACING_A/2 + SHIFT_BOT_Y)) / 4
-CORNER_POSITIONS = [
-    (CORNER_CX - CORNER_RECT_X/2, CORNER_CY - CORNER_RECT_Y/2),
-    (CORNER_CX + CORNER_RECT_X/2, CORNER_CY - CORNER_RECT_Y/2),
-    (CORNER_CX - CORNER_RECT_X/2, CORNER_CY + CORNER_RECT_Y/2),
-    (CORNER_CX + CORNER_RECT_X/2, CORNER_CY + CORNER_RECT_Y/2),
-]
+# (4 corner boss/M3/CB features removed per user request 2026-06-11)
 
 # 4 × M3 (Φ3.2) through-holes on the 70×90 vertical-leg face. Pattern now
 # matches 4 specific rim_ring holes (so the bracket bolts down to the rim
@@ -112,6 +92,15 @@ VLEG_M3_POSITIONS = [
     _vleg_pos_from_rim(RIM_R_OUT, RIM_MATING_ANGLES_DEG[0]),  # (74.658, 57.301)
     _vleg_pos_from_rim(RIM_R_OUT, RIM_MATING_ANGLES_DEG[1]),  # (15.342, 57.301)
 ]
+
+# 2 rectangular cutouts through the hleg plate near the vleg end.
+# Long axis along Y: 30 (Y) × 13 (X), left edge 10 mm from the plate's left
+# (back) face, symmetric about the Y midline, centers 45 mm apart.
+SLOT_LEN      = 30.0                   # along Y
+SLOT_W        = 13.0                   # along X
+SLOT_X_LEFT   = 10.0                   # slot left edge from X=0
+SLOT_CC       = 45.0                   # center-to-center along Y
+SLOT_Y_CENTERS = (WIDTH/2 - SLOT_CC/2, WIDTH/2 + SLOT_CC/2)   # 22.5, 67.5
 
 # 2 × M3 through-holes drilled ALONG +Y (perpendicular to the gusset triangle
 # faces). The single drill passes through both 5-mm-wide gussets (and the air
@@ -155,11 +144,12 @@ for hz in GUSSET_HOLE_Z_POSITIONS:
 # Top hole of each pair: at (X_pair, Y_center − spacing/2). Bottom hole:
 # at (X_pair + SHIFT_BOT_X, Y_center + spacing/2 + SHIFT_BOT_Y).
 m3_positions = []
-for (x_val, s_val) in [(M3_X_A, M3_SPACING_A),
-                       (M3_X_B, M3_SPACING_B),
-                       (M3_X_C, M3_SPACING_C)]:
+for (x_val, s_val, extra_y) in [(M3_X_A, M3_SPACING_A, 0.0),
+                                (M3_X_B, M3_SPACING_B, 0.0),
+                                (M3_X_C, M3_SPACING_C, EXTRA_BOT_Y_C)]:
     m3_positions.append((x_val,                M3_Y_CENTER - s_val / 2))
-    m3_positions.append((x_val + SHIFT_BOT_X,  M3_Y_CENTER + s_val / 2 + SHIFT_BOT_Y))
+    m3_positions.append((x_val + SHIFT_BOT_X,
+                         M3_Y_CENTER + s_val / 2 + SHIFT_BOT_Y + extra_y))
 
 for (hx, hy) in m3_positions:
     h = m3d.Manifold.cylinder(THICK + 2, M3_DIAM / 2, M3_DIAM / 2,
@@ -167,29 +157,11 @@ for (hx, hy) in m3_positions:
     h = h.translate((hx, hy, -1.0))
     part = part - h
 
-# 4 corner features: add Φ7 × 2 bosses on top of hleg (additive)
-for (hx, hy) in CORNER_POSITIONS:
-    boss = m3d.Manifold.cylinder(CORNER_BOSS_H,
-                                 CORNER_BOSS_DIAM / 2, CORNER_BOSS_DIAM / 2,
-                                 48, False)
-    boss = boss.translate((hx, hy, THICK))
-    part = part + boss
-
-# Φ3.2 M3 through-holes (through boss + hleg, z = -1 .. THICK + BOSS_H + 1)
-for (hx, hy) in CORNER_POSITIONS:
-    h = m3d.Manifold.cylinder(THICK + CORNER_BOSS_H + 2,
-                              CORNER_M3_DIAM / 2, CORNER_M3_DIAM / 2,
-                              M3_SEG, False)
-    h = h.translate((hx, hy, -1.0))
-    part = part - h
-
-# Φ4.2 × 4 mm counterbores opening from the bottom face (z = -1 .. CB_DEPTH)
-for (hx, hy) in CORNER_POSITIONS:
-    cb = m3d.Manifold.cylinder(CORNER_CB_DEPTH + 1.0,
-                               CORNER_CB_DIAM / 2, CORNER_CB_DIAM / 2,
-                               48, False)
-    cb = cb.translate((hx, hy, -1.0))
-    part = part - cb
+# 2 rectangular cutouts through hleg plate (vertical, through Z)
+for sy in SLOT_Y_CENTERS:
+    s = m3d.Manifold.cube((SLOT_W, SLOT_LEN, THICK + 2.0), False)
+    s = s.translate((SLOT_X_LEFT, sy - SLOT_LEN/2, -1.0))
+    part = part - s
 
 # 4 × M3 through-holes in vleg (horizontal, along X axis)
 for (hy, hz) in VLEG_M3_POSITIONS:

@@ -9,18 +9,10 @@ width = 90;    // was 80
 thick = 4;
 
 gusset_width = 5;
-gusset_y_positions = [gusset_width/2, width - gusset_width/2];   // 2 edge gussets
+gusset_y_positions = [gusset_width/2, width/2, width - gusset_width/2];  // 2 edge + 1 middle
 
-corner_m3_diam   = 3.2;
-corner_boss_diam = 7;
-corner_boss_h    = 2;
-corner_cb_diam   = 4.2;
-corner_cb_depth  = 4;
-corner_rect_x    = 49;
-corner_rect_y    = 58;
+// (4 corner boss/M3/CB features removed per user request 2026-06-11)
 hleg_feat_x_shift = 30;                  // all hleg-top features shifted +30 in X
-corner_cx        = hleg_feat_x_shift + 52;   // 82
-corner_cy        = 45.5;
 
 // 2 × M3 gusset through-holes (along Y, hit both gussets)
 gusset_hole_diam       = 3.2;
@@ -48,11 +40,20 @@ m3_spacing_a = 20;
 m3_x_b       = m3_x_a + 66;              // 191
 m3_spacing_b = 20;
 m3_x_c       = hleg_feat_x_shift + 8;    // 38
-m3_spacing_c = 70;
+m3_spacing_c = 67;   // was 70; +1 bottom-shift → actual hole c-to-c 68
 
-// Bottom-row holes (+Y side) are shifted (+1, +1) from the mirror position
+// 2 rectangular cutouts through hleg (30 Y × 13 X, left edge X=10, c-to-c 45)
+slot_len    = 30;
+slot_w      = 13;
+slot_x_left = 10;
+slot_cc     = 45;
+slot_y_centers = [width/2 - slot_cc/2, width/2 + slot_cc/2];   // 22.5, 67.5
+
+// Bottom-row holes (+Y side) are shifted (+1, +1) from the mirror position;
+// pair C's bottom hole gets an extra +1 Y (2026-06-12)
 shift_bot_x  = 1;
 shift_bot_y  = 1;
+extra_bot_y_c = 1;
 
 module hole_at(x, y) {
     translate([x, y, -1])
@@ -78,31 +79,20 @@ module l_bracket() {
             cube([leg_a, width, thick]);
             cube([thick, width, leg_b]);
             for (yc = gusset_y_positions) gusset(yc);
-            // 4 × Φ7 × 2 bosses on top of hleg at corner positions
-            for (sx = [-1, 1]) for (sy = [-1, 1])
-                translate([corner_cx + sx * corner_rect_x/2,
-                           corner_cy + sy * corner_rect_y/2, thick])
-                    cylinder(h = corner_boss_h, d = corner_boss_diam, $fn = 48);
         }
         // 6 × M3 hleg
-        for (p = [[m3_x_a, m3_spacing_a],
-                  [m3_x_b, m3_spacing_b],
-                  [m3_x_c, m3_spacing_c]]) {
+        for (p = [[m3_x_a, m3_spacing_a, 0],
+                  [m3_x_b, m3_spacing_b, 0],
+                  [m3_x_c, m3_spacing_c, extra_bot_y_c]]) {
             hole_at(p[0],                 width/2 - p[1]/2);
-            hole_at(p[0] + shift_bot_x,   width/2 + p[1]/2 + shift_bot_y);
+            hole_at(p[0] + shift_bot_x,   width/2 + p[1]/2 + shift_bot_y + p[2]);
         }
-        // 4 × M3 through boss+hleg
-        for (sx = [-1, 1]) for (sy = [-1, 1])
-            translate([corner_cx + sx * corner_rect_x/2,
-                       corner_cy + sy * corner_rect_y/2, -1])
-                cylinder(h = thick + corner_boss_h + 2, d = corner_m3_diam, $fn = 32);
-        // 4 × Φ4.2 × 4 counterbore from bottom
-        for (sx = [-1, 1]) for (sy = [-1, 1])
-            translate([corner_cx + sx * corner_rect_x/2,
-                       corner_cy + sy * corner_rect_y/2, -1])
-                cylinder(h = corner_cb_depth + 1, d = corner_cb_diam, $fn = 48);
         // 4 × M3 vleg (trapezoid matching rim_ring mating holes)
         for (p = vleg_m3_positions) vleg_hole(p[0], p[1]);
+        // 2 rectangular cutouts through hleg plate
+        for (sy = slot_y_centers)
+            translate([slot_x_left, sy - slot_len/2, -1])
+                cube([slot_w, slot_len, thick + 2]);
         // 2 × M3 through both gussets along Y
         for (gz = gusset_hole_z_positions)
             translate([gusset_hole_x, -1, gz])

@@ -19,7 +19,7 @@ WIDTH = 90.0          # was 80
 THICK = 4.0
 
 GUSSET_WIDTH       = 5.0
-GUSSET_Y_POSITIONS = [GUSSET_WIDTH/2, WIDTH - GUSSET_WIDTH/2]   # 2.5, 87.5 (2 gussets)
+GUSSET_Y_POSITIONS = [GUSSET_WIDTH/2, WIDTH/2, WIDTH - GUSSET_WIDTH/2]  # 2.5, 45, 87.5 (3 gussets)
 
 HLEG_FEAT_X_SHIFT = 30.0           # all hleg-top features shifted +30 in X
 M3_DIAM       = 3.2
@@ -29,34 +29,21 @@ M3_SPACING_A  = 20.0
 M3_X_B        = M3_X_A + 66.0                 # 191
 M3_SPACING_B  = 20.0
 M3_X_C        = HLEG_FEAT_X_SHIFT + 8.0       # 38
-M3_SPACING_C  = 70.0
+M3_SPACING_C  = 67.0   # was 70; +1 bottom-shift → actual hole c-to-c 68
 SHIFT_BOT_X   = 1.0
 SHIFT_BOT_Y   = 1.0
+EXTRA_BOT_Y_C = 1.0   # pair C bottom hole sits 1 lower (2026-06-12)
 M3_PAIRS = [
-    (M3_X_A, M3_SPACING_A),
-    (M3_X_B, M3_SPACING_B),
-    (M3_X_C, M3_SPACING_C),
+    (M3_X_A, M3_SPACING_A, 0.0),
+    (M3_X_B, M3_SPACING_B, 0.0),
+    (M3_X_C, M3_SPACING_C, EXTRA_BOT_Y_C),
 ]
-M3_TOP_POSITIONS = [(xv, M3_Y_CENTER - sv/2)               for (xv, sv) in M3_PAIRS]
-M3_BOT_POSITIONS = [(xv + SHIFT_BOT_X, M3_Y_CENTER + sv/2 + SHIFT_BOT_Y) for (xv, sv) in M3_PAIRS]
+M3_TOP_POSITIONS = [(xv, M3_Y_CENTER - sv/2)               for (xv, sv, ey) in M3_PAIRS]
+M3_BOT_POSITIONS = [(xv + SHIFT_BOT_X, M3_Y_CENTER + sv/2 + SHIFT_BOT_Y + ey)
+                    for (xv, sv, ey) in M3_PAIRS]
 M3_POSITIONS = M3_TOP_POSITIONS + M3_BOT_POSITIONS
 
-# 4 corner features on hleg (boss + M3 through + counterbore from bottom)
-CORNER_M3_DIAM   = 3.2
-CORNER_BOSS_DIAM = 7.0
-CORNER_BOSS_H    = 2.0
-CORNER_CB_DIAM   = 4.2
-CORNER_CB_DEPTH  = 4.0
-CORNER_RECT_X    = 49.0
-CORNER_RECT_Y    = 58.0
-CORNER_CX        = HLEG_FEAT_X_SHIFT + 52.0   # 82
-CORNER_CY        = 45.5
-CORNER_POSITIONS = [
-    (CORNER_CX - CORNER_RECT_X/2, CORNER_CY - CORNER_RECT_Y/2),
-    (CORNER_CX + CORNER_RECT_X/2, CORNER_CY - CORNER_RECT_Y/2),
-    (CORNER_CX - CORNER_RECT_X/2, CORNER_CY + CORNER_RECT_Y/2),
-    (CORNER_CX + CORNER_RECT_X/2, CORNER_CY + CORNER_RECT_Y/2),
-]
+# (4 corner boss/M3/CB features removed per user request 2026-06-11)
 
 # 4 × M3 vleg through-holes — mate with 4 rim_ring holes when the vleg lies
 # flat on the rim base. (Trapezoidal pattern, no longer a rectangle.)
@@ -80,6 +67,13 @@ VLEG_INNER_Z = VLEG_M3_INNER_TOP[1]   # 18.036
 VLEG_OUTER_Z = VLEG_M3_OUTER_TOP[1]   # 57.301
 VLEG_INNER_DY = VLEG_M3_INNER_TOP[0] - VLEG_M3_INNER_BOT[0]   # 26.788
 VLEG_OUTER_DY = VLEG_M3_OUTER_TOP[0] - VLEG_M3_OUTER_BOT[0]   # 59.316
+
+# 2 rectangular cutouts through hleg (30 Y × 13 X, left edge at X=10, c-to-c 45)
+SLOT_LEN      = 30.0
+SLOT_W        = 13.0
+SLOT_X_LEFT   = 10.0
+SLOT_CC       = 45.0
+SLOT_Y_CENTERS = (WIDTH/2 - SLOT_CC/2, WIDTH/2 + SLOT_CC/2)   # 22.5, 67.5
 
 # 2 × M3 gusset through-holes (along Y, hit both gussets)
 GUSSET_HOLE_DIAM = 3.2
@@ -123,18 +117,28 @@ def arrow(tx, ty, dx, dy):
     pdf.set_fill_color(0, 0, 0)
     pdf.polygon([(tx, ty), (bx + ARR_W*px, by + ARR_W*py),
                  (bx - ARR_W*px, by - ARR_W*py)], style="F")
-def text(x, y, s, size=TXT_D, anchor="start"):
+def text(x, y, s, size=TXT_D, anchor="start", halo=False):
     pdf.set_font("SimHei", "", size)
     if   anchor == "middle": x -= pdf.get_string_width(s)/2
     elif anchor == "end":    x -= pdf.get_string_width(s)
+    if halo:
+        sw, fh = pdf.get_string_width(s), pdf.font_size
+        pdf.set_fill_color(255, 255, 255)
+        pdf.rect(x - 0.4, y - fh * 0.85, sw + 0.8, fh * 1.1, style="F")
+        pdf.set_fill_color(0, 0, 0)
     pdf.text(x, y, s)
-def rot_text(cx, cy, s, angle_deg, size=TXT_D, anchor="middle"):
+def rot_text(cx, cy, s, angle_deg, size=TXT_D, anchor="middle", halo=False):
     pdf.set_font("SimHei", "", size)
     sw = pdf.get_string_width(s)
     with pdf.rotation(angle=angle_deg, x=cx, y=cy):
         if   anchor == "middle": dx = -sw/2
         elif anchor == "end":    dx = -sw
         else: dx = 0
+        if halo:
+            fh = pdf.font_size
+            pdf.set_fill_color(255, 255, 255)
+            pdf.rect(cx + dx - 0.4, cy - fh * 0.85, sw + 0.8, fh * 1.1, style="F")
+            pdf.set_fill_color(0, 0, 0)
         pdf.text(cx + dx, cy, s)
 def _with_unit(label, unit="mm"):
     s = str(label).strip()
@@ -155,7 +159,7 @@ def hdim(x1, x2, yg, yd, label):
         ext = ARR_L + 1.0
         line(x_l - ext, yd, x_r + ext, yd, DIM_W)
         arrow(x_l, yd, 1, 0); arrow(x_r, yd, -1, 0)
-    text((x_l + x_r) / 2, yd - 1.8, label, anchor="middle")
+    text((x_l + x_r) / 2, yd - 1.8, label, anchor="middle", halo=True)
 def vdim(y1, y2, xg, xd, label):
     label = _with_unit(label)
     if xd > xg: ex1, ex2, to = xg+EXT_GP, xd+EXT_OV,  4.0
@@ -173,10 +177,10 @@ def vdim(y1, y2, xg, xd, label):
         arrow(xd, y_top, 0, 1); arrow(xd, y_bot, 0, -1)
     label_h_rot = pdf.get_string_width(label)
     if gap >= label_h_rot + 1.0:
-        rot_text(xd + to, (y_top + y_bot) / 2, label, angle_deg=90, anchor="middle")
+        rot_text(xd + to, (y_top + y_bot) / 2, label, angle_deg=90, anchor="middle", halo=True)
     else:
         y_label = y_bot + (ARR_L + 1.0) + label_h_rot / 2 + 1.0
-        rot_text(xd + to, y_label, label, angle_deg=90, anchor="middle")
+        rot_text(xd + to, y_label, label, angle_deg=90, anchor="middle", halo=True)
 
 # ===== Page frame & title =====
 _w(0.3)
@@ -186,9 +190,9 @@ text(PAGE_W/2, 14, "POV 3D L 形托架  L-Bracket  ({:g}×{:g}, W{:g}, T{:g})".f
 text(PAGE_W/2, 19.5,
      f"长边 {LEG_A:g} / 短边 {LEG_B:g} / 宽 {WIDTH:g} / 板厚 {THICK:g} / "
      f"6 × Φ{M3_DIAM:g} M3 (下排 X+{SHIFT_BOT_X:g} Y+{SHIFT_BOT_Y:g}) / "
-     f"4 × [Φ{CORNER_BOSS_DIAM:g}×{CORNER_BOSS_H:g} 凸台 + Φ{CORNER_M3_DIAM:g} M3 通孔 + Φ{CORNER_CB_DIAM:g}×{CORNER_CB_DEPTH:g} 沉孔(底→顶)] ({CORNER_RECT_X:g}×{CORNER_RECT_Y:g} 角) / "
      f"4 × Φ{VLEG_M3_DIAM:g} M3 立板 (对 rim 内圈R{RIM_R_IN:g}+外圈R{RIM_R_OUT:g} @ 157.5°/202.5°,距圆心{HLEG_DIST_FROM_CENTER:g}) / "
-     f"2 × 三角加强筋  (GB 第一角投影)",
+     f"2 × {SLOT_W:g}×{SLOT_LEN:g} 开口 (距左边{SLOT_X_LEFT:g},中距{SLOT_CC:g}) / "
+     f"3 × 三角加强筋 (两边+中间,各厚{GUSSET_WIDTH:g})  (GB 第一角投影)",
      size=TXT_I, anchor="middle")
 
 # ===== FRONT VIEW (1:1) — looking from +Y. PDF x = world X, PDF y = -world Z =====
@@ -214,21 +218,10 @@ for i in range(len(pts) - 1):
 pdf.set_dash_pattern(dash=2.0, gap=1.2); _w(HID_W)
 for x_val in (M3_X_A, M3_X_B, M3_X_C):
     pdf.line(*fv(x_val, 0), *fv(x_val, THICK))
-# Corner-stack M3 holes — through boss + hleg, so z=0..THICK+BOSS_H
-for x_val in sorted(set(p[0] for p in CORNER_POSITIONS)):
-    pdf.line(*fv(x_val, 0), *fv(x_val, THICK + CORNER_BOSS_H))
+# Slot cutout edges (hidden) — both slots share the same X extent
+for x_val in (SLOT_X_LEFT, SLOT_X_LEFT + SLOT_W):
+    pdf.line(*fv(x_val, 0), *fv(x_val, THICK))
 pdf.set_dash_pattern(); _w(GEOM_W)
-
-# Boss bumps on top of hleg — drawn as 3-segment "cap" above the hleg top
-# edge at each unique X position of the corner stacks. 4 bosses share 2
-# unique X positions, so 2 bumps in the front view.
-_w(GEOM_W)
-boss_r = CORNER_BOSS_DIAM / 2
-for x_val in sorted(set(p[0] for p in CORNER_POSITIONS)):
-    line(*fv(x_val - boss_r, THICK), *fv(x_val - boss_r, THICK + CORNER_BOSS_H), GEOM_W)
-    line(*fv(x_val - boss_r, THICK + CORNER_BOSS_H),
-         *fv(x_val + boss_r, THICK + CORNER_BOSS_H), GEOM_W)
-    line(*fv(x_val + boss_r, THICK + CORNER_BOSS_H), *fv(x_val + boss_r, THICK), GEOM_W)
 
 # Gusset hypotenuse line — both gussets project to the same triangle in
 # the front view (the legs overlap with the L's inner edges; only the
@@ -264,7 +257,7 @@ vdim(fv(0, GUSSET_HOLE_Z1)[1], fv(0, THICK)[1],
 
 text(fv(GUSSET_HOLE_X + 6, GUSSET_HOLE_Z2)[0],
      fv(GUSSET_HOLE_X + 6, GUSSET_HOLE_Z2)[1] - 1,
-     f"2 × Φ{GUSSET_HOLE_DIAM:g} 通孔 (M3),贯通两片加强筋",
+     f"2 × Φ{GUSSET_HOLE_DIAM:g} 通孔 (M3),贯通三片加强筋",
      size=TXT_I, anchor="start")
 
 # Front-view dims
@@ -316,30 +309,25 @@ for (hx, hy) in M3_POSITIONS:
     pdf.line(cx, cy - 3, cx, cy + 3)
     pdf.set_dash_pattern(); _w(GEOM_W)
 
-# 4 corner stacks — each: Φ7 boss outline + Φ3.2 M3 through-hole (solid) +
-# Φ4.2 counterbore on bottom face (hidden dashed)
-for (hx, hy) in CORNER_POSITIONS:
-    cx, cy = tv(hx, hy)
-    _w(GEOM_W)
-    # Φ7 boss outer (visible solid)
-    pdf.circle(cx, cy, CORNER_BOSS_DIAM/2, style="D")
-    # Φ4.2 counterbore (on bottom — hidden from top, dashed)
-    pdf.set_dash_pattern(dash=1.5, gap=1.0); _w(HID_W)
-    pdf.circle(cx, cy, CORNER_CB_DIAM/2, style="D")
-    pdf.set_dash_pattern(); _w(GEOM_W)
-    # Φ3.2 M3 through-hole (solid)
-    pdf.circle(cx, cy, CORNER_M3_DIAM/2, style="D")
-    # crosshair
-    pdf.set_dash_pattern(dash=1.2, gap=0.6); _w(0.13)
-    pdf.line(cx - 4, cy, cx + 4, cy)
-    pdf.line(cx, cy - 4, cx, cy + 4)
-    pdf.set_dash_pattern(); _w(GEOM_W)
-
-# Bounding rectangle of the 4 corner positions (light dashed reference)
-pdf.set_dash_pattern(dash=2.0, gap=1.2); _w(0.15)
-pdf.rect(tv_x0 + CORNER_CX - CORNER_RECT_X/2, tv_y0 + CORNER_CY - CORNER_RECT_Y/2,
-         CORNER_RECT_X, CORNER_RECT_Y, style='D')
-pdf.set_dash_pattern(); _w(GEOM_W)
+# 2 rectangular cutouts (through-holes — visible solid outlines)
+_w(GEOM_W)
+for sy in SLOT_Y_CENTERS:
+    pdf.rect(tv_x0 + SLOT_X_LEFT, tv_y0 + sy - SLOT_LEN/2,
+             SLOT_W, SLOT_LEN, style="D")
+# Slot dims: 10 (left edge→slot) and 13 (width) in the between-slot band,
+# 30 (length) along slot-1 centerline, 45 (c-to-c) right of the slots
+hdim(tv_x0, tv_x0 + SLOT_X_LEFT,
+     tv_y0 + SLOT_Y_CENTERS[0] + SLOT_LEN/2, tv_y0 + M3_Y_CENTER - 4,
+     f"{SLOT_X_LEFT:g}")
+hdim(tv_x0 + SLOT_X_LEFT, tv_x0 + SLOT_X_LEFT + SLOT_W,
+     tv_y0 + SLOT_Y_CENTERS[0] + SLOT_LEN/2, tv_y0 + M3_Y_CENTER + 4,
+     f"{SLOT_W:g}")
+vdim(tv_y0 + SLOT_Y_CENTERS[0] - SLOT_LEN/2, tv_y0 + SLOT_Y_CENTERS[0] + SLOT_LEN/2,
+     tv_x0 + SLOT_X_LEFT + SLOT_W/2 - 5, tv_x0 + SLOT_X_LEFT + SLOT_W/2,
+     f"{SLOT_LEN:g}")
+vdim(tv_y0 + SLOT_Y_CENTERS[0], tv_y0 + SLOT_Y_CENTERS[1],
+     tv_x0 + SLOT_X_LEFT + SLOT_W, tv_x0 + SLOT_X_LEFT + SLOT_W + 10,
+     f"{SLOT_CC:g}")
 
 # Top-view overall dims
 hdim(tv_x0, tv_x0 + LEG_A,
@@ -366,7 +354,7 @@ hy_C_top = tv(*M3_TOP_POSITIONS[2])[1]
 hy_C_bot = tv(*M3_BOT_POSITIONS[2])[1]
 SP_A = M3_SPACING_A + SHIFT_BOT_Y   # 21
 SP_B = M3_SPACING_B + SHIFT_BOT_Y   # 21
-SP_C = M3_SPACING_C + SHIFT_BOT_Y   # 71
+SP_C = M3_SPACING_C + SHIFT_BOT_Y + EXTRA_BOT_Y_C   # 69
 vdim(hy_A_top, hy_A_bot, tv_x0 + M3_X_A, tv_x0 + M3_X_A - DIM_O1, f"{SP_A:g}")
 vdim(hy_B_top, hy_B_bot, tv_x0 + M3_X_B, tv_x0 + M3_X_B - DIM_O1, f"{SP_B:g}")
 vdim(hy_C_top, hy_C_bot, tv_x0 + M3_X_C, tv_x0 + M3_X_C + DIM_O1, f"{SP_C:g}")
@@ -375,18 +363,9 @@ vdim(hy_C_top, hy_C_bot, tv_x0 + M3_X_C, tv_x0 + M3_X_C + DIM_O1, f"{SP_C:g}")
 vdim(tv_y0, hy_C_top, tv_x0, tv_x0 - DIM_O1,
      f"{M3_Y_CENTER - M3_SPACING_C/2:g}")
 
-# Corner-stack rectangle dims: 49 (X) and 58 (Y)
-hxC_L = tv(CORNER_CX - CORNER_RECT_X/2, 0)[0]
-hxC_R = tv(CORNER_CX + CORNER_RECT_X/2, 0)[0]
-hyC_T = tv(0, CORNER_CY - CORNER_RECT_Y/2)[1]
-hyC_B = tv(0, CORNER_CY + CORNER_RECT_Y/2)[1]
-hdim(hxC_L, hxC_R, hyC_T, hyC_T - DIM_O1, f"{CORNER_RECT_X:g}")
-vdim(hyC_T, hyC_B, hxC_L, hxC_L - DIM_O1, f"{CORNER_RECT_Y:g}")
-
-# Note about the bottom-row M3 shift + corner-stack feature
+# Note about the bottom-row M3 shift
 text(tv_x0 + LEG_A - 2, tv_y0 - 3,
-     f"注: M3 下排 X+{SHIFT_BOT_X:g}, Y+{SHIFT_BOT_Y:g} 偏移 / "
-     f"4 × Φ{CORNER_BOSS_DIAM:g}×{CORNER_BOSS_H:g} 凸台 + Φ{CORNER_M3_DIAM:g} M3 通孔 + Φ{CORNER_CB_DIAM:g}×{CORNER_CB_DEPTH:g} 沉孔(底→顶)",
+     f"注: M3 下排 X+{SHIFT_BOT_X:g}, Y+{SHIFT_BOT_Y:g} 偏移",
      size=TXT_I, anchor="end")
 
 # ===== RIGHT-SIDE VIEW (1:1) — looking from +X. Shows width × height (90 × LEG_B) =====

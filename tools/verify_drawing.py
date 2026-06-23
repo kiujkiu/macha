@@ -62,6 +62,12 @@ def extract_filled_path_bboxes(page) -> list[tuple]:
             continue
         if fm.value == 0:                              # not filled
             continue
+        # Skip white-filled paths — they are text halo masks, not arrows
+        cr, cg, cb, ca = (ctypes.c_uint() for _ in range(4))
+        if raw.FPDFPageObj_GetFillColor(obj, ctypes.byref(cr), ctypes.byref(cg),
+                                        ctypes.byref(cb), ctypes.byref(ca)):
+            if cr.value >= 250 and cg.value >= 250 and cb.value >= 250:
+                continue
         l, b, r, t = (ctypes.c_float() for _ in range(4))
         if raw.FPDFPageObj_GetBounds(obj,
                 ctypes.byref(l), ctypes.byref(b), ctypes.byref(r), ctypes.byref(t)):

@@ -39,7 +39,7 @@ HOLE_ANGLES_DEG = [22.5 + k * 45.0 for k in range(8)]
 
 # ===== rim_top_disc geometry =====
 DISC_OD      = 200.0
-DISC_THICK   = 5.0
+DISC_THICK   = 6.0
 DISC_Z0      = RIM_TOTAL_H          # 9.0 — disc bottom (sits on rim wall top)
 DISC_Z1      = DISC_Z0 + DISC_THICK  # 14.0 — disc top
 
@@ -88,26 +88,30 @@ MATING_HOLES_XY = _mating_holes()
 
 # Bracket gusset hole positions in assembly frame:
 #   x_assembly = -(z_print) - 14.3 = -34.3 or -64.3
-#   z_assembly = x_print + DISC_Z1 = 19 + 14 = 33
+#   z_assembly = x_print + DISC_Z1 = 19 + DISC_Z1
 GUSSET_HOLE_X = (-34.3, -64.3)
-GUSSET_HOLE_Z = 33.0
+GUSSET_HOLE_Z = 19.0 + DISC_Z1
 GUSSET_HOLE_DIAM = 3.2
 
-# 6 special M3 + Φ4.2 CB on the disc top face (+X half, opposite the bracket)
+# 8 special M3 + Φ4.2 CB on the disc top face (+X half, opposite the bracket)
 SPECIAL_M3_DIAM = 3.2
 SPECIAL_CB_DIAM = 4.2
 SPECIAL_POSITIONS = [
-    ( 5.0,  37.5), ( 5.0, -37.5),
-    (51.0,  37.5), (51.0, -37.5),
-    (60.0,  22.0), (60.0, -22.0),
+    # 6 boss holes, aligned to the pi2hub75e PCB (component side up)
+    (-5.0, -37.8), ( 5.0, -37.8),
+    (-5.0,  38.0), ( 5.0,  38.0),
+    (50.7, -37.5), (50.8,  37.4),
+    # 4 plain holes
+    (62.0,  21.0), (62.0, -21.0),
+    (88.0,  28.5), (88.0, -28.5),
 ]
 # Slot on +Y rib
 SLOT_WIDTH    = 15.0
-SLOT_HEIGHT   = 6.0
-SLOT_X_CENTER = 35.0                  # was 16
-SLOT_BOTTOM_Z = DISC_THICK + 11.0     # disc-build Z=16 (was 19)
-# Slot bottom in disc-build frame = 16. In assembly: DISC_Z0 + 16 = 9+16 = 25.
-SLOT_BOTTOM_Z_ASM = DISC_Z0 + SLOT_BOTTOM_Z   # 25 in assembly Z
+SLOT_HEIGHT   = 16.0
+SLOT_BOTTOM_Z = DISC_THICK + 14.0     # disc-build frame
+SLOTS = [(41.0, +RIB_CC/2), (18.5, -RIB_CC/2)]   # (X-center, rib Y)
+# Slot bottom in assembly: DISC_Z0 + SLOT_BOTTOM_Z.
+SLOT_BOTTOM_Z_ASM = DISC_Z0 + SLOT_BOTTOM_Z
 
 # ===== PDF setup =====
 PAGE_W, PAGE_H = 420.0, 297.0
@@ -272,10 +276,11 @@ for hx in GUSSET_HOLE_X:
         pcx, pcy = tv(hx, ry)
         pdf.circle(pcx, pcy, GUSSET_HOLE_DIAM/2, style="D")
 
-# Slot on +Y rib (hidden in top view since under the rib's top surface)
+# Rib slots (hidden in top view since under the ribs' top surfaces)
 pdf.set_dash_pattern(dash=2.0, gap=1.2); _w(HID_W)
-sx0, sy0 = tv(SLOT_X_CENTER - SLOT_WIDTH/2, +RIB_CC/2 + RIB_THICK/2)
-pdf.rect(sx0, sy0, SLOT_WIDTH, RIB_THICK, style="D")
+for (s_xc, s_ry) in SLOTS:
+    sx0, sy0 = tv(s_xc - SLOT_WIDTH/2, s_ry + RIB_THICK/2)
+    pdf.rect(sx0, sy0, SLOT_WIDTH, RIB_THICK, style="D")
 pdf.set_dash_pattern(); _w(GEOM_W)
 
 # Bracket vleg footprint (solid green outline)
@@ -369,11 +374,12 @@ fx_r, fy_b = sv(VLEG_Y_MAX, HFIN_Z0)
 pdf.rect(fx_l, fy_t, fx_r - fx_l, fy_b - fy_t, style="D")
 pdf.set_draw_color(0, 0, 0); _w(GEOM_W)
 
-# Slot on +Y rib — dashed rectangle in side view (slot is hidden behind rib right end in +X projection)
+# Rib slots — dashed rectangles in side view (hidden in +X projection)
 pdf.set_dash_pattern(dash=2.0, gap=1.2); _w(HID_W)
-sx_l, sy_t = sv(+RIB_CC/2 - RIB_THICK/2, SLOT_BOTTOM_Z_ASM + SLOT_HEIGHT)
-sx_r, sy_b = sv(+RIB_CC/2 + RIB_THICK/2, SLOT_BOTTOM_Z_ASM)
-pdf.rect(sx_l, sy_t, sx_r - sx_l, sy_b - sy_t, style="D")
+for (_s_xc, s_ry) in SLOTS:
+    sx_l, sy_t = sv(s_ry - RIB_THICK/2, SLOT_BOTTOM_Z_ASM + SLOT_HEIGHT)
+    sx_r, sy_b = sv(s_ry + RIB_THICK/2, SLOT_BOTTOM_Z_ASM)
+    pdf.rect(sx_l, sy_t, sx_r - sx_l, sy_b - sy_t, style="D")
 pdf.set_dash_pattern(); _w(GEOM_W)
 
 # Gusset hole at Z = 33 — appears as a horizontal line spanning Y from rib to rib
