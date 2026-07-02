@@ -1,14 +1,14 @@
 """
-mlkpai_carrier_disc — 转子承载盘 Φ200×6 (2026-07-01, 旧 rim_top_disc 保留)。
+mlkpai_carrier_disc — 转子承载盘 Φ170×6 (2026-07-01, 旧 rim_top_disc 保留)。
 
 叠层: 盘 → 6 凸台(带铜螺母)固定 pi2hub → pi2hub(下, 板底件1.2) → 尼龙柱+排针排座 → 米联派(上)。
 承载盘特征 (居中坐标系, 盘体 Z = 0..6; 位置为 pi2hub 居中、转45° 前的 disc 本体系):
-  • Φ200 × 6 flat disc
+  • Φ170 × 6 flat disc
   • 16 × Φ3.2 M3 挂环孔 (PCD Φ70 R35 + PCD Φ155 R77.5, 角度 22.5+45k°) + 顶面 Φ7×2.5 沉孔 → 装 rim_ring
-  • 6 × Φ14 安装凸台 (高2, Z 6..8) 在 pi2hub 6 孔位 (±39.5, 25/-25/-55): 每个 = 从凸台顶面
-    Φ4.2 沉孔 4 深 (压 M3×4×4.5 注塑铜花螺母 OD4.5) + Φ3.2 通孔到盘底 (螺丝/公头颈)。
-    凸台顶 = pi2hub 落座面; 板底件 1.2 在 2mm 凸台间隙里避空 (余 0.8)。
-  • 3 × Φ6 支托 (高2, Z 6..8, 实心无孔) 顶住 pi2hub 顶排连接器 (T1/T2/T3, 实心无排针孔处):
+  • 6 × Φ10 安装凸台 (高2, Z 6..8) 在 pi2hub 6 孔位 (±39.5, 25/-25/-55): 每个 = 从 *盘底面*
+    Φ4.2 沉孔向上 4 深 (Z0..4, 压 M3×4×4.5 注塑铜花螺母 OD4.5, 被 Z4 台肩挡住) + Φ3.2
+    通到凸台顶 (顶上螺丝穿 pi2hub 拧下来把铜螺母拉紧)。凸台顶 = pi2hub 落座面; 板底件1.2 在2间隙避空。
+  • 3 × Φ3 支托 (高2, Z 6..8, 实心无孔) 顶住 pi2hub 顶排连接器 (T1/T2/T3, 让开排针):
     T1(-47,37) 顶排左端 / T2(-5,37) 顶排中间空档 / T3(47,37) 顶排右端。
 """
 import math, struct
@@ -16,7 +16,7 @@ from pathlib import Path
 import numpy as np
 import manifold3d as m3d
 
-DISC_OD, THICK, SEG = 200.0, 6.0, 192
+DISC_OD, THICK, SEG = 170.0, 6.0, 192
 
 # 16 rim-mounting holes
 INNER_R, OUTER_R = 35.0, 77.5
@@ -25,7 +25,7 @@ M3, M3_CB_D, M3_CB_DEEP = 3.2, 7.0, 2.5
 
 # 6 pi2hub mounting bosses (centred, pre-45° disc frame)
 BOSS_XY = [(-39.5, 25.0), (39.5, 25.0), (-39.5, -25.0), (39.5, -25.0), (-39.5, -55.0), (39.5, -55.0)]
-BOSS_D, BOSS_H = 14.0, 2.0
+BOSS_D, BOSS_H = 10.0, 2.0
 THRU_D, INSERT_D, INSERT_DEEP = 3.2, 4.2, 4.0     # 通孔 + 铜螺母沉孔 (从凸台顶)
 
 # 3 support pads 托 (solid, no hole) — Φ3, 让开所有排针孔 (>1.6mm gap, 实测)
@@ -54,10 +54,10 @@ for R in (INNER_R, OUTER_R):
         disc = disc - _cyl(M3, x, y, -1, THICK+1)
         disc = disc - _cyl(M3_CB_D, x, y, THICK - M3_CB_DEEP, THICK+1)
 
-# 6 boss insert holes: Φ3.2 through (disc+boss) + Φ4.2 pocket 4mm from BOSS TOP
+# 6 boss insert holes: Φ3.2 through (disc+boss) + Φ4.2 pocket 4mm from DISC BOTTOM (up)
 for (x, y) in BOSS_XY:
     disc = disc - _cyl(THRU_D, x, y, -1, BOSS_TOP+1)
-    disc = disc - _cyl(INSERT_D, x, y, BOSS_TOP - INSERT_DEEP, BOSS_TOP+1)   # Z 4..8
+    disc = disc - _cyl(INSERT_D, x, y, -1, INSERT_DEEP)                       # Z 0..4 from bottom
 
 # ===== export =====
 mesh = disc.to_mesh()

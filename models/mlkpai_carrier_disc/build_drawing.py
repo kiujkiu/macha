@@ -1,16 +1,16 @@
 """
-A3 drawing — mlkpai_carrier_disc (Φ200×6 转子承载盘, 更新 2026-07-01).
-俯视图 + 凸台铜螺母孔详图。承载 pi2hub75e: 6×Φ14 凸台(带铜螺母孔) + 3×Φ6 托。
+A3 drawing — mlkpai_carrier_disc (Φ170×6 转子承载盘, 更新 2026-07-01).
+俯视图 + 凸台铜螺母孔详图。承载 pi2hub75e: 6×Φ10 凸台(带铜螺母孔) + 3×Φ3 托。
 GB first-angle, mm.
 """
 import math, os
 from pathlib import Path
 from fpdf import FPDF
 
-DISC_OD, THICK = 200.0, 6.0
+DISC_OD, THICK = 170.0, 6.0
 INNER_R, OUTER_R = 35.0, 77.5
 BOSS_XY = [(-39.5,25),(39.5,25),(-39.5,-25),(39.5,-25),(-39.5,-55),(39.5,-55)]
-BOSS_D, BOSS_H = 14.0, 2.0
+BOSS_D, BOSS_H = 10.0, 2.0
 THRU_D, INSERT_D, INSERT_DEEP = 3.2, 4.2, 4.0
 TUO_XY = [(-48.5,37),(-4,37),(45,40)]
 TUO_D, TUO_H = 3.0, 2.0
@@ -74,9 +74,9 @@ def cross(cx,cy,r=2.6):
     pdf.set_dash_pattern(dash=1.2,gap=0.6); _w(0.13); pdf.line(cx-r,cy,cx+r,cy); pdf.line(cx,cy-r,cx,cy+r); pdf.set_dash_pattern(); _w(GEOM_W)
 
 _w(0.3); pdf.rect(5,5,PAGE_W-10,PAGE_H-10,style="D")
-text(PAGE_W/2,15,"POV 3D — mlkpai_carrier_disc  转子承载盘 Φ200×6 (承载 pi2hub75e + 米联派)",size=TXT_T,anchor="middle")
+text(PAGE_W/2,15,"POV 3D — mlkpai_carrier_disc  转子承载盘 Φ170×6 (承载 pi2hub75e + 米联派)",size=TXT_T,anchor="middle")
 text(PAGE_W/2,21,
-     "16×M3 挂环孔(PCD Φ70+Φ155)装 rim_ring / 6×Φ14 凸台(铜螺母孔,固定pi2hub)@(±39.5,25/−25/−55) / 3×Φ6 托(顶连接器)"
+     "16×M3 挂环孔(PCD Φ70+Φ155)装 rim_ring / 6×Φ10 凸台(铜螺母孔,固定pi2hub)@(±39.5,25/−25/−55) / 3×Φ3 托(顶连接器)"
      "  GB 1st-angle, mm", size=TXT_I,anchor="middle")
 
 # ===== TOP view =====
@@ -105,7 +105,7 @@ hdim(tv(-DISC_OD/2,-DISC_OD/2)[0],tv(DISC_OD/2,-DISC_OD/2)[0],tv(0,-DISC_OD/2)[1
 hdim(tv(-39.5,-55)[0],tv(39.5,-55)[0],tv(0,-55)[1],tv(0,-55)[1]-DIM_O1,"79")
 vdim(tv(-39.5,25)[1],tv(-39.5,-25)[1],tv(-39.5,0)[0],tv(-39.5,0)[0]-DIM_O1,"50")
 vdim(tv(39.5,-25)[1],tv(39.5,-55)[1],tv(39.5,0)[0],tv(39.5,0)[0]+DIM_O1,"30")
-note(tv(-39.5,25)[0],tv(-39.5,25)[1],tv(-DISC_OD/2,0)[0]-4,tv(0,44)[1],"6×Φ14 凸台 (h2) / Φ3.2通+Φ4.2铜螺母沉",anchor="end")
+note(tv(-39.5,25)[0],tv(-39.5,25)[1],tv(-DISC_OD/2,0)[0]-4,tv(0,44)[1],"6×Φ10 凸台 (h2) / Φ3.2通+Φ4.2铜螺母沉",anchor="end")
 note(tv(-48.5,37)[0],tv(-48.5,37)[1],tv(-DISC_OD/2,0)[0]-4,tv(0,30)[1],"3×Φ3 托 (h2) 让开排针 T1/T2/T3",anchor="end")
 note(tv(OUTER_R*math.cos(math.radians(157.5)),OUTER_R*math.sin(math.radians(157.5)))[0],
      tv(OUTER_R*math.cos(math.radians(157.5)),OUTER_R*math.sin(math.radians(157.5)))[1],
@@ -116,28 +116,27 @@ DS=4.0; dx0, dcy = 340.0, 150.0
 def dv(x,z): return (dx0 + x*DS, dcy - z*DS)   # z up; disc bottom z=0, boss top z=8
 text(dx0,44,"凸台铜螺母孔 详图 (4:1, 剖)",size=TXT_L,anchor="middle")
 _w(GEOM_W)
-halfb=BOSS_D/2   # 7 boss half-width
+halfb=BOSS_D/2   # boss half-width (Φ10 → 5)
 halfd=11.0       # show a disc chunk each side
-# disc slab bottom 0..6, boss 6..8 (width Φ14)
-# outline profile (right half then mirror): trace disc top + boss step + hole
+# disc slab 0..6, boss 6..8; hole: Φ4.2 pocket at BOTTOM (0..4), Φ3.2 neck to top (4..8)
 def profile(sgn):
     xo=sgn*halfd; xb=sgn*halfb; xi42=sgn*INSERT_D/2; xi32=sgn*THRU_D/2
-    # from far bottom up outer edge, across disc top to boss, up boss side, boss top to hole
-    pts=[dv(xo,0),dv(xo,6),dv(xb,6),dv(xb,8),dv(xi42,8),dv(xi42,4),dv(xi32,4),dv(xi32,0)]
+    # outer edge up, disc top to boss, up boss, boss top to Φ3.2 neck, down to shoulder z4, out to Φ4.2, down to bottom
+    pts=[dv(xo,0),dv(xo,6),dv(xb,6),dv(xb,8),dv(xi32,8),dv(xi32,4),dv(xi42,4),dv(xi42,0)]
     for i in range(len(pts)-1): line(*pts[i],*pts[i+1],GEOM_W)
 profile(-1); profile(1)
-line(*dv(-halfd,0),*dv(-THRU_D/2,0),GEOM_W); line(*dv(THRU_D/2,0),*dv(halfd,0),GEOM_W)  # bottom face (hole open)
+line(*dv(-halfd,0),*dv(-INSERT_D/2,0),GEOM_W); line(*dv(INSERT_D/2,0),*dv(halfd,0),GEOM_W)  # bottom face (Φ4.2 open)
 # centre line
 pdf.set_dash_pattern(dash=3,gap=1.5); _w(0.15); pdf.line(*dv(0,-2),*dv(0,10)); pdf.set_dash_pattern(); _w(GEOM_W)
 # dims
-hdim(dv(-INSERT_D/2,8)[0],dv(INSERT_D/2,8)[0],dv(0,8)[1],dv(0,8)[1]-DIM_O1,f"Φ{INSERT_D:g}")
-hdim(dv(-THRU_D/2,0)[0],dv(THRU_D/2,0)[0],dv(0,0)[1],dv(0,0)[1]+DIM_O1,f"Φ{THRU_D:g}")
+hdim(dv(-INSERT_D/2,0)[0],dv(INSERT_D/2,0)[0],dv(0,0)[1],dv(0,0)[1]+DIM_O1,f"Φ{INSERT_D:g}")   # Φ4.2 at bottom
+hdim(dv(-THRU_D/2,8)[0],dv(THRU_D/2,8)[0],dv(0,8)[1],dv(0,8)[1]-DIM_O1,f"Φ{THRU_D:g}")         # Φ3.2 at top
 hdim(dv(-halfb,8)[0],dv(halfb,8)[0],dv(0,8)[1],dv(0,8)[1]-DIM_O2,f"Φ{BOSS_D:g}")
 vdim(dv(halfd,0)[1],dv(halfd,6)[1],dv(halfd,0)[0],dv(halfd,0)[0]+DIM_O1,f"{THICK:g}")
 vdim(dv(halfb,6)[1],dv(halfb,8)[1],dv(halfb,6)[0],dv(halfb,6)[0]+DIM_O1,f"{BOSS_H:g}")
-vdim(dv(-INSERT_D/2,4)[1],dv(-INSERT_D/2,8)[1],dv(-halfb,0)[0]-6,dv(-halfb,0)[0]-6,f"{INSERT_DEEP:g}")
-text(dx0,dv(0,0)[1]+DIM_O2,"Φ4.2 从凸台顶沉 4 深 (压 M3×4×4.5 铜花螺母); Φ3.2 通到盘底",size=TXT_I,anchor="middle")
-text(dx0,dv(0,0)[1]+DIM_O2+6,"盘6 + 凸台2 = 8; pi2hub 坐凸台顶, 板底件1.2 在2间隙避空",size=TXT_I,anchor="middle")
+vdim(dv(-INSERT_D/2,0)[1],dv(-INSERT_D/2,4)[1],dv(-halfd,0)[0]-6,dv(-halfd,0)[0]-6,f"{INSERT_DEEP:g}")  # depth 4 from bottom
+text(dx0,dv(0,0)[1]+DIM_O2,"Φ4.2 从盘底向上沉 4 深 (Z0..4, 压铜螺母, Z4 台肩挡住); Φ3.2 通到凸台顶",size=TXT_I,anchor="middle")
+text(dx0,dv(0,0)[1]+DIM_O2+6,"盘6 + 凸台2 = 8; 顶上螺丝穿 pi2hub 拧入铜螺母把它拉紧",size=TXT_I,anchor="middle")
 
 # ===== title block =====
 tb_y=PAGE_H-24; tb_x,tb_w,tb_h=20,PAGE_W-40,14
