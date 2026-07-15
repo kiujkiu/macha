@@ -49,17 +49,30 @@ NOTCH_R       = BOSS_OD / 2 + 2.0
 NOTCH_SEG     = 24
 
 # ===== Ring collar parameters (aligned with baseplate) =====
-COLLAR_OD = 80.0
+COLLAR_OD = 84.0   # 80→84 (2026-07-10): 铜花螺母孔外侧肉厚 1.65→3.65; M6 帽(Φ12.5)内缘 R43.75 留 1.75
 COLLAR_ID = 65.0                  # = BOSS_OD → press-fit alignment
 COLLAR_H  = 13.0
 COLLAR_Z0 = BASE_THICK            # ring bottom sits on base top (Z=5)
 COLLAR_NOTCH_A_START = NOTCH_A_START
 COLLAR_NOTCH_A_END   = NOTCH_A_END
-COLLAR_NOTCH_H       = 6.0
+COLLAR_NOTCH_H       = 8.0   # 6→8 (2026-07-13): 与凸台槽口同高, 内外开口一致
 COLLAR_NOTCH_R       = COLLAR_OD / 2 + 2.0
 COLLAR_NOTCH_SEG     = 28
 
 assert abs(COLLAR_ID - BOSS_OD) < 1e-9, "collar ID must equal boss OD for alignment"
+
+# ===== flange_disc 连接孔 (2026-07-10) =====
+# flange_disc 内圈 8 孔 (PCD 72.5, R36.25, 22.5°+45k°) 坐在套环顶面上 —
+# 对应加 8× Φ3.2 通孔 + Φ4.2×4 沉孔从套环顶面 (Z18) 向下开
+# (压 M3×4×4.5 注塑铜花螺母, flange_disc 用 M3 从上锁入)。
+# R36.25 在套环壁 R32.5..40 正中; 最近孔 (67.5°/112.5°) 距缺口边 (75°/105°)
+# 弧向 4.73, 沉孔 Z14..18 与缺口 Z5..11 也不重叠。
+FLANGE_HOLE_R     = 36.25            # = flange_disc PCD 72.5 / 2
+FLANGE_HOLE_ANGS  = [22.5 + 45.0 * k for k in range(8)]
+FLANGE_M3_DIAM    = 3.2
+FLANGE_CB_DIAM    = 4.2
+FLANGE_CB_DEPTH   = 4.0
+COLLAR_TOP        = COLLAR_Z0 + COLLAR_H          # 18
 
 # ===== Base =====
 base = m3d.Manifold.cube((BASE_SIDE, BASE_SIDE, BASE_THICK), True)
@@ -129,6 +142,19 @@ collar = collar - c_notch
 # ===== Combine =====
 part = base + boss + collar
 
+# ===== 8× flange_disc 连接孔: Φ3.2 通 (Z0..18) + Φ4.2×4 沉孔 顶面+底面 =====
+# (底面沉孔 2026-07-10 晚追加: 同规格 Φ4.2×4 从底面向上; 中段 Φ3.2 仅剩 Z4..14)
+for a in FLANGE_HOLE_ANGS:
+    hx = FLANGE_HOLE_R * math.cos(math.radians(a))
+    hy = FLANGE_HOLE_R * math.sin(math.radians(a))
+    thr = m3d.Manifold.cylinder(COLLAR_TOP + 2, FLANGE_M3_DIAM / 2,
+                                FLANGE_M3_DIAM / 2, 32, False)
+    part = part - thr.translate((hx, hy, -1.0))
+    cb = m3d.Manifold.cylinder(FLANGE_CB_DEPTH + 1, FLANGE_CB_DIAM / 2,
+                               FLANGE_CB_DIAM / 2, 32, False)
+    part = part - cb.translate((hx, hy, COLLAR_TOP - FLANGE_CB_DEPTH))
+    part = part - cb.translate((hx, hy, -1.0))
+
 # ===== Export STL =====
 mesh  = part.to_mesh()
 verts = np.asarray(mesh.vert_properties)[:, :3]
@@ -159,6 +185,8 @@ print(f"  bbox Z: {verts[:,2].min():7.2f} .. {verts[:,2].max():7.2f}")
 print(f"  volume:        {part.volume():8.2f} mm^3")
 print(f"  surface area:  {part.surface_area():8.2f} mm^2")
 print(f"  notches aligned at {NOTCH_A_START:g}°–{NOTCH_A_END:g}° (boss H{NOTCH_H:g}, collar H{COLLAR_NOTCH_H:g})")
+print(f"  flange 连接孔 8× Φ{FLANGE_M3_DIAM:g} 通 + Φ{FLANGE_CB_DIAM:g}×{FLANGE_CB_DEPTH:g} 沉孔 顶面+底面 "
+      f"@ R{FLANGE_HOLE_R:g}, {FLANGE_HOLE_ANGS[0]:g}°+45k° (配 M3×4×4.5 铜花螺母)")
 
 # Sanity-check binary STL size
 _expected = 84 + len(tris) * 50

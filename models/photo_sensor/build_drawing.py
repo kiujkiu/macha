@@ -104,7 +104,7 @@ new_doc()
 text(PAGE_W/2, 14, "POV 3D photo_sensor — sensor_bracket  (圆盘上平板, 外伸挂光电开关, PLA)",
      size=TXT_T, anchor="middle")
 text(PAGE_W/2, 20,
-     "贴圆盘上表面, 锁(-92.5,±20)圆盘孔(2×M3通孔, 从上往下, 无沉孔) / 外伸段下面挂模块: 2×M3+Φ4.2×4沉孔 + 3让位坑(底面深2) / 厚5",
+     "贴圆盘上表面, 锁(-92.5,±20)圆盘孔(2×M3通孔, 从上往下, 无沉孔) / 外伸段下面挂模块: 2×Φ3.2 直通 (顶沉取消 2026-07-14) + 3让位槽贯通 / 厚6 (5→6)",
      size=TXT_I, anchor="middle")
 S = 3.0
 ax0, ay0 = 70.0, 70.0
@@ -115,76 +115,58 @@ RED_L = [(34.5, 44.0), (34.5, 4.0)]
 BLUE_L = [(22.0, 41.0), (8.0, 41.0)]
 for (lx, ly) in RED_L: circle(*bv(lx, ly), S*3.4)
 for (lx, ly) in BLUE_L:
-    circle(*bv(lx, ly), S*4.2)          # CB
-    circle(*bv(lx, ly), S*3.2)          # thru
-# 3 relief pockets (dashed, underside): local rects
-POCK_L = [(5.0, 11.0, 19.5, 28.5), (19.0, 25.0, 19.5, 28.5), (10.5, 19.5, 39.0, 45.5)]
+    circle(*bv(lx, ly), S*3.2)          # thru (顶沉已取消)
+# 3 through relief slots (solid outline — 贯通): local rects
+POCK_L = [(5.0, 11.0, 19.5, 28.5), (19.0, 25.0, 19.5, 28.5), (11.15, 18.85, 39.0, 45.5)]  # 排针槽宽 7.7
 for (x0, x1, y0, y1) in POCK_L:
-    rect_dashed(bv(x0, y1)[0], bv(x0, y1)[1], S*(x1-x0), S*(y1-y0))
+    _w(GEOM_W); pdf.rect(bv(x0, y1)[0], bv(x0, y1)[1], S*(x1-x0), S*(y1-y0), style="D")
 # dims
 hdim(bv(0, 0)[0], bv(41, 0)[0], bv(0, 0)[1], bv(0, 0)[1]+DIM_O1, "41")
 vdim(bv(0, 0)[1], bv(0, 50)[1], bv(0, 0)[0], bv(0, 0)[0]-DIM_O1, "50")
 hdim(bv(8, 41)[0], bv(22, 41)[0], bv(0, 41)[1], bv(0, 41)[1]-DIM_O1, "14 (模块孔距)")
 vdim(bv(34.5, 4)[1], bv(34.5, 44)[1], bv(41, 0)[0], bv(41, 0)[0]+DIM_O1, "40 (圆盘孔距)")
 hdim(bv(0, 41)[0], bv(8, 41)[0], bv(0, 50)[1], bv(0, 50)[1]-DIM_O1, "8")
-text(bv(22, 41)[0]+3, bv(22, 41)[1]-3, "2×Φ3.2 + Φ4.2×4沉孔 (锁模块)", TXT_I, "start", True)
+text(bv(22, 41)[0]+3, bv(22, 41)[1]-3, "2×Φ3.2 直通 (锁模块, M3×12+螺母)", TXT_I, "start", True)
 text(bv(34.5, 24)[0]+3, bv(34.5, 24)[1], "2×Φ3.4 (锁圆盘, 无沉孔)", TXT_I, "start", True)
-text(bv(12, 24)[0]-2, bv(12, 24)[1], "3×让位坑 深2 (虚线, 底面)", TXT_I, "start", True)
+text(bv(12, 24)[0]-2, bv(12, 24)[1], "3×让位槽 贯通", TXT_I, "start", True)
 
 # side section (X-Z) 3:1
 sx0, sz0 = 250.0, 230.0
 def sv(lx, z): return (sx0 + S*lx, sz0 - S*z)   # z up
-text(sx0 + 50, 150, "侧视 (3:1)  (沿 -Y 看, 厚5)", size=TXT_L, anchor="middle")
-_w(GEOM_W); pdf.rect(sv(0, 5)[0], sv(0, 5)[1], S*41, S*5, style="D")
+text(sx0 + 50, 150, "侧视 (3:1)  (沿 -Y 看, 厚6)", size=TXT_L, anchor="middle")
+_w(GEOM_W); pdf.rect(sv(0, 6)[0], sv(0, 6)[1], S*41, S*6, style="D")
 # BLUE CB (Φ4.2×4 from top) at lx 8 and 22 — show as notch
 for lx in (8.0, 22.0):
-    pdf.rect(sv(lx-2.1, 5)[0], sv(lx-2.1, 5)[1], S*4.2, S*4, style="D")   # CB pocket from top
-    line(*sv(lx, 1.0), *sv(lx, 0), GEOM_W)                                # M3 thru stub
-# pockets (2mm from bottom) at lx ~5-25 (shown as bottom notches, dashed)
+    line(*sv(lx, 6.0), *sv(lx, 0), GEOM_W)                                # M3 thru
+# through slots at lx ~5-25 (hidden lines, full thickness)
 pdf.set_dash_pattern(dash=1.5, gap=1.0); _w(HID_W)
-pdf.rect(sv(5, 2)[0], sv(5, 2)[1], S*20, S*2, style="D"); pdf.set_dash_pattern()
-vdim(sv(41, 0)[1], sv(41, 5)[1], sv(41, 0)[0], sv(41, 0)[0]+DIM_O1, "5")
-vdim(sv(0, 5-4)[1], sv(0, 5)[1], sv(0, 0)[0], sv(0, 0)[0]-DIM_O1, "沉孔4")
-vdim(sv(30, 0)[1], sv(30, 2)[1], sv(30, 0)[0], sv(30, 0)[0]+DIM_O1, "坑2")
-text(sx0, 168, "RED 圆盘孔=通孔无沉孔; BLUE 模块孔=Φ4.2×4 顶面沉孔; 底面 3 让位坑深2", TXT_I, "start", True)
+pdf.rect(sv(5, 6)[0], sv(5, 6)[1], S*20, S*6, style="D"); pdf.set_dash_pattern()
+vdim(sv(41, 0)[1], sv(41, 6)[1], sv(41, 0)[0], sv(41, 0)[0]+DIM_O1, "6")
+
+text(sx0, 168, "全部孔为普通直通 (无沉孔); 3 让位槽贯通", TXT_I, "start", True)
 
 # ---- detail markers on the plan (RED holes are plain through → no detail) ----
 def detail_mark(cx, cy, letter, r=6.5):
     _w(0.25); pdf.set_dash_pattern(dash=1.0, gap=0.8); pdf.circle(cx, cy, r, style="D"); pdf.set_dash_pattern()
     text(cx + r + 0.5, cy - r + 1, letter, size=TXT_L)
-detail_mark(*bv(22, 41), "A")            # BLUE counterbored module hole
 detail_mark(*bv(8, 24), "B")             # relief pocket
 
-# ---- DETAIL A (6:1) — BLUE counterbore (Φ3.2 thru + Φ4.2×4 CB) ----
-DS = 6.0; dax, daz = 250.0, 130.0
-def da(x, z): return (dax + DS*x, daz - DS*z)
-text(dax + 24, 60, "详图 A (6:1)  模块孔沉孔", size=TXT_L, anchor="middle")
-_w(GEOM_W)
-for a, b in [((0,0),(2.4,0)),((2.4,0),(2.4,1)),((2.4,1),(1.9,1)),((1.9,1),(1.9,5)),((1.9,5),(0,5)),((0,5),(0,0))]:
-    line(*da(*a), *da(*b), GEOM_W)
-for a, b in [((8,0),(5.6,0)),((5.6,0),(5.6,1)),((5.6,1),(6.1,1)),((6.1,1),(6.1,5)),((6.1,5),(8,5)),((8,5),(8,0))]:
-    line(*da(*a), *da(*b), GEOM_W)
-pdf.set_dash_pattern(dash=1.2, gap=0.8); _w(0.13); pdf.line(*da(4,5.6), *da(4,-0.6)); pdf.set_dash_pattern()
-hdim(da(1.9,5)[0], da(6.1,5)[0], da(0,5)[1], da(0,5)[1]-DIM_O1, "Φ4.2")
-hdim(da(2.4,0)[0], da(5.6,0)[0], da(0,0)[1], da(0,0)[1]+DIM_O1, "Φ3.2 通")
-vdim(da(0,0)[1], da(0,5)[1], da(0,0)[0], da(0,0)[0]-DIM_O1, "5")
-vdim(da(8,1)[1], da(8,5)[1], da(8,0)[0], da(8,0)[0]+DIM_O1, "深4")
-text(dax + 4, 122, "(顶面进, 锁模块)", TXT_I, "start", True)
 
 # ---- DETAIL B (6:1) — relief pocket (2mm blind, underside) ----
+DS = 6.0
 dbx, dbz = 350.0, 130.0
 def db(x, z): return (dbx + DS*x, dbz - DS*z)
-text(dbx + 24, 60, "详图 B (6:1)  让位坑", size=TXT_L, anchor="middle")
+text(dbx + 24, 60, "详图 B (6:1)  让位槽 (贯通)", size=TXT_L, anchor="middle")
 _w(GEOM_W)
-for a, b in [((0,0),(1,0)),((1,0),(1,2)),((1,2),(7,2)),((7,2),(7,0)),((7,0),(8,0)),((8,0),(8,5)),((8,5),(0,5)),((0,5),(0,0))]:
+for a, b in [((0,0),(1,0)),((1,0),(1,6)),((1,6),(0,6)),((0,6),(0,0)),((7,0),(8,0)),((8,0),(8,6)),((8,6),(7,6)),((7,6),(7,0))]:
     line(*db(*a), *db(*b), GEOM_W)
-hdim(db(1,2)[0], db(7,2)[0], db(0,2)[1], db(0,2)[1]-DIM_O1, "坑宽")
-vdim(db(8,0)[1], db(8,2)[1], db(8,0)[0], db(8,0)[0]+DIM_O1, "深2")
-vdim(db(0,0)[1], db(0,5)[1], db(0,0)[0], db(0,0)[0]-DIM_O1, "5")
-text(dbx + 4, 122, "(底面进, 让焊脚)", TXT_I, "start", True)
+hdim(db(1,6)[0], db(7,6)[0], db(0,6)[1], db(0,6)[1]-DIM_O1, "槽宽")
+vdim(db(8,0)[1], db(8,6)[1], db(8,0)[0], db(8,0)[0]+DIM_O1, "6 (贯通)")
+
+text(dbx + 4, 122, "(贯通, 让焊脚)", TXT_I, "start", True)
 
 title_block("POV 3D — photo_sensor / sensor_bracket (×1, 转子)",
-            "平板 41×50×5 贴圆盘顶 / 2×Φ3.4锁圆盘(通孔无沉孔) + 2×Φ3.2+Φ4.2×4沉孔锁模块(详图A) + 3让位坑深2(详图B) / 外伸悬挑")
+            "平板 41×50×6 (5→6, 2026-07-14) 贴圆盘顶 / 2×Φ3.4锁圆盘 + 2×Φ3.2锁模块 (全部直通无沉孔) + 3让位槽贯通(详图B) / 外伸悬挑")
 save("photo_sensor_bracket_drawing.pdf")
 
 # ============================================================

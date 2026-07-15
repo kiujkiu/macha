@@ -100,8 +100,8 @@ def save(pdf, name):
 # ================= Sheet 1: sensor_bracket_v2 =================
 pdf = new_pdf(); h = mk_helpers(pdf)
 h['frame']("POV 3D v2 — sensor_bracket_v2 光电支架 (θ=180/-X, 装 mlkpai_carrier_disc)",
-     "5厚盘顶板 X-113..-64×Y±35 (外角45°斜切; R_SLOT 112→98 缩半径 2026-07-07), 借盘R77.5环孔(-71.60,±29.66) Φ3.4 M3上进 / "
-     "模块孔(-91,17)/(-105,17) Φ3.2+Φ4.2×4顶沉→详图A / 3× 2mm 底面避空槽 / 梁(-98,0,盘顶-8) / 基准=旋转轴  (GB 1st-angle, 2:1, mm)")
+     "3厚盘顶板 (6→3, 2026-07-15) X-113..-64×Y±35 (外角45°斜切; R_SLOT 112→98 缩半径 2026-07-07), 借盘R77.5环孔(-71.60,±29.66) Φ3.4 M3上进 / "
+     "模块孔(-91,17)/(-105,17) Φ3.2 直通 (顶沉取消, M3×8+螺母) / 3× 贯通避空槽 / 梁(-98,0,盘顶-8) / 基准=旋转轴  (GB 1st-angle, 2:1, mm)")
 S=2.0; CX, CY = 130.0, 130.0    # plan: pdf_x = (X+95.5)*S+CX, pdf_y = CY - Y*S (θ=180 件, 轴在图右外侧)
 def pv(x,y): return (CX+(x+95.5)*S, CY-y*S)
 h['text'](CX,52,"俯视图 (2:1)  基准: X=0 为旋转轴 (在图右外侧)",size=TXT_L,anchor="middle")
@@ -109,16 +109,13 @@ h['pl']([pv(-113,-20),pv(-113,20),pv(-98,35),pv(-64,35),pv(-64,-35),pv(-98,-35),
 for (x,y) in [(-71.601,29.658),(-71.601,-29.658)]:
     cx,cy=pv(x,y); pdf.circle(cx,cy,1.7*S,style="D"); h['cross'](cx,cy,4.5)
 for (x,y) in [(-91,17),(-105,17)]:
-    cx,cy=pv(x,y); pdf.circle(cx,cy,1.6*S,style="D"); pdf.circle(cx,cy,2.1*S,style="D"); h['cross'](cx,cy,4.5)
-pdf.set_dash_pattern(dash=2.0,gap=1.2)
-for (x0,x1,y0,y1) in [(-108,-102,-4.5,4.5),(-94,-88,-4.5,4.5),(-102.5,-93.5,15,21.5)]:
-    h['pl']([pv(x0,y0),pv(x1,y0),pv(x1,y1),pv(x0,y1),pv(x0,y0)],HID_W)
-pdf.set_dash_pattern()
+    cx,cy=pv(x,y); pdf.circle(cx,cy,1.6*S,style="D"); h['cross'](cx,cy,4.5)
+for (x0,x1,y0,y1) in [(-108,-102,-4.5,4.5),(-94,-88,-4.5,4.5),(-101.85,-94.15,15,21.5)]:
+    h['pl']([pv(x0,y0),pv(x1,y0),pv(x1,y1),pv(x0,y1),pv(x0,y0)])   # 贯通槽 → 实线
 # 盘边 R85 参考弧 (θ=180 侧)
 pdf.set_dash_pattern(dash=2.0,gap=1.2); pdf.set_line_width(0.18)
 arc=[pv(85*math.cos(math.radians(a)),85*math.sin(math.radians(a))) for a in range(154,207,2)]
 h['pl'](arc); pdf.set_dash_pattern(); pdf.set_line_width(GEOM_W)
-dax,day=pv(-91,17); pdf.circle(dax,day,7.0,style="D"); h['text'](dax+9,day-6,"A",size=TXT_L)
 h['hdim'](pv(-113,-35)[0],pv(-64,-35)[0],pv(0,-35)[1],pv(0,-35)[1]+DIM_O1,"49")
 h['hdim'](pv(-71.601,-35)[0],pv(-64,-35)[0],pv(0,-35)[1],pv(0,-35)[1]+DIM_O2,"7.6")
 h['hdim'](pv(-105,35)[0],pv(-91,35)[0],pv(0,17)[1],pv(0,35)[1]-DIM_O1,"14")
@@ -126,41 +123,25 @@ h['vdim'](pv(0,29.658)[1],pv(0,-29.658)[1],pv(-71.601,0)[0],pv(-64,0)[0]+DIM_O1,
 h['vdim'](pv(0,35)[1],pv(0,-35)[1],pv(-64,0)[0],pv(-64,0)[0]+DIM_O2,"70")
 h['vdim'](pv(0,17)[1],pv(0,0)[1],pv(-105,0)[0],pv(-113,0)[0]-DIM_O1,"17")
 h['note'](*pv(-71.601,-29.658),pv(-64,0)[0]+8,pv(0,-44)[1],"2×Φ3.4 通 (M3上进 穿板+盘+环)")
-h['note'](*pv(-105,17),pv(-113,0)[0]-8,pv(0,30)[1],"2×Φ3.2+Φ4.2×4顶沉 → 详图A",anchor="end")
+h['note'](*pv(-105,17),pv(-113,0)[0]-8,pv(0,30)[1],"2×Φ3.2 通 (M3×12 顶入, 模块下螺母)",anchor="end")
 h['note'](*pv(-78.3,33.2),pv(-64,0)[0]+8,66.0,"盘边 R85 (参考)")
-h['text'](pv(-88.5,0)[0],236.0,"梁位置 (-98, 0), 距轴 98 / 3 虚线槽 = 底面 2mm 避空(焊脚) / 外角斜切 (-113,±20)→(-98,±35)",size=TXT_I,anchor="middle")
+h['text'](pv(-88.5,0)[0],236.0,"梁位置 (-98, 0), 距轴 98 / 3 槽贯通 (焊脚避空, 2026-07-14 挖穿) / 外角斜切 (-113,±20)→(-98,±35)",size=TXT_I,anchor="middle")
 h['hdim'](pv(-98,20)[0],pv(-64,20)[0],pv(0,17)[1]-14,pv(0,35)[1]-DIM_O2,"34 (梁R98-板内缘64)")
 # 侧视 (X→右, Z→上; 板厚)
 SVX=300.0
 def sv(x,z): return (SVX+(x+95.5)*S, 150.0-(z-48.2)*S)
 h['text'](SVX,52,"侧视图 (2:1)",size=TXT_L,anchor="middle")
-h['pl']([sv(-113,45.7),sv(-64,45.7),sv(-64,50.7),sv(-113,50.7),sv(-113,45.7)])
+h['pl']([sv(-113,45.7),sv(-64,45.7),sv(-64,48.7),sv(-113,48.7),sv(-113,45.7)])
 pdf.set_dash_pattern(dash=2.0,gap=1.2)
-h['line'](*sv(-108,47.7),*sv(-88,47.7),HID_W)   # 避空槽深 2 示意
+for sx in (-108,-102,-94,-88):   # 两条贯通槽的边 (隐藏线, 全厚)
+    h['line'](*sv(sx,45.7),*sv(sx,48.7),HID_W)
 pdf.set_dash_pattern()
 h['hdim'](sv(-113,0)[0],sv(-64,0)[0],sv(0,45.7)[1],sv(0,45.7)[1]+DIM_O1,"49")
-h['vdim'](sv(0,50.7)[1],sv(0,45.7)[1],sv(-64,0)[0],sv(-64,0)[0]+DIM_O1,"5")
-h['note'](*sv(-98,45.7),sv(-64,0)[0]+8,sv(0,42)[1]+14,"模块扣板底(槽口朝下), 板底避空槽深2")
-# 详图 A (6:1)
-DAX,DAY,DS=275.0,228.0,6.0
-h['text'](290.0,198.0,"详图 A (6:1) — 模块孔 Φ4.2 顶沉",size=TXT_L,anchor="middle")
-def da(x,r): return (DAX+x*DS, DAY-r*DS)   # x: 0=板底,5=板顶; r 径向
-for sgn in (1,-1):
-    h['pl']([da(0,sgn*4),da(0,sgn*1.6)]); h['pl']([da(0,sgn*4),da(5,sgn*4)])
-    h['pl']([da(0,sgn*1.6),da(1,sgn*1.6)])          # Φ3.2 壁 (板底起)
-    h['pl']([da(1,sgn*1.6),da(1,sgn*2.1)])          # 台肩
-    h['pl']([da(1,sgn*2.1),da(5,sgn*2.1)])          # Φ4.2 壁
-    h['pl']([da(5,sgn*2.1),da(5,sgn*4)])            # 板顶
-pdf.set_dash_pattern(dash=4.0,gap=1.5,phase=2.0); pdf.set_line_width(0.18)
-pdf.line(da(-0.8,0)[0],DAY,da(5.8,0)[0],DAY); pdf.set_dash_pattern(); pdf.set_line_width(GEOM_W)
-h['hdim'](da(1,0)[0],da(5,0)[0],da(0,-4)[1],da(0,-4)[1]+DIM_O1,"4")
-h['vdim'](da(0,1.6)[1],da(0,-1.6)[1],da(0,0)[0],da(0,0)[0]-DIM_O1,"Φ3.2")
-h['vdim'](da(0,2.1)[1],da(0,-2.1)[1],da(5,0)[0],da(5,0)[0]+DIM_O1,"Φ4.2")
-h['text'](330.0,218.0,"左=板底(贴模块), 右=板顶",size=TXT_I,anchor="start")
-h['text'](330.0,224.0,"M3 从顶入, 头沉入 Φ4.2×4",size=TXT_I,anchor="start")
-h['tblock']("POV 3D v2 结构件 — sensor_bracket_v2 光电支架 (θ=180)","投影 1st-angle / 比例 2:1, 详图 6:1",
-       "板 49×70×5 (X-113..-64, 外角斜切) / 借环孔(-71.60,±29.66) Φ3.4 / 模块孔 -91/-105@Y+17 Φ3.2+Φ4.2×4沉 / 3避空槽2深 / 平躺打印 / mm",
-       "2026-07-03  /  POV3D / models / photo_sensor / sensor_bracket_v2.stl")
+h['vdim'](sv(0,48.7)[1],sv(0,45.7)[1],sv(-64,0)[0],sv(-64,0)[0]+DIM_O1,"3")
+h['note'](*sv(-98,45.7),sv(-64,0)[0]+8,sv(0,42)[1]+14,"模块扣板底(槽口朝下), 避空槽贯通")
+h['tblock']("POV 3D v2 结构件 — sensor_bracket_v2 光电支架 (θ=180)","投影 1st-angle / 比例 2:1",
+       "板 49×70×3 (X-113..-64, 外角斜切) / 借环孔(-71.60,±29.66) Φ3.4 (M3×16) / 模块孔 -91/-105@Y+17 Φ3.2直通(M3×8) / 3避空槽贯通 / 平躺打印 / mm",
+       "2026-07-15  /  POV3D / models / photo_sensor / sensor_bracket_v2.stl")
 save(pdf, "photo_sensor_bracket_v2_drawing.pdf")
 
 # ================= Sheet 2: index_vane_v2 =================

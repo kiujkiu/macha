@@ -18,7 +18,8 @@ Views:
                                        between Z=3..5.5 at R=72.5..82.5, and
                                        the stepped hole profiles.
   3) DETAIL B       (详图 B, 4:1)    — M3 + Φ7 × 4 CB stack (diamond holes).
-  4) DETAIL C       (详图 C, 4:1)    — M3 + Φ4.2 × 4 CB stack (the other 20).
+  4) DETAIL C       (详图 C, 4:1)    — M3 + Φ4.2 CB stack: PCD 环 16 孔深 4.5
+                       (4→4.5, 2026-07-14); 方形 4 孔同构但深 4.0 (注记)。
 """
 import math
 import os
@@ -48,6 +49,7 @@ M3_DIAM   = 3.2
 CB_A_DIAM = 7.0
 CB_B_DIAM = 4.2
 CB_DEPTH  = 4.0
+RING_CB_DEPTH = 4.5   # PCD 环形 16 孔 (4→4.5, 2026-07-14)
 
 # Center counterbore — Φ6.2 × 2.2 mm pocket, opens from BOTTOM face at (0,0).
 # No through-hole, pocket only.
@@ -221,7 +223,7 @@ text(PAGE_W/2, 13, "POV 3D 轴座盘  Hub Disc", size=TXT_T, anchor="middle")
 text(PAGE_W/2, 19,
      f"基盘 Φ{BASE_OD:g}×{BASE_T:g} / 下凸台 Φ{LOWER_BOSS_D:g}×{LOWER_BOSS_T:g} / "
      f"上凸台 Φ{UPPER_BOSS_D:g}×{UPPER_BOSS_T:g} / 外缘凸圈 Φ{RIM_BOSS_OD:g}/Φ{RIM_BOSS_ID:g}×{RIM_BOSS_T:g} (切口 {RIM_CUTOUT_A_S:g}°–{RIM_CUTOUT_A_E:g}°) / "
-     f"24×Φ{M3_DIAM:g} M3 + Φ{CB_A_DIAM:g} 沉孔 (顶面, 菱形) + Φ{CB_B_DIAM:g}×{CB_DEPTH:g} 沉孔 (底面, 其余) + 中心 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g} 沉孔 (底面)",
+     f"24×Φ{M3_DIAM:g} M3 + Φ{CB_A_DIAM:g}×{CB_DEPTH:g} 沉孔 (顶面, 菱形) + Φ{CB_B_DIAM:g} 沉孔 底面: 方形×{CB_DEPTH:g} / PCD环×{RING_CB_DEPTH:g} + 中心 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g} (底面)",
      size=TXT_I, anchor="middle")
 
 # ===== TOP VIEW (1:1) =====
@@ -443,7 +445,7 @@ pdf.line(sf_x, sf_y, sf_x, sf_y + 6)
 pdf.line(sf_x, sf_y + 6, se_kink_x, se_label_y)
 pdf.line(se_kink_x, se_label_y, se_label_x, se_label_y)
 text(se_label_x + 1.5, se_label_y - 1.2,
-     f"8 × Φ{M3_DIAM:g} + Φ{CB_B_DIAM:g}×{CB_DEPTH:g} 沉孔 (内圈 PCD Φ{INNER_PCD:g})",
+     f"8 × Φ{M3_DIAM:g} + Φ{CB_B_DIAM:g}×{RING_CB_DEPTH:g} 沉孔 (内圈 PCD Φ{INNER_PCD:g})",
      size=TXT_D, anchor="start")
 
 # ---- SOUTH-WEST corner: 8 × Φ4.2 PCD155 outer ring ----
@@ -457,7 +459,7 @@ pdf.line(wf_x, wf_y, sw_kink_x, wf_y)
 pdf.line(sw_kink_x, wf_y, sw_kink_x, sw_label_y)
 pdf.line(sw_kink_x, sw_label_y, sw_label_x, sw_label_y)
 text(sw_label_x + 1.5, sw_label_y - 1.2,
-     f"8 × Φ{M3_DIAM:g} + Φ{CB_B_DIAM:g}×{CB_DEPTH:g} 沉孔 (外圈 PCD Φ{OUTER_PCD:g})",
+     f"8 × Φ{M3_DIAM:g} + Φ{CB_B_DIAM:g}×{RING_CB_DEPTH:g} 沉孔 (外圈 PCD Φ{OUTER_PCD:g})",
      size=TXT_D, anchor="start")
 
 # ---- Top-view diameter dims (stacked above the disc) ----
@@ -783,7 +785,7 @@ text(dc_cx, dc_cy - Z3 * DC_SCALE - DC_DIM_O - 12,
      "详图 C  Detail C  (4:1)   尺寸单位: mm",
      size=TXT_L, anchor="middle")
 text(dc_cx, dc_cy - Z3 * DC_SCALE - DC_DIM_O - 5,
-     f"方形 / 内 PCD / 外 PCD 孔: M3 + Φ{CB_B_DIAM:g}×{CB_DEPTH:g} 沉孔",
+     f"内/外 PCD 环 16 孔: M3 + Φ{CB_B_DIAM:g}×{RING_CB_DEPTH:g} 沉孔 (方形 4 孔同构, 深 {CB_DEPTH:g})",
      size=TXT_I, anchor="middle")
 
 DC_HALF_BASE = 7.0
@@ -797,12 +799,12 @@ dc_z_top = Z2     # 5.5
 _w(GEOM_W)
 line(*dc(-DC_HALF_BASE, 0),       *dc(-DC_HALF_CB,   0),       GEOM_W)
 line(*dc( DC_HALF_CB,   0),       *dc( DC_HALF_BASE, 0),       GEOM_W)
-line(*dc(-DC_HALF_CB, 0),         *dc(-DC_HALF_CB, CB_DEPTH),  GEOM_W)
-line(*dc( DC_HALF_CB, 0),         *dc( DC_HALF_CB, CB_DEPTH),  GEOM_W)
-line(*dc(-DC_HALF_CB, CB_DEPTH),  *dc(-DC_HALF_M3, CB_DEPTH),  GEOM_W)
-line(*dc( DC_HALF_M3, CB_DEPTH),  *dc( DC_HALF_CB, CB_DEPTH),  GEOM_W)
-line(*dc(-DC_HALF_M3, CB_DEPTH),  *dc(-DC_HALF_M3, dc_z_top),  GEOM_W)
-line(*dc( DC_HALF_M3, CB_DEPTH),  *dc( DC_HALF_M3, dc_z_top),  GEOM_W)
+line(*dc(-DC_HALF_CB, 0),         *dc(-DC_HALF_CB, RING_CB_DEPTH),  GEOM_W)
+line(*dc( DC_HALF_CB, 0),         *dc( DC_HALF_CB, RING_CB_DEPTH),  GEOM_W)
+line(*dc(-DC_HALF_CB, RING_CB_DEPTH),  *dc(-DC_HALF_M3, RING_CB_DEPTH),  GEOM_W)
+line(*dc( DC_HALF_M3, RING_CB_DEPTH),  *dc( DC_HALF_CB, RING_CB_DEPTH),  GEOM_W)
+line(*dc(-DC_HALF_M3, RING_CB_DEPTH),  *dc(-DC_HALF_M3, dc_z_top),  GEOM_W)
+line(*dc( DC_HALF_M3, RING_CB_DEPTH),  *dc( DC_HALF_M3, dc_z_top),  GEOM_W)
 line(*dc(-DC_HALF_BASE, dc_z_top), *dc(-DC_HALF_M3, dc_z_top), GEOM_W)
 line(*dc( DC_HALF_M3,   dc_z_top), *dc( DC_HALF_BASE, dc_z_top), GEOM_W)
 line(*dc(-DC_HALF_BASE, 0), *dc(-DC_HALF_BASE, dc_z_top), GEOM_W)
@@ -820,9 +822,9 @@ pdf.line(dc(0, -2)[0], dc(0, -2)[1], dc(0, dc_z_top + 2)[0], dc(0, dc_z_top + 2)
 pdf.set_dash_pattern()
 _w(GEOM_W)
 
-vdim(dc(0, CB_DEPTH)[1], dc(0, 0)[1],
+vdim(dc(0, RING_CB_DEPTH)[1], dc(0, 0)[1],
      dc(-DC_HALF_BASE, 0)[0], dc(-DC_HALF_BASE, 0)[0] - DC_DIM_O,
-     f"{CB_DEPTH:g}")
+     f"{RING_CB_DEPTH:g}")
 hdim(dc(-DC_HALF_CB, 0)[0], dc(DC_HALF_CB, 0)[0],
      dc(0, 0)[1], dc(0, 0)[1] + DC_DIM_O,
      f"Φ{CB_B_DIAM:g}")

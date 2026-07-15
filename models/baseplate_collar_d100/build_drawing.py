@@ -8,6 +8,9 @@ A3 landscape 2D engineering drawing for POV3D baseplate_collar
                           Z=18..28, base profile with central Φ12 pocket,
                           and floating right-side pieces at the notch.
   3) DETAIL B (3:1) — M3 + Φ7 CB stepped hole.
+  4) DETAIL C (2:1) — flange 连接孔 (2026-07-10): 套环壁剖面, Φ3.2 通 (Z0..18)
+                       + Φ4.2×4 沉孔 顶面+底面 (压 M3×4×4.5 铜花螺母;
+                       底面沉孔同日晚追加, 中段 Φ3.2 仅 Z4..14)。
 """
 import math
 from pathlib import Path
@@ -33,12 +36,19 @@ NOTCH_A_S  = 75.0
 NOTCH_A_E  = 105.0
 NOTCH_H    = 8.0
 
-COLLAR_OD  = 80.0
+COLLAR_OD  = 84.0
 COLLAR_ID  = 65.0           # = BOSS_OD
 COLLAR_H   = 13.0
 COLLAR_Z0  = BASE_THICK     # 5
 COLLAR_Z1  = COLLAR_Z0 + COLLAR_H  # 18
-COLLAR_NOTCH_H = 6.0
+COLLAR_NOTCH_H = 8.0
+
+# flange_disc 连接孔 (2026-07-10)
+FL_HOLE_R    = 36.25          # PCD 72.5 / 2
+FL_ANGS      = [22.5 + 45.0 * k for k in range(8)]
+FL_M3_DIAM   = 3.2
+FL_CB_DIAM   = 4.2
+FL_CB_DEPTH  = 4.0
 
 T_BASE = BASE_SIDE / 2      # 50
 T_CO   = COLLAR_OD / 2      # 40 (collar outer)
@@ -153,7 +163,8 @@ text(PAGE_W/2, 19.5,
      f"中央 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g} 沉孔(顶) / "
      f"凸台 Φ{BOSS_OD:g}/Φ{BOSS_ID:g} H{BOSS_H:g} / "
      f"套环 Φ{COLLAR_OD:g}/Φ{COLLAR_ID:g} H{COLLAR_H:g} / "
-     f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° 对齐",
+     f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° 对齐 / "
+     f"8×Φ{FL_M3_DIAM:g}+Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g}沉(顶+底) PCD Φ{2*FL_HOLE_R:g}",
      size=TXT_I, anchor="middle")
 
 # ===== TOP VIEW (1:1) =====
@@ -212,6 +223,17 @@ pdf.circle(ccx, ccy, COLLAR_OD/2, style="D")
 pdf.circle(ccx, ccy, BOSS_OD/2,   style="D")
 pdf.circle(ccx, ccy, BOSS_ID/2,   style="D")
 pdf.circle(ccx, ccy, CENTER_CB_DIAM/2, style="D")
+
+# 8 × flange 连接孔 @ R36.25, 22.5°+45k° (Φ3.2 通 + Φ4.2 沉孔, 均从顶可见)
+pdf.set_dash_pattern(dash=4, gap=1.5); _w(0.13)
+pdf.circle(ccx, ccy, FL_HOLE_R, style="D")           # PCD Φ72.5 点划圆
+pdf.set_dash_pattern()
+_w(GEOM_W)
+for a_deg in FL_ANGS:
+    a = math.radians(a_deg)
+    hx, hy = tv(FL_HOLE_R * math.cos(a), FL_HOLE_R * math.sin(a))
+    pdf.circle(hx, hy, FL_M3_DIAM/2, style="D")
+    pdf.circle(hx, hy, FL_CB_DIAM/2, style="D")
 
 # Notches (hidden from top — wall below the visible top face). Show dashed
 # radial lines at the notch boundaries, spanning collar OD to boss ID.
@@ -288,6 +310,19 @@ pdf.line(lx, ly, lx + 8, ly)
 text(lx + 8, ly - 1,
      f"中央 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g} 沉孔 (顶面)",
      size=TXT_D, anchor="start")
+# flange 连接孔 (leader 自 337.5° 孔, 详图 C)
+fl_a = math.radians(337.5)
+fl_x = ccx + (FL_HOLE_R + FL_CB_DIAM/2*0.7) * math.cos(fl_a)
+fl_y = ccy - (FL_HOLE_R + FL_CB_DIAM/2*0.7) * math.sin(fl_a)
+lx, ly = tv(82, -16)
+pdf.line(fl_x, fl_y, lx, ly)
+pdf.line(lx, ly, lx + 8, ly)
+text(lx + 8, ly - 1,
+     f"8 × Φ{FL_M3_DIAM:g} 通孔 + Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g} 沉孔(顶面+底面)",
+     size=TXT_D, anchor="start")
+text(lx + 8, ly + 4,
+     f"PCD Φ{2*FL_HOLE_R:g}, 22.5°+45k° (对 flange_disc 内圈孔) → 详图 C",
+     size=TXT_D, anchor="start")
 # Boss callout (upper left)
 bx, by = tv(BOSS_OD/2 * math.cos(math.radians(135)),
             BOSS_OD/2 * math.sin(math.radians(135)))
@@ -314,7 +349,7 @@ lx, ly = tv(18, 56)
 pdf.line(nx, ny, lx, ly)
 pdf.line(lx, ly, lx + 10, ly)
 text(lx + 10, ly - 1,
-     f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° (对齐): 凸台 H{NOTCH_H:g} / 套环 H{COLLAR_NOTCH_H:g}",
+     f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° (对齐): 凸台/套环同高 H{NOTCH_H:g}",
      size=TXT_D, anchor="start")
 
 # ===== SECTION A-A (1:1) =====
@@ -393,16 +428,10 @@ vdim(sa(0, COLLAR_Z1)[1], sa(0, BASE_THICK)[1],
 vdim(sa(0, BASE_THICK)[1], sa(0, 0)[1],
      sa(T_BASE, 0)[0], right_dim_x3, f"{BASE_THICK:g}")
 
-# Notch heights — on the right side near T_CO, in the open notch area
-# Boss notch height (8) — between Z=BASE_THICK and Z=Z_BOSS_NOTCH_CEIL,
-# placed outside the collar (x > T_CO)
+# Notch height — 凸台/套环同高 (6→8 统一, 2026-07-13), 一条尺寸即可
 boss_nh_x = sa(T_CO + 9, 0)[0]
 vdim(sa(0, Z_BOSS_NOTCH_CEIL)[1], sa(0, BASE_THICK)[1],
      sa(T_CO, 0)[0], boss_nh_x, f"{NOTCH_H:g}")
-# Collar notch height (6) — placed further out (x > boss_nh_x)
-coll_nh_x = sa(T_CO + 17, 0)[0]
-vdim(sa(0, Z_COLLAR_NOTCH_CEIL)[1], sa(0, BASE_THICK)[1],
-     sa(T_CO, 0)[0], coll_nh_x, f"{COLLAR_NOTCH_H:g}")
 
 # Top horizontal diameter dims (stacked above boss top)
 top_y_ref = sa(0, Z_BOSS_TOP)[1]
@@ -459,6 +488,67 @@ hdim(db(-DB_HALF_CB, 0)[0], db(DB_HALF_CB, 0)[0],
 hdim(db(-DB_HALF_M3, 0)[0], db(DB_HALF_M3, 0)[0],
      db(0, BASE_THICK)[1], db(0, BASE_THICK)[1] - DB_DIM_O, f"Φ{M3_DIAM:g}")
 
+# ===== DETAIL C (2:1) — flange 连接孔: 套环壁剖面 Φ3.2 通 + Φ4.2×4 顶沉 =====
+DC_SCALE = 2.0
+dc_cx, dc_cy = 383, 248                    # z=0 基线与详图 B 对齐
+DC_DIM_O = 11.0
+def dc(t, z): return (dc_cx + t * DC_SCALE, dc_cy - z * DC_SCALE)
+
+text(dc_cx, dc_cy - COLLAR_Z1 * DC_SCALE - 17,
+     "详图 C  Detail C  (2:1)", size=TXT_L, anchor="middle")
+
+DC_HALF_WALL = (COLLAR_OD - BOSS_OD) / 4   # 3.75 (壁 32.5..40 → 孔居中 ±3.75)
+DC_HALF_BASE = 7.0
+DC_HALF_M3   = FL_M3_DIAM / 2
+DC_HALF_CB   = FL_CB_DIAM / 2
+Z_CB0 = COLLAR_Z1 - FL_CB_DEPTH            # 14
+
+Z_CB1 = FL_CB_DEPTH                        # 4 : 底面沉孔顶 (z 0..4)
+
+_w(GEOM_W)
+# 底板条 (z 0..5, 局部) — 底面开口 = Φ4.2 底沉孔
+line(*dc(-DC_HALF_BASE, 0), *dc(-DC_HALF_CB, 0), GEOM_W)
+line(*dc( DC_HALF_CB,   0), *dc( DC_HALF_BASE, 0), GEOM_W)
+line(*dc(-DC_HALF_BASE, 0), *dc(-DC_HALF_BASE, BASE_THICK), GEOM_W)
+line(*dc( DC_HALF_BASE, 0), *dc( DC_HALF_BASE, BASE_THICK), GEOM_W)
+line(*dc(-DC_HALF_BASE, BASE_THICK), *dc(-DC_HALF_WALL, BASE_THICK), GEOM_W)
+line(*dc( DC_HALF_WALL, BASE_THICK), *dc( DC_HALF_BASE, BASE_THICK), GEOM_W)
+# 套环壁 (z 5..18)
+line(*dc(-DC_HALF_WALL, BASE_THICK), *dc(-DC_HALF_WALL, COLLAR_Z1), GEOM_W)
+line(*dc( DC_HALF_WALL, BASE_THICK), *dc( DC_HALF_WALL, COLLAR_Z1), GEOM_W)
+line(*dc(-DC_HALF_WALL, COLLAR_Z1), *dc(-DC_HALF_CB, COLLAR_Z1), GEOM_W)
+line(*dc( DC_HALF_CB,   COLLAR_Z1), *dc( DC_HALF_WALL, COLLAR_Z1), GEOM_W)
+# 顶面沉孔 Φ4.2 (z 14..18)
+line(*dc(-DC_HALF_CB, COLLAR_Z1), *dc(-DC_HALF_CB, Z_CB0), GEOM_W)
+line(*dc( DC_HALF_CB, COLLAR_Z1), *dc( DC_HALF_CB, Z_CB0), GEOM_W)
+line(*dc(-DC_HALF_CB, Z_CB0), *dc(-DC_HALF_M3, Z_CB0), GEOM_W)
+line(*dc( DC_HALF_M3, Z_CB0), *dc( DC_HALF_CB, Z_CB0), GEOM_W)
+# 底面沉孔 Φ4.2 (z 0..4)
+line(*dc(-DC_HALF_CB, 0), *dc(-DC_HALF_CB, Z_CB1), GEOM_W)
+line(*dc( DC_HALF_CB, 0), *dc( DC_HALF_CB, Z_CB1), GEOM_W)
+line(*dc(-DC_HALF_CB, Z_CB1), *dc(-DC_HALF_M3, Z_CB1), GEOM_W)
+line(*dc( DC_HALF_M3, Z_CB1), *dc( DC_HALF_CB, Z_CB1), GEOM_W)
+# Φ3.2 通孔壁 (z 4..14)
+line(*dc(-DC_HALF_M3, Z_CB0), *dc(-DC_HALF_M3, Z_CB1), GEOM_W)
+line(*dc( DC_HALF_M3, Z_CB0), *dc( DC_HALF_M3, Z_CB1), GEOM_W)
+# 孔轴线
+pdf.set_dash_pattern(dash=3, gap=1.2); _w(0.13)
+pdf.line(dc(0, -2)[0], dc(0, -2)[1], dc(0, COLLAR_Z1 + 2)[0], dc(0, COLLAR_Z1 + 2)[1])
+pdf.set_dash_pattern(); _w(GEOM_W)
+# 尺寸
+vdim(dc(0, COLLAR_Z1)[1], dc(0, Z_CB0)[1],
+     dc(DC_HALF_BASE, 0)[0], dc(DC_HALF_BASE, 0)[0] + DC_DIM_O, f"{FL_CB_DEPTH:g}")
+vdim(dc(0, Z_CB1)[1], dc(0, 0)[1],
+     dc(DC_HALF_BASE, 0)[0], dc(DC_HALF_BASE, 0)[0] + DC_DIM_O, f"{FL_CB_DEPTH:g}")
+vdim(dc(0, COLLAR_Z1)[1], dc(0, 0)[1],
+     dc(-DC_HALF_BASE, 0)[0], dc(-DC_HALF_BASE, 0)[0] - DC_DIM_O, f"{COLLAR_Z1:g}")
+hdim(dc(-DC_HALF_CB, 0)[0], dc(DC_HALF_CB, 0)[0],
+     dc(0, COLLAR_Z1)[1], dc(0, COLLAR_Z1)[1] - DC_DIM_O, f"Φ{FL_CB_DIAM:g}")
+hdim(dc(-DC_HALF_M3, 0)[0], dc(DC_HALF_M3, 0)[0],
+     dc(0, Z_CB1)[1], dc(0, 0)[1] + DC_DIM_O, f"Φ{FL_M3_DIAM:g}")
+text(dc_cx, dc_cy + DC_DIM_O + 8,
+     "压 M3×4×4.5 铜花螺母 (顶面+底面, 沉孔同规格)", size=TXT_D, anchor="middle")
+
 # ===== Title block =====
 tb_y = PAGE_H - 32
 tb_x, tb_w, tb_h = 20, PAGE_W - 40, 18
@@ -469,15 +559,15 @@ text(tb_x + 4, tb_y + 6,
      "POV 3D 结构件 — 底盘+套环 合并件 (Baseplate + Ring Collar)",
      size=TXT_L, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 6,
-     "投影 1st-angle  /  比例 1:1 (俯, 剖) / 3:1 (详图 B)",
+     "投影 1st-angle  /  比例 1:1 (俯, 剖) / 3:1 (详图 B) / 2:1 (详图 C)",
      size=TXT_I, anchor="end")
 text(tb_x + 4, tb_y + 14.5,
      f"100×100×{BASE_THICK:g} / 4×M6 / 4×M3+Φ7×{CB_DEPTH:g} / 中央 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g}(顶) / "
      f"凸台 Φ{BOSS_OD:g}/Φ{BOSS_ID:g} H{BOSS_H:g} / 套环 Φ{COLLAR_OD:g}/Φ{COLLAR_ID:g} H{COLLAR_H:g} / "
-     f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° 对齐  /  单位 mm",
+     f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° / 8×Φ{FL_M3_DIAM:g}+Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g}沉(顶+底)  /  单位 mm",
      size=TXT_I, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 14.5,
-     "2026-06-29  /  POV3D / models / baseplate_collar_d100 / baseplate_collar_d100.stl",
+     "2026-07-10  /  POV3D / models / baseplate_collar_d100 / baseplate_collar_d100.stl",
      size=TXT_I, anchor="end")
 
 out = Path(__file__).with_name("baseplate_collar_d100_drawing.pdf")

@@ -20,7 +20,8 @@ rim_cutout_a_e = 5;     // 外凸圈切口结束角
 m3_diam        = 3.2;
 cb_a_diam      = 7.0;   // diamond
 cb_b_diam      = 4.2;   // square / PCD-70 / PCD-155
-cb_depth       = 4.0;   // pocket depth (4 mm)
+cb_depth       = 4.0;   // pocket depth (diamond / square)
+ring_cb_depth  = 4.5;   // PCD 环形 16 孔沉深 4→4.5 (2026-07-14)
 
 // Center counterbore — Φ6.2 × 2.2 mm pocket only (no through-hole),
 // opens from the BOTTOM face at (0, 0).
@@ -34,6 +35,7 @@ diamond_cb_from_top = true;
 
 // derived
 total_h        = base_t + lower_boss_t + upper_boss_t;  // 9
+
 
 // Pattern A — diagonals 12 and 15
 diag_x = 12;
@@ -55,10 +57,10 @@ module through_hole(x, y) {
         cylinder(h = total_h + 2, d = m3_diam, $fn = 32);
 }
 
-module counterbore(x, y, d) {
-    // Bottom-opening CB: Z = -0.1 .. cb_depth
+module counterbore(x, y, d, dep = cb_depth) {
+    // Bottom-opening CB: Z = -0.1 .. dep
     translate([x, y, -0.1])
-        cylinder(h = cb_depth + 0.1, d = d, $fn = 32);
+        cylinder(h = dep + 0.1, d = d, $fn = 32);
 }
 
 module counterbore_top(x, y, d) {
@@ -122,7 +124,7 @@ module hub_disc() {
             x = inner_pcd_r * cos(a);
             y = inner_pcd_r * sin(a);
             through_hole(x, y);
-            counterbore(x, y, cb_b_diam);
+            counterbore(x, y, cb_b_diam, ring_cb_depth);
         }
         // Pattern D — outer PCD ring Φ155 (8 holes), rotated by ring_hole_rotation
         for (k = [0 : 7]) {
@@ -130,7 +132,7 @@ module hub_disc() {
             x = outer_pcd_r * cos(a);
             y = outer_pcd_r * sin(a);
             through_hole(x, y);
-            counterbore(x, y, cb_b_diam);
+            counterbore(x, y, cb_b_diam, ring_cb_depth);
         }
         // Center counterbore — Φ6.2 × 2.2 mm bottom-opening pocket (no through)
         translate([0, 0, -0.1])

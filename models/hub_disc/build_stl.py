@@ -16,10 +16,10 @@ Geometry (all mm, axis along +Z, base bottom at Z=0):
           CB Φ4.2 × 4 mm deep, opens from the BOTTOM face (Z = 0 .. 4)
       C — inner PCD ring  (8 holes): PCD Φ70 (R=35), rotated by
           RING_HOLE_ROTATION (default 22.5° CCW)
-          CB Φ4.2 × 4 mm deep, opens from the BOTTOM face (Z = 0 .. 4)
+          CB Φ4.2 × 4.5 mm deep (4→4.5, 2026-07-14), BOTTOM face (Z = 0 .. 4.5)
       D — outer PCD ring  (8 holes): PCD Φ155 (R=77.5), rotated by
           RING_HOLE_ROTATION (default 22.5° CCW)
-          CB Φ4.2 × 4 mm deep, opens from the BOTTOM face (Z = 0 .. 4)
+          CB Φ4.2 × 4.5 mm deep (4→4.5, 2026-07-14), BOTTOM face (Z = 0 .. 4.5)
 
   - For the bottom-opening CBs (B/C/D): depth 4 mm > base thickness 3 mm,
     so the CB cuts 3 mm of base plus 1 mm into whatever sits above.
@@ -60,7 +60,8 @@ TOTAL_H = BASE_T + LOWER_BOSS_T + UPPER_BOSS_T   # 9
 M3_DIAM   = 3.2
 CB_A_DIAM = 7.0    # diamond holes
 CB_B_DIAM = 4.2    # square / PCD-70 / PCD-155 holes
-CB_DEPTH  = 4.0    # 4 mm pocket depth
+CB_DEPTH  = 4.0    # 4 mm pocket depth (diamond A / square B)
+RING_CB_DEPTH = 4.5   # PCD 环形 16 孔沉深 4→4.5 (2026-07-14 用户)
 
 # Center counterbore — Φ6.2 × 2.2 mm, opens from the BOTTOM face (Z=0..2.2)
 # at (0, 0). Pocket only (no through-hole), recessed into the base from below.
@@ -76,6 +77,7 @@ DIAMOND_CB_FROM_TOP = True
 # Angular rotation (degrees, CCW positive) applied to BOTH PCD ring patterns
 # (PCD70 and PCD155). The 4 diamond holes and 4 square holes are NOT rotated.
 RING_HOLE_ROTATION = 22.5
+
 
 # Pattern A — center diamond, diagonals 12 and 15
 DIAG_X = 12.0
@@ -147,7 +149,7 @@ rim_boss = rim_boss - _wedge
 part = base + lower_boss + upper_boss + rim_boss
 
 # ===== Drill holes =====
-def drill_through_and_cb(part, x, y, cb_diam, cb_from_top=False):
+def drill_through_and_cb(part, x, y, cb_diam, cb_from_top=False, cb_depth=CB_DEPTH):
     """Cut a Φ3.2 through-hole and a CB Φ × CB_DEPTH.
 
     cb_from_top=False (default): CB opens from the BOTTOM face (Z=0 .. CB_DEPTH).
@@ -161,11 +163,11 @@ def drill_through_and_cb(part, x, y, cb_diam, cb_from_top=False):
     h = h.translate((x, y, -1.0))
     part = part - h
 
-    cb_h = CB_DEPTH + slop
+    cb_h = cb_depth + slop
     cb = m3d.Manifold.cylinder(cb_h, cb_diam / 2, cb_diam / 2, HOLE_SEG, False)
     if cb_from_top:
-        # span Z = (TOTAL_H - CB_DEPTH) .. (TOTAL_H + slop)
-        cb = cb.translate((x, y, TOTAL_H - CB_DEPTH))
+        # span Z = (TOTAL_H - cb_depth) .. (TOTAL_H + slop)
+        cb = cb.translate((x, y, TOTAL_H - cb_depth))
     else:
         # span Z = -slop .. CB_DEPTH
         cb = cb.translate((x, y, -slop))
@@ -178,9 +180,10 @@ for (x, y) in PATTERN_A:
 for (x, y) in PATTERN_B:
     part = drill_through_and_cb(part, x, y, CB_B_DIAM)              # Φ4.2 CB
 for (x, y) in PATTERN_C:
-    part = drill_through_and_cb(part, x, y, CB_B_DIAM)              # Φ4.2 CB
+    part = drill_through_and_cb(part, x, y, CB_B_DIAM, cb_depth=RING_CB_DEPTH)  # Φ4.2×4.5
 for (x, y) in PATTERN_D:
-    part = drill_through_and_cb(part, x, y, CB_B_DIAM)              # Φ4.2 CB
+    part = drill_through_and_cb(part, x, y, CB_B_DIAM, cb_depth=RING_CB_DEPTH)  # Φ4.2×4.5
+
 
 # Center counterbore — Φ6.2 × 2.2 mm pocket only, opens from the BOTTOM
 # (no through-hole). Cut a cylinder from Z = -slop .. CENTER_CB_DEPTH.

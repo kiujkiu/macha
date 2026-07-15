@@ -28,11 +28,18 @@ notch_a_start   = 75;
 notch_a_end     = 105;
 notch_h         = 8;
 
-collar_od         = 80;
+collar_od         = 84;  // 80→84 (2026-07-10) 螺母孔加肉, M6帽Φ12.5留1.75
 collar_id         = 65;       // = boss_od
 collar_h          = 13;
 collar_z0         = base_thick;
-collar_notch_h    = 6;
+collar_notch_h    = 8;  // 6→8 (2026-07-13) 与凸台同高
+
+// flange_disc 连接孔 (2026-07-10): flange 内圈 8 孔 (PCD 72.5) 坐在套环顶面
+flange_hole_r   = 36.25;      // = PCD 72.5 / 2, 套环壁 32.5..40 正中
+flange_m3_diam  = 3.2;
+flange_cb_diam  = 4.2;        // M3×4×4.5 铜花螺母
+flange_cb_depth = 4;
+collar_top      = collar_z0 + collar_h;   // 18
 
 // derived
 m3_side    = m3_diag / sqrt(2);
@@ -40,6 +47,7 @@ notch_r    = boss_od / 2 + 2;
 collar_notch_r = collar_od / 2 + 2;
 
 module baseplate_collar_d100() {
+  difference() {
     union() {
         // === base with holes (no notch cuts the base) ===
         difference() {
@@ -92,6 +100,18 @@ module baseplate_collar_d100() {
                     ));
         }
     }
+    // === 8× flange_disc 连接孔: Φ3.2 通 (Z0..18) + Φ4.2×4 沉孔 顶面+底面 ===
+    for (k = [0:7]) {
+        a = 22.5 + 45 * k;
+        translate([flange_hole_r*cos(a), flange_hole_r*sin(a), -1])
+            cylinder(h = collar_top + 2, d = flange_m3_diam, $fn = 32);
+        translate([flange_hole_r*cos(a), flange_hole_r*sin(a),
+                   collar_top - flange_cb_depth])
+            cylinder(h = flange_cb_depth + 1, d = flange_cb_diam, $fn = 32);
+        translate([flange_hole_r*cos(a), flange_hole_r*sin(a), -1])
+            cylinder(h = flange_cb_depth + 1, d = flange_cb_diam, $fn = 32);
+    }
+  }
 }
 
 baseplate_collar_d100();

@@ -24,7 +24,7 @@ import numpy as np
 import manifold3d as m3d
 
 R_SLOT = 112.0
-PL_Z0, PL_Z1 = 46.7, 51.7                       # plate on the disc top (5 mm)
+PL_Z0, PL_Z1 = 46.7, 52.7                       # plate on the disc top (6 mm; 5→6, 2026-07-14)
 PL_X0, PL_X1, PL_Y0, PL_Y1 = -127.0, -86.0, -24.0, 26.0   # outer edge +5mm (outer BLUE hole was 3mm from edge → 8mm)
 RED  = [(-92.5, 20.0), (-92.5, -20.0)]
 BLUE = [(-R_SLOT + 7.0, 17.0), (-R_SLOT - 7.0, 17.0)]   # (−105,17)/(−119,17)
@@ -46,16 +46,15 @@ for (x, y) in RED:
     plate = plate - zcyl(PL_Z0 - 1, PL_Z1 + 1, M3_CLEAR/2, x, y)
 
 # BLUE — module hangs flush under the outboard plate: M3 thru + Φ4.2×4 top CB
-for (x, y) in BLUE:
+for (x, y) in BLUE:   # Φ3.2 直通 (顶沉取消 2026-07-14)
     plate = plate - zcyl(PL_Z0 - 1, PL_Z1 + 1, 3.2/2, x, y)
-    plate = plate - zcyl(PL_Z1 - CB_DEPTH, PL_Z1 + 1, CB_D/2, x, y)
 
 # 3 relief pockets (2mm) in the UNDERSIDE for the module's up-leads (R_SLOT=112)
 POCKETS = [(-122.0, -116.0, -4.5, 4.5),   # 2 opto legs near (−119,0)
            (-108.0, -102.0, -4.5, 4.5),   # 2 opto legs near (−105,0)
-           (-116.5, -107.5, 15.0, 21.5)]  # 3 header tails near (−112,18)
+           (-115.85, -108.15, 15.0, 21.5)]   # 宽 9→7.7 (2026-07-14)  # 3 header tails near (−112,18)
 for (x0, x1, y0, y1) in POCKETS:
-    plate = plate - box(x0, x1, y0, y1, PL_Z0, PL_Z0 + 2.0)
+    plate = plate - box(x0, x1, y0, y1, PL_Z0 - 1, PL_Z1 + 1)   # 挖穿 (2026-07-14, 原 2mm 底面避空)
 
 # ---- export ----
 mesh = plate.to_mesh()
