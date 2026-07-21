@@ -40,9 +40,6 @@ RIM_BOSS_ID   = 145.0
 RIM_BOSS_OD   = 165.0
 RIM_BOSS_T    = 2.5
 
-RIM_CUTOUT_A_S = 0.0    # 外凸圈切口起始角
-RIM_CUTOUT_A_E = 5.0    # 外凸圈切口结束角
-
 TOTAL_H = BASE_T + LOWER_BOSS_T + UPPER_BOSS_T   # 9
 
 M3_DIAM   = 3.2
@@ -222,7 +219,7 @@ pdf.rect(5, 5, PAGE_W - 10, PAGE_H - 10, style="D")
 text(PAGE_W/2, 13, "POV 3D 轴座盘  Hub Disc", size=TXT_T, anchor="middle")
 text(PAGE_W/2, 19,
      f"基盘 Φ{BASE_OD:g}×{BASE_T:g} / 下凸台 Φ{LOWER_BOSS_D:g}×{LOWER_BOSS_T:g} / "
-     f"上凸台 Φ{UPPER_BOSS_D:g}×{UPPER_BOSS_T:g} / 外缘凸圈 Φ{RIM_BOSS_OD:g}/Φ{RIM_BOSS_ID:g}×{RIM_BOSS_T:g} (切口 {RIM_CUTOUT_A_S:g}°–{RIM_CUTOUT_A_E:g}°) / "
+     f"上凸台 Φ{UPPER_BOSS_D:g}×{UPPER_BOSS_T:g} / 外缘凸圈 Φ{RIM_BOSS_OD:g}/Φ{RIM_BOSS_ID:g}×{RIM_BOSS_T:g} (整圈) / "
      f"24×Φ{M3_DIAM:g} M3 + Φ{CB_A_DIAM:g}×{CB_DEPTH:g} 沉孔 (顶面, 菱形) + Φ{CB_B_DIAM:g} 沉孔 底面: 方形×{CB_DEPTH:g} / PCD环×{RING_CB_DEPTH:g} + 中心 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g} (底面)",
      size=TXT_I, anchor="middle")
 
@@ -253,42 +250,9 @@ pdf.set_dash_pattern(dash=1.5, gap=1.0); _w(HID_W)
 pdf.circle(ccx, ccy, CENTER_CB_DIAM / 2, style="D")
 pdf.set_dash_pattern()
 _w(GEOM_W)
-# Φ145 rim boss ID — drawn as an arc with a gap at the cutout angular range
+# Φ145 rim boss ID — full circle (5° cutout removed 2026-07-20 用户)
 import math as _m
-_arc_segs = 240
-_a_start_skip = _m.radians(RIM_CUTOUT_A_S)
-_a_end_skip   = _m.radians(RIM_CUTOUT_A_E)
-def _ang_in_cutout(a):
-    return _a_start_skip <= (a % (2 * _m.pi)) <= _a_end_skip
-_arc_pts = []
-for _i in range(_arc_segs + 1):
-    _a = 2 * _m.pi * _i / _arc_segs
-    if _ang_in_cutout(_a):
-        if _arc_pts:
-            for _k in range(len(_arc_pts) - 1):
-                pdf.line(_arc_pts[_k][0], _arc_pts[_k][1],
-                         _arc_pts[_k+1][0], _arc_pts[_k+1][1])
-            _arc_pts = []
-        continue
-    _arc_pts.append((ccx + R_RBI * _m.cos(_a),
-                     ccy - R_RBI * _m.sin(_a)))
-for _k in range(len(_arc_pts) - 1):
-    pdf.line(_arc_pts[_k][0], _arc_pts[_k][1],
-             _arc_pts[_k+1][0], _arc_pts[_k+1][1])
-# Radial step edges where the boss wall ends at the cutout (visible top edges)
-for _ang_d in (RIM_CUTOUT_A_S, RIM_CUTOUT_A_E):
-    _a = _m.radians(_ang_d)
-    _x_in  = ccx + R_RBI * _m.cos(_a)
-    _y_in  = ccy - R_RBI * _m.sin(_a)
-    _x_out = ccx + R_BO  * _m.cos(_a)
-    _y_out = ccy - R_BO  * _m.sin(_a)
-    pdf.line(_x_in, _y_in, _x_out, _y_out)
-# Angular dim labels for cutout (just outside the OD)
-for _ang_d in (RIM_CUTOUT_A_S, RIM_CUTOUT_A_E):
-    _a = _m.radians(_ang_d)
-    _lx = ccx + (R_BO + 8) * _m.cos(_a)
-    _ly = ccy - (R_BO + 8) * _m.sin(_a)
-    text(_lx, _ly, f"{_ang_d:g}°", size=TXT_D, anchor="middle")
+pdf.circle(ccx, ccy, R_RBI, style="D")
 
 # ---- PCD reference circles (dashed) for inner PCD Φ70 and outer PCD Φ155 ----
 pdf.set_dash_pattern(dash=2.5, gap=1.5); _w(0.15)
@@ -846,7 +810,7 @@ text(tb_x + tb_w - 4, tb_y + 6,
      size=TXT_I, anchor="end")
 text(tb_x + 4, tb_y + 14.5,
      f"Φ{BASE_OD:g}×{BASE_T:g} 基盘 / 下凸 Φ{LOWER_BOSS_D:g}×{LOWER_BOSS_T:g} / "
-     f"上凸 Φ{UPPER_BOSS_D:g}×{UPPER_BOSS_T:g} / 凸圈 Φ{RIM_BOSS_OD:g}/Φ{RIM_BOSS_ID:g}×{RIM_BOSS_T:g} (切口 {RIM_CUTOUT_A_S:g}°–{RIM_CUTOUT_A_E:g}°) / "
+     f"上凸 Φ{UPPER_BOSS_D:g}×{UPPER_BOSS_T:g} / 凸圈 Φ{RIM_BOSS_OD:g}/Φ{RIM_BOSS_ID:g}×{RIM_BOSS_T:g} (整圈) / "
      f"24×Φ{M3_DIAM:g} + Φ{CB_A_DIAM:g}/Φ{CB_B_DIAM:g}×{CB_DEPTH:g} 沉孔 + 中心 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g} 沉孔 (底)  /  单位 mm",
      size=TXT_I, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 14.5,

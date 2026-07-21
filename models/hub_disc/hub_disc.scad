@@ -14,8 +14,6 @@ upper_boss_t   = 3.5;   // Z = 5.5 .. 9
 rim_boss_id    = 145;
 rim_boss_od    = 165;
 rim_boss_t     = 2.5;   // Z = 3 .. 5.5
-rim_cutout_a_s = 0;     // 外凸圈切口起始角
-rim_cutout_a_e = 5;     // 外凸圈切口结束角
 
 m3_diam        = 3.2;
 cb_a_diam      = 7.0;   // diamond
@@ -80,24 +78,11 @@ module hub_disc() {
             // upper center boss
             translate([0, 0, base_t + lower_boss_t])
                 cylinder(h = upper_boss_t, d = upper_boss_d, $fn = 192);
-            // outer rim boss (annular) with angular cutout
+            // outer rim boss (annular, full 360°)
             translate([0, 0, base_t]) difference() {
-                difference() {
-                    cylinder(h = rim_boss_t, d = rim_boss_od, $fn = 192);
-                    translate([0, 0, -1])
-                        cylinder(h = rim_boss_t + 2, d = rim_boss_id, $fn = 192);
-                }
-                // pie wedge subtracted from rim only
-                translate([0, 0, -0.1])
-                    linear_extrude(height = rim_boss_t + 0.2)
-                        polygon(concat(
-                            [[0, 0]],
-                            [for (i = [0:24])
-                                let (a = rim_cutout_a_s
-                                        + i*(rim_cutout_a_e - rim_cutout_a_s)/24)
-                                [(rim_boss_od/2 + 2) * cos(a),
-                                 (rim_boss_od/2 + 2) * sin(a)]]
-                        ));
+                cylinder(h = rim_boss_t, d = rim_boss_od, $fn = 192);
+                translate([0, 0, -1])
+                    cylinder(h = rim_boss_t + 2, d = rim_boss_id, $fn = 192);
             }
         }
         // Pattern A — diamond (4 holes), CB Φ7.

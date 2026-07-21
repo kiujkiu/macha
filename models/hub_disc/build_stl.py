@@ -6,7 +6,8 @@ Geometry (all mm, axis along +Z, base bottom at Z=0):
   - Base disc (solid):     Φ165 × thickness 3        (Z = 0 .. 3)
   - Lower center boss:     Φ80  × 2.5                (Z = 3 .. 5.5)  solid
   - Upper center boss:     Φ60  × 3.5                (Z = 5.5 .. 9)  solid
-  - Outer rim boss:        ID 145 / OD 165 × 2.5     (Z = 3 .. 5.5)  annular
+  - Outer rim boss:        ID 145 / OD 165 × 2.5     (Z = 3 .. 5.5)  annular,
+                           full 360° (5° cutout removed 2026-07-20 用户)
 
   - 24 holes (axes along Z, Φ3.2 through):
       A — center diamond (4 holes): rhombus diagonals 12 & 15
@@ -49,10 +50,6 @@ UPPER_BOSS_T = 3.5   # Z = 5.5 .. 9
 RIM_BOSS_ID = 145.0
 RIM_BOSS_OD = 165.0
 RIM_BOSS_T  = 2.5    # Z = 3 .. 5.5
-
-# Rim-boss angular cutout (removes boss only — base remains intact under it)
-RIM_CUTOUT_A_S = 0.0
-RIM_CUTOUT_A_E = 5.0
 
 TOTAL_H = BASE_T + LOWER_BOSS_T + UPPER_BOSS_T   # 9
 
@@ -131,20 +128,6 @@ rim_inner = m3d.Manifold.cylinder(RIM_BOSS_T + 2.0, RIM_BOSS_ID / 2,
 rim_inner = rim_inner.translate((0.0, 0.0, -1.0))
 rim_boss  = rim_outer - rim_inner
 rim_boss  = rim_boss.translate((0.0, 0.0, BASE_T))
-
-# Cutout: pie wedge from origin to a radius past OD, subtracted from rim_boss only
-# so the base remains intact under the wedge.
-import math as _math
-_wedge_pts = [(0.0, 0.0)]
-_wedge_r = RIM_BOSS_OD / 2 + 2.0
-_n_seg = 24
-for _i in range(_n_seg + 1):
-    _a = _math.radians(RIM_CUTOUT_A_S +
-                       _i * (RIM_CUTOUT_A_E - RIM_CUTOUT_A_S) / _n_seg)
-    _wedge_pts.append((_wedge_r * _math.cos(_a), _wedge_r * _math.sin(_a)))
-_wedge = m3d.CrossSection([_wedge_pts]).extrude(RIM_BOSS_T + 0.2)
-_wedge = _wedge.translate((0.0, 0.0, BASE_T - 0.1))
-rim_boss = rim_boss - _wedge
 
 part = base + lower_boss + upper_boss + rim_boss
 

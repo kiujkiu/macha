@@ -92,32 +92,38 @@ parts.append(("mounting_flange", mf))
 motor = m3d.Manifold.cylinder(MOTOR_H, MOTOR_D/2, MOTOR_D/2, 64, False).translate((0, 0, MOTOR_Z0))
 parts.append(("motor (placeholder)", mesh_tris(motor)))
 
-# 4) 转子: hub_disc 翻转嵌进 rim_ring, 两者同层 31.7..40.7 (组合高 9, 同 v1;
-#    hub Φ60 凸台入 ring ID60 孔, 缺口互锁)
-hub = read_stl(ROOT / "models/hub_disc/hub_disc.stl")
-hub[..., 1] = -hub[..., 1]
-hub[..., 2] = ROTOR_Z0 + 9.0 - hub[..., 2]
-hub = hub[:, ::-1, :].copy()
+# 4) 转子 (2026-07-20 承载盘并入 rim_ring 后重排, 组合高 9→10.5):
+#    hub_disc 正放 —— Φ165 底板贴电机转子面 (31.7..34.7), 中心塔到 40.7;
+#    中心菱形沉孔朝上, 电机螺丝从 rim_ring 的 ID60 孔里下去装。
+hub = read_stl(ROOT / "models/hub_disc/hub_disc.stl") + np.array([0.0, 0.0, ROTOR_Z0])
 hub = rot_z(hub, ROTOR_ROT)
 parts.append(("hub_disc (rotor, 下)", hub))
 
-RING_Z0 = ROTOR_Z0                        # 31.7 : 与 hub 同层嵌套
-ring = read_stl(ROOT / "models/rim_ring/rim_ring.stl") + np.array([0.0, 0.0, RING_Z0])
+#    rim_ring 翻转扣上 (托盘平面朝上当承载面, 外唇朝下包住 hub 外缘):
+#    托盘底坐在 hub 两圈共面支承台 (Φ80 凸台顶 + 外环凸台顶, 均 Z=37.2)。
+#    绕 X 转 180° = 先镜像 Y 再镜像 Z, 两次镜像 det=+1, 绕向不变, 不用翻三角。
+RING_TOP = ROTOR_Z0 + 10.5                # 42.2 : 托盘顶 = 转子承载面
+ring = read_stl(ROOT / "models/rim_ring/rim_ring.stl")
+ring[..., 1] = -ring[..., 1]
+ring[..., 2] = RING_TOP - ring[..., 2]
 ring = rot_z(ring, ROTOR_ROT)
-parts.append(("rim_ring (rotor, 上)", ring))
+parts.append(("rim_ring (rotor, 上/承载盘)", ring))
 
-# 5) 新承载盘 mlkpai_carrier_disc: 坐在 rim_ring 顶 (40.7), Φ170×5 (随转 45°)
-DISC_Z0 = RING_Z0 + 9.0                    # 40.7 : rim_ring 顶
-DISC_TOP = DISC_Z0 + 5.0                   # 45.7 盘面 (盘厚 6→5, 2026-07-06)
-disc = read_stl(ROOT / "models/mlkpai_carrier_disc/mlkpai_carrier_disc.stl") + np.array([0.0, 0.0, DISC_Z0])
-disc = rot_z(disc, ROTOR_ROT)
-parts.append(("mlkpai_carrier_disc", disc))
+# 5) mlkpai_carrier_disc 已取消 (2026-07-20) —— 那 7 个 pi2hub 孔 + Φ4.2×4.5
+#    铜螺母沉孔已并入 rim_ring 托盘, 承载面改由 rim_ring 自己提供。
+DISC_TOP = RING_TOP                        # 42.2 : 承载面 (原盘面 45.7, 降 3.5)
 
-# 6) pi2hub75e (下板, 100×75, 7 孔): 盘上凸台已取消 (2026-07-06), 板与盘之间
-#    改用 7× M3 尼龙垫柱 ~5 高 (占位: 落座面仍 = 盘面+5=51.7; 盘上只剩
-#    Φ3.2 通孔 + 盘底铜螺母沉孔)。 PCB 方向 PCB_ROT + 挪位 PCB_OFF 不变。
+# 6) pi2hub75e (下板, 100×75, 7 孔): 板与托盘之间 7× M3 尼龙垫柱 ~5 高
+#    (落座面 = 托盘顶+5 = 47.2)。 PCB 方向 PCB_ROT + 挪位 PCB_OFF。
 PCB_ROT = 90.0
 PCB_OFF = (-10.0, 0.0)   # 盘系再 -X 挪 10 (2026-07-03 晚)
+# 2026-07-21: 7 孔整组绕圆心逆时针 135° (俯视), pi2hub/柱/米联派同步转。
+# 把 +135° 折进 PCB_ROT / PCB_OFF (绕原点旋转), 下游放置代码不动。
+PI_ROT_EXTRA = 135.0
+_e = math.radians(PI_ROT_EXTRA)
+PCB_OFF = (PCB_OFF[0]*math.cos(_e) - PCB_OFF[1]*math.sin(_e),
+           PCB_OFF[0]*math.sin(_e) + PCB_OFF[1]*math.cos(_e))
+PCB_ROT = PCB_ROT + PI_ROT_EXTRA
 _r = math.radians(ROTOR_ROT)
 PCB_OFF_W = np.array([PCB_OFF[0]*math.cos(_r) - PCB_OFF[1]*math.sin(_r),
                       PCB_OFF[0]*math.sin(_r) + PCB_OFF[1]*math.cos(_r), 0.0])
@@ -141,7 +147,7 @@ PCB_Z0 = PI_TOP + NYLON_H                   # 61.8 : 米联派 PCB 底面
 board = read_stl(ROOT / "models/mlkpai_board/mlkpai_board.stl") + np.array([0.0, 0.0, PCB_Z0])
 board = rot_z(board, ROTOR_ROT + PCB_ROT) + PCB_OFF_W
 parts.append(("mlkpai_board (上)", board))
-print(f"disc {DISC_Z0:.1f}..{DISC_TOP:.1f}; 垫柱顶 {BOSS_TOP:.1f}; pi2hub {BOSS_TOP:.1f}..{PI_TOP:.1f}; "
+print(f"承载面(rim_ring 托盘顶) {DISC_TOP:.1f}; 垫柱顶 {BOSS_TOP:.1f}; pi2hub {BOSS_TOP:.1f}..{PI_TOP:.1f}; "
       f"尼龙柱 {PI_TOP:.1f}..{PCB_Z0:.1f}; 米联派底 {PCB_Z0:.1f}")
 
 # 9) l_bracket_v2 屏幕支架三件: 门形底座 A/B (镜像左右手件, 双脚借盘 R77.5 环孔
@@ -151,7 +157,10 @@ print(f"disc {DISC_Z0:.1f}..{DISC_TOP:.1f}; 垫柱顶 {BOSS_TOP:.1f}; pi2hub {BO
 #    X=-13.27 转到 +13.27, LED 面仍在轴平面 X=0 但朝 -X; 帽腿因此落在平板
 #    +X 末端, top_cap_v2 得以做成 L 型。盘 R77.5 环孔是 45° 阵列, 180° 转
 #    后 4 只脚仍落在既有孔上, 盘不用改。
-SCREEN_FLIP = 180.0
+# 2026-07-21: 屏幕连接组件 + 光电组件整体顺时针 45° (从上往下), 配合删掉承载盘后
+# 环孔基准 45° 偏移; 脚落相邻环孔 (换一组螺丝)。屏幕/龙门/光电同一旋转量。
+SCR_SENS_ROT = -45.0
+SCREEN_FLIP = 180.0 + SCR_SENS_ROT      # 135
 gb = np.concatenate([read_stl(ROOT / "models/l_bracket_v2/gantry_base_A.stl"),
                      read_stl(ROOT / "models/l_bracket_v2/gantry_base_B.stl")], axis=0) \
      + np.array([0.0, 0.0, DISC_TOP])
@@ -177,25 +186,19 @@ print(f"支架翼板底 {DISC_TOP+21.0:.1f} / 中央缺口顶(±60内) {DISC_TOP
 #     (外购, 扣板底, 槽口朝下, 梁 (-98,0,37.7) 径向) — 两者随转子 (ROTOR_ROT);
 #     index_vane_v2 静止 (脚 M6 @ 网格 (-100,±25) 切向对) — 不转。
 #     ROTOR_ROT=0 时模块正好套住挡片 → 快照可直接目检干涉。
-sb = read_stl(ROOT / "models/photo_sensor/sensor_bracket_v2.stl")
-sb = rot_z(sb, ROTOR_ROT)
-parts.append(("sensor_bracket_v2", sb))
-sm = read_stl(ROOT / "models/photo_sensor/sensor_module.stl")
-sm[..., 1] = -sm[..., 1]; sm[..., 2] = -sm[..., 2]      # 绕 X 转180 = 槽口朝下 (v1 同款)
-sm = sm[:, ::-1, :].copy()                               # 翻面修正三角朝向
-sm = sm + np.array([-98.0, 20.0, DISC_TOP])   # R_SLOT 112→98 (2026-07-07); 顶面平贴支架板底
-sm = rot_z(sm, ROTOR_ROT)
-parts.append(("sensor_module", sm))
-iv = read_stl(ROOT / "models/photo_sensor/index_vane_v2.stl")   # 静止, 不转
-parts.append(("index_vane_v2", iv))
+# 2026-07-21: 光电开关 (bracket + module + vane) 暂时删除 —— 后面要大改, 先不放。
+# (原 sensor_bracket_v2 / sensor_module / index_vane_v2 代码保留在 git 历史里。)
 
 # 12) USB WiFi 网卡 + 倒扣盒 (2026-07-09 第三版定稿): 模块侧立 (整块 14.5×40×70,
 #     天线反折在内, 14.5×70 面坐盘, 40 竖直), 插头朝 +Y (同米联派 J6)。倒扣五面盒
-#     壁 3, 借盘 4 环孔 (R35/R77.5 @ ±22.5°) 4× M3×14; +Y 端壁母头窗 + 扎带槽。随转子。
+#     壁 3, 借盘 4 环孔 4× M3×14; +Y 端壁母头窗 + 扎带槽。随转子。
+#     2026-07-21: 整组绕圆心逆时针 135° (跟 pi2hub 同步转, 避开干涉)。135°=3×45°
+#     把 ±22.5° 环孔映射到 112.5°/157.5° 环孔 -> 脚落现成孔, 不新增。
+WIFI_ROT_EXTRA = 135.0
 for nm, f in [("wifi_box",        "models/usb_wifi/wifi_box.stl"),
               ("usb_wifi_module", "models/usb_wifi/usb_wifi_module.stl")]:
     w = read_stl(ROOT / f) + np.array([0.0, 0.0, DISC_TOP])
-    parts.append((nm, rot_z(w, ROTOR_ROT)))
+    parts.append((nm, rot_z(w, ROTOR_ROT + WIFI_ROT_EXTRA)))
 
 # 13) 顶部定心轴承 v2 (2026-07-09, models/top_bearing/ *_v2): 结构同 v1 —
 #     静止侧: 4×Φ8×350 M6螺纹柱 @(±125,±125) (R176.78, v2 网格最外角孔),
@@ -275,7 +278,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 COLORS = {"breadboard center-grid": "#333333", "baseplate_collar_d100": "#777777",
           "flange_disc": "#88aacc", "mounting_flange": "#cccc77",
           "motor (placeholder)": "#444444", "hub_disc (rotor, 下)": "#ccaa55",
-          "rim_ring (rotor, 上)": "#9999bb", "mlkpai_carrier_disc": "#9ccf9c",
+          "rim_ring (rotor, 上/承载盘)": "#9ccf9c",
           "pi2hub75e (下板)": "#2a7d2a", "nylon standoffs ×4": "#dddddd",
           "mlkpai_board (上)": "#e03020", "gantry_base A+B": "#aa6622",
           "screen_plate": "#cc8833", "screen_150x169": "#3355cc",

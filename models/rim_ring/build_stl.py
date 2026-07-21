@@ -4,14 +4,20 @@ Build POV 3D rim_ring STL using manifold3d.
 Geometry (all mm, axis along +Z, base bottom at Z=0; CCW positive angles,
 0 deg = +X axis):
 
+2026-07-20 改动 (承载盘并入):
+  mlkpai_carrier_disc 取消 —— rim_ring 翻过来 (托盘平面朝上) 自己当承载面,
+  pi2hub 直接坐托盘顶。为此:
+    • 托盘 BASE_H 3.5 -> 5 (要塞下 Phi4.2 x 4.5 铜螺母沉孔), 总高 9 -> 10.5
+    • 并入原承载盘那 7 个 pi2hub 安装孔: Phi3.2 通孔 + Phi4.2 x 4.5 沉孔,
+      沉孔从装配下方(唇侧)往上开; 孔位 = 承载盘系 (x, -y) (装配里绕 X 翻转)
+    • 外唇两个角度缺口全部取消 -> 外环凸台补全为完整整圈 (互锁不要了)
+    • 新增 2 个 Phi4 通孔 @ (-10°,R72) 和 (-42.5°,R56)
+
   Feature 1 - Base annulus:
-      ID 60, OD 170, height 3.5  (Z = 0 .. 3.5)
-      Notch cutout: remove the band r > 40 (Phi > 80),
+      ID 60, OD 170, height 5  (Z = 0 .. 5)
+      Notch cutout (扇形挖槽): remove band r in [35, 61],
                     angles -45 deg .. -40 deg,
-                    Z = 1.5 .. 3.5  (notch depth 2mm)
-      Result: inner ring r in [30, 40] is full 3.5mm tall everywhere;
-              outer ring r in [40, 85] is 3.5mm tall everywhere except in
-              the -45..-40 deg wedge where only the bottom 1.5mm remains.
+                    lip-side top 2mm (Z = 3 .. 5)  (2026-07-20 改 R40..OD -> R35..R61)
 
   Feature 2 - 16 Phi3.2 M3 through-holes:
       PCD Phi70  (R = 35)  x 8 holes
@@ -36,17 +42,20 @@ import numpy as np
 import manifold3d as m3d
 
 # ===== Parameters =====
-# Base annulus
+# Base annulus ("托盘")
 BASE_ID = 60.0
 BASE_OD = 170.0
-BASE_H  = 3.5           # Z = 0 .. 3.5
+BASE_H  = 5.0           # Z = 0 .. 5   (2026-07-20: 3.5 -> 5, 见文件头)
 
-# Notch in base (outer band only, top half)
-NOTCH_R_MIN = 40.0      # Phi 80
+# Notch in base (扇形挖槽, lip-side 2mm 深)
+# 2026-07-20: 径向范围 R40..OD 改为 R35..R61 (用户); 互锁已取消, 纯挖槽。
+NOTCH_R_MIN = 35.0      # 内径 (was 40)
+NOTCH_R_MAX = 61.0      # 外径 (was BASE_OD/2 = 85)
 NOTCH_A_S   = -45.0     # deg
 NOTCH_A_E   = -40.0     # deg
-NOTCH_Z_S   = 1.5       # Z lower (notch depth = BASE_H - NOTCH_Z_S = 2.0)
-NOTCH_Z_E   = BASE_H    # Z upper
+NOTCH_DEPTH = 2.0       # 深度 2 (从唇侧面往下), 不随 BASE_H 变
+NOTCH_Z_S   = BASE_H - NOTCH_DEPTH   # Z lower
+NOTCH_Z_E   = BASE_H                 # Z upper
 
 # Outer rim boss
 RIM_ID  = 165.0
@@ -73,6 +82,38 @@ PATTERN_OUTER = [(OUTER_PCD_R * math.cos(math.radians(a)),
 
 CYL_SEG  = 240
 HOLE_SEG = 32
+
+# 2 个 Φ4 通孔 (2026-07-20 用户新增), 极坐标 (角度从 +X 起, CCW 正):
+EXTRA_HOLE_D = 4.0
+EXTRA_HOLES_POLAR = [(-10.0, 72.0), (-42.5, 56.0)]   # (deg, R)  (2026-07-20: 42.5->-42.5; 2026-07-21: 2.5->10->-10)
+EXTRA_HOLES = [(R * math.cos(math.radians(a)), R * math.sin(math.radians(a)))
+               for (a, R) in EXTRA_HOLES_POLAR]
+
+# (2026-07-21: WiFi 盒改绕圆心转 135° [与 pi2hub 边平行], 脚落 112.5/157.5° 现成
+#  环孔 -> 无需专用孔; 之前 152° 用的 4 个新孔已撤销。)
+
+# ===== 7 pi2hub mounting holes (2026-07-20, 从 mlkpai_carrier_disc 并入) =====
+# 承载盘取消后, rim_ring 翻过来 (托盘平面朝上) 自己当承载面。
+# 装配中 rim_ring 绕 X 翻转 (y -> -y), 所以零件系坐标 = 原承载盘系的 (x, -y)。
+PCB_ROT = 90.0
+PCB_OFF = (-10.0, 0.0)
+# 2026-07-21: 7 孔整组绕圆心逆时针再转 135° (从上往下看装配). 在盘设计系
+# (翻转前) 加 +135°, 装配绕 X 翻转后即等于俯视逆时针 135°。板/柱/米联派同步转。
+PI_ROT_EXTRA = 135.0
+def _rotp(pts, deg=PCB_ROT, off=PCB_OFF):
+    r = math.radians(deg); c, s_ = math.cos(r), math.sin(r)
+    return [(round(c*x - s_*y + off[0], 3), round(s_*x + c*y + off[1], 3)) for (x, y) in pts]
+def _rot_about_origin(pts, deg):
+    r = math.radians(deg); c, s_ = math.cos(r), math.sin(r)
+    return [(round(c*x - s_*y, 3), round(s_*x + c*y, 3)) for (x, y) in pts]
+_PI_BASE = _rotp([(-47.0, 44.0), (0.0, 44.0), (47.0, 44.0),
+                  (-39.5, 25.0), (39.5, 25.0), (-39.5, -25.0), (39.5, -25.0)])
+_PI_DISC = _rot_about_origin(_PI_BASE, PI_ROT_EXTRA)   # 绕圆心 +135°
+PI_HOLES = [(x, -y) for (x, y) in _PI_DISC]        # 翻转 -> 零件系
+PI_THRU_D, PI_INSERT_D, PI_INSERT_DEEP = 3.2, 4.2, 4.5
+# 沉孔从装配下方 (唇侧面 Z=BASE_H) 往上 4.5 -> 占 Z 0.5..5, 朝上的托盘面留 0.5 台肩。
+# (2026-07-20 用户定 4.5, 与 hub_disc 环孔 2026-07-14 的 4->4.5 一致。)
+# 铜螺母 (M3x4x4.5, OD4.5) 从 hub_disc 那圈 r40..72.5 的空槽里往上压入。
 
 # ===== Helpers =====
 def annulus(z0, h, r_in, r_out, segments=CYL_SEG):
@@ -108,24 +149,16 @@ notch_h = NOTCH_Z_E - NOTCH_Z_S          # 2.5
 notch_clearance_r = BASE_OD / 2 + 2.0    # 87
 notch_wedge = wedge(NOTCH_A_S, NOTCH_A_E, notch_clearance_r,
                     notch_h + 0.4, NOTCH_Z_S - 0.2, n_seg=24)
-# Annulus that contains only material with r > NOTCH_R_MIN within the wedge:
+# Annulus that limits the cut to R_MIN..R_MAX within the wedge:
 notch_outer_ann = annulus(NOTCH_Z_S - 0.2, notch_h + 0.4,
-                          NOTCH_R_MIN, BASE_OD / 2 + 1.0)
+                          NOTCH_R_MIN, NOTCH_R_MAX)
 notch_cutter = m3d.Manifold.batch_boolean(
     [notch_wedge, notch_outer_ann], m3d.OpType.Intersect)
 base = base - notch_cutter
 
-# Outer rim boss (annular)
+# Outer rim boss (annular) — 2026-07-20: 两个角度缺口 (RIM_CUT1/2) 全部取消,
+# 外唇补全为完整整圈 (用户: 互锁不要了, 都补全)。
 rim = annulus(BASE_H, RIM_H, RIM_ID / 2, RIM_OD / 2)
-
-# Two angular cutouts in the rim boss only (base intact under them, except
-# where Feature 1 has already cut). Use wedges that clear past the OD.
-rim_clearance_r = RIM_OD / 2 + 2.0       # 87
-rim_cut1 = wedge(RIM_CUT1_A_S, RIM_CUT1_A_E, rim_clearance_r,
-                 RIM_H + 0.4, BASE_H - 0.2, n_seg=24)
-rim_cut2 = wedge(RIM_CUT2_A_S, RIM_CUT2_A_E, rim_clearance_r,
-                 RIM_H + 0.4, BASE_H - 0.2, n_seg=24)
-rim = rim - rim_cut1 - rim_cut2
 
 part = base + rim
 
@@ -141,6 +174,21 @@ for (x, y) in PATTERN_INNER:
     part = drill_through(part, x, y)
 for (x, y) in PATTERN_OUTER:
     part = drill_through(part, x, y)
+
+# ===== 2 个 Φ4 通孔 (2026-07-20) =====
+for (x, y) in EXTRA_HOLES:
+    h = m3d.Manifold.cylinder(TOTAL_H + 2.0, EXTRA_HOLE_D / 2, EXTRA_HOLE_D / 2,
+                              HOLE_SEG, False).translate((x, y, -1.0))
+    part = part - h
+
+
+# ===== 7 pi2hub 孔: Phi3.2 通孔 + Phi4.2 x 4 铜螺母沉孔 (从唇侧 Z=BASE_H 往下) =====
+def _cyl(d, x, y, z0, z1, seg=48):
+    return m3d.Manifold.cylinder(z1 - z0, d / 2, d / 2, seg, False).translate((x, y, z0))
+
+for (x, y) in PI_HOLES:
+    part = part - _cyl(PI_THRU_D, x, y, -1.0, BASE_H + 1.0)
+    part = part - _cyl(PI_INSERT_D, x, y, BASE_H - PI_INSERT_DEEP, BASE_H + 1.0)
 
 # ===== Export STL =====
 mesh = part.to_mesh()
@@ -173,6 +221,10 @@ print(f"  volume:        {part.volume():10.2f} mm^3")
 print(f"  surface area:  {part.surface_area():10.2f} mm^2")
 print(f"  16 Phi3.2 through-holes (8 on PCD Phi70, 8 on PCD Phi155)")
 print(f"  angles: 22.5 + k*45 (k=0..7) = {[round(a,1) for a in HOLE_ANGLES]}")
+print(f"  7 pi2hub 孔: Phi{PI_THRU_D:g} 通 + Phi{PI_INSERT_D:g}x{PI_INSERT_DEEP:g} 沉(从唇侧)")
+print(f"  2 Phi{EXTRA_HOLE_D:g} 通孔 @ (deg,R)={EXTRA_HOLES_POLAR}")
+
+print(f"  外唇缺口全部取消 -> 完整整圈")
 
 # Sanity-check binary STL: 80-byte header + u32 + 50 bytes/triangle
 _expected = 84 + len(tris) * 50
