@@ -187,13 +187,18 @@ print(f"支架翼板底 {DISC_TOP+21.0:.1f} / 中央缺口顶(±60内) {DISC_TOP
 
 # 11) 光电同步 v3 (2026-07-23 大改: 搬到顶部轴心区, 整体尺寸最小化):
 #     sensor_module 平贴压条顶 (随转子): 模块局部 rotZ-90 后贴 (capX -3..20,
-#     capY -55..-35), 安装孔在条中线 (capX0, capY -38/-52), 梁线 (capX 17, capY -45) r_v≈48.1;
+#     capY -55..-35), 模块绕孔中点 M(0,-45) 转 22.19°, 孔 (±2.64, -38.5/-51.5), 光轴过圆心, 刀片中心 r41.7;
 #     2×M3 入压条 v5 的方螺母囚窝。静止挡光片 = vane_slider_v3 可调滑片
 #     (2026-07-24 终版: 刀片印长 50 装机剪短补偿架高), 锁 frame_B 45° 臂筋侧,
 #     刀尖调到 asm 280 (光轴 ~282.4, 叉顶 285.65 对筋底 290 留 4.35)。
 sm = read_stl(MODELS / "photo_sensor/sensor_module.stl")
 sm = sm[..., [1, 0, 2]] * np.array([1.0, -1.0, 1.0])   # rotZ-90: (x,y)->(y,-x)
-sm = sm + np.array([-3.0, -45.0, 267.95])   # 2026-07-23: 孔挪条中线 (capX0), 梁线 capX+17
+sm = sm + np.array([-3.0, -45.0, 267.95])
+# 六改: 绕孔线中点 M(0,-45) 转 22.196° → 光轴过圆心 (sin th = 17/45)
+_th = np.arcsin(17.0 / 45.0)   # 22.196°
+_R = np.array([[np.cos(_th), -np.sin(_th)], [np.sin(_th), np.cos(_th)]])
+_M = np.array([0.0, -45.0])
+sm[..., :2] = (sm[..., :2] - _M) @ _R.T + _M   # 2026-07-23: 孔挪条中线 (capX0), 梁线 capX+17
 parts.append(("sensor_module", rot_z(sm, ROTOR_ROT + V3_SCR_ROT)))
 # (2026-07-23 曾长死在 frame_B 筋底; 2026-07-24 改独立滑片, 见 frame 段后。)
 

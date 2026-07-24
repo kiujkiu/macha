@@ -26,15 +26,19 @@ HEAD_D, HEAD_T = 13.0, 2.7           # M6 平头头窝 (开口朝下)
 SCREW_YS, SCREW_D = (64.0, -64.0), 3.2   # 2× 屏顶 M3, Φ3.2 平面通孔
 # 2026-07-23 v5: 光电模块直贴条顶 (梁线 r≈32, 模块中心 Y≈-30), 2×M3 @
 # (-6,-23)/(-6,-37) + 底面方螺母囚窝 5.8²×2.2 (压条压上屏后螺母被囚, 无攻牙)
-SEN_HOLES = [(0.0, -38.0), (0.0, -52.0)]   # 三改: 18 宽正中; 四改: 外移 (模块中心 capY−45, 旋转扫掠余量 2.1)
-# 2026-07-23 二改 (用户: 按老 v2 支架的孔型) — Φ3.2 平通 + 底面 Φ6.5×2.5
-# 头窝 (M3×12 压条上屏前从下插入, 同 M6 头窝逻辑), 模块平贴条顶, 螺母锁
-# PCB 上面 (可从上拆装); 焊脚避空挖穿 (老方案 "3 避空槽挖穿"): 条上只有
-# 排针尾 @ (X−1.2, −27.5..−32.5) → 穿透槽; 4 对管脚在条外悬空。
-# 梁线 (capX+17, capY−45) → r_v≈48.1; 弦偏移使叉臂扫掠带加宽, 静刀片净通道
-# r 44.7..51.9 — 刀片 3 宽 @ 46.8..49.8, 双侧扫掠余量 ~2.1 (frame_B 同步)。
-SEN_CB_D, SEN_CB_T = 6.5, 2.5
-SEN_LEAD_SLOT = (-3.5, 1.0, -49.0, -41.0)    # 排针尾避空槽 (穿透; 尾 @ X-1.2, 距两孔缘各 1.4)
+# 六改 (用户): 不加宽压条 — 模块绕两孔连线中点 M(0,-45) 旋转 SEN_TH, 使光轴
+# (对射连线, 平行孔线偏距 17) 过圆心: sin(SEN_TH) = 17/45 → 22.187°。
+# 叉臂扫掠为同心环, 刀片净通道 r36.78..46.66 (刀片 r40.2..43.2, 余量 ~3.4/侧)。
+# 对射管焊脚旋转后落条外悬空 (无需避空); 排针尾避空槽随转 (斜置矩形)。
+import math
+SEN_TH = math.degrees(math.asin(17.0 / 45.0))        # 22.187°
+_s, _c = math.sin(math.radians(SEN_TH)), math.cos(math.radians(SEN_TH))
+SEN_M = (0.0, -45.0)                                  # 孔线中点 (旋转中心)
+SEN_HOLES = [(7*_s, -45.0 - 7*_c), (-7*_s, -45.0 + 7*_c)]   # (±2.644, -51.481/-38.519)
+SEN_CB_D, SEN_CB_T = 7.5, 2.5   # 六改: 头沉孔 Φ6.5→7.5 (用户: 小了)
+SEN_SLOT_L, SEN_SLOT_W = 8.0, 3.0             # 排针尾避空槽 (穿透, 斜置: 长轴沿孔线,
+SEN_SLOT_C = (-1.2*_c, -45.0 - 1.2*_s)        # 中心 = M + 1.2·(-n) → (-1.111, -45.453),
+SEN_SLOT_ANG = SEN_TH - 90.0                  # 尾 @ 模块局部 y1.8, 距两孔缘各 1.4)
 
 def cyl(d, x, y, z0, z1, seg=48):
     return m3d.Manifold.cylinder(z1-z0, d/2, d/2, seg, False).translate((x, y, z0))
@@ -46,10 +50,10 @@ part = box(-BLK_X, BLK_X, -BLK_Y, BLK_Y, BAR_Z0, BAR_Z1)
 
 part -= cyl(AXIS_BORE, 0, 0, BAR_Z0-1, BAR_Z1+1)             # 轴 Φ6.2 通孔
 part -= cyl(HEAD_D, 0, 0, BAR_Z0-1, BAR_Z0+HEAD_T)           # Φ13×2.7 头窝 (朝下)
-part -= m3d.Manifold.cube((SEN_LEAD_SLOT[1]-SEN_LEAD_SLOT[0],
-                           SEN_LEAD_SLOT[3]-SEN_LEAD_SLOT[2],
-                           BAR_Z1-BAR_Z0+2), False)\
-    .translate((SEN_LEAD_SLOT[0], SEN_LEAD_SLOT[2], BAR_Z0-1))   # 排针尾避空槽 (穿透)
+part -= m3d.Manifold.cube((SEN_SLOT_L, SEN_SLOT_W, BAR_Z1-BAR_Z0+2), False)\
+    .translate((-SEN_SLOT_L/2, -SEN_SLOT_W/2, 0.0))\
+    .rotate((0, 0, SEN_SLOT_ANG))\
+    .translate((SEN_SLOT_C[0], SEN_SLOT_C[1], BAR_Z0-1))          # 排针尾避空槽 (穿透, 斜置)
 for (sx, sy) in SEN_HOLES:                                    # 光电模块 2×M3
     part -= cyl(3.2, sx, sy, BAR_Z0-1, BAR_Z1+1)
     part -= cyl(SEN_CB_D, sx, sy, BAR_Z0-1, BAR_Z0+SEN_CB_T)  # 底面头窝
