@@ -36,9 +36,9 @@ _s, _c = math.sin(math.radians(SEN_TH)), math.cos(math.radians(SEN_TH))
 SEN_M = (0.0, -45.0)                                  # 孔线中点 (旋转中心)
 SEN_HOLES = [(7*_s, -45.0 - 7*_c), (-7*_s, -45.0 + 7*_c)]   # (±2.644, -51.481/-38.519)
 SEN_CB_D, SEN_CB_T = 7.5, 2.5   # 六改: 头沉孔 Φ6.5→7.5 (用户: 小了)
-SEN_SLOT_L, SEN_SLOT_W = 9.0, 6.0             # 排针尾避空槽 (穿透, 斜置: 长轴沿孔线; 七改宽 3→6, 八改长 8→9,
-SEN_SLOT_C = (-1.2*_c, -45.0 - 1.2*_s)        # 中心 = M + 1.2·(-n) → (-1.111, -45.453),
-SEN_SLOT_ANG = SEN_TH - 90.0                  # 尾 @ 模块局部 y1.8, 距两孔缘各 1.4)
+SEN_SLOT_L, SEN_SLOT_W = 9.0, 8.0             # 排针尾避空槽 (穿透, 斜置: 长轴沿孔线;
+SEN_SLOT_C = (0.0, -45.0)                     # 九改: 以两孔连线为对称轴 (中心 = M) 且加宽 6→8;
+SEN_SLOT_ANG = SEN_TH - 90.0                  # 尾 @ 偏线 1.2 仍被覆盖, 槽端距孔缘 0.9)
 
 def cyl(d, x, y, z0, z1, seg=48):
     return m3d.Manifold.cylinder(z1-z0, d/2, d/2, seg, False).translate((x, y, z0))
