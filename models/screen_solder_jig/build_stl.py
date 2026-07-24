@@ -5,11 +5,12 @@ screen_solder_jig — 焊接时给 screen_150x169 定位的托盘 (2026-07-21 �
 背面朝上露出接口/引脚供焊接。
 
 内腔 (用户给定):
-  • 平面 150 (X, 屏宽) × 168.75 (Y, 屏高)
+  • 平面 150.3 (X, 屏宽) × 169.05 (Y, 屏高)  (150/168.75 各 +0.3 间隙)
   • 深度 15 (Z)  —— 屏厚 7.27 落入后, 上沿高出屏背 7.73
 
 壁厚 4 (用户给定) / 底厚 3 (WALL / FLOOR 可调)。
-外形 158 × 176.75 × 18, 落在 X2D 256 床内, 平放底朝下打印, 无支撑。
+底面 4 × 40×40 方形通孔 (2×2 对称), 减 LED 面接触 + 透气。
+外形 158.3 × 177.05 × 18, 落在 X2D 256 床内, 平放底朝下打印, 无支撑。
 
 局部坐标: 内腔在 XY 居中, 底 Z 0..FLOOR, 腔 Z FLOOR..FLOOR+DEPTH, 开口 +Z。
 """
@@ -20,23 +21,31 @@ import numpy as np
 import manifold3d as m3d
 
 # ===== Parameters =====
-CAV_W = 150.0      # X — screen width  (screen_150x169: W=150)
-CAV_H = 168.75     # Y — screen height (用户给定 168.75; 屏模型 H=169, 见交付说明)
+CAV_W = 150.3      # X — screen width  (150→150.3, 用户 2026-07-21 +0.3 间隙)
+CAV_H = 169.05     # Y — screen height (168.75→169.05, 用户 2026-07-21 +0.3 间隙)
 DEPTH = 15.0       # Z — pocket depth (用户 2026-07-21: 10→15)
 WALL  = 4.0        # side wall thickness (用户 2026-07-21: 5→4)
 FLOOR = 3.0        # floor thickness
 
-OUT_W = CAV_W + 2 * WALL     # 160
-OUT_H = CAV_H + 2 * WALL     # 178.75
-OUT_Z = DEPTH + FLOOR        # 13
+OUT_W = CAV_W + 2 * WALL     # 158.3
+OUT_H = CAV_H + 2 * WALL     # 177.05
+OUT_Z = DEPTH + FLOOR        # 18
 
 # M3 through-holes in the two 150-wide end walls (the ±Y walls, 用户 2026-07-21):
-# axis along Y (through the 5mm wall), 3 per wall spaced 64 in X, hole center
+# axis along Y (through the 4mm wall), 3 per wall spaced 64 in X, hole center
 # 6.6mm above the internal floor. One Y-axis cylinder pierces BOTH end walls,
 # so 3 cylinders = 3 holes per wall.
 HOLE_D  = 3.2                 # M3 clearance
 HOLE_XS = [-64.0, 0.0, 64.0]  # spacing 64
 HOLE_Z  = FLOOR + 6.6         # 9.6 — 距内腔底面 6.6
+
+# 4 × 40×40 square through-holes in the FLOOR (用户 2026-07-21: 4cm×4cm, 对称放).
+# 2×2 symmetric, centered — leaves a border ring + central cross ribs so the
+# screen's LED face isn't fully backed by plastic. All within the cavity floor
+# (don't reach the walls). Margins/ribs ≥ ~19mm.
+SQ_SIDE = 40.0
+SQ_CX, SQ_CY = 36.0, 42.0
+SQ_CENTERS = [(sx * SQ_CX, sy * SQ_CY) for sx in (-1, 1) for sy in (-1, 1)]
 
 _slop = 0.1
 
@@ -60,6 +69,12 @@ for x in HOLE_XS:
     h = h.rotate((90.0, 0.0, 0.0))                 # axis Z -> Y
     h = h.translate((x, 0.0, HOLE_Z))
     jig = jig - h
+
+# 4 × 40×40 floor cutouts (through the floor, Z 0..FLOOR).
+for (sx, sy) in SQ_CENTERS:
+    sq = m3d.Manifold.cube((SQ_SIDE, SQ_SIDE, FLOOR + 2 * _slop), False).translate(
+        (sx - SQ_SIDE / 2, sy - SQ_SIDE / 2, -_slop))
+    jig = jig - sq
 
 # ===== Export STL =====
 mesh = jig.to_mesh()
@@ -91,3 +106,4 @@ print(f"  bbox X {verts[:,0].min():.2f}..{verts[:,0].max():.2f}  "
       f"Z {verts[:,2].min():.2f}..{verts[:,2].max():.2f}")
 print(f"  volume {jig.volume()/1000:.1f} cm^3")
 print(f"  M3 holes: ±Y walls, X={HOLE_XS} (间距64), Z={HOLE_Z:g} (底面上6.6), Φ{HOLE_D:g} 通")
+print(f"  floor squares: 4 × {SQ_SIDE:g}×{SQ_SIDE:g} @ (±{SQ_CX:g}, ±{SQ_CY:g}) 通底")

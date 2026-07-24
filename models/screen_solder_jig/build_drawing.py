@@ -12,12 +12,14 @@ from pathlib import Path
 from fpdf import FPDF
 
 # ===== Geometry (mirror build_stl.py) =====
-CAV_W, CAV_H, DEPTH = 150.0, 168.75, 15.0
+CAV_W, CAV_H, DEPTH = 150.3, 169.05, 15.0
 WALL, FLOOR = 4.0, 3.0
-OUT_W, OUT_H, OUT_Z = CAV_W + 2*WALL, CAV_H + 2*WALL, DEPTH + FLOOR   # 160,178.75,18
+OUT_W, OUT_H, OUT_Z = CAV_W + 2*WALL, CAV_H + 2*WALL, DEPTH + FLOOR   # 158.3,177.05,18
 HOLE_D, HOLE_XS = 3.2, [-64.0, 0.0, 64.0]
 HOLE_Z = FLOOR + 6.6                                   # 9.6 (6.6 above internal floor)
 HOLE_H_ABOVE = HOLE_Z - FLOOR                          # 6.6
+SQ_SIDE, SQ_CX, SQ_CY = 40.0, 36.0, 42.0              # 4×40×40 floor cutouts @ (±36,±42)
+SQ_CENTERS = [(sx*SQ_CX, sy*SQ_CY) for sx in (-1,1) for sy in (-1,1)]
 xo, yo = OUT_W/2, OUT_H/2                              # 80, 89.375
 cx, cy = CAV_W/2, CAV_H/2                              # 75, 84.375
 S = 1.0
@@ -135,15 +137,25 @@ for x in HOLE_XS:
         pdf.line(*tv(x+dx,-yo), *tv(x+dx,-cy))      # -Y wall band
         pdf.line(*tv(x+dx, cy), *tv(x+dx, yo))      # +Y wall band
     pdf.set_dash_pattern(); _w(GEOM_W)
+# 4 floor square cutouts (visible looking into the open pocket)
+_w(GEOM_W)
+for (sx,sy) in SQ_CENTERS:
+    q=[tv(sx-SQ_SIDE/2,sy-SQ_SIDE/2),tv(sx+SQ_SIDE/2,sy-SQ_SIDE/2),
+       tv(sx+SQ_SIDE/2,sy+SQ_SIDE/2),tv(sx-SQ_SIDE/2,sy+SQ_SIDE/2)]
+    for i in range(4): line(*q[i],*q[(i+1)%4],GEOM_W)
 # dims
-hdim(tv(-xo,yo)[0],tv(xo,yo)[0],tv(0,yo)[1],tv(0,yo)[1]+DIM_O1,f"{OUT_W:g}")       # 160
-hdim(tv(-cx,-yo)[0],tv(cx,-yo)[0],tv(0,-yo)[1],tv(0,-yo)[1]-DIM_O1,f"{CAV_W:g}")   # cavity 150
+hdim(tv(-xo,yo)[0],tv(xo,yo)[0],tv(0,yo)[1],tv(0,yo)[1]+DIM_O1,f"{OUT_W:g}")       # 158.3
+hdim(tv(-cx,-yo)[0],tv(cx,-yo)[0],tv(0,-yo)[1],tv(0,-yo)[1]-DIM_O1,f"{CAV_W:g}")   # cavity 150.3
 hdim(tv(-64,-yo)[0],tv(0,-yo)[0],tv(0,-yo)[1],tv(0,-yo)[1]-DIM_O2,"64")            # spacing
 hdim(tv(0,-yo)[0],tv(64,-yo)[0],tv(0,-yo)[1],tv(0,-yo)[1]-DIM_O2,"64")
-vdim(tv(-xo,-yo)[1],tv(-xo,yo)[1],tv(-xo,0)[0],tv(-xo,0)[0]-DIM_O1,f"{OUT_H:g}")   # 178.75
-vdim(tv(cx,-cy)[1],tv(cx,cy)[1],tv(xo,0)[0],tv(xo,0)[0]+DIM_O1,f"{CAV_H:g}")       # cavity 168.75
-note(*tv(-xo+WALL/2,cy-20), tv(-xo,0)[0]-14, tv(-xo,0)[1]+40, f"壁厚 {WALL:g}", anchor="end")
-text(tv_cx, tv(0,0)[1], "内腔 150×168.75 (屏落入)", size=TXT_I, anchor="middle", halo=True)
+vdim(tv(-xo,-yo)[1],tv(-xo,yo)[1],tv(-xo,0)[0],tv(-xo,0)[0]-DIM_O1,f"{OUT_H:g}")   # 177.05
+vdim(tv(cx,-cy)[1],tv(cx,cy)[1],tv(xo,0)[0],tv(xo,0)[0]+DIM_O1,f"{CAV_H:g}")       # cavity 169.05
+# floor-square dims: side 40, center offsets 36 / 42
+hdim(tv(SQ_CX-SQ_SIDE/2,0)[0],tv(SQ_CX+SQ_SIDE/2,0)[0],tv(0,0)[1],tv(0,0)[1]-6,f"{SQ_SIDE:g}")   # 40 (X)
+vdim(tv(0,0)[1],tv(0,SQ_CY)[1],tv(0,0)[0],tv(0,0)[0]-6,f"{SQ_CY:g}")               # 42 (Y center)
+hdim(tv(0,-SQ_CY)[0],tv(SQ_CX,-SQ_CY)[0],tv(0,-SQ_CY-SQ_SIDE/2)[1],tv(0,-SQ_CY-SQ_SIDE/2)[1]-6,f"{SQ_CX:g}")  # 36 (X center)
+note(*tv(-xo+WALL/2,-cy+18), tv(-xo,0)[0]-14, tv(-xo,0)[1]-40, f"壁厚 {WALL:g}", anchor="end")
+text(tv_cx, tv(0,cy-10)[1], "4 × 40×40 方孔 通底", size=TXT_I, anchor="middle", halo=True)
 
 # ===================== 2) FRONT VIEW (looking +Y, -Y end wall) =====================
 fv_cx, fv_z0 = 305.0, 96.0
@@ -195,7 +207,7 @@ vdim(av(0,OUT_Z)[1],av(0,FLOOR)[1],av(yo,0)[0],av(yo,0)[0]+DIM_O2,f"{DEPTH:g}") 
 vdim(av(0,HOLE_Z)[1],av(0,0)[1],av(-yo,0)[0],av(-yo,0)[0]-DIM_O1,f"{HOLE_Z:g}")    # 9.6 from bottom
 note(*av(-cy,FLOOR/2), av(-yo,0)[0]-14, av(0,0)[1]+2, f"底 {FLOOR:g}", anchor="end")
 text(av(-yo,HOLE_Z)[0]-2, av(0,HOLE_Z)[1]-1.5, f"(距内腔底 {HOLE_H_ABOVE:g})", size=TXT_I, anchor="end", halo=True)
-text(av_cx, av(0,0)[1]+DIM_O2+7, "屏正面朝下落入, 深 15 > 屏厚 7.27 · M3 沿 Y 穿端壁", size=TXT_I, anchor="middle")
+text(av_cx, av(0,0)[1]+DIM_O2+7, "屏正面朝下落入, 深 15 > 屏厚 7.27 · 底面 4×40²方孔见俯视", size=TXT_I, anchor="middle")
 
 # ===== Title block =====
 tb_y=PAGE_H-28; tb_x,tb_w,tb_h=20,PAGE_W-40,18

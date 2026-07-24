@@ -1,0 +1,98 @@
+"""
+bottom_portal_v3 — v3 双面屏底部门形梁, 平板 2T + 2半U 版 (2026-07-22 深夜
+四改, 用户: 底部再拆 — U 拆成两个对称半件, T↔腿接缝每侧只锁 1 颗螺丝;
+最终 2 种件 × 各 2 个, 全部同件转 180° 复用; 每件单一高度平躺打印,
+矩形无弧, 全贯穿螺丝+螺母, 无攻牙无铜螺母)。
+
+屏 = 双面屏模组 13.4×150×168.75 (LED 面 ±6.7), 底面 3×M3 居中 @64。
+盘系 (Z0 = 承载面), 装配随 V3_SCR_ROT=-45°。
+
+两种平板件:
+  · portal_t_v3 ×2 (同一件, 第二件绕 Z 转 180°): **12 厚水平平板 (Z 0..12),
+    平躺打印**。平面形状 = T: 矩形脚板 (X ±33.5 × Y 64..76, 2×Φ3.4 @
+    (±29.658, 71.601) 借盘环孔, 角 r 83.1 < R85, 无弧) + 内伸舌
+    (X 4..12 × Y 52..64, 尖距 pi2hub 板边 2); 舌上 1×Φ3.2 水平孔 (孔轴沿 X) @ (Y 58, Z 6)。
+  · portal_uh_v3 ×2 (同一件, 第二件绕 Z 转 180°): **8 厚竖直平板 (X ±4),
+    平躺打印 (+X 面贴床, 搭接舌在下贴床)**。形状 = 半 U: 半梁 Y −6..68 ×
+    Z 40..50 (顶面 Z50 = 屏底; Y 6..68 全厚 8, Y −6..6 减成 X 0..4 半厚
+    搭接舌) + 一条腿 Y 50..64 × Z 2..40 (腿边抵 T 脚板内面, 腿下端 1×Φ3.2)。
+    自带屏孔: (0, +64) 全厚区 + 中央 (0,0) 在搭接舌上 (半槽)。
+中央接缝: 两半件的搭接舌在梁中央互补叠合 (0..4 + −4..0 = 全厚 8), 中央屏幕
+螺丝 M3×16 @ (0,0) 同时穿两舌半槽锁进模组底孔 — 不加额外五金。
+T↔腿接缝: U 腿面贴 T 舌侧面 (合 16 厚), **每侧 1× M3×20 水平贯穿 + 螺母**
+@ (Y 58, Z 6); 腿边抵 T 脚板内面 (Y64) 止转。整体 180° 对称。
+BOM: 接缝 M3×20+螺母 ×2; 屏底 M3×16 ×3 (中央那颗兼锁梁缝); 脚 M3×25 ×4
+(T12+环5+hub~5.5 入 hub 底铜螺母 — hub 既有); 无攻牙件。
+"""
+import struct
+from pathlib import Path
+import numpy as np
+import manifold3d as m3d
+
+# T 平板
+T_H = 12.0                                  # 整件高度 (平躺打印)
+BAR_X, BAR_Y0, BAR_Y1 = 33.5, 64.0, 76.0    # 矩形脚板 (角 r=83.06 < 85)
+FOOT_HOLES = [(29.658, 71.601), (-29.658, 71.601)]
+FOOT_HOLE_D = 3.4
+TONGUE_X0, TONGUE_X1 = 4.0, 12.0            # 内伸舌 (+X 半, 8 宽)
+TONGUE_Y0 = 52.0                            # 舌尖 (pi2hub 板在组系伸到 Y±50, 留 2)
+# U 平板
+U_T = 8.0                                   # 板厚 (X ±4)
+BEAM_Y, BEAM_Z0, BEAM_Z1 = 68.0, 40.0, 50.0
+LEG_Y0, LEG_Y1, LEG_Z0 = 50.0, 64.0, 2.0   # 腿顶不越 Y64 (=T 脚板内face, 相抵)
+SCREW_YS = (-64.0, 0.0, 64.0)               # 屏孔
+SCREW_D = 3.2
+JOINT_YS, JOINT_Z = (58.0,), 6.0            # 接缝孔 ×1/侧 (孔轴沿 X, 居舌中)
+LAP_Y = 6.0                                 # 梁中央搭接舌半长 (Y ±6)
+
+def box(x0, x1, y0, y1, z0, z1):
+    return m3d.Manifold.cube((x1-x0, y1-y0, z1-z0), False).translate((x0, y0, z0))
+
+def cyl_z(d, x, y, z0, z1, seg=32):
+    return m3d.Manifold.cylinder(z1-z0, d/2, d/2, seg, False).translate((x, y, z0))
+
+def cyl_x(d, x0, x1, y, z, seg=32):
+    c = m3d.Manifold.cylinder(x1-x0, d/2, d/2, seg, False)
+    return c.rotate((0, 90, 0)).translate((x0, y, z))
+
+def write_stl(part, name, header):
+    mesh = part.to_mesh()
+    verts = np.asarray(mesh.vert_properties)[:, :3]
+    tris = np.asarray(mesh.tri_verts)
+    out = Path(__file__).with_name(name)
+    with out.open("wb") as f:
+        f.write(header.encode().ljust(80, b" ")[:80])
+        f.write(struct.pack("<I", len(tris)))
+        for t in tris:
+            v0, v1, v2 = verts[t[0]], verts[t[1]], verts[t[2]]
+            n = np.cross(v1-v0, v2-v0); L = float(np.linalg.norm(n))
+            if L > 0: n = n/L
+            f.write(struct.pack("<3f", *n))
+            f.write(struct.pack("<3f", *v0)); f.write(struct.pack("<3f", *v1)); f.write(struct.pack("<3f", *v2))
+            f.write(struct.pack("<H", 0))
+    assert 84 + len(tris)*50 == out.stat().st_size
+    r = float(np.hypot(verts[:, 0], verts[:, 1]).max())
+    print(f"wrote {out.name}  vol {part.volume()/1000:.1f} cm3 (~{part.volume()*1.27/1000:.0f} g)  r_max {r:.2f}")
+
+# ===== portal_t_v3 (+Y 件; -Y 件 = 绕 Z 转 180°) =====
+t = box(-BAR_X, BAR_X, BAR_Y0, BAR_Y1, 0.0, T_H)            # 矩形脚板
+t += box(TONGUE_X0, TONGUE_X1, TONGUE_Y0, BAR_Y0, 0.0, T_H) # 内伸舌
+for (hx, hy) in FOOT_HOLES:
+    t -= cyl_z(FOOT_HOLE_D, hx, hy, -1.0, T_H + 1.0)
+for jy in JOINT_YS:
+    t -= cyl_x(SCREW_D, TONGUE_X0 - 1.0, TONGUE_X1 + 1.0, jy, JOINT_Z)
+write_stl(t, "portal_t_v3.stl", "POV3D portal_t_v3 flat (x2, 2nd rotZ180)")
+
+# ===== portal_uh_v3 (半 U; 第二件 = 绕 Z 转 180°) =====
+u = box(-U_T/2, U_T/2, LAP_Y, BEAM_Y, BEAM_Z0, BEAM_Z1)     # 半梁全厚段 Y 6..68
+u += box(0.0, U_T/2, -LAP_Y, LAP_Y, BEAM_Z0, BEAM_Z1)       # 搭接舌 (X 0..4, Y ±6)
+u += box(-U_T/2, U_T/2, LEG_Y0, LEG_Y1, LEG_Z0, BEAM_Z0)    # 腿
+u -= cyl_z(SCREW_D, 0.0, 64.0, BEAM_Z0 - 1.0, BEAM_Z1 + 1.0)   # 屏孔 (+64)
+u -= cyl_z(SCREW_D, 0.0, 0.0, BEAM_Z0 - 1.0, BEAM_Z1 + 1.0)    # 中央屏孔 (舌上半槽)
+for jy in JOINT_YS:
+    u -= cyl_x(SCREW_D, -U_T/2 - 1.0, U_T/2 + 1.0, jy, JOINT_Z)
+write_stl(u, "portal_uh_v3.stl", "POV3D portal_uh_v3 half-U flat (x2, 2nd rotZ180)")
+
+print(f"  T: 12 厚平板 (脚板 {2*BAR_X:g}×{BAR_Y1-BAR_Y0:g} 矩形 + 舌 8×{BAR_Y0-TONGUE_Y0:g}), 平躺打印")
+print(f"  半U: 8 厚平板 (半梁 {BEAM_Y+LAP_Y:g}×{BEAM_Z1-BEAM_Z0:g} + 舌 ±{LAP_Y:g} + 腿 {LEG_Y1-LEG_Y0:g}×{BEAM_Z0-LEG_Z0:g}), +X 面贴床平躺打印 ×2")
+print(f"  T↔腿接缝 M3×20+螺母 ×2 @ (Y±58, Z{JOINT_Z:g}); 梁中央 = 中央屏幕螺丝兼锁; 脚 M3×25 ×4")

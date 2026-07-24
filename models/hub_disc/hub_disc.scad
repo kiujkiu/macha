@@ -5,10 +5,10 @@
 base_od        = 165;
 base_t         = 3;     // Z = 0 .. 3
 
-lower_boss_d   = 80;
+lower_boss_d   = 70;    // 2026-07-21: 80->70 (凸台让渡给 rim_ring 内凸台环)
 lower_boss_t   = 2.5;   // Z = 3 .. 5.5
 
-upper_boss_d   = 60;
+upper_boss_d   = 50;    // 2026-07-21: 60->50
 upper_boss_t   = 3.5;   // Z = 5.5 .. 9
 
 rim_boss_id    = 145;
@@ -17,7 +17,7 @@ rim_boss_t     = 2.5;   // Z = 3 .. 5.5
 
 m3_diam        = 3.2;
 cb_a_diam      = 7.0;   // diamond
-cb_b_diam      = 4.2;   // square / PCD-70 / PCD-155
+cb_b_diam      = 4.2;   // square / PCD-60 / PCD-155
 cb_depth       = 4.0;   // pocket depth (diamond / square)
 ring_cb_depth  = 4.5;   // PCD 环形 16 孔沉深 4→4.5 (2026-07-14)
 
@@ -28,7 +28,7 @@ center_cb_depth = 2.2;
 
 // Direction toggle: the central diamond (pattern A) counterbore now opens
 // from the TOP face (top of upper boss) downward, recessing the screw head
-// into the Φ60 upper boss. All other 20 CBs still open from the bottom.
+// into the Φ50 upper boss. All other 20 CBs still open from the bottom.
 diamond_cb_from_top = true;
 
 // derived
@@ -43,7 +43,7 @@ diag_y = 15;
 square_side = 30;
 
 // Pattern C/D — PCDs
-inner_pcd_r = 35;   // Φ70
+inner_pcd_r = 30;   // Φ60 (2026-07-21: 35->30, 与 rim_ring 同步)
 outer_pcd_r = 77.5; // Φ155
 
 // Angular rotation applied to BOTH PCD ring patterns (degrees, CCW positive).
@@ -103,7 +103,7 @@ module hub_disc() {
             through_hole(p[0], p[1]);
             counterbore(p[0], p[1], cb_b_diam);
         }
-        // Pattern C — inner PCD ring Φ70 (8 holes), rotated by ring_hole_rotation
+        // Pattern C — inner PCD ring Φ60 (8 holes), rotated by ring_hole_rotation
         for (k = [0 : 7]) {
             a = k * 360 / 8 + ring_hole_rotation;
             x = inner_pcd_r * cos(a);

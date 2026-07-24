@@ -2,19 +2,19 @@
 Generate a 2D engineering drawing (PDF, A3 landscape) for the POV3D hub disc.
 
 Views:
-  1) TOP VIEW       (俯视图, 1:1)    — all 4 outline circles (Φ165, Φ145, Φ80,
-                                       Φ60), diamond (12×15) outline, square
-                                       30×30 outline, both PCD circles (Φ70,
+  1) TOP VIEW       (俯视图, 1:1)    — all 4 outline circles (Φ165, Φ145, Φ70,
+                                       Φ50), diamond (12×15) outline, square
+                                       30×30 outline, both PCD circles (Φ60,
                                        Φ155), all 24 holes shown as Φ3.2 solid
                                        circle + dashed Φ7 or Φ4.2 CB (CB
                                        hidden from top), and a crosshair.
   2) SECTION A-A    (剖视图 A-A, 1:1) — cut along +X axis (0°), passes through:
                                        diamond holes at (±6, 0),
-                                       PCD-70 holes at (±35, 0),
+                                       PCD-60 holes at (±30, 0),
                                        PCD-155 holes at (±77.5, 0).
                                        Shows 3-step Z structure: base 3, lower
-                                       center boss step at Z=5.5 (Φ80), upper
-                                       boss step at Z=9 (Φ60), rim boss
+                                       center boss step at Z=5.5 (Φ70), upper
+                                       boss step at Z=9 (Φ50), rim boss
                                        between Z=3..5.5 at R=72.5..82.5, and
                                        the stepped hole profiles.
   3) DETAIL B       (详图 B, 4:1)    — M3 + Φ7 × 4 CB stack (diamond holes).
@@ -30,10 +30,12 @@ from fpdf import FPDF
 BASE_OD       = 165.0
 BASE_T        = 3.0
 
-LOWER_BOSS_D  = 80.0
+# 2026-07-21 深夜: 下凸台 80→70, 上凸台 60→50 (让渡给 rim_ring 内凸台环
+# OD80/ID70×2.5), 与 build_stl.py 同步。
+LOWER_BOSS_D  = 70.0
 LOWER_BOSS_T  = 2.5
 
-UPPER_BOSS_D  = 60.0
+UPPER_BOSS_D  = 50.0
 UPPER_BOSS_T  = 3.5
 
 RIM_BOSS_ID   = 145.0
@@ -56,8 +58,8 @@ CENTER_CB_DEPTH = 2.2
 DIAG_X = 12.0
 DIAG_Y = 15.0
 SQUARE_SIDE = 30.0
-INNER_PCD_R = 35.0
-INNER_PCD   = 2 * INNER_PCD_R    # 70
+INNER_PCD_R = 30.0    # Φ60 (2026-07-21 深夜: 35→30, 与 build_stl.py 同步)
+INNER_PCD   = 2 * INNER_PCD_R    # 60
 OUTER_PCD_R = 77.5
 OUTER_PCD   = 2 * OUTER_PCD_R    # 155
 
@@ -68,8 +70,8 @@ RING_HOLE_ROTATION = 22.5
 
 # Convenience radii
 R_BO        = BASE_OD / 2        # 82.5
-R_LBO       = LOWER_BOSS_D / 2   # 40.0
-R_UBO       = UPPER_BOSS_D / 2   # 30.0
+R_LBO       = LOWER_BOSS_D / 2   # 35.0
+R_UBO       = UPPER_BOSS_D / 2   # 25.0
 R_RBI       = RIM_BOSS_ID / 2    # 72.5
 R_RBO       = RIM_BOSS_OD / 2    # 82.5
 
@@ -87,7 +89,7 @@ PATTERN_B = [( SQUARE_SIDE/2,  SQUARE_SIDE/2),
              (-SQUARE_SIDE/2,  SQUARE_SIDE/2),
              ( SQUARE_SIDE/2, -SQUARE_SIDE/2),
              (-SQUARE_SIDE/2, -SQUARE_SIDE/2)]
-# Pattern C — inner PCD Φ70, rotated by RING_HOLE_ROTATION
+# Pattern C — inner PCD Φ60, rotated by RING_HOLE_ROTATION
 PATTERN_C = [(INNER_PCD_R * math.cos(math.radians(k * 45 + RING_HOLE_ROTATION)),
               INNER_PCD_R * math.sin(math.radians(k * 45 + RING_HOLE_ROTATION)))
              for k in range(8)]
@@ -243,8 +245,8 @@ text(end2[0] - 7, end2[1] + 4, "A", size=6)
 _w(GEOM_W)
 ccx, ccy = tv(0, 0)
 pdf.circle(ccx, ccy, R_BO,  style="D")   # Φ165 base OD (intact — base under cutout)
-pdf.circle(ccx, ccy, R_LBO, style="D")   # Φ80 lower boss OD
-pdf.circle(ccx, ccy, R_UBO, style="D")   # Φ60 upper boss OD
+pdf.circle(ccx, ccy, R_LBO, style="D")   # Φ70 lower boss OD
+pdf.circle(ccx, ccy, R_UBO, style="D")   # Φ50 upper boss OD
 # Center Φ6.2 counterbore — hidden from top (opens on bottom face), so dashed.
 pdf.set_dash_pattern(dash=1.5, gap=1.0); _w(HID_W)
 pdf.circle(ccx, ccy, CENTER_CB_DIAM / 2, style="D")
@@ -254,7 +256,7 @@ _w(GEOM_W)
 import math as _m
 pdf.circle(ccx, ccy, R_RBI, style="D")
 
-# ---- PCD reference circles (dashed) for inner PCD Φ70 and outer PCD Φ155 ----
+# ---- PCD reference circles (dashed) for inner PCD Φ60 and outer PCD Φ155 ----
 pdf.set_dash_pattern(dash=2.5, gap=1.5); _w(0.15)
 pdf.circle(ccx, ccy, INNER_PCD_R, style="D")
 pdf.circle(ccx, ccy, OUTER_PCD_R, style="D")
@@ -347,7 +349,7 @@ pdf.set_dash_pattern()
 # four "compass corners" of the page:
 #   N (top-left  corner): 4 × Φ7 diamond CB (顶面) — leader from N diamond vertex
 #   E (top-right edge):   4 × Φ4.2 square (方形) — leader from NE square corner
-#   S (bottom-right):     8 × Φ4.2 PCD70 inner ring — leader from S-most PCD70 hole
+#   S (bottom-right):     8 × Φ4.2 PCD60 inner ring — leader from S-most PCD60 hole
 #   W (bottom-left):      8 × Φ4.2 PCD155 outer ring — leader from W-most PCD155 hole
 
 _w(EXT_W)
@@ -397,7 +399,7 @@ text(ne_label_x + 1.5, ne_label_y - 1.2,
      f"4 × Φ{M3_DIAM:g} + Φ{CB_B_DIAM:g}×{CB_DEPTH:g} 沉孔 (方形 {SQUARE_SIDE:g}×{SQUARE_SIDE:g})",
      size=TXT_D, anchor="start")
 
-# ---- SOUTH-EAST corner: 8 × Φ4.2 PCD70 inner ring ----
+# ---- SOUTH-EAST corner: 8 × Φ4.2 PCD60 inner ring ----
 # Label parked BELOW the disc on the right half (so the W callout has room
 # on the left half of the strip).
 iy_x, iy_y = _closest_hole(PATTERN_C, -90)
@@ -451,15 +453,15 @@ _w(GEOM_W)
 
 # Section: cut along +X, so "t" = X. Holes intersected:
 #   diamond at t = ±DIAG_X/2 = ±6     (CB Φ7,   M3 Φ3.2)
-#   PCD-70  at t = ±35                (CB Φ4.2, M3 Φ3.2)
+#   PCD-60  at t = ±30                (CB Φ4.2, M3 Φ3.2)
 #   PCD-155 at t = ±77.5              (CB Φ4.2, M3 Φ3.2)
 # Note: square holes at (±15, ±15) are NOT on the X axis, so they don't appear
 # in section A-A.
 #
 # Material at each radius t (looking radially):
-#   |t| <= R_UBO=30           -> material from Z=0 to Z=9 (base + lower + upper)
-#   R_UBO=30 < |t| <= R_LBO=40 -> material from Z=0 to Z=5.5 (base + lower)
-#   R_LBO=40 < |t| < R_RBI=72.5 -> material from Z=0 to Z=3 (base only)
+#   |t| <= R_UBO=25           -> material from Z=0 to Z=9 (base + lower + upper)
+#   R_UBO=25 < |t| <= R_LBO=35 -> material from Z=0 to Z=5.5 (base + lower)
+#   R_LBO=35 < |t| < R_RBI=72.5 -> material from Z=0 to Z=3 (base only)
 #   R_RBI=72.5 <= |t| <= R_BO=82.5 -> material at Z=0..3 (base) AND Z=3..5.5 (rim boss)
 #                                     (the rim boss sits on top of the base in this band)
 #
@@ -501,10 +503,10 @@ line(*sa(-R_RBO, Z2), *sa(-R_RBO, Z0), GEOM_W)
 #   M3 (diam = M3) from z=CB_DEPTH to whatever material top exists
 # In our section the material top at hole t0 is:
 #   diamond hole at t=±6:   top is Z3=9 (upper boss covers it)
-#   PCD-70 hole at t=±35:   top is Z2=5.5 (lower boss covers it; upper boss outer R=30 < 35)
+#   PCD-60 hole at t=±30:   top is Z2=5.5 (lower boss covers it; upper boss outer R=25 < 30)
 #   PCD-155 hole at t=±77.5: top is Z2=5.5 (rim boss covers it; 72.5..82.5 band)
 # The CB cuts the bottom face from Z=0 up to Z=4 (so 1mm into the material above
-# the base at t=±6 and t=±35 and t=±77.5). The M3 then goes from Z=4 to the
+# the base at t=±6 and t=±30 and t=±77.5). The M3 then goes from Z=4 to the
 # top of the material at that radius.
 
 def hole_top_z(t0):
@@ -755,7 +757,7 @@ text(dc_cx, dc_cy - Z3 * DC_SCALE - DC_DIM_O - 5,
 DC_HALF_BASE = 7.0
 DC_HALF_CB   = CB_B_DIAM / 2   # 2.1
 DC_HALF_M3   = M3_DIAM / 2     # 1.6
-# Show the material spanning Z=0..Z2=5.5 (base + lower boss, typical of PCD-70
+# Show the material spanning Z=0..Z2=5.5 (base + lower boss, typical of PCD-60
 # and PCD-155 hole positions). For the diamond case the top extends to Z3,
 # but that's covered by Detail B.
 dc_z_top = Z2     # 5.5
@@ -814,7 +816,7 @@ text(tb_x + 4, tb_y + 14.5,
      f"24×Φ{M3_DIAM:g} + Φ{CB_A_DIAM:g}/Φ{CB_B_DIAM:g}×{CB_DEPTH:g} 沉孔 + 中心 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g} 沉孔 (底)  /  单位 mm",
      size=TXT_I, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 14.5,
-     "2026-06-04  /  POV3D / models / hub_disc / hub_disc.stl",
+     "2026-07-21  /  POV3D / models / hub_disc / hub_disc.stl",
      size=TXT_I, anchor="end")
 
 out = Path(__file__).with_name("hub_disc_drawing.pdf")

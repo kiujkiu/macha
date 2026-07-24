@@ -1,7 +1,18 @@
 """
 POV3D 装配 v3  (assembly_v3)  ——  双面屏配置 (2026-07-10)
 
-与 assembly_v2 的区别 (仅屏幕组件 + 顶帽, 其余全部沿用 v2):
+2026-07-22 大改: 同步 v2.1 的转子重构 + 换 13.4 厚新屏 (边缘孔固定):
+  · hub_disc 正放 + rim_ring 翻转当承载面 (42.2), mlkpai_carrier_disc 取消
+  · pi2hub 组 +135°; wifi_shell 放平倒扣定稿位; 光电暂删 (等大改)
+  · 柱 ±100 + frame_A/B_v2_1 (v2.1 短臂版)
+  · 新屏 150×168.75×13.4 (LED 面=外侧, 边缘孔固定: 上下边各 3×M3 @64,
+    距 LED 面 6.6, 同 screen_solder_jig 定位孔) —— LED 面 ±16.4
+  · 屏幕组 (板/龙门/屏/顶帽) 整体转 V3_SCR_ROT=-45°: 4 脚落 22.5/67.5/
+    202.5/247.5 环孔 (同 v2.1 用孔), 避开 wifi 壳 (不转则塔 A 扎进壳)
+  ⚠ screen_plate_v3 / gantry_v3 / top_cap_v3 为旧 7.27 屏设计的占位件,
+    待按边缘孔固定方案重做 (cap 腿孔与舌孔现差 3.5)。
+
+与 assembly_v2 的区别 (原始 v3 设计, 仅屏幕组件 + 顶帽):
   1. **双面屏, 背靠背对称**: screen_plate_v3 居中在轴平面 (X -3..+3),
      两块 150×169×7.27 屏分别贴板两面 —— 前屏 X -10.27..-3 (LED 面 -10.27
      朝 -X), 后屏 X +3..+10.27 (LED 面 +10.27 朝 +X)。LED 面对称 ±10.27。
@@ -95,29 +106,32 @@ parts.append(("mounting_flange", mf))
 motor = m3d.Manifold.cylinder(MOTOR_H, MOTOR_D/2, MOTOR_D/2, 64, False).translate((0, 0, MOTOR_Z0))
 parts.append(("motor (placeholder)", mesh_tris(motor)))
 
-# 4) 转子: hub_disc 翻转嵌进 rim_ring, 两者同层 31.7..40.7 (组合高 9)
-hub = read_stl(MODELS / "hub_disc/hub_disc.stl")
-hub[..., 1] = -hub[..., 1]
-hub[..., 2] = ROTOR_Z0 + 9.0 - hub[..., 2]
-hub = hub[:, ::-1, :].copy()
+# 4) 转子 (2026-07-21 重构, 同 v2.1): hub_disc 正放贴电机 (31.7..40.7, 塔 Φ50/
+#    下凸台 Φ70), rim_ring 翻转扣上 (托盘面朝上当承载面, 顶 42.2; 内凸台环
+#    OD80/ID70 落 hub 底板顶兼径向定心)。电机螺丝从 ring ID50 孔下去装。
+hub = read_stl(MODELS / "hub_disc/hub_disc.stl") + np.array([0.0, 0.0, ROTOR_Z0])
 hub = rot_z(hub, ROTOR_ROT)
 parts.append(("hub_disc (rotor, 下)", hub))
 
-RING_Z0 = ROTOR_Z0                        # 31.7 : 与 hub 同层嵌套
-ring = read_stl(MODELS / "rim_ring/rim_ring.stl") + np.array([0.0, 0.0, RING_Z0])
+RING_TOP = ROTOR_Z0 + 10.5                # 42.2 : 托盘顶 = 转子承载面
+ring = read_stl(MODELS / "rim_ring/rim_ring.stl")
+ring[..., 1] = -ring[..., 1]
+ring[..., 2] = RING_TOP - ring[..., 2]
 ring = rot_z(ring, ROTOR_ROT)
-parts.append(("rim_ring (rotor, 上)", ring))
+parts.append(("rim_ring (rotor, 上/承载盘)", ring))
 
-# 5) 承载盘 mlkpai_carrier_disc: 坐在 rim_ring 顶 (40.7), Φ170×5
-DISC_Z0 = RING_Z0 + 9.0                    # 40.7
-DISC_TOP = DISC_Z0 + 5.0                   # 45.7 盘面
-disc = read_stl(MODELS / "mlkpai_carrier_disc/mlkpai_carrier_disc.stl") + np.array([0.0, 0.0, DISC_Z0])
-disc = rot_z(disc, ROTOR_ROT)
-parts.append(("mlkpai_carrier_disc", disc))
+# 5) mlkpai_carrier_disc 已取消 (2026-07-20) — 功能并入 rim_ring
+DISC_TOP = RING_TOP                        # 42.2 : 承载面
 
-# 6) pi2hub75e (下板): 7× M3 尼龙垫柱 ~5 高, 落座面 = 盘面+5 = 51.7 (同 v2)
+# 6) pi2hub75e (下板): 7× M3 尼龙垫柱 ~5 高, 落座面 = 承载面+5 = 47.2 (同 v2.1)
 PCB_ROT = 90.0
 PCB_OFF = (-10.0, 0.0)
+# 2026-07-21: 7 孔整组绕圆心逆时针 135° (俯视), 折进 PCB_ROT/PCB_OFF (同 v2.1)
+PI_ROT_EXTRA = 135.0
+_e = math.radians(PI_ROT_EXTRA)
+PCB_OFF = (PCB_OFF[0]*math.cos(_e) - PCB_OFF[1]*math.sin(_e),
+           PCB_OFF[0]*math.sin(_e) + PCB_OFF[1]*math.cos(_e))
+PCB_ROT = PCB_ROT + PI_ROT_EXTRA
 _r = math.radians(ROTOR_ROT)
 PCB_OFF_W = np.array([PCB_OFF[0]*math.cos(_r) - PCB_OFF[1]*math.sin(_r),
                       PCB_OFF[0]*math.sin(_r) + PCB_OFF[1]*math.cos(_r), 0.0])
@@ -141,97 +155,123 @@ PCB_Z0 = PI_TOP + NYLON_H                   # 61.8
 board = read_stl(MODELS / "mlkpai_board/mlkpai_board.stl") + np.array([0.0, 0.0, PCB_Z0])
 board = rot_z(board, ROTOR_ROT + PCB_ROT) + PCB_OFF_W
 parts.append(("mlkpai_board (上)", board))
-print(f"disc {DISC_Z0:.1f}..{DISC_TOP:.1f}; 垫柱顶 {BOSS_TOP:.1f}; pi2hub {BOSS_TOP:.1f}..{PI_TOP:.1f}; "
+print(f"承载面(rim_ring 托盘顶) {DISC_TOP:.1f}; 垫柱顶 {BOSS_TOP:.1f}; pi2hub {BOSS_TOP:.1f}..{PI_TOP:.1f}; "
       f"尼龙柱 {PI_TOP:.1f}..{PCB_Z0:.1f}; 米联派底 {PCB_Z0:.1f}")
 
-# 9) l_bracket_v3 屏幕支架: gantry_v3 ×2 对角放 (件A 脚+Y 塔-X侧; 件B = 绕 Z
-#    转 180°, 脚-Y 塔+X侧 → 180° 旋转对称) + screen_plate_v3 (176×214×6 居中
-#    X -3..+3, 顶部凸舌到 280.7)。脚借盘 R77.5 环孔 (45° 阵列, 转 180° 仍对孔)。
-gA = read_stl(ROOT / "models/l_bracket_v3/gantry_v3.stl") + np.array([0.0, 0.0, DISC_TOP])
-gA = rot_z(gA, ROTOR_ROT)
-parts.append(("gantry_v3 A (+Y, 塔-X)", gA))
-gB = read_stl(ROOT / "models/l_bracket_v3/gantry_v3.stl") + np.array([0.0, 0.0, DISC_TOP])
-gB = rot_z(gB, ROTOR_ROT + 180.0)
-parts.append(("gantry_v3 B (-Y, 塔+X)", gB))
-sp = read_stl(ROOT / "models/l_bracket_v3/screen_plate_v3.stl") + np.array([0.0, 0.0, DISC_TOP])
-sp = rot_z(sp, ROTOR_ROT)
-parts.append(("screen_plate_v3", sp))
+# 9) bottom_portal_v3 底部门形梁 (2026-07-22, 取代 gantry_v3×2 + screen_plate_v3;
+#    中央板取消): 2 脚 (4 孔借盘环孔) + 2 腿 + 横梁 (顶 Z50 = 屏底, 6×M3×16 从
+#    下往上拧进双屏底边孔)。整组 V3_SCR_ROT=-45°: 4 脚落 22.5/67.5/202.5/247.5
+#    环孔 (同 v2.1 用孔, 避开 H1-H4 头沉), 腿避开 wifi 壳 (脚内缘与壳 NE 边平行
+#    隙 ~2.2)。
+# 2026-07-22 深夜终版 (用户分步定稿): 底部 = portal_tee_v3 ×2 (同件转 180°):
+# T 型 (底条 67×10×5 装转子两螺丝 [Φ7 工艺井过筋], 竖梃 5×10 到 Z50) +
+# 两端→梃顶大三角筋 (厚5) + 顶托内伸盖屏底 ±64 孔 (M3×12 经 Φ6.5 头窝井
+# 向上锁屏, 托下 45° 小筋); 屏每侧只锁 1 颗, 中央孔空置, 模组自身为梁。
+V3_SCR_ROT = -45.0
+te = read_stl(ROOT / "models/bottom_portal_v3/portal_tee_v3.stl") + np.array([0.0, 0.0, DISC_TOP])
+parts.append(("portal_tee A", rot_z(te.copy(), ROTOR_ROT + V3_SCR_ROT)))
+parts.append(("portal_tee B", rot_z(te.copy(), ROTOR_ROT + V3_SCR_ROT + 180.0)))
 
-# 10) 双屏 150×169×7.27 背靠背: 屏模块局部系 LED 面 X=0 朝 +X, 体 -7.27..0。
-#     后屏: 原样 +10.27 → 体 +3..+10.27, LED +10.27 朝 +X;
-#     前屏: 绕 Z 转 180° 再 -10.27 → 体 -10.27..-3, LED -10.27 朝 -X。
-#     下边沿 = 盘顶+50 (同 v2)。
-SCREEN_T = 7.27
-PLATE_HT = 3.0
-SCREEN_Z0 = DISC_TOP + 50.0                 # 95.7
-sc_raw = read_stl(MODELS / "screen_150x169/screen_150x169.stl")
-sc_b = sc_raw + np.array([PLATE_HT + SCREEN_T, 0.0, SCREEN_Z0])       # +3..+10.27
-sc_b = rot_z(sc_b, ROTOR_ROT)
-parts.append(("screen back (+X)", sc_b))
-sc_f = rot_z(sc_raw.copy(), 180.0) + np.array([-(PLATE_HT + SCREEN_T), 0.0, SCREEN_Z0])
-sc_f = rot_z(sc_f, ROTOR_ROT)               # -10.27..-3
-parts.append(("screen front (-X)", sc_f))
+# 10) 双面屏模组 (2026-07-22 深夜澄清: "两个屏幕一起" = 一体模组 13.4×150×
+#     168.75, LED 面 ±6.7 两外侧; 底/顶面各 3×M3 居中单排 @64)。孪生已居中,
+#     直接坐梁顶 (Z50 = 承载面+50), 随 V3_SCR_ROT。
+SCREEN_T = 13.4
+SCREEN_Z0 = DISC_TOP + 50.0                 # 92.2
+sc = read_stl(MODELS / "screen_150x169_t13/screen_150x169_t13.stl") \
+     + np.array([0.0, 0.0, SCREEN_Z0])
+sc = rot_z(sc, ROTOR_ROT + V3_SCR_ROT)
+parts.append(("dual_screen", sc))
 MLK_TOP = PCB_Z0 + 1.6 + 1.2                # 64.6 米联派板顶+针尾
 print(f"支架翼板底 {DISC_TOP+21.0:.1f} / 中央缺口顶(±60内) {DISC_TOP+50.0:.1f} (米联派顶 {MLK_TOP:.1f}); "
-      f"双屏 {SCREEN_Z0:.1f}..{SCREEN_Z0+169:.1f} (LED 面 X=±{PLATE_HT+SCREEN_T:.2f}); "
-      f"板顶舌 {DISC_TOP+213.5:.1f}..{DISC_TOP+235.0:.1f}")
+      f"双面屏模组 {SCREEN_Z0:.1f}..{SCREEN_Z0+168.75:.1f} (LED 面 X=±{SCREEN_T/2:.2f})")
 
-# 11) 光电同步 (同 v2): sensor_bracket_v2 + sensor_module 随转子; index_vane_v2 静止
-sb = read_stl(MODELS / "photo_sensor/sensor_bracket_v2.stl")
-sb = rot_z(sb, ROTOR_ROT)
-parts.append(("sensor_bracket_v2", sb))
+# 11) 光电同步 v3 (2026-07-23 大改: 搬到顶部轴心区, 整体尺寸最小化):
+#     sensor_module 平贴压条顶 (随转子): 模块局部 rotZ-90 后贴 (capX -3..20,
+#     capY -55..-35), 安装孔在条中线 (capX0, capY -38/-52), 梁线 (capX 17, capY -45) r_v≈48.1;
+#     2×M3 入压条 v5 的方螺母囚窝。静止挡光片 = vane_slider_v3 可调滑片
+#     (2026-07-24 终版: 刀片印长 50 装机剪短补偿架高), 锁 frame_B 45° 臂筋侧,
+#     刀尖调到 asm 280 (光轴 ~282.4, 叉顶 285.65 对筋底 290 留 4.35)。
 sm = read_stl(MODELS / "photo_sensor/sensor_module.stl")
-sm[..., 1] = -sm[..., 1]; sm[..., 2] = -sm[..., 2]      # 绕 X 转180 = 槽口朝下
-sm = sm[:, ::-1, :].copy()
-sm = sm + np.array([-98.0, 20.0, DISC_TOP])
-sm = rot_z(sm, ROTOR_ROT)
-parts.append(("sensor_module", sm))
-iv = read_stl(MODELS / "photo_sensor/index_vane_v2.stl")   # 静止, 不转
-parts.append(("index_vane_v2", iv))
+sm = sm[..., [1, 0, 2]] * np.array([1.0, -1.0, 1.0])   # rotZ-90: (x,y)->(y,-x)
+sm = sm + np.array([-3.0, -45.0, 267.95])   # 2026-07-23: 孔挪条中线 (capX0), 梁线 capX+17
+parts.append(("sensor_module", rot_z(sm, ROTOR_ROT + V3_SCR_ROT)))
+# (2026-07-23 曾长死在 frame_B 筋底; 2026-07-24 改独立滑片, 见 frame 段后。)
 
-# 12) USB WiFi 网卡 + 倒扣盒 (同 v2): 随转子
-for nm, f in [("wifi_box",        "usb_wifi/wifi_box.stl"),
-              ("usb_wifi_module", "usb_wifi/usb_wifi_module.stl")]:
-    w = read_stl(MODELS / f) + np.array([0.0, 0.0, DISC_TOP])
-    parts.append((nm, rot_z(w, ROTOR_ROT)))
+# 12) WiFi (同 v2.1 定稿): wifi_shell 倒扣罩 (开口/沿朝下) + 放平模块孪生,
+#     盒位 XC43 + 长边平移 -13, 随 135° 组转, 长边平行 pi2hub。
+WIFI_ROT_EXTRA = 135.0
+XC_WIFI, YC_WIFI = 43.0, -13.0
+WS_H, WS_W = 18.1, 46.4
+ws = read_stl(MODELS / "usb_wifi/wifi_shell.stl")
+ws = ws[..., [2, 1, 0]] * np.array([1.0, 1.0, -1.0])   # rotY(+90), det=+1
+ws[..., 0] += XC_WIFI - WS_W / 2
+ws[..., 1] += YC_WIFI
+ws[..., 2] += WS_H + DISC_TOP
+parts.append(("wifi_shell", rot_z(ws, ROTOR_ROT + WIFI_ROT_EXTRA)))
+wm = read_stl(MODELS / "usb_wifi/usb_wifi_module_flat.stl") + np.array([0.0, 0.0, DISC_TOP])
+parts.append(("usb_wifi_module", rot_z(wm, ROTOR_ROT + WIFI_ROT_EXTRA)))
 
-# 13) 顶部定心轴承: 柱 + frame_A/B_v2 沿用 v2; 转子侧换 top_cap_v3 ——
-#     对称一字帽 (板 X -65..+65, 双腿 X ±(3..7) Z 267..292.7 夹板顶凸舌,
-#     4×M3×18 @ (±22, Z{271,276.5}); 配重孔阵 ±X 两端各 19)。
-#     轴五金同 v2: M6×40 平头 (先装后夹舌) + Φ8×50 螺柱 + 双 688。
-CAPTOP_V3 = 292.7
-POST_H, POST_XY = 350.0, 125.0
+# 13) 顶部定心轴承: 柱 + frame_A/B_v2 沿用 v2; 转子侧 top_cap_v3_1 薄压条
+#     (2026-07-22: 用户"只连左右两个 M3 孔, 做薄" → 31.75 厚压梁块改 7 厚
+#     扁条 18×140, 底 260.95 = 屏顶, 顶 267.95)。
+#     轴五金: M6×20 平头 (底面 Φ13×2.7 头窝, 先装后压屏) + Φ8×30 螺柱 + 双 688。
+CAPTOP_V3 = 267.95
+# 2026-07-22: 柱内移 1 格 ±125 → ±100 + frame_A/B_v2_1 短臂版 (同 v2.1)
+# 2026-07-22: 帽变薄后五金按 1cm 分辨率重选最短 — 柱 300→280 (架臂底 280
+# 对条顶 267.95 留 12.05 ≥ 5), 轴承降至 283..288/291..296; 螺柱 Φ8×30
+# (267.95..297.95, 底坐条顶, 顶完整穿过上 688 顶 296), 螺丝 M6×20
+# (头 260.95..263.65, 杆到 280.95, 旋入螺柱 13)。整机 322.7 → 297.95。
+# 2026-07-23 光电大改配套: 柱 280→290 (+1cm, 光电叉顶 285.65 对臂底留 4.35),
+# 螺柱 Φ8×30→Φ8×40; 同日柱再内移 1 格 ±100→±75 (POST_R 106.07, frame 换 v3 短臂,
+# 转子 84.5 对柱内缘 102 留 17.6)。
+POST_H, POST_XY = 290.0, 75.0
 for px in (-POST_XY, POST_XY):
     for py in (-POST_XY, POST_XY):
         post = m3d.Manifold.cylinder(POST_H, 4.0, 4.0, 24, False).translate((px, py, 0.0))
         parts.append((f"post @({px:+.0f},{py:+.0f})", mesh_tris(post)))
-fa = read_stl(MODELS / "top_bearing/frame_A_v2.stl")
+FRAME_DIR = ROOT / "models/top_bearing_v3"
+fa = read_stl(FRAME_DIR / "frame_A_v3.stl")
 fa = rot_z(fa, 135.0)
 fa[..., 2] += POST_H
-parts.append(("frame_A_v2 (SW+NW)", fa))
-fb = read_stl(MODELS / "top_bearing/frame_B_v2.stl")     # 打印翻转姿态
+parts.append(("frame_A_v3 (SW+NW)", fa))
+fb = read_stl(FRAME_DIR / "frame_B_v3.stl")            # 打印翻转姿态
 fb[..., 1] = -fb[..., 1]
 fb[..., 2] = POST_H + 16.0 - fb[..., 2]
 fb = fb[:, ::-1, :].copy()
 fb = rot_z(fb, -45.0)
-parts.append(("frame_B_v2 (NE+SE)", fb))
-cap = read_stl(ROOT / "models/top_cap_v3/top_cap_v3.stl")  # 打印翻转姿态
+parts.append(("frame_B_v3 (NE+SE)", fb))
+# 挡光滑片 vane_slider_v3 (静止; 终版: 两件都圆孔, 调节=刀片印长50装机剪短):
+# 锁 frame_B ang=90 臂筋 (asm 45°) 侧面, M3×20+螺母 ×2 穿筋孔 (r45.2/51.4,
+# 居中 z4 = asm 294); 板 8 高填满筋侧 (底平筋底 290, 顶抵臂底 298), 装配用已剪短孪生 (刀尖 280)
+vs = read_stl(ROOT / "models/photo_sensor_v3/vane_slider_v3_asm.stl")
+vs = vs[..., [0, 2, 1]].copy()          # 打印姿态 (x,z,y-2) → 件系
+vs[..., 1] += 2.0
+vs = vs[:, ::-1, :]                     # 轴交换镜像 → 翻回绕向
+vs = rot_z(vs, 45.0)
+vs[..., 2] += 290.0
+parts.append(("vane_slider_v3", vs))
+# top_cap_v3_1 顶部薄压条 v3 (2026-07-22: 用户"做薄"):
+# 扁条 18×140×7 (底 260.95 = 屏顶, 压住双屏; 顶 267.95 = CAPTOP),
+# 2× 盘头 M3×12~14 经 Φ3.2 平面通孔拧进屏顶孔 (0,±64) (中央孔被轴占);
+# M6×20 平头藏底面 Φ13×2.7 头窝 (⚠ 先装 M6 再压屏), 头 260.95..263.65。
+cap = read_stl(ROOT / "models/top_cap_v3_1/top_cap_v3_1.stl")  # 打印翻转姿态
 cap[..., 1] = -cap[..., 1]
 cap[..., 2] = CAPTOP_V3 - cap[..., 2]
 cap = cap[:, ::-1, :].copy()
-cap = rot_z(cap, ROTOR_ROT)
-parts.append(("top_cap_v3 (rotor)", cap))
-scr = m3d.Manifold.cylinder(40.0, 3.0, 3.0, 32, False).translate((0, 0, 286.4))
-parts.append(("M6x40 screw (rotor)", mesh_tris(scr)))
-sto = m3d.Manifold.cylinder(50.0, 4.0, 4.0, 48, False).translate((0, 0, 316.4))
-parts.append(("standoff Φ8×50 (rotor)", mesh_tris(sto)))
-for bz, tag in ((353.0, "688 lower (frame_A)"), (361.0, "688 upper (frame_B)")):
+cap = rot_z(cap, ROTOR_ROT + V3_SCR_ROT)
+parts.append(("top_cap_v3_1 (rotor)", cap))
+scr = m3d.Manifold.cylinder(17.3, 3.0, 3.0, 32, False).translate((0, 0, 263.65))
+parts.append(("M6x20 screw (rotor)", mesh_tris(scr)))
+sto = m3d.Manifold.cylinder(40.0, 4.0, 4.0, 48, False).translate((0, 0, 267.95))
+parts.append(("standoff Φ8×40 (rotor)", mesh_tris(sto)))
+for bz, tag in ((POST_H + 3.0, "688 lower (frame_A)"), (POST_H + 11.0, "688 upper (frame_B)")):
     brg = (m3d.Manifold.cylinder(5.0, 8.0, 8.0, 64, False)
            - m3d.Manifold.cylinder(7.0, 4.0, 4.0, 64, False).translate((0, 0, -1.0)))
     parts.append((tag, mesh_tris(brg.translate((0.0, 0.0, bz)))))
-print(f"顶轴承: 柱顶 {POST_H:.0f}; 帽板 {CAPTOP_V3-9:.1f}..{CAPTOP_V3:.1f} "
-      f"(帽腿底 267.0 / 屏顶 {SCREEN_Z0+169:.1f} / 舌顶 {DISC_TOP+235.0:.1f}); "
-      f"轴承 353..358 / 361..366; 螺柱 316.4..366.4")
+print(f"顶轴承 (柱±{POST_XY:.0f}×{POST_H:.0f}, POST_R 106.07): 柱顶 {POST_H:.0f}; 薄压条 260.95..{CAPTOP_V3:.2f} "
+      f"(底=屏顶 {SCREEN_Z0+168.75:.2f}); 架臂底-条顶隙 {POST_H-CAPTOP_V3:.2f}; "
+      f"轴承 {POST_H+3:.0f}..{POST_H+8:.0f} / {POST_H+11:.0f}..{POST_H+16:.0f}; "
+      f"螺柱 Φ8×30 @{CAPTOP_V3:.2f}..{CAPTOP_V3+30:.2f}, M6×20 杆到 280.95 (旋入 13)")
 
 # 报告 d100 4 脚落点 (应为 (±50,0)/(0,±50))
 _feet = [(-35.355, 35.355), (35.355, 35.355), (-35.355, -35.355), (35.355, -35.355)]
@@ -268,21 +308,20 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 COLORS = {"breadboard center-grid": "#333333", "baseplate_collar_d100": "#777777",
           "flange_disc": "#88aacc", "mounting_flange": "#cccc77",
           "motor (placeholder)": "#444444", "hub_disc (rotor, 下)": "#ccaa55",
-          "rim_ring (rotor, 上)": "#9999bb", "mlkpai_carrier_disc": "#9ccf9c",
+          "rim_ring (rotor, 上/承载盘)": "#9ccf9c",
           "pi2hub75e (下板)": "#2a7d2a", "nylon standoffs ×4": "#dddddd",
           "mlkpai_board (上)": "#e03020",
-          "gantry_v3 A (+Y, 塔-X)": "#aa6622", "gantry_v3 B (-Y, 塔+X)": "#aa6622",
-          "screen_plate_v3": "#cc8833",
-          "screen front (-X)": "#3355cc", "screen back (+X)": "#5533cc",
-          "sensor_bracket_v2": "#7744aa", "sensor_module": "#222266",
-          "index_vane_v2": "#aa2288", "wifi_box": "#22aaaa",
+          "portal_tee A": "#aa6622", "portal_tee B": "#aa6622",
+          "sensor_module": "#222266",
+          "dual_screen": "#3355cc",
+          "wifi_shell": "#22aaaa",
           "usb_wifi_module": "#111111",
-          "frame_A_v2 (SW+NW)": "#5577aa", "frame_B_v2 (NE+SE)": "#5577aa",
-          "top_cap_v3 (rotor)": "#cc8888", "M6x40 screw (rotor)": "#888888",
-          "standoff Φ8×50 (rotor)": "#888888",
-          "688 lower (frame_A)": "#999999", "688 upper (frame_B)": "#999999"}
-for px in (-125, 125):
-    for py in (-125, 125):
+          "frame_A_v3 (SW+NW)": "#5577aa", "frame_B_v3 (NE+SE)": "#5577aa",
+          "top_cap_v3_1 (rotor)": "#cc8888", "M6x20 screw (rotor)": "#888888",
+          "standoff Φ8×30 (rotor)": "#888888",
+          "vane_slider_v3": "#cc6644", "688 lower (frame_A)": "#999999", "688 upper (frame_B)": "#999999"}
+for px in (-75, 75):
+    for py in (-75, 75):
         COLORS[f"post @({px:+.0f},{py:+.0f})"] = "#666666"
 fig = plt.figure(figsize=(14, 7))
 for i, (elev, azim, title) in enumerate([(22, -60, "iso"), (89, -90, "top")]):

@@ -94,13 +94,13 @@ parts.append(("motor (placeholder)", mesh_tris(motor)))
 
 # 4) 转子 (2026-07-20 承载盘并入 rim_ring 后重排, 组合高 9→10.5):
 #    hub_disc 正放 —— Φ165 底板贴电机转子面 (31.7..34.7), 中心塔到 40.7;
-#    中心菱形沉孔朝上, 电机螺丝从 rim_ring 的 ID60 孔里下去装。
+#    中心菱形沉孔朝上, 电机螺丝从 rim_ring 的 ID50 孔里下去装 (2026-07-21 深夜: 凸台让渡, hub 塔 Φ60→50/下凸台 80→70, ring 中孔 60→50 + 内凸台环 OD80/ID70×2.5, 内圈8孔 R35→R30)。
 hub = read_stl(ROOT / "models/hub_disc/hub_disc.stl") + np.array([0.0, 0.0, ROTOR_Z0])
 hub = rot_z(hub, ROTOR_ROT)
 parts.append(("hub_disc (rotor, 下)", hub))
 
 #    rim_ring 翻转扣上 (托盘平面朝上当承载面, 外唇朝下包住 hub 外缘):
-#    托盘底坐在 hub 两圈共面支承台 (Φ80 凸台顶 + 外环凸台顶, 均 Z=37.2)。
+#    托盘底坐在 hub 两圈共面支承台 (Φ70 凸台顶 + 外环凸台顶, 均 Z=37.2), 自带内凸台环 OD80/ID70×2.5 落 hub 底板顶 (34.7) 兼径向定心。
 #    绕 X 转 180° = 先镜像 Y 再镜像 Z, 两次镜像 det=+1, 绕向不变, 不用翻三角。
 RING_TOP = ROTOR_Z0 + 10.5                # 42.2 : 托盘顶 = 转子承载面
 ring = read_stl(ROOT / "models/rim_ring/rim_ring.stl")
@@ -189,16 +189,26 @@ print(f"支架翼板底 {DISC_TOP+21.0:.1f} / 中央缺口顶(±60内) {DISC_TOP
 # 2026-07-21: 光电开关 (bracket + module + vane) 暂时删除 —— 后面要大改, 先不放。
 # (原 sensor_bracket_v2 / sensor_module / index_vane_v2 代码保留在 git 历史里。)
 
-# 12) USB WiFi 网卡 + 倒扣盒 (2026-07-09 第三版定稿): 模块侧立 (整块 14.5×40×70,
-#     天线反折在内, 14.5×70 面坐盘, 40 竖直), 插头朝 +Y (同米联派 J6)。倒扣五面盒
-#     壁 3, 借盘 4 环孔 4× M3×14; +Y 端壁母头窗 + 扎带槽。随转子。
-#     2026-07-21: 整组绕圆心逆时针 135° (跟 pi2hub 同步转, 避开干涉)。135°=3×45°
-#     把 ±22.5° 环孔映射到 112.5°/157.5° 环孔 -> 脚落现成孔, 不新增。
+# 12) WiFi 壳子 wifi_shell v1 (2026-07-21 晚, 替代旧 wifi_box+侧立模块): 侧开口
+#     五面盒倒扣 —— 开口面 + 双端沿朝下贴承载面, 罩住放平的网卡模块 (40×70 面
+#     贴盘, 14.5 高; 放平模块孪生待重建, 暂不画)。零件系 → 盘系: 绕 Y +90°
+#     ((x,y,z)→(z,y,−x)), 开口面落 Z0, footprint 中线挪到 XC_WIFI; 随 135° 组转
+#     后长边与 pi2hub 板边平行。外角 r=84.4 < R85。4× 沿孔 = 盘系局部
+#     (33.5,±43.3)/(58.5,±43.3) 再转 135° —— rim_ring 已开同位 4 孔
+#     (2026-07-21 晚, Φ3.2 通 + Φ4.2×4.5 唇侧铜螺母沉孔, M3×8 上装)。
 WIFI_ROT_EXTRA = 135.0
-for nm, f in [("wifi_box",        "models/usb_wifi/wifi_box.stl"),
-              ("usb_wifi_module", "models/usb_wifi/usb_wifi_module.stl")]:
-    w = read_stl(ROOT / f) + np.array([0.0, 0.0, DISC_TOP])
-    parts.append((nm, rot_z(w, ROTOR_ROT + WIFI_ROT_EXTRA)))
+XC_WIFI, YC_WIFI = 43.0, -13.0   # 2026-07-22 定稿: 靠 pi2hub 3mm + 沿长边平移 -13 (-15→-13: 消除沉孔侵内凸台环)
+WS_H, WS_W = 18.1, 46.4        # 壳深 (倒扣后高) / footprint 宽 (同 build_shell.py)
+ws = read_stl(ROOT / "models/usb_wifi/wifi_shell.stl")
+ws = ws[..., [2, 1, 0]] * np.array([1.0, 1.0, -1.0])   # rotY(+90), det=+1 不用翻三角
+ws[..., 0] += XC_WIFI - WS_W / 2                       # footprint X 19.8..66.2
+ws[..., 1] += YC_WIFI                                  # 长边平移 -13 (孔对 rim_ring 定稿单组)
+ws[..., 2] += WS_H + DISC_TOP                          # 开口/沿贴承载面, 顶 +18.1
+parts.append(("wifi_shell", rot_z(ws, ROTOR_ROT + WIFI_ROT_EXTRA)))
+# 放平模块孪生 (2026-07-22, build_module_flat.py: 盘系局部最终位, 口轴线离盘 7.25)
+wm = read_stl(ROOT / "models/usb_wifi/usb_wifi_module_flat.stl") \
+     + np.array([0.0, 0.0, DISC_TOP])
+parts.append(("usb_wifi_module", rot_z(wm, ROTOR_ROT + WIFI_ROT_EXTRA)))
 
 # 13) 顶部定心轴承 v2 (2026-07-09, models/top_bearing/ *_v2): 结构同 v1 —
 #     静止侧: 4×Φ8×350 M6螺纹柱 @(±125,±125) (R176.78, v2 网格最外角孔),
@@ -283,7 +293,7 @@ COLORS = {"breadboard center-grid": "#333333", "baseplate_collar_d100": "#777777
           "mlkpai_board (上)": "#e03020", "gantry_base A+B": "#aa6622",
           "screen_plate": "#cc8833", "screen_150x169": "#3355cc",
           "sensor_bracket_v2": "#7744aa", "sensor_module": "#222266",
-          "index_vane_v2": "#aa2288", "wifi_box": "#22aaaa",
+          "index_vane_v2": "#aa2288", "wifi_shell": "#22aaaa",
           "usb_wifi_module": "#111111",
           "frame_A_v2 (SW+NW)": "#5577aa", "frame_B_v2 (NE+SE)": "#5577aa",
           "top_cap_v2 (rotor)": "#cc8888", "M6x40 screw (rotor)": "#888888",

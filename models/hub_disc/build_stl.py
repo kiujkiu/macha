@@ -4,18 +4,19 @@ Build POV 3D hub disc STL using manifold3d.
 Geometry (all mm, axis along +Z, base bottom at Z=0):
 
   - Base disc (solid):     Φ165 × thickness 3        (Z = 0 .. 3)
-  - Lower center boss:     Φ80  × 2.5                (Z = 3 .. 5.5)  solid
-  - Upper center boss:     Φ60  × 3.5                (Z = 5.5 .. 9)  solid
+  - Lower center boss:     Φ70  × 2.5                (Z = 3 .. 5.5)  solid
+  - Upper center boss:     Φ50  × 3.5                (Z = 5.5 .. 9)  solid
+    (2026-07-21 深夜: 80/60 -> 70/50, 让渡给 rim_ring 内凸台环 OD80/ID70)
   - Outer rim boss:        ID 145 / OD 165 × 2.5     (Z = 3 .. 5.5)  annular,
                            full 360° (5° cutout removed 2026-07-20 用户)
 
   - 24 holes (axes along Z, Φ3.2 through):
       A — center diamond (4 holes): rhombus diagonals 12 & 15
           positions (±6, 0), (0, ±7.5); CB Φ7 × 4 mm deep,
-          opens from the TOP face (Z = 5 .. 9, recessed into upper Φ60 boss)
+          opens from the TOP face (Z = 5 .. 9, recessed into upper Φ50 boss)
       B — center square   (4 holes): corners of 30×30 square (±15, ±15)
           CB Φ4.2 × 4 mm deep, opens from the BOTTOM face (Z = 0 .. 4)
-      C — inner PCD ring  (8 holes): PCD Φ70 (R=35), rotated by
+      C — inner PCD ring  (8 holes): PCD Φ60 (R=30, 2026-07-21), rotated by
           RING_HOLE_ROTATION (default 22.5° CCW)
           CB Φ4.2 × 4.5 mm deep (4→4.5, 2026-07-14), BOTTOM face (Z = 0 .. 4.5)
       D — outer PCD ring  (8 holes): PCD Φ155 (R=77.5), rotated by
@@ -25,7 +26,7 @@ Geometry (all mm, axis along +Z, base bottom at Z=0):
   - For the bottom-opening CBs (B/C/D): depth 4 mm > base thickness 3 mm,
     so the CB cuts 3 mm of base plus 1 mm into whatever sits above.
   - For the top-opening diamond CBs: 4 mm depth is fully inside the upper
-    Φ60 boss (3.5 mm) plus 0.5 mm into the lower Φ80 boss below.
+    Φ50 boss (3.5 mm) plus 0.5 mm into the lower Φ70 boss below.
 
 Final orientation: base bottom at Z=0, top of upper center boss at Z=9.
 Print orientation: flat on bed, base down.
@@ -41,10 +42,13 @@ import manifold3d as m3d
 BASE_OD = 165.0
 BASE_T  = 3.0      # Z = 0 .. 3
 
-LOWER_BOSS_D = 80.0
+# 2026-07-21 深夜 (中央凸台一部分让渡给 rim_ring 的新内凸台环 OD80/ID70x2.5):
+# 下凸台 80->70, 上凸台 60->50; rim_ring 中孔 ID 60->50 同步, 径向定心改由
+# ring 内凸台环 ID70 套本件 Phi70 下凸台承担。
+LOWER_BOSS_D = 70.0
 LOWER_BOSS_T = 2.5   # Z = 3 .. 5.5
 
-UPPER_BOSS_D = 60.0
+UPPER_BOSS_D = 50.0
 UPPER_BOSS_T = 3.5   # Z = 5.5 .. 9
 
 RIM_BOSS_ID = 145.0
@@ -91,8 +95,8 @@ PATTERN_B = [( SQUARE_SIDE/2,  SQUARE_SIDE/2),
              ( SQUARE_SIDE/2, -SQUARE_SIDE/2),
              (-SQUARE_SIDE/2, -SQUARE_SIDE/2)]
 
-# Pattern C — inner PCD ring Φ70 (8 holes), rotated by RING_HOLE_ROTATION
-INNER_PCD_R = 35.0    # Φ70
+# Pattern C — inner PCD ring Φ60 (8 holes), rotated by RING_HOLE_ROTATION
+INNER_PCD_R = 30.0    # Φ60 (2026-07-21 深夜: 35->30, 与 rim_ring 同步)
 PATTERN_C = [(INNER_PCD_R * math.cos(math.radians(k * 360.0 / 8 + RING_HOLE_ROTATION)),
               INNER_PCD_R * math.sin(math.radians(k * 360.0 / 8 + RING_HOLE_ROTATION)))
              for k in range(8)]

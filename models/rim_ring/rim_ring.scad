@@ -1,114 +1,61 @@
-// POV 3D rim_ring - parametric OpenSCAD source.
-//
-// Geometry (all mm, axis along +Z, base bottom at Z=0; CCW positive angles,
-// 0 deg = +X axis):
-//
-//   Feature 1 - Base annulus:
-//       ID 60, OD 170, height 3.5  (Z = 0 .. 3.5)
-//       Notch cutout: remove the band r > 40 (Phi > 80),
-//                     angles -45 deg .. -40 deg,
-//                     Z = 1.5 .. 3.5  (notch depth 2mm)
-//
-//   Feature 2 - 16 Phi3.2 M3 through-holes:
-//       PCD Phi70  x 8 holes  (R = 35)
-//       PCD Phi155 x 8 holes  (R = 77.5)
-//       angles = 22.5 + k * 45  for k = 0..7
-//
-//   Feature 3 - Outer rim boss:
-//       ID 165, OD 170 (2.5 mm wall), height 5.5  (Z = 3.5 .. 9.0)
-//       Two angular cutouts (boss only):
-//           -5 deg .. 0 deg
-//           -45 deg .. -40 deg
+// rim_ring — 外圈托盘环 v3 (与 build_stl.py 同参, 2026-07-22 定稿几何)。
+// 零件系: Z0 = 托盘承载面 (装配绕 X 翻转后朝上), Z5 = 唇侧面, 总高 10.5。
+// 2026-07-20/21/22: 承载盘并入 (7 pi2hub 孔), 中孔 ID60->50, 内圈 8 孔 R35->30,
+// 内凸台环 OD80/ID70x2.5 (唇侧, 落 hub 底板顶兼径向定心), 挖槽 R40..61,
+// wifi 定稿单组 4 沿孔 (盒 XC43 + 长边平移-13; -15→-13 消除沉孔侵内凸台环), 4 环孔头沉孔 Φ7.5x2.0 (承载面侧, R30+R77.5 @202.5/247.5)。
+// 孔位坐标由 build_stl.py 公式导出 (改参数请以它为准再同步这里)。
 
-// ===== Parameters =====
-BASE_ID = 60.0;
-BASE_OD = 170.0;
-BASE_H  = 3.5;
+base_id  = 50;   base_od = 170;  base_h = 5;      // 托盘环
+rim_id   = 165;  rim_od  = 170;  rim_h  = 5.5;    // 外唇 Z5..10.5 (完整整圈)
+iboss_od = 80;   iboss_id = 70;  iboss_h = 2.5;   // 内凸台环 (唇侧 Z5..7.5)
+notch_r0 = 40;   notch_r1 = 61;                   // 扇形挖槽 R40..61
+notch_a0 = -45;  notch_a1 = -40; notch_deep = 2;  // -45..-40 deg, 唇侧深 2 (Z3..5)
+m3 = 3.2;  inner_pcd_r = 30;  outer_pcd_r = 77.5; // 16 环孔 PCD Φ60 + Φ155
+insert_d = 4.2;  insert_deep = 4.5;               // 铜螺母沉孔 (唇侧往下, 台肩 0.5)
+head_cb_d = 7.5; head_cb_deep = 2.0;              // 4 环孔头沉孔 (承载面侧, 内圈+外圈)
+head_cb_angles = [202.5, 247.5];                  // wifi 角落 4 颗锁紧螺丝 (内圈 2 在模块底下, 外圈 2 挨盒东侧)
+extra_d = 4;                                      // 2 Φ4 通孔
+extra_polar = [[-10, 72], [-42.5, 56]];           // (deg, R)
+pi_holes = [[71.418,4.95],[38.184,38.184],[4.95,71.418],[52.679,-3.182],
+            [-3.182,52.679],[17.324,-38.537],[-38.537,17.324]];      // 7 pi2hub
+wifi_holes = [[-42.992,-0.141],[18.243,-61.377],[-60.67,-17.819],[0.566,-79.055]]; // 4 wifi (XC43, -13)
 
-NOTCH_R_MIN = 40.0;
-NOTCH_A_S   = -45.0;
-NOTCH_A_E   = -40.0;
-NOTCH_Z_S   = 1.5;
-NOTCH_Z_E   = BASE_H;
-
-RIM_ID = 165.0;
-RIM_OD = 170.0;
-RIM_H  = 5.5;
-
-RIM_CUT1_A_S = -5.0;
-RIM_CUT1_A_E =  0.0;
-RIM_CUT2_A_S = -45.0;
-RIM_CUT2_A_E = -40.0;
-
-TOTAL_H = BASE_H + RIM_H;   // 9.0
-
-M3_DIAM     = 3.2;
-INNER_PCD_R = 35.0;          // Phi 70
-OUTER_PCD_R = 77.5;          // Phi 155
-
-$fn = 192;
-
-// ===== Helpers =====
-module annulus(z0, h, r_in, r_out) {
-    translate([0, 0, z0])
-        difference() {
-            cylinder(h = h, r = r_out);
-            translate([0, 0, -1])
-                cylinder(h = h + 2, r = r_in);
-        }
+module ann(z0, h, r_in, r_out){
+  translate([0,0,z0]) difference(){
+    cylinder(h=h, r=r_out, $fn=240);
+    translate([0,0,-1]) cylinder(h=h+2, r=r_in, $fn=240);
+  }
+}
+module thru(x, y, d=m3){ translate([x,y,-1]) cylinder(h=12.5, d=d, $fn=32); }
+module insert_pocket(x, y){                       // 唇侧 Z5 往下 4.5 (占 Z0.5..5, +1 溢出)
+  translate([x,y,base_h-insert_deep]) cylinder(h=insert_deep+1, d=insert_d, $fn=32);
 }
 
-// Pie wedge from origin sweeping a_start..a_end (deg), radius r,
-// extruded h, starting at Z=z0.
-module wedge(a_start, a_end, r, h, z0, n_seg = 24) {
-    translate([0, 0, z0])
-        linear_extrude(height = h)
-            polygon(points = concat(
-                [[0, 0]],
-                [ for (i = [0 : n_seg])
-                    [ r * cos(a_start + i * (a_end - a_start) / n_seg),
-                      r * sin(a_start + i * (a_end - a_start) / n_seg) ] ]
-            ));
-}
-
-// Through-hole at (x, y)
-module through_hole(x, y) {
-    translate([x, y, -1])
-        cylinder(h = TOTAL_H + 2, r = M3_DIAM / 2);
-}
-
-// ===== Assembly =====
-difference() {
-    union() {
-        // Base annulus with notch
-        difference() {
-            annulus(0, BASE_H, BASE_ID / 2, BASE_OD / 2);
-            // Notch: wedge intersected with outer-band annulus
-            intersection() {
-                wedge(NOTCH_A_S, NOTCH_A_E, BASE_OD / 2 + 2,
-                      NOTCH_Z_E - NOTCH_Z_S + 0.4, NOTCH_Z_S - 0.2);
-                annulus(NOTCH_Z_S - 0.2, NOTCH_Z_E - NOTCH_Z_S + 0.4,
-                        NOTCH_R_MIN, BASE_OD / 2 + 1);
-            }
-        }
-
-        // Outer rim boss with two angular cutouts
-        difference() {
-            annulus(BASE_H, RIM_H, RIM_ID / 2, RIM_OD / 2);
-            wedge(RIM_CUT1_A_S, RIM_CUT1_A_E, RIM_OD / 2 + 2,
-                  RIM_H + 0.4, BASE_H - 0.2);
-            wedge(RIM_CUT2_A_S, RIM_CUT2_A_E, RIM_OD / 2 + 2,
-                  RIM_H + 0.4, BASE_H - 0.2);
-        }
+difference(){
+  union(){
+    ann(0, base_h, base_id/2, base_od/2);         // 托盘环
+    ann(base_h, rim_h, rim_id/2, rim_od/2);       // 外唇
+    ann(base_h, iboss_h, iboss_id/2, iboss_od/2); // 内凸台环
+  }
+  // 扇形挖槽 (唇侧面往下 2)
+  translate([0,0,base_h-notch_deep]) linear_extrude(notch_deep+1)
+    intersection(){
+      difference(){ circle(r=notch_r1, $fn=240); circle(r=notch_r0, $fn=240); }
+      polygon([[0,0], for(a=[notch_a0:0.5:notch_a1]) [100*cos(a),100*sin(a)]]);
     }
-
-    // 16 Phi3.2 through-holes (8 on PCD70, 8 on PCD155),
-    // angles = 22.5 + k*45 for k=0..7
-    for (k = [0 : 7]) {
-        a = 22.5 + k * 45;
-        // Inner PCD Phi70
-        through_hole(INNER_PCD_R * cos(a), INNER_PCD_R * sin(a));
-        // Outer PCD Phi155
-        through_hole(OUTER_PCD_R * cos(a), OUTER_PCD_R * sin(a));
-    }
+  // 16 环孔 (22.5 + k*45)
+  for(k=[0:7]){
+    a = 22.5 + k*45;
+    thru(inner_pcd_r*cos(a), inner_pcd_r*sin(a));
+    thru(outer_pcd_r*cos(a), outer_pcd_r*sin(a));
+  }
+  // 4 环孔头沉孔 (承载面 Z0 侧, 内圈 + 外圈)
+  for(a=head_cb_angles) for(r=[inner_pcd_r, outer_pcd_r])
+    translate([r*cos(a), r*sin(a), -1])
+      cylinder(h=head_cb_deep+1, d=head_cb_d, $fn=48);
+  // 7 pi2hub 孔 + 4 wifi 沿孔 (Φ3.2 通 + 铜螺母沉孔)
+  for(p=pi_holes){ thru(p[0],p[1]); insert_pocket(p[0],p[1]); }
+  for(p=wifi_holes){ thru(p[0],p[1]); insert_pocket(p[0],p[1]); }
+  // 2 Φ4 通孔
+  for(p=extra_polar) thru(p[1]*cos(p[0]), p[1]*sin(p[0]), extra_d);
 }
