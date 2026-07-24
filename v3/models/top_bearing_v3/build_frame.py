@@ -83,9 +83,10 @@ frame_a = frame_piece(upper=False)                 # print as built
 frame_b = frame_piece(upper=True)
 # ===== 光电挡光滑片安装孔 (2026-07-24 终版, 用户: 两件都普通 M3 圆孔不开槽,
 # 高度调节改为刀片印长 5cm 装机剪裁): frame_B ang=90 臂筋 (asm 45°) 上
-# 2×Φ3.2 沿 X 贯穿圆孔, 居中在筋 8 高的中点 z4 (asm 294) @ y 45.2 / 51.4;
+# 2×Φ3.2 沿 X 贯穿圆孔, 居中在筋 8 高的中点 z4 (asm 294) @ y 43.3 / 53.3
+# (2026-07-24 五改, 用户: 孔距 1cm, 对称于刀片中心 r48.3);
 # M3×20+螺母 ×2 把滑片 (vane_slider_v3) 夹在侧面。
-VANE_BOLT_RS, VANE_BOLT_Z = (45.2, 51.4), 4.0
+VANE_BOLT_RS, VANE_BOLT_Z = (43.3, 53.3), 4.0
 for br in VANE_BOLT_RS:
     h = m3d.Manifold.cylinder(RIB_W + 2, M3_TIGHT/2, M3_TIGHT/2, 24, False)
     frame_b = frame_b - h.rotate((0, 90, 0)).translate((-RIB_W/2 - 1, br, VANE_BOLT_Z))
