@@ -14,7 +14,8 @@ from build_shell import (CAV_X, CAV_Y, CAV_Z, WALL, IX0, IX1, IY0, IY1,
                          IZ0, IZ1, OX0, OX1, OY0, OY1, OZ0, OZ1,
                          WIN_W, WIN_H, WIN_XC, WIN_ZC,
                          FLG_L, FLG_T, FLG_X0, FLG_Y1, M3_D, HOLE_YC, HOLE_CC,
-                         HOLE_ZS, GUS_T, GUS_ARM, GUS_ZS)
+                         HOLE_ZS, GUS_T, GUS_ARM, GUS_ZS,
+                         TRIM_R, TRIM_CX_Z, TRIM_CY_Y)
 
 FONT = "/mnt/c/Windows/Fonts/simhei.ttf"
 GEOM_W, DIM_W, EXT_W_, HID_W = 0.50, 0.20, 0.20, 0.30
@@ -110,6 +111,7 @@ pdf = new_pdf(); h = mk_helpers(pdf)
 h['frame']("POV 3D — wifi_shell 新 WiFi 壳子 v1 (侧开口五面盒 + 双端沿)",
     "内腔 15.1×70.6×40.4 / 壁 3 / 开口面 = +X 侧 70.6×40.4 (无壁) / +Y 端壁出口窗 10.7×19.1 / "
     "±Y 端沿外伸 10×厚 3 (X15.1..18.1, 与开口面共面) 各 2×Φ3.2 + 2 三角筋 2.5 厚 45° / "
+    f"2026-07-27 盘缘裁切: -Y 端角按 R{TRIM_R:g} 圆弧切齐 (弧心在零件系 y={TRIM_CY_Y:g}, z=-{TRIM_CX_Z:g} = 转子轴), 见侧视图 / "
     "基准 = 封闭壁外面 X0 + 外底面 Z0 + Y 中面 / 安装 = 倒扣: 开口/沿朝下贴盘, 罩住放平的模块 (40×70 面贴盘, 14.5 高)  (GB 1st-angle, 2:1, mm)")
 
 S = 2.0
@@ -148,6 +150,26 @@ h['rect'](*sv(OY0,OZ1),*sv(OY1,OZ0))                       # 盒体外廓
 h['rect'](*sv(IY0,IZ1),*sv(IY1,IZ0))                       # 腔口 (开口面可见)
 h['rect'](*sv(-FLG_Y1,OZ1),*sv(OY0,OZ0))                   # -Y 沿 (后方, X0..3)
 h['rect'](*sv(OY1,OZ1),*sv(FLG_Y1,OZ0))                    # +Y 沿
+# --- 盘缘裁切弧 (2026-07-27): 本视图 = 零件系 Y-Z 面, 裁切圆柱轴平行 X
+#     → 在此视图里是真圆弧: (z+TRIM_CX_Z)^2 + (y-TRIM_CY_Y)^2 = TRIM_R^2
+import math as _m
+_zc = [OZ0 + (OZ1-OZ0)*i/120.0 for i in range(121)]
+_arc = []
+for _z in _zc:
+    _dx = TRIM_R**2 - (_z + TRIM_CX_Z)**2
+    if _dx <= 0:
+        continue
+    _y = TRIM_CY_Y - _m.sqrt(_dx)
+    if _y > -FLG_Y1:                    # 只画真正切到料的那一段
+        _arc.append(sv(_y, _z))
+if len(_arc) > 1:
+    pdf.set_line_width(GEOM_W)
+    for _i in range(len(_arc)-1):
+        pdf.line(_arc[_i][0], _arc[_i][1], _arc[_i+1][0], _arc[_i+1][1])
+    h['note'](_arc[len(_arc)//2][0], _arc[len(_arc)//2][1], sv(-FLG_Y1,0)[0]-6, 60.0,
+              f"盘缘裁切 R{TRIM_R:g} (弧心 = 转子轴, 零件系 y{TRIM_CY_Y:g}/z-{TRIM_CX_Z:g}) — "
+              f"切掉原 -Y 沿外角 (装配系 r90.22 -> 83.50, 收进 Φ170 盘缘内)", anchor="end")
+
 for z0 in GUS_ZS:                                          # 筋 Z 带 (沿后方 X5.1..15.1, 隐藏)
     h['drect'](*sv(-FLG_Y1,z0+GUS_T),*sv(OY0,z0))
     h['drect'](*sv(OY1,z0+GUS_T),*sv(FLG_Y1,z0))
@@ -186,8 +208,8 @@ h['tblock']("POV 3D 结构件 — wifi_shell 新 WiFi 壳子 v1 (侧开口五面
     "投影 1st-angle / 比例 2:1 / 全平面通孔无详图",
     f"盒体 {OX1-OX0:g}×{OY1-OY0:g}×{OZ1-OZ0:g} (含沿总长 {2*FLG_Y1:g}) / 内腔 {CAV_X:g}×{CAV_Y:g}×{CAV_Z:g} / 壁 {WALL:g} / "
     f"开口 = +X 侧 / 窗 {WIN_W:g}×{WIN_H:g} @ (X{WIN_XC:g}, Z{WIN_ZC:g}) / 沿 {FLG_L:g}×{FLG_T:g} ×2 + 筋 {GUS_T:g} ×4 + "
-    f"4×Φ{M3_D:g} (距壁 5, c-c {HOLE_CC:g}) / 打印/安装姿态 = 倒扣 (开口/沿朝下) 零支撑 / PETG / mm",
-    "2026-07-21  /  POV3D / models / usb_wifi / wifi_shell.stl")
+    f"4×Φ{M3_D:g} (距壁 5, c-c {HOLE_CC:g}) / 盘缘裁切 R{TRIM_R:g} / 打印/安装姿态 = 倒扣 (开口/沿朝下) 零支撑 / PETG / mm",
+    "2026-07-27  /  POV3D / models / usb_wifi / wifi_shell.stl")
 
 out = Path(__file__).with_name("wifi_shell_drawing.pdf")
 try:

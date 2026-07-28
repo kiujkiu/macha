@@ -19,6 +19,7 @@ Y 对称 ±38.3。装配位/固定方式待定 (用户手动排), 先出几何�
 窗 10.7(此姿态竖直)×19.1(水平) 正对放平母头壳 10.3 高×18.7 宽。
 打印按安装姿态 (沿贴床), 筋 45° 零支撑。
 """
+import math
 import struct
 from pathlib import Path
 import numpy as np
@@ -61,6 +62,24 @@ HOLE_ZS = ((OZ1 - OZ0) / 2 - HOLE_CC / 2, (OZ1 - OZ0) / 2 + HOLE_CC / 2)  # 10.7
 GUS_T, GUS_ARM = 2.5, 10.0
 GUS_ZS = (0.0, OZ1 - GUS_T)              # 筋 Z 带: 0..2.5 / 43.9..46.4
 
+# ===== 盘缘裁切 (2026-07-27, 用户: "有个脚出来了, 要砍掉") =====
+# −Y 端沿的外角原本伸到盘系 r=90.22, 悬出 Φ170 承载盘缘 (R85) 5.2 —— 是全机
+# 唯一探出盘外的结构件; 加转子罩 (rotor_shroud_v3, 内壁 R82) 后更必须收回。
+# 裁法 = 在盘系里用一个 R_TRIM 圆柱把壳切齐 (圆柱轴 = 转子轴)。
+# 零件系→盘系映射 (见 assembly_v3 §12: rotY(+90) 倒扣 + XC/YC 平移):
+#     disc_X = z_part + (WIFI_XC − WS_W/2) = z_part + 19.8
+#     disc_Y = y_part + WIFI_YC            = y_part − 13
+# 组转 135° 只绕轴转, 不改半径, 故裁切只与上面两式有关。
+# R_TRIM 取值权衡 (2026-07-27):
+#   · −Y 沿最外那颗 M3 孔中心在盘系 r=79.06, Φ4.2 沉孔边 r=81.16 —— 裁到 R81.5
+#     (罩内壁 R82 完全不用让位) 只剩 0.34 料, 等于废掉该螺丝并要挪 rim_ring 沿孔;
+#   · 取 R83.5: 孔外留 2.34 料, 4 颗沿螺丝全保住, rim_ring 不动;
+#     罩子在该处开内壁让位窝到 R84.0 (留 1.0 皮, 同 portal_tee 脚角的处理)。
+# 内腔最外角在盘系 r=79.55 < R_TRIM → 裁切不会破腔 (build 时 assert 复核)。
+TRIM_R = 83.5
+TRIM_CX_Z = 19.8      # 转子轴在零件系的 z 坐标 (= −(WIFI_XC − WS_W/2) 的相反数)
+TRIM_CY_Y = 13.0      # 转子轴在零件系的 y 坐标 (= −WIFI_YC)
+
 def box(x0, x1, y0, y1, z0, z1):
     return m3d.Manifold.cube((x1 - x0, y1 - y0, z1 - z0), False).translate((x0, y0, z0))
 
@@ -93,6 +112,20 @@ def main():
     part -= box(WIN_XC - WIN_W / 2, WIN_XC + WIN_W / 2, IY1 - 1.0, FLG_Y1 + 1.0,
                 WIN_ZC - WIN_H / 2, WIN_ZC + WIN_H / 2)
 
+    # ===== 盘缘裁切 (2026-07-27): 与转子轴同心的 R_TRIM 圆柱求交 =====
+    # 必须放在最后 (所有加料/挖料之后), 否则后续 union 会把切掉的角补回来。
+    v_before = part.volume()
+    trim = (m3d.Manifold.cylinder(400.0, TRIM_R, TRIM_R, 512, False)
+            .rotate((0, 90, 0))                       # 轴 +Z → +X (平行零件系 X)
+            .translate((-200.0, TRIM_CY_Y, -TRIM_CX_Z)))
+    part = part ^ trim
+    # 复核: 不破腔 (内腔最外角半径 < TRIM_R) + 仍是单连通体
+    cav_r = max(math.hypot(z + TRIM_CX_Z, y - TRIM_CY_Y)
+                for z in (IZ0, IZ1) for y in (IY0, IY1))
+    assert cav_r < TRIM_R, f"裁切破腔: 腔角 r={cav_r:.2f} ≥ TRIM_R={TRIM_R}"
+    n_body = len(part.decompose())
+    assert n_body == 1, f"裁切把壳切成了 {n_body} 块"
+
     # ===== export =====
     mesh = part.to_mesh()
     verts = np.asarray(mesh.vert_properties)[:, :3]
@@ -118,6 +151,10 @@ def main():
     print(f"  ±Y 端沿: 外伸 {FLG_L:g} × 厚 {FLG_T:g} (X {FLG_X0:g}..{OX1:g}, 与开口面共面, 全宽 {OZ1-OZ0:g}), 至 Y ±{FLG_Y1:g}")
     print(f"  4×Φ{M3_D:g} 通 (孔轴沿 X) @ Y ±{HOLE_YC:g} (距壁 5), Z {HOLE_ZS[0]:g}/{HOLE_ZS[1]:g} (c-c {HOLE_CC:g})")
     print(f"  三角筋 ×4: {GUS_T:g} 厚, 45° 臂 {GUS_ARM:g} (X {FLG_X0-GUS_ARM:g}..{FLG_X0:g}), Z 带 {GUS_ZS[0]:g}..{GUS_ZS[0]+GUS_T:g} / {GUS_ZS[1]:g}..{GUS_ZS[1]+GUS_T:g}")
+    disc_r = np.hypot(verts[:, 2] + TRIM_CX_Z, verts[:, 1] - TRIM_CY_Y)
+    print(f"  盘缘裁切 R{TRIM_R:g}: 削掉 {v_before-part.volume():.1f} mm³ "
+          f"({(v_before-part.volume())/v_before*100:.1f}%), 裁后盘系 r_max {disc_r.max():.2f} "
+          f"(盘缘 85 / 罩内壁 82); 内腔角 r {cav_r:.2f}, 连通体 {n_body}")
 
 if __name__ == "__main__":
     main()

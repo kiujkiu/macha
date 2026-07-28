@@ -182,6 +182,16 @@ sc = read_stl(MODELS / "screen_150x169_t13/screen_150x169_t13.stl") \
 sc = rot_z(sc, ROTOR_ROT + V3_SCR_ROT)
 parts.append(("dual_screen", sc))
 MLK_TOP = PCB_Z0 + 1.6 + 1.2                # 64.6 米联派板顶+针尾
+
+# 10b) 转子电路罩 rotor_shroud_v3 (2026-07-27, 用户: 把屏幕以下电路部分遮起来,
+#      整体像个圆柱): Φ170 齐盘缘 / 壁 3 / 高 50 (承载面 42.2 → 屏底 92.2),
+#      两半对开 + 3 厚封顶带屏缝; 每半 2× M3×55 经内立柱拧进 rim_ring 4 个
+#      空闲外圈环孔 (装配 112.5/157.5/292.5/337.5°) 到 hub 底铜花螺母。
+#      随屏组转 V3_SCR_ROT (立柱角 = 零件系 22.5/157.5/202.5/337.5°)。
+SHROUD_DIR = ROOT / "models/rotor_shroud_v3"
+for _tag in ("A", "B"):
+    _sh = read_stl(SHROUD_DIR / f"shroud_half_{_tag}_v3.stl") + np.array([0.0, 0.0, DISC_TOP])
+    parts.append((f"shroud_half_{_tag}_v3", rot_z(_sh, ROTOR_ROT + V3_SCR_ROT)))
 print(f"支架翼板底 {DISC_TOP+21.0:.1f} / 中央缺口顶(±60内) {DISC_TOP+50.0:.1f} (米联派顶 {MLK_TOP:.1f}); "
       f"双面屏模组 {SCREEN_Z0:.1f}..{SCREEN_Z0+168.75:.1f} (LED 面 X=±{SCREEN_T/2:.2f})")
 
@@ -319,6 +329,7 @@ COLORS = {"breadboard center-grid": "#333333", "baseplate_collar_d100": "#777777
           "portal_tee A": "#aa6622", "portal_tee B": "#aa6622",
           "sensor_module": "#222266",
           "dual_screen": "#3355cc",
+          "shroud_half_A_v3": "#b0b8c8", "shroud_half_B_v3": "#98a0b0",
           "wifi_shell": "#22aaaa",
           "usb_wifi_module": "#111111",
           "frame_A_v3 (SW+NW)": "#5577aa", "frame_B_v3 (NE+SE)": "#5577aa",

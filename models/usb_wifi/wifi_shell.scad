@@ -42,3 +42,14 @@ difference(){
   for(zc=hole_zs) for(yc=[hole_yc,-hole_yc])          // 4×Φ3.2 (孔轴沿 X)
     translate([flg_x0-1,yc,zc]) rotate([0,90,0]) cylinder(h=flg_t+2, d=m3, $fn=32);
 }
+
+// ===== 盘缘裁切 (2026-07-27, 用户: "有个脚出来了, 要砍掉") =====
+// -Y 端沿外角原伸到盘系 r=90.22, 悬出 Φ170 承载盘缘 5.2 —— 与转子轴同心的
+// R83.5 圆柱求交切齐 (r_max 90.22 -> 83.50)。零件系->盘系:
+//   disc_X = z + 19.8 ; disc_Y = y - 13   (135° 组转只绕轴, 不改半径)
+// 用法: 把上面的最终实体包在 intersection() { ... trim_cyl(); } 里。
+trim_r = 83.5; trim_cx_z = 19.8; trim_cy_y = 13;
+module trim_cyl() {
+  translate([-200, trim_cy_y, -trim_cx_z]) rotate([0,90,0])
+    cylinder(h = 400, r = trim_r, $fn = 512);
+}
