@@ -17,6 +17,11 @@ m42_diam        = 4.2;  // 沉孔直径
 m42_depth       = 4;    // 沉孔深度 (从底部 z=0 向上)
 
 // 2026-07-29 v4 (用户"补成整圈"): 走线槽 + 外缘缺口取消 → 整圈连续, 外圈 8 孔
+// 2 个 M4 通孔 (2026-07-29): 位置避开下方 100×100 方底盘 (对角伸到 r70.7)
+//   与套环 Φ84 —— 取 R70 @ -10°/-80°, 整个落在环形凹槽 R40..72.5 内。
+extra_hole_d = 4;
+extra_holes_polar = [[-10, 70], [-80, 70]];   // [deg, R]
+
 slot_enable = false;
 outer_cutout_enable = false;
 outer_cutout_a_s = 40;
@@ -89,6 +94,11 @@ module flange_disc_v4() {
             translate([0, 0, slot_z_bot])
                 linear_extrude(height = slot_z_top - slot_z_bot)
                     annular_wedge(slot_r_in, slot_r_out, slot_a_s, slot_a_e);
+
+        // ----- 2 × M4 通孔 -----
+        for (h = extra_holes_polar)
+            translate([h[1]*cos(h[0]), h[1]*sin(h[0]), -1])
+                cylinder(h = total_h + 2, d = extra_hole_d, $fn = 32);
 
         // ----- 8 × M3 inner holes (through 7mm), 顺时针 20° -----
         for (k = [0 : n_holes - 1]) {

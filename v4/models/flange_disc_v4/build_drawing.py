@@ -45,6 +45,10 @@ OUTER_CUT_A_E = 50.0
 
 # 2026-07-29 v4 (用户"补成整圈"): 走线槽 + 外缘缺口都取消 → 盘整圈连续,
 # 外圈孔恢复 8 个。与 build_stl.py 的两个开关必须一致 (本图参数是复刻不是 import)。
+# 2 个 M4 通孔 (2026-07-29) — 与 build_stl.py 的 EXTRA_HOLES_POLAR 必须一致
+EXTRA_HOLE_D = 4.0
+EXTRA_HOLES_POLAR = [(-10.0, 70.0), (-80.0, 70.0)]   # (deg, R)
+
 SLOT_ENABLE = False
 OUTER_CUTOUT_ENABLE = False
 SLOT_R_IN  = 40.0
@@ -174,7 +178,7 @@ text(PAGE_W/2, 19,
      f"Φ{BASE_OD:g}/Φ{BASE_ID:g}×{BASE_T:g} 基环 / 内凸缘 Φ{INNER_BOSS_OD:g}/Φ{INNER_BOSS_ID:g}×{BOSS_T:g} / "
      + f"外凸缘 Φ{OUTER_BOSS_OD:g}/Φ{OUTER_BOSS_ID:g}×{BOSS_T:g} / 16×Φ{M3_DIAM:g} M3 通孔 / "
      + ("外缘缺口 %g°–%g° / 槽口 %g°–%g°" % (OUTER_CUT_A_S, OUTER_CUT_A_E, SLOT_A_S, SLOT_A_E)
-      if (SLOT_ENABLE or OUTER_CUTOUT_ENABLE) else "整圈无开口 (v4): 无走线槽 / 无外缘缺口 / 外圈 8 孔"),
+      if (SLOT_ENABLE or OUTER_CUTOUT_ENABLE) else "整圈无开口 (v4): 无走线槽 / 无外缘缺口 / 外圈 8 孔 / +2×Φ4 M4 通孔"),
      size=TXT_I, anchor="middle")
 
 # ===== TOP VIEW (1:1) =====
@@ -320,6 +324,28 @@ pdf.line(tv(-R_BO - 8, 0)[0], tv(-R_BO - 8, 0)[1],
 pdf.line(tv(0, -R_BO - 8)[0], tv(0, -R_BO - 8)[1],
          tv(0,  R_BO + 8)[0], tv(0,  R_BO + 8)[1])
 pdf.set_dash_pattern()
+
+# ---- 2 × M4 通孔 (2026-07-29) ----
+_w(GEOM_W)
+m4_pts = []
+for (a_d, R) in EXTRA_HOLES_POLAR:
+    a = math.radians(a_d)
+    mx = ccx + R * math.cos(a)
+    my = ccy - R * math.sin(a)
+    m4_pts.append((mx, my, a_d, R))
+    pdf.circle(mx, my, EXTRA_HOLE_D / 2, style="D")
+    pdf.set_dash_pattern(dash=1.2, gap=0.6); _w(0.12)
+    pdf.line(mx - 4, my, mx + 4, my); pdf.line(mx, my - 4, mx, my + 4)
+    pdf.set_dash_pattern(); _w(GEOM_W)
+# 引注
+_mx, _my, _a, _R = m4_pts[0]
+m4_lx, m4_ly = tv(70, 55)
+pdf.line(_mx, _my, m4_lx, m4_ly); pdf.line(m4_lx, m4_ly, m4_lx + 8, m4_ly)
+text(m4_lx + 8, m4_ly - 1.2,
+     "2×Φ%g 通 (M4) @ (%g°,R%g) / (%g°,R%g)" % (EXTRA_HOLE_D,
+        EXTRA_HOLES_POLAR[0][0], EXTRA_HOLES_POLAR[0][1],
+        EXTRA_HOLES_POLAR[1][0], EXTRA_HOLES_POLAR[1][1]),
+     size=TXT_D, anchor="start")
 
 if OUTER_CUTOUT_ENABLE:
     # ---- Angular annotations: outer cutout (40°, 50°) ----
@@ -583,7 +609,7 @@ text(tb_x + 4, tb_y + 14.5,
      f"Φ{BASE_OD:g}/Φ{BASE_ID:g}×{BASE_T:g} / 凸缘 Φ{INNER_BOSS_OD:g}+Φ{OUTER_BOSS_ID:g}×{BOSS_T:g} / "
      + f"16×Φ{M3_DIAM:g} M3 / "
      + (f"外缘缺口 {OUTER_CUT_A_S:g}°–{OUTER_CUT_A_E:g}° / 槽口 {SLOT_A_S:g}°–{SLOT_A_E:g}° Z{SLOT_Z_BOT:g}–{SLOT_Z_TOP:g}"
-        if (SLOT_ENABLE or OUTER_CUTOUT_ENABLE) else "整圈无开口 (v4), 外圈 8 孔")
+        if (SLOT_ENABLE or OUTER_CUTOUT_ENABLE) else "整圈无开口 (v4), 外圈 8 孔, +2×Φ4 M4")
      + "  /  单位 mm",
      size=TXT_I, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 14.5,

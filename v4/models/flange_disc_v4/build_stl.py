@@ -65,6 +65,20 @@ SLOT_Z_BOT = 2.0
 SLOT_Z_TOP = 7.0
 # 2026-07-29 v4 (用户: "补成整圈"): 走线扇形槽取消 → 盘身整圈连续。
 # ⚠ 这条槽原是 R40..82.5 / Z2..7 / 0..5° 的走线通道; 关掉后该层无径向出口。
+# ===== 2 个 M4 通孔 (2026-07-29, 用户: "和转子那个很像, 在 flange_disc 增加 2 个 M4 的孔") =====
+# 极坐标与 rim_ring 的 EXTRA_HOLES_POLAR 完全一致 (角度从 +X 起, CCW 正)。
+# 位置经核算后调整 (不照搬 rim_ring 原坐标), 原因:
+#   · rim_ring 的 (-42.5°, R56) 搬过来后正压在 100×100 方底盘上方 —— 底盘在 -42.5°
+#     (接近对角) 方向伸到 r=67.8, 孔下方是 5mm 实心, 螺母/线都下不去。
+#   · -42.5° 无论怎么挪半径都很紧 (R70 净空仅 0.18, R72 才够但要咬法兰外凸缘)。
+#   → 两孔都取 R70 (整个落在环形凹槽 R40..72.5 内, 外缘 R72 距凸缘内缘 0.5),
+#     角度改到坐标轴附近的 -10° / -80°: 底盘该方位只伸到 r≈50.8, 下方净空 17.2,
+#     到最近 M3 孔边距 14.1。两孔关于 -45° 对称。
+EXTRA_HOLE_D = 4.0
+EXTRA_HOLES_POLAR = [(-10.0, 70.0), (-80.0, 70.0)]   # (deg, R)
+EXTRA_HOLES = [(R * math.cos(math.radians(a)), R * math.sin(math.radians(a)))
+               for (a, R) in EXTRA_HOLES_POLAR]
+
 SLOT_ENABLE = False
 SLOT_A_S   = 0.0
 SLOT_A_E   = 5.0
@@ -176,6 +190,12 @@ for k in range(N_HOLES):
     part = part - cb
 
 # ===== Export STL =====
+# ===== 2 × M4 通孔 =====
+for (ex, ey) in EXTRA_HOLES:
+    h = m3d.Manifold.cylinder(TOTAL_H + 2.0, EXTRA_HOLE_D / 2, EXTRA_HOLE_D / 2,
+                              HOLE_SEG, False).translate((ex, ey, -1.0))
+    part = part - h
+
 mesh = part.to_mesh()
 verts = np.asarray(mesh.vert_properties)[:, :3]
 tris  = np.asarray(mesh.tri_verts)
@@ -203,4 +223,5 @@ print(f"  bbox Z: {verts[:,2].min():8.3f} .. {verts[:,2].max():8.3f}")
 print(f"  volume:        {part.volume():10.2f} mm^3")
 print(f"  surface area:  {part.surface_area():10.2f} mm^2")
 print(f"  inner hole PCD R = {INNER_HOLE_R}  ({N_HOLES} holes @ 0°,45°,...,315°)")
+print(f"  2×Φ{EXTRA_HOLE_D:g} M4 通孔 @ " + ", ".join(f"({a:g}°,R{R:g})" for a,R in EXTRA_HOLES_POLAR))
 print(f"  outer hole PCD R = {OUTER_HOLE_R}  ({'7 effective (45° eaten by cutout)' if OUTER_CUTOUT_ENABLE else '8 holes, 整圈无缺口'})")
