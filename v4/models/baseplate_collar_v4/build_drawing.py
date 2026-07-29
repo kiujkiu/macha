@@ -39,7 +39,7 @@ BOSS_ID    = 55.0
 BOSS_H     = 23.0
 # 2026-07-29 v4 (用户"补成整圈"): 走线缺口取消, 凸台/套环整圈连续。
 # 与 build_stl.py 的 NOTCH_ENABLE 必须一致 (本图纸参数是复刻不是 import)。
-NOTCH_ENABLE = False
+NOTCH_ENABLE = True
 NOTCH_A_S  = 75.0
 NOTCH_A_E  = 105.0
 NOTCH_H    = 8.0

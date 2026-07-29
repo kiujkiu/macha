@@ -55,12 +55,13 @@ OUTER_HOLE_R = (OUTER_BOSS_ID/2 + OUTER_BOSS_OD/2) / 2   # 77.5
 # 2026-07-29 v4: 外圈凸台的 40..45° 缺口同样补回整圈 (用户"补成整圈")。
 # 副作用是 45° 那个外圈孔恢复 → 外圈从 7 孔变回 8 孔 (与 mounting_flange 的 8 孔
 # 全部对上, 多一颗螺丝, 更好)。
-OUTER_CUTOUT_ENABLE = False
+OUTER_CUTOUT_ENABLE = False   # 2026-07-29 用户红框: 外凸缘 40°-45° 缺口去掉 → 凸缘整圈, 外圈恢复 8 孔
 OUTER_CUTOUT_A_S = 40.0
 OUTER_CUTOUT_A_E = 45.0
 
 SLOT_R_IN  = INNER_BOSS_OD / 2   # 40
-SLOT_R_OUT = OUTER_BOSS_OD / 2   # 82.5
+SLOT_R_OUT = 60.0                # 2026-07-29 用户: 50 → 60
+                                 # → 槽只挖 R40..50 的基盘上半, 外圈凸台段 (R72.5..82.5) 恢复完整
 SLOT_Z_BOT = 2.0
 SLOT_Z_TOP = 7.0
 # 2026-07-29 v4 (用户: "补成整圈"): 走线扇形槽取消 → 盘身整圈连续。
@@ -75,11 +76,13 @@ SLOT_Z_TOP = 7.0
 #     角度改到坐标轴附近的 -10° / -80°: 底盘该方位只伸到 r≈50.8, 下方净空 17.2,
 #     到最近 M3 孔边距 14.1。两孔关于 -45° 对称。
 EXTRA_HOLE_D = 4.0
-EXTRA_HOLES_POLAR = [(-10.0, 70.0), (-80.0, 70.0)]   # (deg, R)
+EXTRA_HOLES_POLAR = [(2.5, 56.0), (30.0, 70.0)]   # (deg, R) 用户指定
+# · (2.5°,R56) 落在走线槽内 → 穿的是槽底 2mm
+# · (30°,R70) 原定 R72, 因 Φ4 外缘 R74 会咬进外凸缘内缘 (R72.5) 1.5mm, 改 R70 (外缘 72, 贴而不咬)
 EXTRA_HOLES = [(R * math.cos(math.radians(a)), R * math.sin(math.radians(a)))
                for (a, R) in EXTRA_HOLES_POLAR]
 
-SLOT_ENABLE = False
+SLOT_ENABLE = True
 SLOT_A_S   = 0.0
 SLOT_A_E   = 5.0
 
@@ -202,7 +205,7 @@ tris  = np.asarray(mesh.tri_verts)
 
 out = Path(__file__).with_name("flange_disc_v4.stl")
 with out.open("wb") as f:
-    f.write(b"POV3D flange_disc_v4 OD165 ID65 T5 / inner+outer bosses / 16 M3 / v4 full-ring".ljust(80, b" ")[:80])
+    f.write(b"POV3D flange_disc_v4 OD165 ID65 T5 / inner+outer bosses / 16 M3 / slot+cutout".ljust(80, b" ")[:80])
     f.write(struct.pack("<I", len(tris)))
     for t in tris:
         v0, v1, v2 = verts[t[0]], verts[t[1]], verts[t[2]]
@@ -223,5 +226,5 @@ print(f"  bbox Z: {verts[:,2].min():8.3f} .. {verts[:,2].max():8.3f}")
 print(f"  volume:        {part.volume():10.2f} mm^3")
 print(f"  surface area:  {part.surface_area():10.2f} mm^2")
 print(f"  inner hole PCD R = {INNER_HOLE_R}  ({N_HOLES} holes @ 0°,45°,...,315°)")
-print(f"  2×Φ{EXTRA_HOLE_D:g} M4 通孔 @ " + ", ".join(f"({a:g}°,R{R:g})" for a,R in EXTRA_HOLES_POLAR))
+print("  额外 M4 通孔: " + (", ".join(f"Φ{EXTRA_HOLE_D:g}@({a:g}°,R{R:g})" for a,R in EXTRA_HOLES_POLAR) if EXTRA_HOLES_POLAR else "无 (待定位)"))
 print(f"  outer hole PCD R = {OUTER_HOLE_R}  ({'7 effective (45° eaten by cutout)' if OUTER_CUTOUT_ENABLE else '8 holes, 整圈无缺口'})")

@@ -41,7 +41,10 @@ INNER_HOLE_R = (INNER_BOSS_ID/2 + INNER_BOSS_OD/2) / 2   # 36.25
 OUTER_HOLE_R = (OUTER_BOSS_ID/2 + OUTER_BOSS_OD/2) / 2   # 77.5
 
 OUTER_CUT_A_S = 40.0
-OUTER_CUT_A_E = 50.0
+OUTER_CUT_A_E = 45.0   # 2026-07-29 修正老 bug: 原为 50.0, 与 build_stl.py 的
+                       # OUTER_CUTOUT_A_E = 45.0 不符 —— 图纸一直把外凸缘缺口标成
+                       # 40°-50°, 实件是 40°-45° (实测模型 R78 处缺失 40.2°..44.8°)。
+                       # ⚠ 本图纸参数是复刻不是 import, 改 build_stl 时必须同步这里。
 
 SLOT_R_IN  = 40.0
 SLOT_R_OUT = 82.5

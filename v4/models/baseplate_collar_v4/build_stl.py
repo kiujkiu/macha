@@ -51,7 +51,7 @@ BOSS_H  = 23.0
 # ⚠⚠ 这个缺口原是**电机线唯一的出口** —— C4110 坐在凸台腔 (ID55) 里, 底盘 5mm 实心,
 #    上方是转子, 线只能沿这个缺口径向穿出。补成整圈后电机线无出路, 装机前必须先想好
 #    走线方案 (改走别处 / 现场开孔 / 把本开关设回 True)。
-NOTCH_ENABLE = False
+NOTCH_ENABLE = True
 NOTCH_A_START = 75.0
 NOTCH_A_END   = 105.0
 NOTCH_H       = 8.0

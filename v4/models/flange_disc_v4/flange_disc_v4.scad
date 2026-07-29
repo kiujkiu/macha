@@ -22,13 +22,13 @@ m42_depth       = 4;    // 沉孔深度 (从底部 z=0 向上)
 extra_hole_d = 4;
 extra_holes_polar = [[-10, 70], [-80, 70]];   // [deg, R]
 
-slot_enable = false;
-outer_cutout_enable = false;
+slot_enable = true;
+outer_cutout_enable = false;   // 2026-07-29: 缺口去掉
 outer_cutout_a_s = 40;
 outer_cutout_a_e = 45;
 
 slot_r_in   = 40;
-slot_r_out  = 82.5;
+slot_r_out  = 60;    // 2026-07-29: 50→60
 slot_z_bot  = 2;
 slot_z_top  = 7;
 slot_a_s    = 0;

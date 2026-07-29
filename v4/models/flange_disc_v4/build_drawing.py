@@ -41,18 +41,21 @@ INNER_HOLE_R = (INNER_BOSS_ID/2 + INNER_BOSS_OD/2) / 2   # 36.25
 OUTER_HOLE_R = (OUTER_BOSS_ID/2 + OUTER_BOSS_OD/2) / 2   # 77.5
 
 OUTER_CUT_A_S = 40.0
-OUTER_CUT_A_E = 50.0
+OUTER_CUT_A_E = 45.0   # 2026-07-29 修正: 原图纸脚本写 50.0, 与 build_stl 的 45.0 不符
+                       # (老 bug, models/flange_disc 的图纸也有 —— 图上标 40-50, 实件 40-45)
 
 # 2026-07-29 v4 (用户"补成整圈"): 走线槽 + 外缘缺口都取消 → 盘整圈连续,
 # 外圈孔恢复 8 个。与 build_stl.py 的两个开关必须一致 (本图参数是复刻不是 import)。
 # 2 个 M4 通孔 (2026-07-29) — 与 build_stl.py 的 EXTRA_HOLES_POLAR 必须一致
 EXTRA_HOLE_D = 4.0
-EXTRA_HOLES_POLAR = [(-10.0, 70.0), (-80.0, 70.0)]   # (deg, R)
+EXTRA_HOLES_POLAR = [(2.5, 56.0), (30.0, 70.0)]   # (deg, R) 用户指定
+# · (2.5°,R56) 落在走线槽内 → 穿的是槽底 2mm
+# · (30°,R70) 原定 R72, 因 Φ4 外缘 R74 会咬进外凸缘内缘 (R72.5) 1.5mm, 改 R70 (外缘 72, 贴而不咬)
 
-SLOT_ENABLE = False
-OUTER_CUTOUT_ENABLE = False
+SLOT_ENABLE = True
+OUTER_CUTOUT_ENABLE = False   # 2026-07-29 用户红框: 外凸缘 40°-45° 缺口去掉 → 凸缘整圈, 外圈恢复 8 孔
 SLOT_R_IN  = 40.0
-SLOT_R_OUT = 82.5
+SLOT_R_OUT = 60.0                # 2026-07-29 用户: 50 → 60
 SLOT_Z_BOT = 2.0
 SLOT_Z_TOP = 7.0
 SLOT_A_S   = 0.0
@@ -177,8 +180,10 @@ text(PAGE_W/2, 13, "POV 3D 法兰盘  Flange Disc", size=TXT_T, anchor="middle")
 text(PAGE_W/2, 19,
      f"Φ{BASE_OD:g}/Φ{BASE_ID:g}×{BASE_T:g} 基环 / 内凸缘 Φ{INNER_BOSS_OD:g}/Φ{INNER_BOSS_ID:g}×{BOSS_T:g} / "
      + f"外凸缘 Φ{OUTER_BOSS_OD:g}/Φ{OUTER_BOSS_ID:g}×{BOSS_T:g} / 16×Φ{M3_DIAM:g} M3 通孔 / "
-     + ("外缘缺口 %g°–%g° / 槽口 %g°–%g°" % (OUTER_CUT_A_S, OUTER_CUT_A_E, SLOT_A_S, SLOT_A_E)
-      if (SLOT_ENABLE or OUTER_CUTOUT_ENABLE) else "整圈无开口 (v4): 无走线槽 / 无外缘缺口 / 外圈 8 孔 / +2×Φ4 M4 通孔"),
+     + ((("外凸缘缺口 %g°–%g° / " % (OUTER_CUT_A_S, OUTER_CUT_A_E)) if OUTER_CUTOUT_ENABLE else "外凸缘整圈无缺口 (外圈 8 孔) / ")
+        + (("走线槽 %g°–%g° R%g–R%g 深 %g" % (SLOT_A_S, SLOT_A_E, SLOT_R_IN, SLOT_R_OUT, BASE_T-SLOT_Z_BOT)) if SLOT_ENABLE else "无走线槽")
+      if (SLOT_ENABLE or OUTER_CUTOUT_ENABLE) else ("整圈无开口 (v4): 无走线槽 / 无外缘缺口 / 外圈 8 孔"
+            + (" / +%d×Φ%g M4" % (len(EXTRA_HOLES_POLAR), EXTRA_HOLE_D) if EXTRA_HOLES_POLAR else ""))),
      size=TXT_I, anchor="middle")
 
 # ===== TOP VIEW (1:1) =====
@@ -325,27 +330,28 @@ pdf.line(tv(0, -R_BO - 8)[0], tv(0, -R_BO - 8)[1],
          tv(0,  R_BO + 8)[0], tv(0,  R_BO + 8)[1])
 pdf.set_dash_pattern()
 
-# ---- 2 × M4 通孔 (2026-07-29) ----
-_w(GEOM_W)
-m4_pts = []
-for (a_d, R) in EXTRA_HOLES_POLAR:
-    a = math.radians(a_d)
-    mx = ccx + R * math.cos(a)
-    my = ccy - R * math.sin(a)
-    m4_pts.append((mx, my, a_d, R))
-    pdf.circle(mx, my, EXTRA_HOLE_D / 2, style="D")
-    pdf.set_dash_pattern(dash=1.2, gap=0.6); _w(0.12)
-    pdf.line(mx - 4, my, mx + 4, my); pdf.line(mx, my - 4, mx, my + 4)
-    pdf.set_dash_pattern(); _w(GEOM_W)
-# 引注
-_mx, _my, _a, _R = m4_pts[0]
-m4_lx, m4_ly = tv(70, 55)
-pdf.line(_mx, _my, m4_lx, m4_ly); pdf.line(m4_lx, m4_ly, m4_lx + 8, m4_ly)
-text(m4_lx + 8, m4_ly - 1.2,
-     "2×Φ%g 通 (M4) @ (%g°,R%g) / (%g°,R%g)" % (EXTRA_HOLE_D,
-        EXTRA_HOLES_POLAR[0][0], EXTRA_HOLES_POLAR[0][1],
-        EXTRA_HOLES_POLAR[1][0], EXTRA_HOLES_POLAR[1][1]),
-     size=TXT_D, anchor="start")
+# ---- 2 × M4 通孔 (2026-07-29; EXTRA_HOLES_POLAR 为空则不画) ----
+if EXTRA_HOLES_POLAR:
+  _w(GEOM_W)
+  m4_pts = []
+  for (a_d, R) in EXTRA_HOLES_POLAR:
+      a = math.radians(a_d)
+      mx = ccx + R * math.cos(a)
+      my = ccy - R * math.sin(a)
+      m4_pts.append((mx, my, a_d, R))
+      pdf.circle(mx, my, EXTRA_HOLE_D / 2, style="D")
+      pdf.set_dash_pattern(dash=1.2, gap=0.6); _w(0.12)
+      pdf.line(mx - 4, my, mx + 4, my); pdf.line(mx, my - 4, mx, my + 4)
+      pdf.set_dash_pattern(); _w(GEOM_W)
+  # 引注
+  _mx, _my, _a, _R = m4_pts[0]
+  m4_lx, m4_ly = tv(70, 55)
+  pdf.line(_mx, _my, m4_lx, m4_ly); pdf.line(m4_lx, m4_ly, m4_lx + 8, m4_ly)
+  text(m4_lx + 8, m4_ly - 1.2,
+       "2×Φ%g 通 (M4) @ (%g°,R%g) / (%g°,R%g)" % (EXTRA_HOLE_D,
+          EXTRA_HOLES_POLAR[0][0], EXTRA_HOLES_POLAR[0][1],
+          EXTRA_HOLES_POLAR[1][0], EXTRA_HOLES_POLAR[1][1]),
+       size=TXT_D, anchor="start")
 
 if OUTER_CUTOUT_ENABLE:
     # ---- Angular annotations: outer cutout (40°, 50°) ----
@@ -380,43 +386,44 @@ if SLOT_ENABLE:
             lx += 1
         text(lx, ly + 1.2, f"{ang_d:g}°", size=TXT_D, anchor="middle")
 
-    # ---- Top-view dimensions ----
-    # Φ165 horizontal across top
-    hdim(tv(-R_BO, 0)[0], tv(R_BO, 0)[0],
-         tv(0, R_BO)[1], tv(0, R_BO)[1] - DIM_O1, f"Φ{BASE_OD:g}")
-    # Φ145 (outer boss ID), stacked further out
-    hdim(tv(-R_OBI, 0)[0], tv(R_OBI, 0)[0],
-         tv(0, R_BO)[1], tv(0, R_BO)[1] - DIM_O2, f"Φ{OUTER_BOSS_ID:g}")
-    # Φ80 (inner boss OD), stacked even further out
-    hdim(tv(-R_IBO, 0)[0], tv(R_IBO, 0)[0],
-         tv(0, R_BO)[1], tv(0, R_BO)[1] - DIM_O3, f"Φ{INNER_BOSS_OD:g}")
-    # Φ65 (base ID) on bottom
-    hdim(tv(-R_BI, 0)[0], tv(R_BI, 0)[0],
-         tv(0, -R_BO)[1], tv(0, -R_BO)[1] + DIM_O1, f"Φ{BASE_ID:g}")
+# ---- Top-view dimensions ----
+# Φ165 horizontal across top
+hdim(tv(-R_BO, 0)[0], tv(R_BO, 0)[0],
+     tv(0, R_BO)[1], tv(0, R_BO)[1] - DIM_O1, f"Φ{BASE_OD:g}")
+# Φ145 (outer boss ID), stacked further out
+hdim(tv(-R_OBI, 0)[0], tv(R_OBI, 0)[0],
+     tv(0, R_BO)[1], tv(0, R_BO)[1] - DIM_O2, f"Φ{OUTER_BOSS_ID:g}")
+# Φ80 (inner boss OD), stacked even further out
+hdim(tv(-R_IBO, 0)[0], tv(R_IBO, 0)[0],
+     tv(0, R_BO)[1], tv(0, R_BO)[1] - DIM_O3, f"Φ{INNER_BOSS_OD:g}")
+# Φ65 (base ID) on bottom
+hdim(tv(-R_BI, 0)[0], tv(R_BI, 0)[0],
+     tv(0, -R_BO)[1], tv(0, -R_BO)[1] + DIM_O1, f"Φ{BASE_ID:g}")
 
-    # Inner-hole PCD callout — leader from SW inner hole (225°), goes down-left to below the disc
-    ih_a = math.radians(225)
-    ih_x = ccx + INNER_HOLE_R * math.cos(ih_a)
-    ih_y = ccy - INNER_HOLE_R * math.sin(ih_a)
-    ih_lx, ih_ly = tv(-65, -78)
-    _w(EXT_W)
-    pdf.line(ih_x, ih_y, ih_lx, ih_ly)
-    pdf.line(ih_lx, ih_ly, ih_lx + 8, ih_ly)
-    text(ih_lx + 8, ih_ly - 1.2,
-         f"8 × Φ{M3_DIAM:g} 内圈通孔, PCD Φ{2*INNER_HOLE_R:g}",
-         size=TXT_D, anchor="start")
+# Inner-hole PCD callout — leader from SW inner hole (225°), goes down-left to below the disc
+ih_a = math.radians(225)
+ih_x = ccx + INNER_HOLE_R * math.cos(ih_a)
+ih_y = ccy - INNER_HOLE_R * math.sin(ih_a)
+ih_lx, ih_ly = tv(-65, -78)
+_w(EXT_W)
+pdf.line(ih_x, ih_y, ih_lx, ih_ly)
+pdf.line(ih_lx, ih_ly, ih_lx + 8, ih_ly)
+text(ih_lx + 8, ih_ly - 1.2,
+     f"8 × Φ{M3_DIAM:g} 内圈通孔, PCD Φ{2*INNER_HOLE_R:g}",
+     size=TXT_D, anchor="start")
 
-    # Outer-hole PCD callout — leader from SW outer hole (225°), goes down-left further out
-    oh_a = math.radians(225)
-    oh_x = ccx + OUTER_HOLE_R * math.cos(oh_a)
-    oh_y = ccy - OUTER_HOLE_R * math.sin(oh_a)
-    oh_lx, oh_ly = tv(-65, -93)
-    pdf.line(oh_x, oh_y, oh_lx, oh_ly)
-    pdf.line(oh_lx, oh_ly, oh_lx + 8, oh_ly)
-    text(oh_lx + 8, oh_ly - 1.2,
-         f"8 × Φ{M3_DIAM:g} 外圈通孔, PCD Φ{2*OUTER_HOLE_R:g} (45° 位置被缺口截除)",
-         size=TXT_D, anchor="start")
+# Outer-hole PCD callout — leader from SW outer hole (225°), goes down-left further out
+oh_a = math.radians(225)
+oh_x = ccx + OUTER_HOLE_R * math.cos(oh_a)
+oh_y = ccy - OUTER_HOLE_R * math.sin(oh_a)
+oh_lx, oh_ly = tv(-65, -93)
+pdf.line(oh_x, oh_y, oh_lx, oh_ly)
+pdf.line(oh_lx, oh_ly, oh_lx + 8, oh_ly)
+text(oh_lx + 8, oh_ly - 1.2,
+     f"8 × Φ{M3_DIAM:g} 外圈通孔, PCD Φ{2*OUTER_HOLE_R:g} (45° 位置被缺口截除)",
+     size=TXT_D, anchor="start")
 
+if OUTER_CUTOUT_ENABLE:
     # Cutout callout — leader from the wedge midpoint to upper-right
     cut_mid_a = math.radians((OUTER_CUT_A_S + OUTER_CUT_A_E) / 2)
     cx_lead = ccx + (R_BO - 4) * math.cos(cut_mid_a)
@@ -428,6 +435,7 @@ if SLOT_ENABLE:
          f"外凸缘缺口 {OUTER_CUT_A_S:g}°–{OUTER_CUT_A_E:g}° (仅去除凸缘)",
          size=TXT_D, anchor="start")
 
+if SLOT_ENABLE:
     # Slot callout — leader from slot midpoint (5°) to upper-right area
     slot_mid_a = math.radians((SLOT_A_S + SLOT_A_E) / 2)
     slot_r_mid = (SLOT_R_IN + SLOT_R_OUT) / 2
@@ -437,7 +445,7 @@ if SLOT_ENABLE:
     pdf.line(sx_lead, sy_lead, slot_lx, slot_ly)
     pdf.line(slot_lx, slot_ly, slot_lx + 8, slot_ly)
     text(slot_lx + 8, slot_ly - 1.2,
-         f"槽口 {SLOT_A_S:g}°–{SLOT_A_E:g}°, R{SLOT_R_IN:g}–R{SLOT_R_OUT:g}, Z{SLOT_Z_BOT:g}–{SLOT_Z_TOP:g}",
+         f"走线槽 {SLOT_A_S:g}°–{SLOT_A_E:g}°, R{SLOT_R_IN:g}–R{SLOT_R_OUT:g}, 挖至 Z{SLOT_Z_BOT:g} (深 {BASE_T-SLOT_Z_BOT:g})",
          size=TXT_D, anchor="start")
 
 # ===== SECTION A-A (1:1) =====
@@ -504,31 +512,21 @@ line(*sa(-R_OBI, BASE_T), *sa(-R_OBI, TOTAL_H), GEOM_W)
 # Inner boss is at R 32.5..40, OUTSIDE the slot's inner R=40 — fully intact.
 
 if SLOT_ENABLE:
-    # Base bottom (z=0): solid from R_BI to R_BO (no slot cut on bottom)
+    # Base bottom (z=0): 整条实心
     line(*sa(R_BI, 0), *sa(R_BO, 0), GEOM_W)
-    # Base top (z=BASE_T): solid from R_BI to R_IBO (=40), then broken in slot
-    # (R 40..82.5 has slot from z=SLOT_Z_BOT..BASE_T → no top surface here at z=BASE_T).
+    # 基盘顶 (z=BASE_T): R_BI..R_IBO 实心, R_IBO..SLOT_R_OUT 被槽挖掉, 之后又是实心
     line(*sa(R_BI, BASE_T), *sa(R_IBO, BASE_T), GEOM_W)
-
-    # Slot floor at z=SLOT_Z_BOT (=3): horizontal from R_IBO to R_BO — this is the
-    # new top surface of the remaining base in the slot wedge.
-    line(*sa(R_IBO, SLOT_Z_BOT), *sa(R_BO, SLOT_Z_BOT), GEOM_W)
-
-    # Vertical edges of the slot (slot side walls in the section view):
-    # At t = R_IBO (=40): slot inner wall climbs from z=SLOT_Z_BOT all the way to
-    # z=TOTAL_H — because slot now extends to top of boss with no cap. This wall
-    # coincides with the outer wall of the inner boss above z=BASE_T (inner boss is
-    # intact), so it's a single continuous vertical from z=SLOT_Z_BOT to z=TOTAL_H.
-    line(*sa(R_IBO, SLOT_Z_BOT), *sa(R_IBO, TOTAL_H), GEOM_W)
-    # At t = R_BO (=82.5): outer rim of disc — intact full vertical from z=0 to z=TOTAL_H.
+    line(*sa(SLOT_R_OUT, BASE_T), *sa(R_BO, BASE_T), GEOM_W)
+    # 槽底 (z=SLOT_Z_BOT) + 两侧竖壁
+    line(*sa(R_IBO, SLOT_Z_BOT), *sa(SLOT_R_OUT, SLOT_Z_BOT), GEOM_W)
+    line(*sa(R_IBO, SLOT_Z_BOT), *sa(R_IBO, TOTAL_H), GEOM_W)      # 内壁 (兼内凸缘外壁)
+    line(*sa(SLOT_R_OUT, SLOT_Z_BOT), *sa(SLOT_R_OUT, BASE_T), GEOM_W)  # 外壁 (槽止于 R50)
+    # 外缘 + 外凸缘 (0..5° 内完整, 不再被槽切)
     line(*sa(R_BO, 0), *sa(R_BO, TOTAL_H), GEOM_W)
-    # (No outer-boss cap above the slot anymore — nothing to draw at z=SLOT_Z_TOP or
-    # at the inner face of the outer boss inside the wedge.)
-
-    # Inner boss on right side: at t = R_BI (32.5) to t = R_IBO (40), z = BASE_T..TOTAL_H
-    # Top
+    line(*sa(R_BO, TOTAL_H), *sa(R_OBI, TOTAL_H), GEOM_W)
+    line(*sa(R_OBI, BASE_T), *sa(R_OBI, TOTAL_H), GEOM_W)
+    # 内凸缘顶
     line(*sa(R_BI, TOTAL_H), *sa(R_IBO, TOTAL_H), GEOM_W)
-    # Outer wall of inner boss is part of the continuous vertical drawn above at t=R_IBO.
 
 else:
     # v4 无槽: 右半边与左半边完全对称 (实体)
@@ -609,7 +607,7 @@ text(tb_x + 4, tb_y + 14.5,
      f"Φ{BASE_OD:g}/Φ{BASE_ID:g}×{BASE_T:g} / 凸缘 Φ{INNER_BOSS_OD:g}+Φ{OUTER_BOSS_ID:g}×{BOSS_T:g} / "
      + f"16×Φ{M3_DIAM:g} M3 / "
      + (f"外缘缺口 {OUTER_CUT_A_S:g}°–{OUTER_CUT_A_E:g}° / 槽口 {SLOT_A_S:g}°–{SLOT_A_E:g}° Z{SLOT_Z_BOT:g}–{SLOT_Z_TOP:g}"
-        if (SLOT_ENABLE or OUTER_CUTOUT_ENABLE) else "整圈无开口 (v4), 外圈 8 孔, +2×Φ4 M4")
+        if (SLOT_ENABLE or OUTER_CUTOUT_ENABLE) else ("整圈无开口 (v4), 外圈 8 孔" + (", +%d×Φ%g M4" % (len(EXTRA_HOLES_POLAR), EXTRA_HOLE_D) if EXTRA_HOLES_POLAR else "")))
      + "  /  单位 mm",
      size=TXT_I, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 14.5,

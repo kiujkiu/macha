@@ -26,7 +26,7 @@ boss_h          = 23;
 
 // 2026-07-29 v4 (用户"补成整圈"): 走线缺口取消 → 凸台/套环整圈连续。
 // ⚠ 该缺口原是电机线唯一出口, 关掉后需另想走线方案。
-notch_enable    = false;
+notch_enable    = true;
 notch_a_start   = 75;
 notch_a_end     = 105;
 notch_h         = 8;
