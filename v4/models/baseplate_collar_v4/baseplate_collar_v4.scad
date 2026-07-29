@@ -24,6 +24,9 @@ boss_od         = 65;
 boss_id         = 55;
 boss_h          = 23;
 
+// 2026-07-29 v4 (用户"补成整圈"): 走线缺口取消 → 凸台/套环整圈连续。
+// ⚠ 该缺口原是电机线唯一出口, 关掉后需另想走线方案。
+notch_enable    = false;
 notch_a_start   = 75;
 notch_a_end     = 105;
 notch_h         = 8;
@@ -74,6 +77,7 @@ module baseplate_collar_v4() {
                 translate([0, 0, -1])
                     cylinder(h = boss_h + 2, d = boss_id, $fn = 96);
             }
+            if (notch_enable)
             linear_extrude(height = notch_h + 0.1)
                 polygon(concat(
                     [[0, 0]],
@@ -90,6 +94,7 @@ module baseplate_collar_v4() {
                 translate([0, 0, -1])
                     cylinder(h = collar_h + 2, d = collar_id, $fn = 128);
             }
+            if (notch_enable)
             translate([0, 0, -0.05])
                 linear_extrude(height = collar_notch_h + 0.1)
                     polygon(concat(

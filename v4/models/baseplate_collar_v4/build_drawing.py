@@ -37,6 +37,9 @@ CENTER_CB_DEPTH = 1.0
 BOSS_OD    = 65.0
 BOSS_ID    = 55.0
 BOSS_H     = 23.0
+# 2026-07-29 v4 (用户"补成整圈"): 走线缺口取消, 凸台/套环整圈连续。
+# 与 build_stl.py 的 NOTCH_ENABLE 必须一致 (本图纸参数是复刻不是 import)。
+NOTCH_ENABLE = False
 NOTCH_A_S  = 75.0
 NOTCH_A_E  = 105.0
 NOTCH_H    = 8.0
@@ -168,8 +171,8 @@ text(PAGE_W/2, 19.5,
      f"中央 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g} 沉孔(顶) / "
      f"凸台 Φ{BOSS_OD:g}/Φ{BOSS_ID:g} H{BOSS_H:g} / "
      f"套环 Φ{COLLAR_OD:g}/Φ{COLLAR_ID:g} H{COLLAR_H:g} / "
-     f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° 对齐 / "
-     f"8×Φ{FL_M3_DIAM:g}+Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g}沉(顶+底) PCD Φ{2*FL_HOLE_R:g}",
+     + (f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° 对齐 / " if NOTCH_ENABLE else "凸台/套环整圈无缺口 (v4) / ")
+     + f"8×Φ{FL_M3_DIAM:g}+Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g}沉(顶+底) PCD Φ{2*FL_HOLE_R:g}",
      size=TXT_I, anchor="middle")
 
 # ===== TOP VIEW (1:1) =====
@@ -240,39 +243,40 @@ for a_deg in FL_ANGS:
     pdf.circle(hx, hy, FL_M3_DIAM/2, style="D")
     pdf.circle(hx, hy, FL_CB_DIAM/2, style="D")
 
-# Notches (hidden from top — wall below the visible top face). Show dashed
-# radial lines at the notch boundaries, spanning collar OD to boss ID.
-pdf.set_dash_pattern(dash=2.0, gap=1.0); _w(HID_W)
-for ang_d in (NOTCH_A_S, NOTCH_A_E):
-    a = math.radians(ang_d)
-    x_in  = ccx + (BOSS_ID/2) * math.cos(a)
-    y_in  = ccy - (BOSS_ID/2) * math.sin(a)
-    x_out = ccx + (COLLAR_OD/2) * math.cos(a)
-    y_out = ccy - (COLLAR_OD/2) * math.sin(a)
-    pdf.line(x_in, y_in, x_out, y_out)
-pdf.set_dash_pattern()
+if NOTCH_ENABLE:
+    # Notches (hidden from top — wall below the visible top face). Show dashed
+    # radial lines at the notch boundaries, spanning collar OD to boss ID.
+    pdf.set_dash_pattern(dash=2.0, gap=1.0); _w(HID_W)
+    for ang_d in (NOTCH_A_S, NOTCH_A_E):
+        a = math.radians(ang_d)
+        x_in  = ccx + (BOSS_ID/2) * math.cos(a)
+        y_in  = ccy - (BOSS_ID/2) * math.sin(a)
+        x_out = ccx + (COLLAR_OD/2) * math.cos(a)
+        y_out = ccy - (COLLAR_OD/2) * math.sin(a)
+        pdf.line(x_in, y_in, x_out, y_out)
+    pdf.set_dash_pattern()
 
-# Notch angle arc + radial dim arrows
-_w(DIM_W)
-ang_r = (COLLAR_OD/2 + BOSS_OD/2) / 2 + 2  # midline of the combined wall
-arc_n = 14
-arc_pts = []
-for i in range(arc_n + 1):
-    t = i / arc_n
-    a = math.radians(NOTCH_A_S + t * (NOTCH_A_E - NOTCH_A_S))
-    arc_pts.append((ccx + ang_r * math.cos(a), ccy - ang_r * math.sin(a)))
-for i in range(len(arc_pts) - 1):
-    pdf.line(*arc_pts[i], *arc_pts[i+1])
+    # Notch angle arc + radial dim arrows
+    _w(DIM_W)
+    ang_r = (COLLAR_OD/2 + BOSS_OD/2) / 2 + 2  # midline of the combined wall
+    arc_n = 14
+    arc_pts = []
+    for i in range(arc_n + 1):
+        t = i / arc_n
+        a = math.radians(NOTCH_A_S + t * (NOTCH_A_E - NOTCH_A_S))
+        arc_pts.append((ccx + ang_r * math.cos(a), ccy - ang_r * math.sin(a)))
+    for i in range(len(arc_pts) - 1):
+        pdf.line(*arc_pts[i], *arc_pts[i+1])
 
-for ang_d in (NOTCH_A_S, NOTCH_A_E):
-    a = math.radians(ang_d)
-    rd_x = ccx + (COLLAR_OD/2 + 8) * math.cos(a)
-    rd_y = ccy - (COLLAR_OD/2 + 8) * math.sin(a)
-    pdf.line(ccx, ccy, rd_x, rd_y)
-    arrow(rd_x, rd_y, math.cos(a), -math.sin(a))
-    lx = ccx + (COLLAR_OD/2 + 13) * math.cos(a)
-    ly = ccy - (COLLAR_OD/2 + 13) * math.sin(a)
-    text(lx, ly, f"{int(ang_d)}°", size=TXT_D, anchor="middle")
+    for ang_d in (NOTCH_A_S, NOTCH_A_E):
+        a = math.radians(ang_d)
+        rd_x = ccx + (COLLAR_OD/2 + 8) * math.cos(a)
+        rd_y = ccy - (COLLAR_OD/2 + 8) * math.sin(a)
+        pdf.line(ccx, ccy, rd_x, rd_y)
+        arrow(rd_x, rd_y, math.cos(a), -math.sin(a))
+        lx = ccx + (COLLAR_OD/2 + 13) * math.cos(a)
+        ly = ccy - (COLLAR_OD/2 + 13) * math.sin(a)
+        text(lx, ly, f"{int(ang_d)}°", size=TXT_D, anchor="middle")
 
 # Top-view overall dims
 hdim(tv(-50, -50)[0], tv(50, -50)[0], tv(0, -50)[1], tv(0, -50)[1] + DIM_O2, "100")
@@ -347,15 +351,16 @@ text(lx - 8, ly - 1,
      f"套环 Φ{COLLAR_OD:g}/Φ{COLLAR_ID:g}, 高 {COLLAR_H:g} (Z={COLLAR_Z0:g}–{COLLAR_Z1:g})",
      size=TXT_D, anchor="end")
 # Notch callout (upper right)
-notch_mid_a = math.radians((NOTCH_A_S + NOTCH_A_E) / 2)
-nx, ny = tv((COLLAR_OD/2 + 4) * math.cos(notch_mid_a),
-            (COLLAR_OD/2 + 4) * math.sin(notch_mid_a))
-lx, ly = tv(18, 56)
-pdf.line(nx, ny, lx, ly)
-pdf.line(lx, ly, lx + 10, ly)
-text(lx + 10, ly - 1,
-     f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° (对齐): 凸台/套环同高 H{NOTCH_H:g}",
-     size=TXT_D, anchor="start")
+if NOTCH_ENABLE:
+    notch_mid_a = math.radians((NOTCH_A_S + NOTCH_A_E) / 2)
+    nx, ny = tv((COLLAR_OD/2 + 4) * math.cos(notch_mid_a),
+                (COLLAR_OD/2 + 4) * math.sin(notch_mid_a))
+    lx, ly = tv(18, 56)
+    pdf.line(nx, ny, lx, ly)
+    pdf.line(lx, ly, lx + 10, ly)
+    text(lx + 10, ly - 1,
+         f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° (对齐): 凸台/套环同高 H{NOTCH_H:g}",
+         size=TXT_D, anchor="start")
 
 # ===== SECTION A-A (1:1) =====
 sa_t_zero_x = 310
@@ -365,7 +370,7 @@ def sa(t, z): return (sa_t_zero_x + t, sa_z_zero_y - z)
 text(sa_t_zero_x, 70, "剖视图  Section A-A  (1:1)   尺寸单位: mm",
      size=TXT_L, anchor="middle")
 text(sa_t_zero_x, 78,
-     "(沿 +Y 方向剖切, 过对齐槽口中分线 / cut along +Y axis through aligned notch bisector)",
+     ("(沿 +Y 方向剖切, 过对齐槽口中分线)" if NOTCH_ENABLE else "(沿 +Y 方向剖切; v4 无缺口, 左右对称实墙)"),
      size=TXT_I, anchor="middle")
 
 _w(GEOM_W)
@@ -389,7 +394,12 @@ line(*sa(-T_CCB, BASE_THICK), *sa(-T_CCB, BASE_THICK - CENTER_CB_DEPTH), GEOM_W)
 line(*sa(-T_CCB, BASE_THICK - CENTER_CB_DEPTH),
      *sa( T_CCB, BASE_THICK - CENTER_CB_DEPTH), GEOM_W)
 line(*sa( T_CCB, BASE_THICK - CENTER_CB_DEPTH), *sa( T_CCB, BASE_THICK), GEOM_W)
-line(*sa( T_CCB, BASE_THICK), *sa( T_BASE, BASE_THICK), GEOM_W)
+if NOTCH_ENABLE:
+    line(*sa( T_CCB, BASE_THICK), *sa( T_BASE, BASE_THICK), GEOM_W)
+else:
+    # 无缺口: 右侧 T_BI..T_CO 被 凸台+套环 实墙盖住, 与左侧对称
+    line(*sa( T_CCB, BASE_THICK), *sa( T_BI,   BASE_THICK), GEOM_W)
+    line(*sa( T_CO,  BASE_THICK), *sa( T_BASE, BASE_THICK), GEOM_W)
 
 # ----- Left side combined boss+collar wall (intact, no notch on this side) -----
 # Outline: collar outer wall up, collar top, boss outer wall up, boss top,
@@ -410,14 +420,22 @@ line(*sa(-T_BI, Z_BOSS_TOP), *sa(-T_BI, BASE_THICK), GEOM_W) # boss inner wall
 #   (T_BO, COLLAR_Z1) -> (T_BO, Z_BOSS_TOP)  boss outer above collar
 #   (T_BO, Z_BOSS_TOP) -> (T_BI, Z_BOSS_TOP)  boss top
 #   (T_BI, Z_BOSS_TOP) -> (T_BI, Z_BOSS_NOTCH_CEIL)  boss inner wall down
-line(*sa(T_BI, Z_BOSS_NOTCH_CEIL),   *sa(T_BO, Z_BOSS_NOTCH_CEIL),   GEOM_W)
-line(*sa(T_BO, Z_BOSS_NOTCH_CEIL),   *sa(T_BO, Z_COLLAR_NOTCH_CEIL), GEOM_W)
-line(*sa(T_BO, Z_COLLAR_NOTCH_CEIL), *sa(T_CO, Z_COLLAR_NOTCH_CEIL), GEOM_W)
-line(*sa(T_CO, Z_COLLAR_NOTCH_CEIL), *sa(T_CO, COLLAR_Z1),           GEOM_W)
-line(*sa(T_CO, COLLAR_Z1),           *sa(T_BO, COLLAR_Z1),           GEOM_W)
-line(*sa(T_BO, COLLAR_Z1),           *sa(T_BO, Z_BOSS_TOP),          GEOM_W)
-line(*sa(T_BO, Z_BOSS_TOP),          *sa(T_BI, Z_BOSS_TOP),          GEOM_W)
-line(*sa(T_BI, Z_BOSS_TOP),          *sa(T_BI, Z_BOSS_NOTCH_CEIL),   GEOM_W)
+if NOTCH_ENABLE:
+    line(*sa(T_BI, Z_BOSS_NOTCH_CEIL),   *sa(T_BO, Z_BOSS_NOTCH_CEIL),   GEOM_W)
+    line(*sa(T_BO, Z_BOSS_NOTCH_CEIL),   *sa(T_BO, Z_COLLAR_NOTCH_CEIL), GEOM_W)
+    line(*sa(T_BO, Z_COLLAR_NOTCH_CEIL), *sa(T_CO, Z_COLLAR_NOTCH_CEIL), GEOM_W)
+    line(*sa(T_CO, Z_COLLAR_NOTCH_CEIL), *sa(T_CO, COLLAR_Z1),           GEOM_W)
+    line(*sa(T_CO, COLLAR_Z1),           *sa(T_BO, COLLAR_Z1),           GEOM_W)
+    line(*sa(T_BO, COLLAR_Z1),           *sa(T_BO, Z_BOSS_TOP),          GEOM_W)
+    line(*sa(T_BO, Z_BOSS_TOP),          *sa(T_BI, Z_BOSS_TOP),          GEOM_W)
+    line(*sa(T_BI, Z_BOSS_TOP),          *sa(T_BI, Z_BOSS_NOTCH_CEIL),   GEOM_W)
+else:
+    # 无缺口: 右半边与左半边完全对称 (实墙)
+    line(*sa(T_CO, BASE_THICK), *sa(T_CO, COLLAR_Z1),  GEOM_W)   # 套环外壁
+    line(*sa(T_CO, COLLAR_Z1),  *sa(T_BO, COLLAR_Z1),  GEOM_W)   # 套环顶
+    line(*sa(T_BO, COLLAR_Z1),  *sa(T_BO, Z_BOSS_TOP), GEOM_W)   # 凸台外壁 (套环之上)
+    line(*sa(T_BO, Z_BOSS_TOP), *sa(T_BI, Z_BOSS_TOP), GEOM_W)   # 凸台顶
+    line(*sa(T_BI, Z_BOSS_TOP), *sa(T_BI, BASE_THICK), GEOM_W)   # 凸台内壁
 
 # ----- Section A-A dimensions -----
 right_dim_x  = sa(T_BASE, 0)[0] + DIM_O1
@@ -434,9 +452,10 @@ vdim(sa(0, BASE_THICK)[1], sa(0, 0)[1],
      sa(T_BASE, 0)[0], right_dim_x3, f"{BASE_THICK:g}")
 
 # Notch height — 凸台/套环同高 (6→8 统一, 2026-07-13), 一条尺寸即可
-boss_nh_x = sa(T_CO + 9, 0)[0]
-vdim(sa(0, Z_BOSS_NOTCH_CEIL)[1], sa(0, BASE_THICK)[1],
-     sa(T_CO, 0)[0], boss_nh_x, f"{NOTCH_H:g}")
+if NOTCH_ENABLE:
+    boss_nh_x = sa(T_CO + 9, 0)[0]
+    vdim(sa(0, Z_BOSS_NOTCH_CEIL)[1], sa(0, BASE_THICK)[1],
+         sa(T_CO, 0)[0], boss_nh_x, f"{NOTCH_H:g}")
 
 # Top horizontal diameter dims (stacked above boss top)
 top_y_ref = sa(0, Z_BOSS_TOP)[1]
@@ -569,7 +588,8 @@ text(tb_x + tb_w - 4, tb_y + 6,
 text(tb_x + 4, tb_y + 14.5,
      f"100×100×{BASE_THICK:g} / 4×M6 / 4×M3+Φ7×{CB_DEPTH:g} / 中央 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g}(顶) / "
      f"凸台 Φ{BOSS_OD:g}/Φ{BOSS_ID:g} H{BOSS_H:g} / 套环 Φ{COLLAR_OD:g}/Φ{COLLAR_ID:g} H{COLLAR_H:g} / "
-     f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° / 8×Φ{FL_M3_DIAM:g}+Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g}沉(顶+底)  /  单位 mm",
+     + (f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° / " if NOTCH_ENABLE else "整圈无缺口 / ")
+     + f"8×Φ{FL_M3_DIAM:g}+Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g}沉(顶+底)  /  单位 mm",
      size=TXT_I, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 14.5,
      "2026-07-29  /  POV3D / v4 / baseplate_collar_v4 / baseplate_collar_v4.stl",

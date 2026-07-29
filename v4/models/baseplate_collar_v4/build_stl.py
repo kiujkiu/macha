@@ -47,6 +47,11 @@ BOSS_OD = 65.0
 BOSS_ID = 55.0
 BOSS_H  = 23.0
 
+# 2026-07-29 v4 (用户: "补成整圈"): 凸台+套环的 75..105° 走线缺口取消 → 整圈连续。
+# ⚠⚠ 这个缺口原是**电机线唯一的出口** —— C4110 坐在凸台腔 (ID55) 里, 底盘 5mm 实心,
+#    上方是转子, 线只能沿这个缺口径向穿出。补成整圈后电机线无出路, 装机前必须先想好
+#    走线方案 (改走别处 / 现场开孔 / 把本开关设回 True)。
+NOTCH_ENABLE = False
 NOTCH_A_START = 75.0
 NOTCH_A_END   = 105.0
 NOTCH_H       = 8.0
@@ -125,7 +130,8 @@ for i in range(NOTCH_SEG + 1):
     wedge_pts.append((NOTCH_R * math.cos(a_rad), NOTCH_R * math.sin(a_rad)))
 notch = m3d.CrossSection([wedge_pts]).extrude(NOTCH_H + 0.1)
 notch = notch.translate((0, 0, BASE_THICK))
-boss = boss - notch
+if NOTCH_ENABLE:
+    boss = boss - notch
 
 # ===== Ring collar (sleeved over boss) =====
 collar_outer = m3d.Manifold.cylinder(COLLAR_H, COLLAR_OD / 2, COLLAR_OD / 2, 128, False)
@@ -142,7 +148,8 @@ for i in range(COLLAR_NOTCH_SEG + 1):
     c_wedge_pts.append((COLLAR_NOTCH_R * math.cos(a_rad), COLLAR_NOTCH_R * math.sin(a_rad)))
 c_notch = m3d.CrossSection([c_wedge_pts]).extrude(COLLAR_NOTCH_H + 0.1)
 c_notch = c_notch.translate((0, 0, COLLAR_Z0 - 0.05))
-collar = collar - c_notch
+if NOTCH_ENABLE:
+    collar = collar - c_notch
 
 # ===== Combine =====
 part = base + boss + collar
@@ -189,7 +196,7 @@ print(f"  bbox Y: {verts[:,1].min():7.2f} .. {verts[:,1].max():7.2f}")
 print(f"  bbox Z: {verts[:,2].min():7.2f} .. {verts[:,2].max():7.2f}")
 print(f"  volume:        {part.volume():8.2f} mm^3")
 print(f"  surface area:  {part.surface_area():8.2f} mm^2")
-print(f"  notches aligned at {NOTCH_A_START:g}°–{NOTCH_A_END:g}° (boss H{NOTCH_H:g}, collar H{COLLAR_NOTCH_H:g})")
+print(f"  走线缺口: {'开 '+str(NOTCH_A_START)+chr(176)+'-'+str(NOTCH_A_END)+chr(176) if NOTCH_ENABLE else '已关闭 → 凸台/套环整圈连续 (v4)'}")
 print(f"  flange 连接孔 8× Φ{FLANGE_M3_DIAM:g} 通 + Φ{FLANGE_CB_DIAM:g}×{FLANGE_CB_DEPTH:g} 沉孔 顶面+底面 "
       f"@ R{FLANGE_HOLE_R:g}, {FLANGE_HOLE_ANGS[0]:g}°+45k° (配 M3×4×4.5 铜花螺母)")
 

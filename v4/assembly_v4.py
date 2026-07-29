@@ -12,6 +12,14 @@ POST_R 106.07 不变 → 顶轴承架 / 转子 / 罩子 / 屏幕支撑全部沿�
 落空 → 改走对角网格位 (±37.5,±37.5): 方形节距 75, 对角 106.07, **装配 ROT 45°→0°**。
 新件 `v4/models/baseplate_collar_v4/`。
 
+2026-07-29 追加 (用户"补成整圈"): 定子侧两处走线开口全部补实 —
+  · baseplate_collar_v4: 凸台+套环 75..105° 走线缺口取消 (NOTCH_ENABLE=False)
+  · flange_disc_v4 (新件): 0..5° 走线扇形槽 + 外圈凸台 40..45° 缺口都取消
+    (SLOT_ENABLE / OUTER_CUTOUT_ENABLE = False); 外圈孔从 7 恢复为 8
+  转子两件 (hub_disc / rim_ring) 早在 2026-07-21 就已补成整圈, 无需改动。
+  ⚠⚠ 底座那个缺口原是**电机线唯一的出口** (C4110 坐凸台腔 ID55, 底盘 5 实心,
+     上方是转子) —— 补实后必须另想走线方案, 或把 NOTCH_ENABLE 设回 True。
+
 ⚠ 底座质量 300×300×12 → 200×200×13 (钢约 8.5kg → 4.1kg)。底座质量是吸收转子
 不平衡的主要手段, 对已知涡动问题 (f₁≈20–27 Hz) 是负面的; 建议用板上的 M6 螺纹孔
 从下方把板锁到桌面/机架 (4 个 Φ6.5 安装孔已被柱占用)。
@@ -119,9 +127,9 @@ bpc = rot_z(bpc, ROT)
 parts.append(("baseplate_collar_v4", bpc))
 
 # 3) flange_disc +18 直立 (随转 45°)
-fd = read_stl(MODELS / "flange_disc/flange_disc.stl") + np.array([0.0, 0.0, 18.0])
+fd = read_stl(ROOT / "models/flange_disc_v4/flange_disc_v4.stl") + np.array([0.0, 0.0, 18.0])
 fd = rot_z(fd, ROT)
-parts.append(("flange_disc", fd))
+parts.append(("flange_disc_v4", fd))
 
 # 3) mounting_flange 翻转 180°(绕 X) 扣顶 (壁 18..25, 底 25..28), 随转 45°
 mf = read_stl(MODELS / "mounting_flange/mounting_flange.stl")
@@ -350,7 +358,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 COLORS = {"grid plate 200x200x13": "#333333", "baseplate_collar_v4": "#777777",
-          "flange_disc": "#88aacc", "mounting_flange": "#cccc77",
+          "flange_disc_v4": "#88aacc", "mounting_flange": "#cccc77",
           "motor (placeholder)": "#444444", "hub_disc (rotor, 下)": "#ccaa55",
           "rim_ring (rotor, 上/承载盘)": "#9ccf9c",
           "pi2hub75e (下板)": "#2a7d2a", "nylon standoffs ×4": "#dddddd",
