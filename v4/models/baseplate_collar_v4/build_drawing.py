@@ -27,6 +27,9 @@ BASE_THICK = 5.0
 M6_DIAG    = 75.0 * math.sqrt(2)                    # 角孔对角间距 (user 2026-06-29)
 M6_PATTERN = M6_DIAG / math.sqrt(2)   # ≈70.71
 M6_DIAM    = 6.5
+# 2026-07-30: 4×M3 电机孔整组转 45° → 孔落坐标轴 (±12.5,0)/(0,±12.5)
+# 与 build_stl.py 的 M3_ROT 必须一致 (本图纸参数是复刻不是 import)
+M3_ROT     = 0.0      # 2026-07-30 用户改回 0 (曾试 45° 让孔落坐标轴, 随即撤回)
 M3_DIAG    = 25.0
 M3_SIDE    = M3_DIAG / math.sqrt(2)
 M3_DIAM    = 3.2
@@ -216,14 +219,17 @@ for sx in (-1, 1):
 
 # 4 × M3 holes + Φ7 CB (CB on bottom — dashed)
 m3_hp = M3_SIDE / 2
-for sx in (-1, 1):
-    for sy in (-1, 1):
-        cx, cy = tv(sx * m3_hp, sy * m3_hp)
-        pdf.circle(cx, cy, M3_DIAM/2, style="D")
-        pdf.set_dash_pattern(dash=1.5, gap=1.0); _w(HID_W)
-        pdf.circle(cx, cy, CB_DIAM/2, style="D")
-        pdf.set_dash_pattern()
-        _w(GEOM_W)
+_mr = math.radians(M3_ROT)
+M3_HOLES = [((sx*m3_hp)*math.cos(_mr) - (sy*m3_hp)*math.sin(_mr),
+             (sx*m3_hp)*math.sin(_mr) + (sy*m3_hp)*math.cos(_mr))
+            for sx in (-1, 1) for sy in (-1, 1)]
+for (mx, my) in M3_HOLES:
+    cx, cy = tv(mx, my)
+    pdf.circle(cx, cy, M3_DIAM/2, style="D")
+    pdf.set_dash_pattern(dash=1.5, gap=1.0); _w(HID_W)
+    pdf.circle(cx, cy, CB_DIAM/2, style="D")
+    pdf.set_dash_pattern()
+    _w(GEOM_W)
 
 # Collar OD Φ80, boss outer Φ65, boss inner Φ55, central Φ12 CB
 ccx, ccy = tv(0, 0)
@@ -287,9 +293,9 @@ vdim(tv(0, m6_hp)[1], tv(0, -m6_hp)[1],
      tv(-m6_hp, 0)[0], tv(-m6_hp, 0)[0] - DIM_O1, f"{M6_PATTERN:.1f}")
 
 # M3 diagonal 25
-diag_p1 = tv(-m3_hp, -m3_hp)
-diag_p2 = tv(m3_hp, m3_hp)
-text(diag_p2[0] + 4, diag_p2[1] - 2, "对角 25", size=TXT_D, anchor="start")
+diag_p1 = tv(*M3_HOLES[0])
+diag_p2 = tv(*M3_HOLES[3])
+text(diag_p2[0] + 4, diag_p2[1] - 2, f"对角 {M3_DIAG:g} (整组转 {M3_ROT:g}°)", size=TXT_D, anchor="start")
 pdf.line(diag_p1[0], diag_p1[1], diag_p2[0], diag_p2[1])
 arrow(diag_p1[0], diag_p1[1], -1, 1); arrow(diag_p2[0], diag_p2[1], 1, -1)
 
@@ -302,7 +308,7 @@ pdf.line(hx + M6_DIAM/2*0.7, hy - M6_DIAM/2*0.7, lx, ly)
 pdf.line(lx, ly, lx + 8, ly)
 text(lx + 8, ly - 1, f"4 × Φ{M6_DIAM:g} (M6 通孔)  节距 {M6_PATTERN:g} (对角 {M6_DIAG:.2f})", size=TXT_D, anchor="start")
 # M3 + CB
-hx, hy = tv(m3_hp, m3_hp)
+hx, hy = tv(*M3_HOLES[3])
 lx, ly = tv(82, 16)
 pdf.line(hx + M3_DIAM/2*0.7, hy - M3_DIAM/2*0.7, lx, ly)
 pdf.line(lx, ly, lx + 8, ly)

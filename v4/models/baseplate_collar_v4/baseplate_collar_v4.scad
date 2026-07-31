@@ -12,6 +12,7 @@ m6_diag         = 75 * sqrt(2);       // 106.07 (2026-07-29 v4: 配 200×200 网
 m6_pattern_side = m6_diag / sqrt(2);   // = 75 方形边长 → 脚落网格位 (±37.5,±37.5)
 m6_diam         = 6.5;
 
+m3_rot          = 0;    // 2026-07-30: 曾试 45° (孔落坐标轴), 用户改回 0
 m3_diag         = 25;
 m3_diam         = 3.2;
 cb_diam         = 7;
@@ -46,6 +47,9 @@ collar_top      = collar_z0 + collar_h;   // 18
 
 // derived
 m3_side    = m3_diag / sqrt(2);
+m3_holes   = [ for (sx = [-1,1], sy = [-1,1])
+               [ sx*m3_side/2*cos(m3_rot) - sy*m3_side/2*sin(m3_rot),
+                 sx*m3_side/2*sin(m3_rot) + sy*m3_side/2*cos(m3_rot) ] ];
 notch_r    = boss_od / 2 + 2;
 collar_notch_r = collar_od / 2 + 2;
 
@@ -59,10 +63,10 @@ module baseplate_collar_v4() {
             for (sx = [-1, 1]) for (sy = [-1, 1])
                 translate([sx * m6_pattern_side/2, sy * m6_pattern_side/2, -1])
                     cylinder(h = base_thick + 2, d = m6_diam, $fn = 48);
-            for (sx = [-1, 1]) for (sy = [-1, 1]) {
-                translate([sx * m3_side/2, sy * m3_side/2, -1])
+            for (h3 = m3_holes) {                    // 4×M3 电机孔 (整组转 m3_rot)
+                translate([h3[0], h3[1], -1])
                     cylinder(h = base_thick + 2, d = m3_diam, $fn = 32);
-                translate([sx * m3_side/2, sy * m3_side/2, -1])
+                translate([h3[0], h3[1], -1])
                     cylinder(h = cb_depth + 1, d = cb_diam, $fn = 48);
             }
             // 中央 Φ12 沉孔（顶面向下 1mm）

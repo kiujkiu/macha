@@ -34,6 +34,11 @@ M6_DIAG         = 75.0 * math.sqrt(2)                      # corner-hole diagona
 M6_PATTERN_SIDE = M6_DIAG / math.sqrt(2)     # ≈70.71 square side → diagonal 100
 M6_DIAM         = 6.5
 
+# 2026-07-30 用户: 「定子电机的 4 个安装螺丝旋转 45°」
+# 原 4×M3 是对角 25 的方形阵 → 孔在 (±8.839, ±8.839) (即对角落在 ±X/±Y 轴上)。
+# 转 45° 后孔落到**坐标轴上**: (±12.5, 0) / (0, ±12.5)。
+# (半径不变 12.5, 只是绕 Z 转了 45°。)
+M3_ROT          = 0.0      # 2026-07-30 用户改回 0 (曾试 45° 让孔落坐标轴, 随即撤回)
 M3_DIAG         = 25.0
 M3_PATTERN_SIDE = M3_DIAG / math.sqrt(2)
 M3_DIAM         = 3.2
@@ -99,15 +104,18 @@ for sx in (-1, 1):
 
 # 4 × M3 center holes + Φ7 counterbore (from bottom)
 m3_hp = M3_PATTERN_SIDE / 2
-for sx in (-1, 1):
-    for sy in (-1, 1):
-        h = m3d.Manifold.cylinder(hole_h, M3_DIAM / 2, M3_DIAM / 2, 32, True)
-        h = h.translate((sx * m3_hp, sy * m3_hp, BASE_THICK / 2))
-        base = base - h
-        cb_h = CB_DEPTH + 1.0
-        cb = m3d.Manifold.cylinder(cb_h, CB_DIAM / 2, CB_DIAM / 2, 48, False)
-        cb = cb.translate((sx * m3_hp, sy * m3_hp, -1.0))
-        base = base - cb
+_mr = math.radians(M3_ROT)
+M3_HOLES = [( (sx*m3_hp)*math.cos(_mr) - (sy*m3_hp)*math.sin(_mr),
+              (sx*m3_hp)*math.sin(_mr) + (sy*m3_hp)*math.cos(_mr) )
+            for sx in (-1, 1) for sy in (-1, 1)]
+for (mx, my) in M3_HOLES:
+    h = m3d.Manifold.cylinder(hole_h, M3_DIAM / 2, M3_DIAM / 2, 32, True)
+    h = h.translate((mx, my, BASE_THICK / 2))
+    base = base - h
+    cb_h = CB_DEPTH + 1.0
+    cb = m3d.Manifold.cylinder(cb_h, CB_DIAM / 2, CB_DIAM / 2, 48, False)
+    cb = cb.translate((mx, my, -1.0))
+    base = base - cb
 
 # Central Φ12 × 1 mm CB on top face
 ccb_h = CENTER_CB_DEPTH + 1.0
@@ -197,6 +205,8 @@ print(f"  bbox Z: {verts[:,2].min():7.2f} .. {verts[:,2].max():7.2f}")
 print(f"  volume:        {part.volume():8.2f} mm^3")
 print(f"  surface area:  {part.surface_area():8.2f} mm^2")
 print(f"  走线缺口: {'开 '+str(NOTCH_A_START)+chr(176)+'-'+str(NOTCH_A_END)+chr(176) if NOTCH_ENABLE else '已关闭 → 凸台/套环整圈连续 (v4)'}")
+print(f"  4×M3 电机孔 (转 {M3_ROT:g}°): " + ", ".join(f"({x:+.2f},{y:+.2f})" for x,y in M3_HOLES)
+      + f"  (半径 {M3_DIAG/2:g})")
 print(f"  flange 连接孔 8× Φ{FLANGE_M3_DIAM:g} 通 + Φ{FLANGE_CB_DIAM:g}×{FLANGE_CB_DEPTH:g} 沉孔 顶面+底面 "
       f"@ R{FLANGE_HOLE_R:g}, {FLANGE_HOLE_ANGS[0]:g}°+45k° (配 M3×4×4.5 铜花螺母)")
 

@@ -1,4 +1,29 @@
 """
+POV3D 装配 v3.1  (assembly_v3_1)  ——  偏心屏实验 (2026-07-30)
+
+v3.1 = **把双面屏整体偏移 SCR_ECC = 6.7, 让其中一面正好落在旋转轴平面上**。
+动机: 双面屏两个 LED 面在 X=±6.7, 面上任一点到轴的最近距离就是 6.7 → 成像中心
+有个 **Φ13.4 的盲柱** (半径 6.7 内在整个旋转周期里被屏体自己占着)。偏移后贴轴
+那面盲区归零, 另一面变 Φ26.8。属实验性配置。
+
+底座沿用 **v4 的 200×200 网格板**配置 (那是实际在装的机器); 改动全在转子/顶部,
+所以 3 个新件在 v3 底座上同样能用。
+
+新件 (v3.1/models/):
+  · portal_tee_v3_1   顶托由梯形(内13.4/外20)改**等宽 ±16**, 屏孔改 X 方向
+    **3 个离散孔 (-6.7 / 0 / +6.7)** —— 破「同件转180°」死结: 转180°后孔位仍是
+    (±6.7,-64)+(0,-64), 两件都有 +6.7 可用, 且同件支持居中装法 → 拧不同孔即可
+    在「居中/偏心」间切换做对照, 不必重印
+  · top_cap_v3_1_1    压条 18→**32 宽 (±16)** 才盖得住偏心后的屏 (原差 4.4);
+    屏孔同样 3×2; 光电那套 (绕 M(0,-45) 转 22.19° 光轴过圆心) 原位不动;
+    -X 悬空区加 9×Φ6.5 配重孔 (细调用, 力臂仅 11 → 主配重需放转子盘大半径)
+  · rotor_shroud_v3_1 屏缝改非对称 **X -7.0..+13.7** (同时覆盖居中与偏心) +
+    T顶托区 ±16.3
+⚠ 动平衡: 屏偏心 6.7 → 不平衡量 = m_屏 × 6.7 (500g 屏 = 3350 g·mm, 约现有残余
+  的 2.4×)。机器已有涡动问题 (f1≈20–27 Hz, 临界 1200–1600 RPM) → **实验先低速跑
+  (≤850 RPM)**, 主配重放转子盘 r≈70 处 (48g 级), 压条那排孔只够细调。
+
+--- 以下沿用 v4 ---
 POV3D 装配 v4  (assembly_v4)  ——  200×200 网格底板配置 (2026-07-29)
 
 v4 = v3 换底板。用户把洞洞板换成 200×200×13 网格板 (卖家规格: M6 螺纹孔
@@ -60,7 +85,7 @@ POV3D 装配 v3  (assembly_v3)  ——  双面屏配置 (2026-07-10)
 沿用 v2: 洞洞板 / baseplate_collar_d100 对脚 45° / 法兰 / 电机 / hub+rim 同层 /
 mlkpai_carrier_disc / pi2hub+尼龙柱+米联派堆叠 / 光电同步 / usb_wifi 盒 /
 顶轴承柱+frame_v2。坐标系 = baseplate 底面 Z=0, Z 向上。
-输出 assembly_v4.stl + 预览 PNG。 仅供装配核对, 不可打印。
+输出 assembly_v3_1.stl + 预览 PNG。 仅供装配核对, 不可打印。
 """
 import math
 import struct
@@ -68,9 +93,11 @@ from pathlib import Path
 import numpy as np
 import manifold3d as m3d
 
-ROOT = Path(__file__).parent            # pov3d/v4
+ROOT = Path(__file__).parent            # pov3d/v3.1
 MODELS = ROOT.parent / "models"         # v1/v2 共享零件库
-V3 = ROOT.parent / "v3"                 # v4 沿用的 v3 专属件 (转子/屏/顶部全套)
+V3 = ROOT.parent / "v3"                 # 沿用的 v3 件
+V4 = ROOT.parent / "v4"                 # 沿用的 v4 定子件 (底座/法兰)
+SCR_ECC = 6.7                           # ★ v3.1: 屏偏心量 (使一面贴轴)
 STL_TRI = np.dtype([("normal", "<f4", 3), ("verts", "<f4", (3, 3)), ("attr", "<u2")])
 
 def read_stl(path):
@@ -122,17 +149,17 @@ for mx in (-BB_MOUNT, BB_MOUNT):
 parts.append(("grid plate 200x200x13", mesh_tris(bb)))
 
 # 2) baseplate_collar_d100 居中转 45° (对脚菱形), 底面坐 Z=0
-bpc = read_stl(ROOT / "models/baseplate_collar_v4/baseplate_collar_v4.stl")
+bpc = read_stl(V4 / "models/baseplate_collar_v4/baseplate_collar_v4.stl")
 bpc = rot_z(bpc, ROT)
 parts.append(("baseplate_collar_v4", bpc))
 
 # 3) flange_disc +18 直立 (随转 45°)
-fd = read_stl(ROOT / "models/flange_disc_v4/flange_disc_v4.stl") + np.array([0.0, 0.0, 18.0])
+fd = read_stl(V4 / "models/flange_disc_v4/flange_disc_v4.stl") + np.array([0.0, 0.0, 18.0])
 fd = rot_z(fd, ROT)
 parts.append(("flange_disc_v4", fd))
 
 # 3) mounting_flange 翻转 180°(绕 X) 扣顶 (壁 18..25, 底 25..28), 随转 45°
-mf = read_stl(ROOT / "models/mounting_flange_v4/mounting_flange_v4.stl")
+mf = read_stl(V4 / "models/mounting_flange_v4/mounting_flange_v4.stl")
 mf[..., 1] = -mf[..., 1]
 mf[..., 2] = 28.0 - mf[..., 2]
 mf = mf[:, ::-1, :].copy()
@@ -205,7 +232,7 @@ print(f"承载面(rim_ring 托盘顶) {DISC_TOP:.1f}; 垫柱顶 {BOSS_TOP:.1f}; 
 # 两端→梃顶大三角筋 (厚5) + 顶托内伸盖屏底 ±64 孔 (M3×12 经 Φ6.5 头窝井
 # 向上锁屏, 托下 45° 小筋); 屏每侧只锁 1 颗, 中央孔空置, 模组自身为梁。
 V3_SCR_ROT = -45.0
-te = read_stl(V3 / "models/bottom_portal_v3/portal_tee_v3.stl") + np.array([0.0, 0.0, DISC_TOP])
+te = read_stl(ROOT / "models/bottom_portal_v3_1/portal_tee_v3_1.stl") + np.array([0.0, 0.0, DISC_TOP])
 parts.append(("portal_tee A", rot_z(te.copy(), ROTOR_ROT + V3_SCR_ROT)))
 parts.append(("portal_tee B", rot_z(te.copy(), ROTOR_ROT + V3_SCR_ROT + 180.0)))
 
@@ -215,7 +242,7 @@ parts.append(("portal_tee B", rot_z(te.copy(), ROTOR_ROT + V3_SCR_ROT + 180.0)))
 SCREEN_T = 13.4
 SCREEN_Z0 = DISC_TOP + 50.0                 # 92.2
 sc = read_stl(MODELS / "screen_150x169_t13/screen_150x169_t13.stl") \
-     + np.array([0.0, 0.0, SCREEN_Z0])
+     + np.array([SCR_ECC, 0.0, SCREEN_Z0])      # ★ v3.1: 偏心 +6.7 (一面贴轴 X=0)
 sc = rot_z(sc, ROTOR_ROT + V3_SCR_ROT)
 parts.append(("dual_screen", sc))
 MLK_TOP = PCB_Z0 + 1.6 + 1.2                # 64.6 米联派板顶+针尾
@@ -225,10 +252,10 @@ MLK_TOP = PCB_Z0 + 1.6 + 1.2                # 64.6 米联派板顶+针尾
 #      两半对开 + 3 厚封顶带屏缝; 每半 2× M3×55 经内立柱拧进 rim_ring 4 个
 #      空闲外圈环孔 (装配 112.5/157.5/292.5/337.5°) 到 hub 底铜花螺母。
 #      随屏组转 V3_SCR_ROT (立柱角 = 零件系 22.5/157.5/202.5/337.5°)。
-SHROUD_DIR = V3 / "models/rotor_shroud_v3"
+SHROUD_DIR = ROOT / "models/rotor_shroud_v3_1"
 for _tag in ("A", "B"):
-    _sh = read_stl(SHROUD_DIR / f"shroud_half_{_tag}_v3.stl") + np.array([0.0, 0.0, DISC_TOP])
-    parts.append((f"shroud_half_{_tag}_v3", rot_z(_sh, ROTOR_ROT + V3_SCR_ROT)))
+    _sh = read_stl(SHROUD_DIR / f"shroud_half_{_tag}_v3_1.stl") + np.array([0.0, 0.0, DISC_TOP])
+    parts.append((f"shroud_half_{_tag}_v3_1", rot_z(_sh, ROTOR_ROT + V3_SCR_ROT)))
 print(f"支架翼板底 {DISC_TOP+21.0:.1f} / 中央缺口顶(±60内) {DISC_TOP+50.0:.1f} (米联派顶 {MLK_TOP:.1f}); "
       f"双面屏模组 {SCREEN_Z0:.1f}..{SCREEN_Z0+168.75:.1f} (LED 面 X=±{SCREEN_T/2:.2f})")
 
@@ -306,7 +333,7 @@ parts.append(("vane_slider_v3", vs))
 # 扁条 18×140×7 (底 260.95 = 屏顶, 压住双屏; 顶 267.95 = CAPTOP),
 # 2× 盘头 M3×12~14 经 Φ3.2 平面通孔拧进屏顶孔 (0,±64) (中央孔被轴占);
 # M6×20 平头藏底面 Φ13×2.7 头窝 (⚠ 先装 M6 再压屏), 头 260.95..263.65。
-cap = read_stl(V3 / "models/top_cap_v3_1/top_cap_v3_1.stl")  # 打印翻转姿态
+cap = read_stl(ROOT / "models/top_cap_v3_1_1/top_cap_v3_1_1.stl")  # 打印翻转姿态
 cap[..., 1] = -cap[..., 1]
 cap[..., 2] = CAPTOP_V3 - cap[..., 2]
 cap = cap[:, ::-1, :].copy()
@@ -333,8 +360,8 @@ print("底座 4×M6 脚 (转%g° 后, 应落网格位 ±37.5):" % ROT,
 
 # ===== merge + export =====
 all_tris = np.concatenate([t for (_, t) in parts], axis=0)
-out = ROOT / "assembly_v4.stl"
-_header = b"POV3D assembly_v4"
+out = ROOT / "assembly_v3_1.stl"
+_header = b"POV3D assembly_v3_1"
 with out.open("wb") as f:
     f.write(_header.ljust(80, b" "))
     f.write(struct.pack("<I", len(all_tris)))
@@ -366,7 +393,7 @@ COLORS = {"grid plate 200x200x13": "#333333", "baseplate_collar_v4": "#777777",
           "portal_tee A": "#aa6622", "portal_tee B": "#aa6622",
           "sensor_module": "#222266",
           "dual_screen": "#3355cc",
-          "shroud_half_A_v3": "#b0b8c8", "shroud_half_B_v3": "#98a0b0",
+          "shroud_half_A_v3_1": "#b0b8c8", "shroud_half_B_v3_1": "#98a0b0",
           "wifi_shell": "#22aaaa",
           "usb_wifi_module": "#111111",
           "frame_A_v3 (SW+NW)": "#5577aa", "frame_B_v3 (NE+SE)": "#5577aa",
@@ -385,6 +412,6 @@ for i, (elev, azim, title) in enumerate([(22, -60, "iso"), (89, -90, "top")]):
     ax.set_box_aspect((1, 1, 1.28)); ax.view_init(elev=elev, azim=azim)
     ax.set_title(title); ax.set_xlabel("X"); ax.set_ylabel("Y"); ax.set_zlabel("Z")
 fig.tight_layout()
-png = ROOT / "assembly_v4_preview.png"
+png = ROOT / "assembly_v3_1_preview.png"
 fig.savefig(png, dpi=110)
 print(f"wrote {png}")
