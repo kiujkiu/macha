@@ -267,11 +267,12 @@ print(f"支架翼板底 {DISC_TOP+21.0:.1f} / 中央缺口顶(±60内) {DISC_TOP
 #     刀尖调到 asm 280 (光轴 ~282.4, 叉顶 285.65 对筋底 290 留 4.35)。
 sm = read_stl(MODELS / "photo_sensor/sensor_module.stl")
 sm = sm[..., [1, 0, 2]] * np.array([1.0, -1.0, 1.0])   # rotZ-90: (x,y)->(y,-x)
-sm = sm + np.array([-3.0, -45.0, 267.95])
+sm = sm + np.array([-3.0 + SCR_ECC, -45.0, 267.95])    # v3.1: 整组随 M 挪 +SCR_ECC
 # 六改: 绕孔线中点 M(0,-45) 转 22.196° → 光轴过圆心 (sin th = 17/45)
-_th = np.arcsin(17.0 / 45.0)   # 22.196°
+_SEN_M = np.array([SCR_ECC, -45.0])                    # v3.1: 孔线中点落屏顶 M3 连线上
+_th = np.arcsin(17.0 / float(np.hypot(*_SEN_M)))       # 21.9414° (重解, 保光轴过圆心)
 _R = np.array([[np.cos(_th), -np.sin(_th)], [np.sin(_th), np.cos(_th)]])
-_M = np.array([0.0, -45.0])
+_M = _SEN_M
 sm[..., :2] = (sm[..., :2] - _M) @ _R.T + _M   # 2026-07-23: 孔挪条中线 (capX0), 梁线 capX+17
 parts.append(("sensor_module", rot_z(sm, ROTOR_ROT + V3_SCR_ROT)))
 # (2026-07-23 曾长死在 frame_B 筋底; 2026-07-24 改独立滑片, 见 frame 段后。)
@@ -322,13 +323,13 @@ parts.append(("frame_B_v3 (NE+SE)", fb))
 # 挡光滑片 vane_slider_v3 (静止; 终版: 两件都圆孔, 调节=刀片印长50装机剪短):
 # 锁 frame_B ang=90 臂筋 (asm 45°) 侧面, M3×20+螺母 ×2 穿筋孔 (r45.2/51.4,
 # 居中 z4 = asm 294); 板 8 高填满筋侧 (底平筋底 290, 顶抵臂底 298), 装配用已剪短孪生 (刀尖 280)
-vs = read_stl(V3 / "models/photo_sensor_v3/vane_slider_v3_asm.stl")
+vs = read_stl(ROOT / "models/photo_sensor_v3_1/vane_slider_v3_1_asm.stl")
 vs = vs[..., [0, 2, 1]].copy()          # 打印姿态 (x,z,y-2) → 件系
 vs[..., 1] += 2.0
 vs = vs[:, ::-1, :]                     # 轴交换镜像 → 翻回绕向
 vs = rot_z(vs, 45.0)
 vs[..., 2] += 290.0
-parts.append(("vane_slider_v3", vs))
+parts.append(("vane_slider_v3_1", vs))
 # top_cap_v3_1 顶部薄压条 v3 (2026-07-22: 用户"做薄"):
 # 扁条 18×140×7 (底 260.95 = 屏顶, 压住双屏; 顶 267.95 = CAPTOP),
 # 2× 盘头 M3×12~14 经 Φ3.2 平面通孔拧进屏顶孔 (0,±64) (中央孔被轴占);
@@ -399,7 +400,7 @@ COLORS = {"grid plate 200x200x13": "#333333", "baseplate_collar_v4": "#777777",
           "frame_A_v3 (SW+NW)": "#5577aa", "frame_B_v3 (NE+SE)": "#5577aa",
           "top_cap_v3_1 (rotor)": "#cc8888", "M6x20 screw (rotor)": "#888888",
           "standoff Φ8×30 (rotor)": "#888888",
-          "vane_slider_v3": "#cc6644", "688 lower (frame_A)": "#999999", "688 upper (frame_B)": "#999999"}
+          "vane_slider_v3_1": "#cc6644", "688 lower (frame_A)": "#999999", "688 upper (frame_B)": "#999999"}
 for px in (-75, 75):
     for py in (-75, 75):
         COLORS[f"post @({px:+.0f},{py:+.0f})"] = "#666666"

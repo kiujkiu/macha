@@ -41,7 +41,8 @@ SCREW_XS = (-SCR_ECC, 0.0, SCR_ECC)      # v3.1: 3 个离散 X 孔位 (同 porta
 # ⚠模块挪位后凸出焊脚落点要重查")。v3.1 把条加宽到 ±16 后**焊脚就压到条上了**
 # —— 实测两处各扎入 1.5 深、约 1×1 截面 (X 11.67..12.67 / 13.99..14.98,
 # Y ≈ -32, Z 266.45..267.95)。这里开两个避空孔 (Φ3 通, 单边余量 ~1)。
-LEG_RELIEF = True
+LEG_RELIEF = False   # 2026-07-31: 光电整组随 M 挪 +6.7 后, 焊脚到 X≈18.9/21.2 = 条外(±16)
+                     # 又悬空了 → 避空孔不再需要 (实测 cap∩sensor = 0)。开关保留
 LEG_D = 3.0
 LEG_XY = ((12.17, -32.47), (14.49, -31.53))   # 实测焊脚中心 (压条零件系 XY)
 
@@ -56,14 +57,31 @@ CW_YS = tuple(float(v) for v in range(-56, 57, 14))   # 9 个, 间距 14
 # 叉臂扫掠为同心环, 刀片净通道 r36.78..46.66 (刀片 r40.2..43.2, 余量 ~3.4/侧)。
 # 对射管焊脚旋转后落条外悬空 (无需避空); 排针尾避空槽随转 (斜置矩形)。
 import math
-SEN_TH = math.degrees(math.asin(17.0 / 45.0))        # 22.187°
-_s, _c = math.sin(math.radians(SEN_TH)), math.cos(math.radians(SEN_TH))
-SEN_M = (0.0, -45.0)                                  # 孔线中点 (旋转中心)
-SEN_HOLES = [(7*_s, -45.0 - 7*_c), (-7*_s, -45.0 + 7*_c)]   # (±2.644, -51.481/-38.519)
+# ===== 光电模块定位 (v3.1 重解, 2026-07-31) =====
+# 用户: 「光电开关的两个螺丝连线中点要在平移后屏幕的两个 M3 螺丝连线上」。
+# 偏心后屏顶两颗 M3 在 (+SCR_ECC, ±64) → 连线是直线 X = +SCR_ECC,
+# 故孔线中点 M 从 (0,-45) 挪到 **(SCR_ECC, -45)**。
+#
+# ★ 只平移会破坏「光轴过圆心」(实测偏离 6.20) —— 用户选方案二: 平移 + 重解转角。
+# 通用解 (不再硬编码 45 / 22.196):
+#   光轴 = 平行孔线、垂距 SEN_BEAM_OFF(17) 的直线; 要它过原点 ⇔ 原点到**孔线**的
+#   垂距 = 17。孔线过 M、方向 u, 该垂距 = |M × u| = |M|·sin(∠(OM,u))
+#   ⇒ ∠(OM,u) = asin(17/|M|) = SEN_TH,  u 的方位角 = atan2(My,Mx) + SEN_TH
+SEN_BEAM_OFF = 17.0                    # 光轴到孔线的垂距 (模块几何, 固定)
+SEN_PITCH = 14.0                       # 两孔中心距
+SEN_M = (SCR_ECC, -45.0)               # ← 中点落在屏顶 M3 连线 X=+SCR_ECC 上
+_d = math.hypot(*SEN_M)                                  # |OM| = 45.4960
+SEN_TH = math.degrees(math.asin(SEN_BEAM_OFF / _d))      # 21.9414° (原 22.1961°)
+_ua = math.radians(math.degrees(math.atan2(SEN_M[1], SEN_M[0])) + SEN_TH)
+_u = (math.cos(_ua), math.sin(_ua))                      # 孔线方向
+SEN_HOLES = [(SEN_M[0] + SEN_PITCH/2*_u[0], SEN_M[1] + SEN_PITCH/2*_u[1]),
+             (SEN_M[0] - SEN_PITCH/2*_u[0], SEN_M[1] - SEN_PITCH/2*_u[1])]
+assert abs(abs(SEN_M[0]*_u[1] - SEN_M[1]*_u[0]) - SEN_BEAM_OFF) < 1e-9, "光轴未过圆心"
+SEN_VANE_R = math.sqrt(_d**2 - SEN_BEAM_OFF**2)          # 刀片中心半径 42.201 (原 41.665)
 SEN_CB_D, SEN_CB_T = 7.5, 2.5   # 六改: 头沉孔 Φ6.5→7.5 (用户: 小了)
-SEN_SLOT_L, SEN_SLOT_W = 9.0, 8.0             # 排针尾避空槽 (穿透, 斜置: 长轴沿孔线;
-SEN_SLOT_C = (0.0, -45.0)                     # 九改: 以两孔连线为对称轴 (中心 = M) 且加宽 6→8;
-SEN_SLOT_ANG = SEN_TH - 90.0                  # 尾 @ 偏线 1.2 仍被覆盖, 槽端距孔缘 0.9)
+SEN_SLOT_L, SEN_SLOT_W = 9.0, 8.0             # 排针尾避空槽 (穿透, 斜置: 长轴沿孔线)
+SEN_SLOT_C = SEN_M                            # 以两孔连线为对称轴 (中心 = M)
+SEN_SLOT_ANG = math.degrees(_ua)              # 槽长轴 = 孔线方向
 
 def cyl(d, x, y, z0, z1, seg=48):
     return m3d.Manifold.cylinder(z1-z0, d/2, d/2, seg, False).translate((x, y, z0))
