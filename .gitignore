@@ -1,9 +1,2 @@
-.venv/
-__pycache__/
-*.pyc
-
-# temp/zoom/scratch files generated during drawing iterations
-_*.png
-_*.py
-*_zoom.png
-*.NEW.pdf
+# 打包产物 (随时可由 tools/sync_print.py + 各 build 脚本重生成)
+*_print.zip
