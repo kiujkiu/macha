@@ -18,9 +18,9 @@ H, PLATE_T, PLATE_Z0 = _P["H"], _P["PLATE_T"], _P["PLATE_Z0"]
 DISC_TOP = _P["DISC_TOP"]
 SCR_HW, TEE_HW, TEE_Y0, SLOT_Y1 = _P["SCR_HW"], _P["TEE_HW"], _P["TEE_Y0"], _P["SLOT_Y1"]
 COL_R, COL_ANG, COL_D = _P["COL_R"], _P["COL_ANG"], _P["COL_D"]
-CW_R, CW_ANG, CW_BOSS_D = _P["CW_R"], _P["CW_ANG"], _P["CW_BOSS_D"]
-CW_BOSS_Z0, CW_HOLE_D = _P["CW_BOSS_Z0"], _P["CW_HOLE_D"]
-CW_NUT_AF, CW_NUT_H = _P["CW_NUT_AF"], _P["CW_NUT_H"]
+CWM_XS, CWM_Y, CWM_BOSS_D = _P["CWM_XS"], _P["CWM_Y"], _P["CWM_BOSS_D"]
+CWM_BOSS_Z0, CWM_INS_D, CWM_INS_H = _P["CWM_BOSS_Z0"], _P["CWM_INS_D"], _P["CWM_INS_H"]
+CWM_BORE_D = _P["CWM_BORE_D"]
 WELL_D, FLOOR_T, BORE_D = _P["WELL_D"], _P["FLOOR_T"], _P["BORE_D"]
 BOL_R_IN, BOL_HW = _P["BOL_R_IN"], _P["BOL_HW"]
 LIP_T, LIP_Z0, LIP_Y = _P["LIP_T"], _P["LIP_Z0"], _P["LIP_Y"]
@@ -116,8 +116,8 @@ text(PAGE_W/2, 25, f"屏缝: ±{SCR_HW:g} (|Y|≤{TEE_Y0:g}) → ±{TEE_HW:g} ({
 text(PAGE_W/2, 30, f"固定: 每半 2× 沉井立柱 Φ{COL_D:g} @ r{COL_R:g} — Φ{WELL_D:g} 井直通顶板, 井底 {FLOOR_T:g} 厚台肩 + Φ{BORE_D:g} 过孔 + Φ{BORE_D:g}→Φ{LEAD_D:g} 引导锥; "
      f"M3×12 坐井底 (头 Φ7.5 沉井内), 长螺丝刀顺井拧, 拧进 hub 底既有铜花螺母 (借 rim_ring 空闲外圈环孔, rim_ring 不改)",
      size=TXT_I, anchor="middle")
-text(PAGE_W/2, 40, f"配重座: 每半 1× 顶板下挂 Φ{CW_BOSS_D:g} 凸台 @ r{CW_R:g} 零件系 {CW_ANG[0]:g}°/{CW_ANG[1]:g}° (装配 {CW_ANG[0]-45:g}°/{CW_ANG[1]-45:g}°), Z{CW_BOSS_Z0:g}..{H:g} 共 {H-CW_BOSS_Z0:g} 厚 — "
-     f"Φ{CW_HOLE_D:g} M6 过孔上下通 + 自由端对边 {CW_NUT_AF:g} × 深 {CW_NUT_H:g} 六角螺母窝 (详图 C); 两座对称跨 180°, 等质量合矢量指向零件系 180°",
+text(PAGE_W/2, 40, f"配重安装孔: 每半 2 个 (半A 在 Y+{CWM_Y:g}, 半B 在 Y−{CWM_Y:g} — **两半关于 Y=0 镜像, 不是 180° 旋转**), X {CWM_XS[0]:g}/{CWM_XS[1]:g} 即零件系 −X 侧跨接缝; "
+     f"顶板下挂 Φ{CWM_BOSS_D:g} 凸台 Z{CWM_BOSS_Z0:g}..{H:g} + Φ{CWM_INS_D:g}×{CWM_INS_H:g} 铜花螺母窝 (罩内压入) + Φ{CWM_BORE_D:g} 过孔 (详图 C) — 配重件 counterweight_arm 骑顶跨缝, M3×16 ×4 把两半连成一体",
      size=TXT_I, anchor="middle")
 text(PAGE_W/2, 35, f"加强: 立柱兼竖筋 / 接缝 bolster (内壁局部 Φ{2*BOL_R_IN:g}, |Y|≤{BOL_HW:g}) / 屏缝下翻边 (X ±{SCR_HW:g}..{SCR_HW+LIP_T:g}, Z{LIP_Z0:g}..{PLATE_Z0:g}, |Y|≤{LIP_Y:g}) — "
      f"打印: 绕 X 翻 180° 顶板贴床, 占地 170×85×50, 零支撑 (GB 1st-angle, mm)",
@@ -168,17 +168,16 @@ for a in [a for a in COL_ANG if math.sin(math.radians(a)) > 0]:
     pdf.circle(cx, cy, BORE_D/2*S, style="D")                # 过孔 (隐藏)
     pdf.set_dash_pattern(); _w(GEOM_W); cross(cx, cy, 9.0)
 
-# 配重座 ×1 (半 A: 135°) — 凸台在顶板之下 = 隐藏; Φ6.5 过孔穿顶板 = 可见
-_cwa = [a for a in CW_ANG if math.sin(math.radians(a)) > 0][0]
-_cwp = pv(CW_R*math.cos(math.radians(_cwa)), CW_R*math.sin(math.radians(_cwa)))
-pdf.set_dash_pattern(dash=2.0, gap=1.2); _w(HID_W)
-pdf.circle(*_cwp, CW_BOSS_D/2*S, style="D")                  # 凸台 Φ14 (隐藏)
-_hr = CW_NUT_AF/math.sqrt(3.0)*S                             # 六角窝 (隐藏)
-polyline([(_cwp[0]+_hr*math.cos(math.radians(60*k+30)), _cwp[1]+_hr*math.sin(math.radians(60*k+30)))
-          for k in range(7)], HID_W, dash=(2.0, 1.2))
-pdf.set_dash_pattern(); _w(GEOM_W)
-pdf.circle(*_cwp, CW_HOLE_D/2*S, style="D")                  # M6 过孔 (可见)
-cross(*_cwp, 9.0)
+# 配重安装孔 (半 A 的 2 个: X -50/-72 @ Y+14) — 凸台/螺母窝在顶板之下 = 隐藏
+_cwm_A = [(x, CWM_Y) for x in CWM_XS]
+for (mx, my) in _cwm_A:
+    cp = pv(mx, my)
+    pdf.set_dash_pattern(dash=2.0, gap=1.2); _w(HID_W)
+    pdf.circle(*cp, CWM_BOSS_D/2*S, style="D")               # 凸台 Φ9 (隐藏)
+    pdf.circle(*cp, CWM_INS_D/2*S, style="D")                # 铜花螺母窝 (隐藏)
+    pdf.set_dash_pattern(); _w(GEOM_W)
+    pdf.circle(*cp, CWM_BORE_D/2*S, style="D")               # Φ3.4 过孔 (可见)
+    cross(*cp, 8.0)
 
 # 尺寸
 hdim(pv(-R_OUT, 0)[0], pv(R_OUT, 0)[0], pv(0, 0)[1], TYC+16, f"Φ{OD:g} (= rim_ring 盘缘)")
@@ -194,7 +193,8 @@ _sp = pv(TEE_HW, (TEE_Y0+SLOT_Y1)/2)
 note(_sp[0], _sp[1], 300, 78, f"屏缝加宽段 ±{TEE_HW:g} (让 T 件顶托)", anchor="start")
 _bp = pv(0, SLOT_Y1+2.0)
 note(_bp[0], _bp[1], 300, 90, f"|Y|>{SLOT_Y1:g} 顶板做实 — 屏缝端部封口", anchor="start")
-note(_cwp[0], _cwp[1], 30, 88, f"配重座 @ r{CW_R:g}, {_cwa:g}° — 详图 C", anchor="start")
+note(*pv(CWM_XS[1], CWM_Y), 30, 88, f"配重安装凸台 ×2 (半A) @ X{CWM_XS[0]:g}/{CWM_XS[1]:g}, Y+{CWM_Y:g} — 详图 C", anchor="start")
+note(*pv(CWM_XS[0], CWM_Y), 30, 94, f"半B 是这两个孔关于 Y=0 的镜像 (X 同, Y−{CWM_Y:g})", anchor="start")
 
 # ===================== 剖视 A-A 1:1 (过沉井的径向剖) =====================
 EX, EYB = 300.0, 200.0
@@ -220,31 +220,32 @@ vdim(ev(0, FLOOR_T)[1], ev(0, 0)[1], ev(R_OUT, 0)[0], ev(R_OUT, 0)[0]+DIM_O2+6, 
 hdim(ev(COL_R-WELL_D/2, 0)[0], ev(COL_R+WELL_D/2, 0)[0], ev(0, H)[1], ev(0, H)[1]-DIM_O1, f"Φ{WELL_D:g} 沉井")
 note(*ev(R_OUT, H*0.75), 372, 150, f"壁 {WALL:g} (Φ{OD:g}/Φ{ID:g})", anchor="end")
 
-# ===================== 详图 C — 配重座 (径向剖, 2:1) =====================
-CS, CX, CYB = 2.0, 248.0, 104.0
-def cv(r, z): return (CX + (r-CW_R)*CS, CYB - (z-36.0)*CS)
-text(CX, 50.0, "详图 C — 配重座 (径向剖, 2:1)", size=TXT_L, anchor="middle")
-_znut = CW_BOSS_Z0 + CW_NUT_H
-polyline([cv(64.0, PLATE_Z0), cv(CW_R-CW_BOSS_D/2, PLATE_Z0),
-          cv(CW_R-CW_BOSS_D/2, CW_BOSS_Z0), cv(R_IN, CW_BOSS_Z0), cv(R_IN, 36.0)])
-polyline([cv(64.0, H), cv(R_OUT, H), cv(R_OUT, 36.0), cv(R_IN, 36.0)])
+# ===================== 详图 C — 配重安装凸台 (剖, 4:1) =====================
+CS, CX, CYB = 4.0, 250.0, 100.0
+def cv(dx, z): return (CX + dx*CS, CYB - (z - CWM_BOSS_Z0)*CS)
+text(CX, 50.0, "详图 C — 配重安装凸台 (剖, 4:1)", size=TXT_L, anchor="middle")
+_ins_z1 = CWM_BOSS_Z0 + CWM_INS_H
+# 轮廓: 顶板 (左右各延伸 11) + 凸台
+polyline([cv(-11.0, PLATE_Z0), cv(-CWM_BOSS_D/2, PLATE_Z0), cv(-CWM_BOSS_D/2, CWM_BOSS_Z0),
+          cv(CWM_BOSS_D/2, CWM_BOSS_Z0), cv(CWM_BOSS_D/2, PLATE_Z0), cv(11.0, PLATE_Z0)])
+polyline([cv(-11.0, H), cv(11.0, H)])
+polyline([cv(-11.0, PLATE_Z0), cv(-11.0, H)]); polyline([cv(11.0, PLATE_Z0), cv(11.0, H)])
 _w(GEOM_W)
-for sgn in (1.0, -1.0):                                   # M6 过孔 Φ6.5 (z 43.5..50)
-    pdf.line(*cv(CW_R+sgn*CW_HOLE_D/2, H), *cv(CW_R+sgn*CW_HOLE_D/2, _znut))
-for sgn in (1.0, -1.0):                                   # 六角窝 (对边 10.3, z 38..43.5)
-    pdf.line(*cv(CW_R+sgn*CW_NUT_AF/2, _znut), *cv(CW_R+sgn*CW_NUT_AF/2, CW_BOSS_Z0))
-    pdf.line(*cv(CW_R+sgn*CW_HOLE_D/2, _znut), *cv(CW_R+sgn*CW_NUT_AF/2, _znut))
-line(*cv(CW_R, 35.0), *cv(CW_R, H+2.0), DIM_W)            # 中心线
-hdim(cv(CW_R-CW_BOSS_D/2, 0)[0], cv(CW_R+CW_BOSS_D/2, 0)[0], cv(0, CW_BOSS_Z0)[1],
-     cv(0, CW_BOSS_Z0)[1]+11.0, f"Φ{CW_BOSS_D:g} 凸台")
-hdim(cv(CW_R-CW_HOLE_D/2, 0)[0], cv(CW_R+CW_HOLE_D/2, 0)[0], cv(0, H)[1],
-     cv(0, H)[1]-10.0, f"Φ{CW_HOLE_D:g} M6 通")
-vdim(cv(0, H)[1], cv(0, CW_BOSS_Z0)[1], cv(R_OUT, 0)[0], cv(R_OUT, 0)[0]+14.0,
-     f"{H-CW_BOSS_Z0:g} 总厚")
-vdim(cv(0, _znut)[1], cv(0, CW_BOSS_Z0)[1], cv(CW_R-CW_BOSS_D/2, 0)[0],
-     cv(CW_R-CW_BOSS_D/2, 0)[0]-13.0, f"{CW_NUT_H:g} 窝深")
-note(*cv(CW_R+CW_NUT_AF/2, (CW_BOSS_Z0+_znut)/2), 214.0, 120.0,
-     f"对边 {CW_NUT_AF:g} 六角窝 — 装半罩前从内侧压入 M6 螺母", anchor="start")
+for sgn in (1.0, -1.0):                                   # 铜花螺母窝 Φ4.2 (z 43..47)
+    pdf.line(*cv(sgn*CWM_INS_D/2, CWM_BOSS_Z0), *cv(sgn*CWM_INS_D/2, _ins_z1))
+    pdf.line(*cv(sgn*CWM_BORE_D/2, _ins_z1), *cv(sgn*CWM_INS_D/2, _ins_z1))
+    pdf.line(*cv(sgn*CWM_BORE_D/2, _ins_z1), *cv(sgn*CWM_BORE_D/2, H))   # Φ3.4 过孔到顶面
+line(*cv(0, CWM_BOSS_Z0-2.5), *cv(0, H+2.5), DIM_W)       # 中心线
+hdim(cv(-CWM_BOSS_D/2, 0)[0], cv(CWM_BOSS_D/2, 0)[0], cv(0, CWM_BOSS_Z0)[1],
+     cv(0, CWM_BOSS_Z0)[1]+11.0, f"Φ{CWM_BOSS_D:g} 凸台")
+hdim(cv(-CWM_BORE_D/2, 0)[0], cv(CWM_BORE_D/2, 0)[0], cv(0, H)[1],
+     cv(0, H)[1]-10.0, f"Φ{CWM_BORE_D:g} M3 通")
+vdim(cv(0, H)[1], cv(0, CWM_BOSS_Z0)[1], cv(11.0, 0)[0], cv(11.0, 0)[0]+14.0,
+     f"{H-CWM_BOSS_Z0:g} 总厚")
+vdim(cv(0, _ins_z1)[1], cv(0, CWM_BOSS_Z0)[1], cv(-CWM_BOSS_D/2, 0)[0],
+     cv(-CWM_BOSS_D/2, 0)[0]-13.0, f"{CWM_INS_H:g} 窝深")
+note(*cv(CWM_INS_D/2, CWM_BOSS_Z0 + CWM_INS_H/2), 214.0, 120.0,
+     f"Φ{CWM_INS_D:g}×{CWM_INS_H:g} 铜花螺母窝 (M3×4×4.5) — **扣半罩前从罩内压入**", anchor="start")
 
 # ===================== 详图 B 沉井底 (4:1) =====================
 DS = 4.0
@@ -267,11 +268,11 @@ note(*dv(COL_R-WELL_D/2+0.2, FLOOR_T+1.2), 232, 238,
 # ===================== A / B 差异说明 =====================
 bx, by = 20.0, 236.0
 _w(0.3); pdf.rect(bx, by, 205.0, 32.0, style="D")
-text(bx+3, by+6, "A / B 两件差异 (基础几何 180° 旋转对称, 仅让位特征不同):", size=TXT_I)
+text(bx+3, by+6, "A / B 两件差异 (基础几何 180° 旋转对称; 让位特征 + 配重安装孔不同):", size=TXT_I)
 text(bx+3, by+12, f"· 半 A (+Y 半): 立柱 零件系 22.5°/157.5°; 含 wifi_shell 内壁让位窝 (让位间隙 {RELIEF_CLR:g} mm)", size=TXT_I)
 text(bx+3, by+18, "· 半 B (-Y 半): 立柱 零件系 202.5°/337.5°; 含 usb_wifi 线缆出口槽 (通到底边, 供罩子竖直落下)", size=TXT_I)
 text(bx+3, by+24, "· 两件均含 portal_tee 脚角让位窝 ×2 (外皮 0.99 mm) 与 wifi 沿最外 M3 头让位窝 (外皮 1.91 mm)", size=TXT_I)
-text(bx+3, by+30, f"· 两件均含配重座 ×1 (A 在 {CW_ANG[0]:g}°, B 在 {CW_ANG[1]:g}°) — 螺丝最长 M6×35, 头下垫螺母/垫圈加码, 咬合 ≥5; 转速下须防松", size=TXT_I)
+text(bx+3, by+30, f"· 配重安装凸台: 两件各 2 个, X {CWM_XS[0]:g}/{CWM_XS[1]:g} 上 **半A 在 Y+{CWM_Y:g} / 半B 在 Y−{CWM_Y:g} —— 关于 Y=0 镜像, 不是 180° 旋转**", size=TXT_I)
 
 tb_y = PAGE_H-28; tb_x, tb_w, tb_h = 20, PAGE_W-40, 18
 _w(0.3); pdf.rect(tb_x, tb_y, tb_w, tb_h, style="D")
@@ -279,7 +280,7 @@ pdf.line(tb_x, tb_y+tb_h/2, tb_x+tb_w, tb_y+tb_h/2)
 text(tb_x+4, tb_y+6, "POV 3D v3 结构件 — rotor_shroud_v3 转子电路罩 (屏底以下全封闭)", size=TXT_L)
 text(tb_x+tb_w-4, tb_y+6, "投影 1st-angle / 比例 1:1 (详图 4:1)", size=TXT_I, anchor="end")
 text(tb_x+4, tb_y+14.5, f"Φ{OD:g}/Φ{ID:g}×{H:g}, 壁 {WALL:g}, 顶板 {PLATE_T:g} / 每件 ~70 cm3 (约 89 g PLA) / "
-     f"BOM: M3×12 (头 Φ7.5) ×4 → hub 底既有铜花螺母; 配重 M6 螺母 ×1 (压六角窝) + M6 螺丝/垫圈 按平衡实测 / 打印: 顶板贴床, 零支撑 / 单位 mm", size=TXT_I)
+     f"BOM: M3×12 (头 Φ7.5) ×4 → hub 底既有铜花螺母; 配重安装 M3×4×4.5 铜花螺母 ×2 (罩内压入) — 配重件 counterweight_arm 另出图 / 打印: 顶板贴床, 零支撑 / 单位 mm", size=TXT_I)
 text(tb_x+tb_w-4, tb_y+14.5, "2026-08-03  /  POV3D / v3 / rotor_shroud_v3 / shroud_half_A_v3.stl + shroud_half_B_v3.stl",
      size=TXT_I, anchor="end")
 

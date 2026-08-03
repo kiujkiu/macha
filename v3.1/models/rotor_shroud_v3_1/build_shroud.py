@@ -83,27 +83,35 @@ BORE_D = 3.4                               # 台肩上的 M3 过孔 (Z 0..FLOOR_
 #   铜花螺母 31.7..36.2 (从 hub 底压入)。 ⇒ **M3×12**: 杆到 33.2, 旋入 3.0 ✓
 #   (M3×14 到 31.2 会探出 hub 底 0.5 顶到电机端面 ✗)
 
-# ===== 配重座 (2026-08-03 用户: "shroud_half 这两个件增加一个螺丝孔, 我们装一个
-# 配重, 用 M6 螺丝来做") =====
-# 为什么放罩子上: 转子盘被罩子盖住够不着, 且 rim_ring R77.5 那圈 8 个孔已全被占
-# (4 沉井立柱 22.5+90k° + 4 个 T 脚 67.5+90k°) —— 罩顶板是唯一还能拿到大力臂的地方。
-# 角向 135° / 225° (每半一个): 各距最近占位 22.5° (r75 弦距 29.3 > 凸台+立柱 14) ✓,
-#   避开屏缝 (沿 ±Y)、bolster (|Y|≤4)、wifi 让位 (≈180°)。
-#   **两个对称跨 180°**: 等质量时合矢量正好指向 −X = v3.1 偏心屏 (+X 偏 6.7) 要修正的
-#   方向, 幅值 2·m·r·cos45° = 1.414·m·r; 两边配不等质量还能在 135..225° 之间调方向。
-#   (正对布置 45°/225° 只能沿一条轴, 且做不出 180° 方向, 已否。)
-# 结构: 顶板下挂 Φ14 凸台 (r 68..82, 外缘正好并到内壁 R82 融合), Z38..50 共 12 厚;
-#   Φ6.5 M6 过孔上下通; 凸台自由端 (Z38) 开对边 10.3 六角螺母窝深 5.5 —— **装半罩前
-#   从里面把 M6 螺母塞进去卡住**, 之后螺丝一律从罩外顶面往下拧, 罩装好也能加减配重。
-# 打印: 打印姿态是绕 X 翻 180° 顶板贴床 ⇒ 凸台朝上、六角窝朝上开口, 零支撑 ✓。
-CW_ENABLE = True
-CW_R = 75.0                                # 力臂 (凸台外缘 82 = 内壁, 融合)
-CW_ANG = (135.0, 225.0)                    # 零件系; A 半 135°, B 半 225°
+# ===== 配重安装孔 (2026-08-03 二改, 用户: "做的有点麻烦, 在 shroud_half A 和 B 上
+# 各增加 2 个 M3 通孔 ... 再做一个件可以锁在这两个通孔上面, 这个新增的件用来锁 M6
+# 螺丝, 这个件需要 A 和 B 一起才能锁住, 旋转不要超出现在的旋转边缘, 应该是直径 17cm") =====
+# 一改 (罩内埋 M6 螺母 + 顶板下挂凸台) 已废弃 —— 螺母要在扣罩前从里面塞、配重量受
+# 内部悬空限制, 太麻烦。改成: 罩子只留 4 个 M3 安装点, 配重做成**独立件
+# counterweight_arm** 骑在顶面上, 4 颗 M3 里 2 颗进半 A、2 颗进半 B ⇒ **该件把两半
+# 在顶部连成一体** (原本接缝除 2 颗立柱螺丝外无连接件, 这是白捡的加强)。
+# 角向: 配重必须指向 **零件系 180° (−X)** —— v3.1 偏心屏往 +X 偏 6.7, 修正矢量反向;
+#   而对开缝正好是 Y=0 平面、含 X 轴 ⇒ 骑在 −X 上天然跨缝, 两半各 2 孔, 完美吻合。
+# 孔位 (−50, ±14) / (−72, ±14): 都在顶板 R82 内, 离最近沉井立柱 15.67 (需 11.5) ✓,
+#   离 bolster (|Y|≤4) 远; bolster 恰好垫在 M6 (r75.5, Y=0) 正下方当支撑。
+# 每个孔 = 顶板下挂 Φ9 凸台 Z43..50 (共 7 厚) + **Φ4.2×4 铜花螺母窝 (从罩内压入
+#   M3×4×4.5, 与本项目其它件同款)** + Φ3.4 过孔到顶面 ⇒ 螺丝一律从罩外往下拧。
+# 打印: 顶板贴床姿态下凸台朝上、螺母窝朝上开口, 零支撑 ✓。
+CWM_ENABLE = True
+CWM_XS = (-50.0, -72.0)                    # 两排 M3 的 X
+CWM_Y = 14.0                               # ±Y (半 A / 半 B 各 2 个)
+CWM_BOSS_D = 9.0
+CWM_BOSS_Z0 = 43.0                         # 凸台底 (顶板下表面 48 往下 5)
+CWM_INS_D, CWM_INS_H = 4.2, 4.0            # M3×4×4.5 铜花螺母窝
+CWM_BORE_D = 3.4                           # M3 过孔
+CW_ENABLE = False                          # ← 一改的罩内 M6 埋螺母座, 已废弃 (代码留档)
+CW_R = 75.0
+CW_ANG = (135.0, 225.0)
 CW_BOSS_D = 14.0
-CW_BOSS_Z0 = 38.0                          # 凸台底 (顶板下表面 48 往下 10)
-CW_HOLE_D = 6.5                            # M6 过孔
-CW_NUT_AF = 10.3                           # M6 螺母对边 10 + 0.3
-CW_NUT_H = 5.5                             # 螺母窝深 (螺母 5 + 0.5)
+CW_BOSS_Z0 = 38.0
+CW_HOLE_D = 6.5
+CW_NUT_AF = 10.3
+CW_NUT_H = 5.5
 
 # 加强
 BOL_R_IN = 76.0                            # 接缝 bolster 内径 (壁局部 9 厚)
@@ -193,15 +201,14 @@ for a in COL_ANG:
 body += ((cyl(COL_TOP, R_IN + 0.5) - cyl(COL_TOP + 2.0, BOL_R_IN, -1.0))
          ^ box(-R_OUT, R_OUT, -BOL_HW, BOL_HW, 0.0, COL_TOP))
 
-# 配重座凸台 ×2 (每半一个), 顶板下挂, 外缘并到内壁
-def _cw_xy(a):
-    return CW_R * math.cos(math.radians(a)), CW_R * math.sin(math.radians(a))
+# 配重安装凸台 ×4 (半 A 2 个 / 半 B 2 个), 顶板下挂
+def _cwm_pts():
+    return [(x, sy * CWM_Y) for x in CWM_XS for sy in (1.0, -1.0)]
 
 
-if CW_ENABLE:
-    for a in CW_ANG:
-        cx, cy = _cw_xy(a)
-        body += cyl(H - CW_BOSS_Z0, CW_BOSS_D / 2, CW_BOSS_Z0, 64).translate((cx, cy, 0.0))
+if CWM_ENABLE:
+    for (cx, cy) in _cwm_pts():
+        body += cyl(H - CWM_BOSS_Z0, CWM_BOSS_D / 2, CWM_BOSS_Z0, 48).translate((cx, cy, 0.0))
 
 # 屏缝下翻边 ×2 (顶板最长自由边加劲, 兼装屏导向)
 # 屏缝下翻边 ×2: 贴在新缝 (SCR_X0 .. SCR_X1) 的两侧外面
@@ -227,27 +234,21 @@ for a in COL_ANG:
     body -= (m3d.Manifold.cylinder(LEAD_H, BORE_D / 2, LEAD_D / 2, 48, False)
              .translate((cx, cy, FLOOR_T - LEAD_H)))
 
-# 配重座: Φ6.5 M6 过孔上下通 + 凸台自由端六角螺母窝 (对边 10.3 × 深 5.5)
-if CW_ENABLE:
-    def hexprism(af, h, z0):
-        r = af / math.sqrt(3.0)            # 对边 af → 外接圆半径
-        return m3d.Manifold.cylinder(h, r, r, 6, False).rotate((0, 0, 30)).translate((0, 0, z0))
-
-    for a in CW_ANG:
-        cx, cy = _cw_xy(a)
-        body -= cyl(H - CW_BOSS_Z0 + 3.0, CW_HOLE_D / 2, CW_BOSS_Z0 - 1.0, 48).translate((cx, cy, 0.0))
-        body -= hexprism(CW_NUT_AF, CW_NUT_H + 1.0, CW_BOSS_Z0 - 1.0).translate((cx, cy, 0.0))
+# 配重安装孔 ×4: Φ4.2×4 铜花螺母窝 (凸台自由端开口, 从罩内压入) + Φ3.4 过孔到顶面
+if CWM_ENABLE:
+    for (cx, cy) in _cwm_pts():
+        body -= cyl(CWM_INS_H + 1.0, CWM_INS_D / 2, CWM_BOSS_Z0 - 1.0, 32).translate((cx, cy, 0.0))
+        body -= cyl(H - CWM_BOSS_Z0 + 3.0, CWM_BORE_D / 2, CWM_BOSS_Z0 - 1.0, 32).translate((cx, cy, 0.0))
 
 # 外径兜底: 任何加料都不许超出 Φ170 (凸台/bolster 半径可能越界)
 body = body ^ cyl(H + 2.0, R_OUT, -1.0)
 V_RAW = body.volume()
-if CW_ENABLE:
+if CWM_ENABLE:
     _cwv = 0.0
-    for a in CW_ANG:
-        cx, cy = _cw_xy(a)
-        _cwv += (body ^ cyl(H - CW_BOSS_Z0, CW_BOSS_D / 2, CW_BOSS_Z0, 64)
+    for (cx, cy) in _cwm_pts():
+        _cwv += (body ^ cyl(H - CWM_BOSS_Z0, CWM_BOSS_D / 2, CWM_BOSS_Z0, 48)
                  .translate((cx, cy, 0.0))).volume()
-    V_CW_BEFORE = _cwv
+    V_CWM_BEFORE = _cwv
 
 # ===================== 2) 让位 (障碍件膨胀后布尔减) =====================
 # 零件系 = 屏局部系。各障碍件的装配变换见 assembly_v3.py, 这里折算回零件系:
@@ -330,18 +331,17 @@ for name, tris in obst.items():
     print(f"  {name:18s} {kind}  切掉 {v:8.1f} mm³   "
           f"r {r.min():6.2f}..{r.max():6.2f}  Z {vt[:,2].min():6.2f}..{vt[:,2].max():6.2f}")
 
-# --- 配重座完整性校核: 让位布尔不许啃到凸台 (啃了说明角向选错) ---
-if CW_ENABLE:
+# --- 配重安装凸台完整性校核: 让位布尔不许啃到凸台 (啃了说明孔位选错) ---
+if CWM_ENABLE:
     _after = 0.0
-    for a in CW_ANG:
-        cx, cy = _cw_xy(a)
-        _after += (body ^ cyl(H - CW_BOSS_Z0, CW_BOSS_D / 2, CW_BOSS_Z0, 64)
+    for (cx, cy) in _cwm_pts():
+        _after += (body ^ cyl(H - CWM_BOSS_Z0, CWM_BOSS_D / 2, CWM_BOSS_Z0, 48)
                    .translate((cx, cy, 0.0))).volume()
-    _loss = V_CW_BEFORE - _after
+    _loss = V_CWM_BEFORE - _after
     print("=" * 76)
-    print(f"配重座 @{CW_ANG[0]:g}°/{CW_ANG[1]:g}° r{CW_R:g}: 让位前后凸台体积 "
-          f"{V_CW_BEFORE:.1f} → {_after:.1f} mm³, 损失 {_loss:.2f}")
-    assert _loss < 1.0, f"配重座被障碍件啃掉 {_loss:.2f} mm³ —— 换角向"
+    print(f"配重安装凸台 ×4 @ X{CWM_XS[0]:g}/{CWM_XS[1]:g} × Y±{CWM_Y:g}: 让位前后体积 "
+          f"{V_CWM_BEFORE:.1f} → {_after:.1f} mm³, 损失 {_loss:.2f}")
+    assert _loss < 1.0, f"配重安装凸台被障碍件啃掉 {_loss:.2f} mm³ —— 换孔位"
     print("  ✓ 未被任何障碍件啃到")
 
 # ===================== 3) 分半 + 导出 =====================
@@ -396,21 +396,13 @@ print(f"固定: 4× M3×12 @ r{COL_R:g}, 坐 Φ{WELL_D:g} 沉井底 {FLOOR_T:g} 
       f"(井深 {H-FLOOR_T:g}, 头 Φ7.5 沉在井里, 长螺丝刀顺井拧); "
       f"借 rim_ring 空闲外圈环孔 (装配 112.5/157.5/292.5/337.5°), rim_ring 不改")
 print("加强: 4 立柱兼竖筋 / 接缝 bolster ×2 (壁局部 9 厚) / 屏缝下翻边 ×2 (6 深)")
-if CW_ENABLE:
-    _hang = {135.0: 25.5, 225.0: 31.5}     # 螺母窝底往下的实测悬空 (见 build 记录)
-    print(f"配重座 ×2 (每半 1 个) @ 零件系 {CW_ANG[0]:g}°/{CW_ANG[1]:g}° r{CW_R:g} "
-          f"(装配 {CW_ANG[0]+V3_SCR_ROT:g}°/{CW_ANG[1]+V3_SCR_ROT:g}°): "
-          f"顶板下挂 Φ{CW_BOSS_D:g} 凸台 Z{CW_BOSS_Z0:g}..{H:g} (12 厚, 外缘并内壁), "
-          f"Φ{CW_HOLE_D:g} M6 过孔通, 自由端对边 {CW_NUT_AF:g} 六角螺母窝深 {CW_NUT_H:g}")
-    print(f"  装法: **装半罩前从里面把 M6 螺母压进六角窝** → 之后 M6 螺丝一律从罩外顶面"
-          f"往下拧, 罩装好也能加减配重 (Φ13 套筒通道已校核通畅)")
-    print(f"  配重量: 螺丝最长 **M6×35** (135° 侧悬空 {_hang[135.0]:g}, 225° 侧 {_hang[225.0]:g}); "
-          f"头下可垫 M6 螺母/垫圈加码 (咬合保持 ≥5) ⇒ 每座约 **10~28 g**")
-    print(f"  两座对称跨 180° ⇒ 等质量合矢量指向零件系 180° (装配 {180+V3_SCR_ROT:g}°), "
-          f"幅值 1.414·m·r ≈ {1.414*CW_R:.0f}·m g·mm; 不等质量可在 {CW_ANG[0]:g}..{CW_ANG[1]:g}° 间调向")
-    print(f"  ⚠ 凸台自身 (2×{V_CW_BEFORE/2/1000:.2f} cm³ ≈ {V_CW_BEFORE*1.27/1000:.1f} g PLA) "
-          f"也带 ~{1.414*(V_CW_BEFORE*1.27/1000/2)*CW_R:.0f} g·mm 的固有偏置, 同样指向 180°")
-    print("  ⚠ 转速下必须防松: 尼龙锁紧螺母或螺纹胶, 垫圈不许松动")
+if CWM_ENABLE:
+    print(f"配重安装孔 ×4 (半 A 2 / 半 B 2) @ (X{CWM_XS[0]:g}/{CWM_XS[1]:g}, Y±{CWM_Y:g}) 零件系 −X 侧, 跨接缝: "
+          f"顶板下挂 Φ{CWM_BOSS_D:g} 凸台 Z{CWM_BOSS_Z0:g}..{H:g} (7 厚) + Φ{CWM_INS_D:g}×{CWM_INS_H:g} 铜花螺母窝 + Φ{CWM_BORE_D:g} 过孔")
+    print(f"  配重件 = **counterweight_arm** (models/counterweight_arm/, 独立打印), M3×16 ×4 从罩外往下拧;")
+    print(f"  该件 2 颗进半 A、2 颗进半 B ⇒ **把两半在顶部连成一体** (接缝原来只有 2 颗立柱螺丝)")
+    print(f"  ⚠ 铜花螺母 M3×4×4.5 ×4 要在**扣半罩之前**从罩内压进凸台端面的窝里")
+
 print("打印: 绕 X 翻 180° 顶板贴床, 占地 170×85×50, 零支撑")
 if relief_log:
     print("让位汇总:", "; ".join(f"{n} {k} {v:.0f}mm³" for n, v, k in relief_log))

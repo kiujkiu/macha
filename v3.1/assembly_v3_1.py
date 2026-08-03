@@ -256,6 +256,13 @@ SHROUD_DIR = ROOT / "models/rotor_shroud_v3_1"
 for _tag in ("A", "B"):
     _sh = read_stl(SHROUD_DIR / f"shroud_half_{_tag}_v3_1.stl") + np.array([0.0, 0.0, DISC_TOP])
     parts.append((f"shroud_half_{_tag}_v3_1", rot_z(_sh, ROTOR_ROT + V3_SCR_ROT)))
+
+# 10c) 配重臂 counterweight_arm (2026-08-03, 共享件): 骑在罩顶面 (Z 92.2) 跨接缝,
+#      4× M3×16 里 2 颗进半 A、2 颗进半 B → 把两半在顶部连成一体; M6 六角头朝下卡
+#      六角窝, 杆朝上叠垫圈当配重 (方向 = 零件系 −X, 正是偏心屏要修正的方向)。
+_arm = read_stl(MODELS / "counterweight_arm/counterweight_arm.stl") \
+    + np.array([0.0, 0.0, DISC_TOP + 50.0])
+parts.append(("counterweight_arm", rot_z(_arm, ROTOR_ROT + V3_SCR_ROT)))
 print(f"支架翼板底 {DISC_TOP+21.0:.1f} / 中央缺口顶(±60内) {DISC_TOP+50.0:.1f} (米联派顶 {MLK_TOP:.1f}); "
       f"双面屏模组 {SCREEN_Z0:.1f}..{SCREEN_Z0+168.75:.1f} (LED 面 X=±{SCREEN_T/2:.2f})")
 
@@ -394,7 +401,7 @@ COLORS = {"grid plate 200x200x13": "#333333", "baseplate_collar_v4": "#777777",
           "portal_tee A": "#aa6622", "portal_tee B": "#aa6622",
           "sensor_module": "#222266",
           "dual_screen": "#3355cc",
-          "shroud_half_A_v3_1": "#b0b8c8", "shroud_half_B_v3_1": "#98a0b0",
+          "counterweight_arm": "#cc7722", "shroud_half_A_v3_1": "#b0b8c8", "shroud_half_B_v3_1": "#98a0b0",
           "wifi_shell": "#22aaaa",
           "usb_wifi_module": "#111111",
           "frame_A_v3 (SW+NW)": "#5577aa", "frame_B_v3 (NE+SE)": "#5577aa",

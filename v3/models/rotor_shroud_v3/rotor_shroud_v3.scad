@@ -17,10 +17,12 @@ col_ang = [22.5, 157.5, 202.5, 337.5];
 well_d = 9; floor_t = 3; bore_d = 3.4; lead_d = 5; lead_h = 0.8;
 bol_r_in = 76; bol_hw = 4;           // 接缝 bolster (内壁局部加厚)
 lip_t = 3; lip_z0 = 41; lip_y = 58;  // 屏缝下翻边
-cw_r = 75; cw_ang = [135, 225];      // 配重座 (2026-08-03): 每半 1 个
-cw_boss_d = 14; cw_boss_z0 = 38;     // 顶板下挂 Φ14 凸台 Z38..50 (外缘并到内壁 R82)
-cw_hole_d = 6.5;                     // M6 过孔上下通
-cw_nut_af = 10.3; cw_nut_h = 5.5;    // 自由端六角螺母窝 (M6 螺母对边 10 + 0.3)
+cwm_xs = [-50, -72]; cwm_y = 14;    // 配重安装孔 (2026-08-03 二改): 每半 2 个
+cwm_boss_d = 9; cwm_boss_z0 = 43;   // 顶板下挂 Φ9 凸台 Z43..50 (7 厚)
+cwm_ins_d = 4.2; cwm_ins_h = 4;     // M3×4×4.5 铜花螺母窝 (凸台自由端开口, 罩内压入)
+cwm_bore_d = 3.4;                   // M3 过孔到顶面
+// ⚠ 半A 用 y=+cwm_y, 半B 用 y=-cwm_y —— 两半**关于 Y=0 镜像, 不是 180° 旋转**
+cwm_ys = (half == "A") ? [ cwm_y ] : [ -cwm_y ];
 seam_gap = 0.15;                     // 对开面单边间隙
 
 module body() {
@@ -40,9 +42,8 @@ module body() {
         }
         translate([-od/2, -bol_hw, 0]) cube([od, 2*bol_hw, h]);
       }
-      for (a = cw_ang)                                  // 配重座凸台 ×2
-        translate([cw_r*cos(a), cw_r*sin(a), cw_boss_z0])
-          cylinder(h = h - cw_boss_z0, d = cw_boss_d, $fn = 64);
+      for (x = cwm_xs) for (y = cwm_ys)  // 配重安装凸台 ×2
+        translate([x, y, cwm_boss_z0]) cylinder(h = h - cwm_boss_z0, d = cwm_boss_d, $fn = 48);
       for (s = [1,-1])                                  // 屏缝下翻边 ×2
         translate([s > 0 ? scr_hw : -(scr_hw+lip_t), -lip_y, lip_z0])
           cube([lip_t, 2*lip_y, plate_z0 - lip_z0]);
@@ -53,11 +54,10 @@ module body() {
     translate([-scr_hw, -slot_y1, lip_z0-1]) cube([2*scr_hw, 2*slot_y1, h - lip_z0 + 2]);
     translate([-tee_hw,  tee_y0, lip_z0-1]) cube([2*tee_hw, slot_y1 - tee_y0, h - lip_z0 + 2]);
     translate([-tee_hw, -slot_y1, lip_z0-1]) cube([2*tee_hw, slot_y1 - tee_y0, h - lip_z0 + 2]);
-    // 配重座: M6 过孔 + 六角螺母窝 (窝朝凸台自由端开口, 打印姿态里朝上)
-    for (a = cw_ang) translate([cw_r*cos(a), cw_r*sin(a), 0]) {
-      translate([0,0,cw_boss_z0-1]) cylinder(h = h - cw_boss_z0 + 3, d = cw_hole_d, $fn = 48);
-      translate([0,0,cw_boss_z0-1]) rotate([0,0,30])
-        cylinder(h = cw_nut_h + 1, d = cw_nut_af/cos(30), $fn = 6);
+    // 配重安装孔: 铜花螺母窝 (朝罩内开口) + M3 过孔
+    for (x = cwm_xs) for (y = cwm_ys) translate([x, y, 0]) {
+      translate([0,0,cwm_boss_z0-1]) cylinder(h = cwm_ins_h + 1, d = cwm_ins_d, $fn = 32);
+      translate([0,0,cwm_boss_z0-1]) cylinder(h = h - cwm_boss_z0 + 3, d = cwm_bore_d, $fn = 32);
     }
     // 沉井 + 过孔 + 引导锥
     for (a = col_ang) translate([col_r*cos(a), col_r*sin(a), 0]) {
