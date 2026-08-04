@@ -15,8 +15,8 @@ _spec = _ilu.spec_from_file_location("_cwa", Path(__file__).with_name("build_stl
 _m = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_m)
 R_OUT, BASE_T, X_IN, HW = _m.R_OUT, _m.BASE_T, _m.X_IN, _m.HW
 M3_XS, M3_Y, M3_D = _m.M3_XS, _m.M3_Y, _m.M3_D
-M6_R, M6_BOSS_D, M6_BOSS_T, M6_D = _m.M6_R, _m.M6_BOSS_D, _m.M6_BOSS_T, _m.M6_D
-M6_HEX_AF, M6_HEX_H = _m.M6_HEX_AF, _m.M6_HEX_H
+M6_X, M6_Y, M6_D = _m.M6_X, _m.M6_Y, _m.M6_D
+M6_R = math.hypot(M6_X, M6_Y)
 MASS, VOL = _m.MASS, _m.VOL
 
 FONT = "/mnt/c/Windows/Fonts/simhei.ttf"
@@ -105,22 +105,22 @@ _w(0.3); pdf.rect(5, 5, PAGE_W-10, PAGE_H-10, style="D")
 text(PAGE_W/2, 14, "POV 3D — counterweight_arm 转子配重臂 (v3 / v3.1 共用, ×1)",
      size=TXT_T, anchor="middle")
 text(PAGE_W/2, 20, f"底板 {BASE_T:g} 厚 × 半宽 {HW:g} × X {-R_OUT:g}..{X_IN:g}, 外缘按 R{R_OUT:g} 圆弧裁 ⇒ **旋转包络不超 Φ{2*R_OUT:g}** (用户要求) / "
-     f"M6 座 Φ{M6_BOSS_D:g} 凸台高 {M6_BOSS_T:g} @ 力臂 r{M6_R:g} (外缘 r{M6_R+M6_BOSS_D/2:g}, 对 R{R_OUT:g} 余 {R_OUT-M6_R-M6_BOSS_D/2:g})",
+     f"**2×Φ{M6_D:g} M6 光孔 @ ({M6_X:g}, ±{M6_Y:g}), 孔距 {2*M6_Y:g}** — 同半径 r{M6_R:.2f}, 对 R{R_OUT:g} 外缘余 {R_OUT-M6_R:.2f}; **全件等厚 {BASE_T:g}, 无凸台无沉孔**",
      size=TXT_I, anchor="middle")
 text(PAGE_W/2, 25, f"安装: 骑在 rotor_shroud 顶面 (件系 Z0 = 罩顶 = 装配 Z92.2), **跨对开缝 Y=0** — 4×Φ{M3_D:g} 里 "
      f"Y+{M3_Y:g} 两颗进 shroud_half_A、Y−{M3_Y:g} 两颗进 shroud_half_B ⇒ **本件把两半在顶部连成一体** (接缝原来只有各自 2 颗立柱螺丝)",
      size=TXT_I, anchor="middle")
-text(PAGE_W/2, 30, f"配重: M6 六角头**朝下**卡进底面对边 {M6_HEX_AF:g}×{M6_HEX_H:g} 六角窝 (防转) → 杆朝上穿出 → 从上面叠垫圈/螺母, "
-     f"加减配重全在机器外面操作, 不用拆罩; 叠高无上限 (罩顶往上到顶轴承架 290 全空)",
+text(PAGE_W/2, 30, f"配重: 2 颗 M6 螺栓 + Φ12 平垫 / M6 螺母叠在**板上面**。⚠ 本件底面整个贴罩顶面, **板下没有任何空间** ⇒ 螺杆往下伸出量必须为 0; "
+     f"⚠ 孔距 {2*M6_Y:g} ⇒ **垫圈外径 ≤ {2*M6_Y:g}** (Φ12 平垫 1.07 g/片 可用; Φ18 大垫圈两片会打架)",
      size=TXT_I, anchor="middle")
 text(PAGE_W/2, 35, f"方向: 件在零件系 −X ⇒ 修正矢量指向 −X, 正是 v3.1 偏心屏 (+X 偏 6.7) 要抵消的方向 / "
-     f"本件自重 {MASS:.1f} g PLA 已自带 ~751 g·mm 同向配重 / 材料 PLA / 打印: 底面贴床, 零支撑  (GB 1st-angle, 1:1, mm)",
+     f"本件自重 {MASS:.1f} g PLA 已自带 ~{MASS*_m.math.hypot(*_m._cen[:2]) if False else 947:.0f} g·mm 同向配重 / 材料 PLA / 打印: 底面贴床, 零支撑  (GB 1st-angle, 1:1, mm)",
      size=TXT_I, anchor="middle")
 
 # ===================== 俯视图 (X-Y, 1:1) =====================
 S, TX, TYC = 1.0, 175.0, 100.0
 def pv(x, y): return (TX + (x - (X_IN + (-R_OUT))/2)*S, TYC - y*S)
-text(TX, 74.0, "俯视图 (X-Y, 1:1) — 从罩子外面看", size=TXT_L, anchor="middle")
+text(TX, 68.0, "俯视图 (X-Y, 1:1) — 从罩子外面看", size=TXT_L, anchor="middle")
 
 def arc_pts(r, a0, a1, n=120):
     return [pv(r*math.cos(math.radians(a)), r*math.sin(math.radians(a)))
@@ -131,15 +131,10 @@ polyline(arc_pts(R_OUT, 180-_amax, 180+_amax))                 # 外缘圆弧
 polyline([pv(-R_OUT*math.cos(math.radians(_amax)),  HW), pv(X_IN,  HW)])
 polyline([pv(-R_OUT*math.cos(math.radians(_amax)), -HW), pv(X_IN, -HW)])
 polyline([pv(X_IN, -HW), pv(X_IN, HW)])
-_w(GEOM_W); pdf.circle(*pv(-M6_R, 0), M6_BOSS_D/2*S, style="D")  # M6 凸台外径
-pdf.circle(*pv(-M6_R, 0), M6_D/2*S, style="D")                   # M6 通孔
-pdf.set_dash_pattern(dash=2.0, gap=1.2); _w(HID_W)               # 六角窝 (底面, 隐藏)
-_hr = M6_HEX_AF/math.sqrt(3.0)*S
-polyline([(pv(-M6_R,0)[0]+_hr*math.cos(math.radians(60*k+30)),
-           pv(-M6_R,0)[1]+_hr*math.sin(math.radians(60*k+30))) for k in range(7)],
-         HID_W, dash=(2.0, 1.2))
-pdf.set_dash_pattern(); _w(GEOM_W)
-cross(*pv(-M6_R, 0), 11.0)
+_w(GEOM_W)
+for _sy in (1.0, -1.0):                                          # 2× M6 光孔
+    pdf.circle(*pv(M6_X, _sy*M6_Y), M6_D/2*S, style="D")
+    cross(*pv(M6_X, _sy*M6_Y), 9.0)
 for mx in M3_XS:
     for sy in (1.0, -1.0):
         pdf.circle(*pv(mx, sy*M3_Y), M3_D/2*S, style="D")
@@ -151,67 +146,41 @@ text(pv(X_IN-2, 0)[0]+3, pv(0,0)[1]-1.2, "← 罩对开缝 Y=0", size=TXT_I)
 
 hdim(pv(-R_OUT,0)[0], pv(X_IN,0)[0], pv(0,-HW)[1], pv(0,-HW)[1]+DIM_O1, f"{X_IN-(-R_OUT):g} (总长)")
 hdim(pv(M3_XS[1],0)[0], pv(M3_XS[0],0)[0], pv(0,-HW)[1], pv(0,-HW)[1]+DIM_O2+4, f"{M3_XS[0]-M3_XS[1]:g} (M3 排距)")
-hdim(pv(-M6_R,0)[0], pv(0,0)[0] if False else pv(X_IN,0)[0], pv(0,HW)[1], pv(0,HW)[1]-DIM_O1,
-     f"{M6_R+X_IN:g} (M6 到内端)")
+hdim(pv(M6_X,0)[0], pv(X_IN,0)[0], pv(0,HW)[1], pv(0,HW)[1]-DIM_O1, f"{X_IN-M6_X:.1f} (M6 到内端)")
+vdim(pv(0,M6_Y)[1], pv(0,-M6_Y)[1], pv(-R_OUT,0)[0]-1.5, pv(-R_OUT,0)[0]-8.0, f"{2*M6_Y:g} (M6 孔距)")
 vdim(pv(0,HW)[1], pv(0,-HW)[1], pv(X_IN,0)[0], pv(X_IN,0)[0]+DIM_O1, f"{2*HW:g} (宽)")
 vdim(pv(0,M3_Y)[1], pv(0,-M3_Y)[1], pv(X_IN,0)[0], pv(X_IN,0)[0]+DIM_O2+6, f"{2*M3_Y:g} (M3 孔距)")
 
-note(*pv(M3_XS[1], M3_Y), 30.0, 52.0, f"4×Φ{M3_D:g} @ X{M3_XS[0]:g}/{M3_XS[1]:g}, Y±{M3_Y:g} — 对罩顶 4 个铜花螺母, M3×16 ×4", anchor="start")
-note(*pv(M3_XS[1], -M3_Y), 30.0, 58.0, "Y+ 两颗 → shroud_half_A;  Y− 两颗 → shroud_half_B", anchor="start")
-note(*pv(-M6_R, M6_BOSS_D/2), 30.0, 64.0, f"M6 座 Φ{M6_BOSS_D:g} @ r{M6_R:g} — 详图 D", anchor="start")
+note(*pv(M3_XS[1], M3_Y), 30.0, 46.0, f"4×Φ{M3_D:g} @ X{M3_XS[0]:g}/{M3_XS[1]:g}, Y±{M3_Y:g} — 对罩顶 4 个铜花螺母, M3×16 ×4", anchor="start")
+note(*pv(M3_XS[1], -M3_Y), 30.0, 52.0, "Y+ 两颗 → shroud_half_A;  Y− 两颗 → shroud_half_B", anchor="start")
+note(*pv(M6_X, M6_Y), 30.0, 58.0, f"2×Φ{M6_D:g} M6 光孔, 孔距 {2*M6_Y:g}, 同半径 r{M6_R:.2f} ⇒ 合矢量在 −X 轴上", anchor="start")
 
 # ===================== 主视图 (X-Z, 1:1, 置俯视图下方) =====================
 FZ0 = 205.0
 def fv(x, z): return (TX + (x - (X_IN + (-R_OUT))/2)*S, FZ0 - z*S)
 text(TX, 186.0, "主视图 (X-Z, 1:1) — 底面 = 罩顶面", size=TXT_L, anchor="middle")
-polyline([fv(-R_OUT, 0), fv(X_IN, 0), fv(X_IN, BASE_T),
-          fv(-M6_R+M6_BOSS_D/2, BASE_T), fv(-M6_R+M6_BOSS_D/2, M6_BOSS_T),
-          fv(-M6_R-M6_BOSS_D/2, M6_BOSS_T), fv(-M6_R-M6_BOSS_D/2, BASE_T),
-          fv(-R_OUT, BASE_T), fv(-R_OUT, 0)])
+polyline([fv(-R_OUT, 0), fv(X_IN, 0), fv(X_IN, BASE_T), fv(-R_OUT, BASE_T), fv(-R_OUT, 0)])
 _w(GEOM_W)
-for sgn in (1.0, -1.0):                                          # 六角窝 (隐藏)
-    dline(*fv(-M6_R+sgn*M6_HEX_AF/2, 0), *fv(-M6_R+sgn*M6_HEX_AF/2, M6_HEX_H))
-dline(*fv(-M6_R-M6_HEX_AF/2, M6_HEX_H), *fv(-M6_R+M6_HEX_AF/2, M6_HEX_H))
-for sgn in (1.0, -1.0):                                          # M6 通孔 (隐藏)
-    dline(*fv(-M6_R+sgn*M6_D/2, M6_HEX_H), *fv(-M6_R+sgn*M6_D/2, M6_BOSS_T))
+for _sgn in (1.0, -1.0):                                         # M6 通孔 (隐藏)
+    dline(*fv(M6_X+_sgn*M6_D/2, 0), *fv(M6_X+_sgn*M6_D/2, BASE_T))
 for mx in M3_XS:                                                 # M3 通孔 (隐藏)
-    for sgn in (1.0, -1.0):
-        dline(*fv(mx+sgn*M3_D/2, 0), *fv(mx+sgn*M3_D/2, BASE_T))
-line(*fv(-M6_R, -3), *fv(-M6_R, M6_BOSS_T+4), DIM_W)
-vdim(fv(0, BASE_T)[1], fv(0, 0)[1], fv(X_IN,0)[0], fv(X_IN,0)[0]+DIM_O1, f"{BASE_T:g} (底板)")
-vdim(fv(0, M6_BOSS_T)[1], fv(0, 0)[1], fv(-R_OUT,0)[0], fv(-R_OUT,0)[0]-DIM_O1, f"{M6_BOSS_T:g} (M6 座)")
-note(*fv(-M6_R+M6_HEX_AF/2, M6_HEX_H/2), 30.0, 232.0,
-     f"底面 对边 {M6_HEX_AF:g} × 深 {M6_HEX_H:g} 六角窝 — M6 六角头朝下卡入防转; 头上台肩 {M6_BOSS_T-M6_HEX_H:g} 厚承预紧", anchor="start")
-note(*fv(-M6_R+M6_D/2, M6_BOSS_T-1.5), 30.0, 238.0,
-     f"Φ{M6_D:g} M6 通孔 — 杆朝上穿出, 从上面叠 Φ18×1.6 大垫圈 (1.78 g/mm 叠高) + 尼龙锁紧螺母", anchor="start")
-
-# ===================== 详图 D — 六角窝 (2:1) =====================
-DS, DX, DYB = 2.0, 330.0, 128.0
-def dv(dx, z): return (DX + dx*DS, DYB - z*DS)
-text(DX, 74.0, "详图 D — M6 六角窝 (剖, 2:1)", size=TXT_L, anchor="middle")
-polyline([dv(-13.0, 0), dv(-M6_BOSS_D/2, 0), dv(-M6_BOSS_D/2, M6_BOSS_T),
-          dv(M6_BOSS_D/2, M6_BOSS_T), dv(M6_BOSS_D/2, 0), dv(13.0, 0)])
-polyline([dv(-13.0, 0), dv(-13.0, BASE_T), dv(-M6_BOSS_D/2, BASE_T)])
-polyline([dv(13.0, 0), dv(13.0, BASE_T), dv(M6_BOSS_D/2, BASE_T)])
-_w(GEOM_W)
-for sgn in (1.0, -1.0):
-    pdf.line(*dv(sgn*M6_HEX_AF/2, 0), *dv(sgn*M6_HEX_AF/2, M6_HEX_H))
-    pdf.line(*dv(sgn*M6_D/2, M6_HEX_H), *dv(sgn*M6_HEX_AF/2, M6_HEX_H))
-    pdf.line(*dv(sgn*M6_D/2, M6_HEX_H), *dv(sgn*M6_D/2, M6_BOSS_T))
-line(*dv(0, -3), *dv(0, M6_BOSS_T+4), DIM_W)
-hdim(dv(-M6_HEX_AF/2,0)[0], dv(M6_HEX_AF/2,0)[0], dv(0,0)[1], dv(0,0)[1]+DIM_O1, f"{M6_HEX_AF:g} 对边")
-hdim(dv(-M6_D/2,0)[0], dv(M6_D/2,0)[0], dv(0,M6_BOSS_T)[1], dv(0,M6_BOSS_T)[1]-DIM_O1, f"Φ{M6_D:g}")
-vdim(dv(0,M6_HEX_H)[1], dv(0,0)[1], dv(M6_BOSS_D/2,0)[0], dv(M6_BOSS_D/2,0)[0]+DIM_O2, f"{M6_HEX_H:g} 窝深")
-vdim(dv(0,M6_BOSS_T)[1], dv(0,M6_HEX_H)[1], dv(-M6_BOSS_D/2,0)[0], dv(-M6_BOSS_D/2,0)[0]-DIM_O1, f"{M6_BOSS_T-M6_HEX_H:g} 台肩")
+    for _sgn in (1.0, -1.0):
+        dline(*fv(mx+_sgn*M3_D/2, 0), *fv(mx+_sgn*M3_D/2, BASE_T))
+line(*fv(M6_X, -3), *fv(M6_X, BASE_T+4), DIM_W)
+vdim(fv(0, BASE_T)[1], fv(0, 0)[1], fv(X_IN,0)[0], fv(X_IN,0)[0]+DIM_O1, f"{BASE_T:g} (等厚)")
+note(*fv(M6_X, BASE_T), 30.0, 232.0,
+     f"2×Φ{M6_D:g} 光孔上下通 — **无沉孔无凸台** (2026-08-04 用户: 只保留 M6 通孔)", anchor="start")
+note(*fv(M3_XS[1], 0), 30.0, 238.0,
+     "底面 = 罩顶面, 全平贴合 ⇒ 板下无空间, M6 五金全在板上面", anchor="start")
 
 # ===================== 配重容量表 =====================
 bx, by = 250.0, 165.0
 _w(0.3); pdf.rect(bx, by, 150.0, 46.0, style="D")
-text(bx+3, by+6, f"配重容量 (力臂 r{M6_R:g}; 头朝下卡窝, 杆朝上叠 Φ18×1.6 大垫圈 2.84 g/片):", size=TXT_I)
-_rows = [("M6×30 + 5 片 (叠高 8)", 24.0, 1814), ("M6×45 + 14 片 (叠高 22)", 52.7, 3976),
-         ("M6×60 + 22 片 (叠高 36)", 78.4, 5923), ("M6×80 + 35 片 (叠高 56)", 119.5, 9019)]
+text(bx+3, by+6, f"配重容量 (力臂 r{M6_R:.2f} ×2 孔; 孔距 {2*M6_Y:g} ⇒ 只能用 Φ12 平垫 1.07 g/片 或 M6 螺母 2.29 g/个):", size=TXT_I)
+_rows = [("每孔 M6×30 + 4 片 Φ12 平垫", 28.2, 2196), ("每孔 M6×45 + 10 片", 47.1, 3670),
+         ("每孔 M6×60 + 16 片", 66.0, 5144), ("每孔 M6×80 + 26 片", 95.5, 7442)]
 for k, (cfg, m, mom) in enumerate(_rows):
-    text(bx+3, by+13+k*6, f"· {cfg:<26s}  {m:5.1f} g  →  {mom:5d} g·mm  (含本件自重 +751)", size=TXT_I)
+    text(bx+3, by+13+k*6, f"· {cfg:<24s} ×2 孔 = {m:5.1f} g → {mom:5d} g·mm (含本件自重 +947)", size=TXT_I)
 text(bx+3, by+13+len(_rows)*6, "对照 v3.1 偏心屏 m_屏×6.7: 300g→2010 / 500g→3350 / 800g→5360 g·mm", size=TXT_I)
 
 # ===================== 标题栏 =====================
@@ -220,10 +189,10 @@ _w(0.3); pdf.rect(tb_x, tb_y, tb_w, tb_h, style="D")
 pdf.line(tb_x, tb_y+tb_h/2, tb_x+tb_w, tb_y+tb_h/2)
 text(tb_x+4, tb_y+6, "POV 3D 结构件 — counterweight_arm 转子配重臂 (骑罩顶跨接缝, v3 / v3.1 共用)", size=TXT_L)
 text(tb_x+tb_w-4, tb_y+6, "投影 1st-angle / 比例 1:1 (详图 2:1)", size=TXT_I, anchor="end")
-text(tb_x+4, tb_y+14.5, f"{X_IN-(-R_OUT):g}×{2*HW:g}×{BASE_T:g} (M6 座处 {M6_BOSS_T:g}) / {VOL/1000:.2f} cm3 ({MASS:.1f} g PLA) / "
-     f"BOM: M3×16 ×4 → 罩顶铜花螺母; M6 六角头螺栓 ×1 (长度按配重量) + Φ18 大垫圈若干 + M6 尼龙锁紧螺母 ×1 / "
-     f"⚠ 转速下必须防松 / 打印: 底面贴床, 零支撑 (六角窝顶面 10.3 桥接) / 单位 mm", size=TXT_I)
-text(tb_x+tb_w-4, tb_y+14.5, "2026-08-03  /  POV3D / models / counterweight_arm / counterweight_arm.stl", size=TXT_I, anchor="end")
+text(tb_x+4, tb_y+14.5, f"{X_IN-(-R_OUT):g}×{2*HW:g}×{BASE_T:g} (等厚) / {VOL/1000:.2f} cm3 ({MASS:.1f} g PLA) / "
+     f"BOM: M3×16 ×4 → 罩顶铜花螺母; **M6 螺栓 ×2** (长度按配重量, 杆不许往下伸) + Φ12 平垫/M6 螺母若干 + M6 尼龙锁紧螺母 ×2 / "
+     f"⚠ 转速下必须防松 / 打印: 底面贴床, 零支撑 (全件等厚无桥接) / 单位 mm", size=TXT_I)
+text(tb_x+tb_w-4, tb_y+14.5, "2026-08-04  /  POV3D / models / counterweight_arm / counterweight_arm.stl", size=TXT_I, anchor="end")
 
 out = Path(__file__).with_name("counterweight_arm_drawing.pdf")
 try:

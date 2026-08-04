@@ -94,6 +94,12 @@ CWM_BOSS_D = 9.0
 CWM_BOSS_Z0 = 43.0                         # 凸台底 (顶板下表面 48 往下 5)
 CWM_INS_D, CWM_INS_H = 4.2, 4.0            # M3×4×4.5 铜花螺母窝
 CWM_BORE_D = 3.4                           # M3 过孔
+# 备选 (默认关): 在罩顶板上给配重臂的 2 个 M6 开 Φ7.5 让位孔, 让螺杆可以往下伸进
+# 罩内 —— 位置 (−77.7, ±6.5) 正好一半一个 (A 在 +6.5 / B 在 −6.5)。默认关是因为
+# 用户只要求"臂上留 M6 通孔", 罩子不动; 真需要更长的螺杆时把它打开即可。
+CWM_M6_CLR_ENABLE = False
+CWM_M6_CLR_XY = (-77.7, 6.5)
+CWM_M6_CLR_D = 7.5
 CW_ENABLE = False                          # ← 一改的罩内 M6 埋螺母座, 已废弃 (代码留档)
 CW_R = 75.0
 CW_ANG = (135.0, 225.0)
@@ -230,6 +236,11 @@ if CWM_ENABLE:
     for (cx, cy) in _cwm_pts():
         body -= cyl(CWM_INS_H + 1.0, CWM_INS_D / 2, CWM_BOSS_Z0 - 1.0, 32).translate((cx, cy, 0.0))
         body -= cyl(H - CWM_BOSS_Z0 + 3.0, CWM_BORE_D / 2, CWM_BOSS_Z0 - 1.0, 32).translate((cx, cy, 0.0))
+
+    if CWM_M6_CLR_ENABLE:
+        for _sy in (1.0, -1.0):
+            body -= cyl(PLATE_T + 3.0, CWM_M6_CLR_D / 2, PLATE_Z0 - 1.0, 32)\
+                .translate((CWM_M6_CLR_XY[0], _sy * CWM_M6_CLR_XY[1], 0.0))
 
 # 外径兜底: 任何加料都不许超出 Φ170 (凸台/bolster 半径可能越界)
 body = body ^ cyl(H + 2.0, R_OUT, -1.0)
