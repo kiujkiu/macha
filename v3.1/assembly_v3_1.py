@@ -135,7 +135,8 @@ ROTOR_Z0 = MOTOR_Z0 + MOTOR_H            # 31.7
 #    M6 螺纹孔: 距边 12.5, 节距 25 → ±12.5/±37.5/±62.5/±87.5 (8×8 = 64 个)
 #    4 安装孔: 距边 25 → (±75,±75), Φ6.5 通 + Φ11×6 沉 (朝下) —— **柱位**
 BB_SIDE, BB_T = 200.0, 13.0
-BB_GRID = [s0 * v for v in (12.5, 37.5, 62.5, 87.5) for s0 in (-1, 1)]
+BB_GRID_ABS = (12.5, 37.5, 62.5, 87.5)
+BB_GRID = [s0 * v for v in BB_GRID_ABS for s0 in (-1, 1)]
 BB_MOUNT = 75.0
 bb = m3d.Manifold.cube((BB_SIDE, BB_SIDE, BB_T), False).translate((-BB_SIDE/2, -BB_SIDE/2, -BB_T))
 for bx in BB_GRID:
@@ -311,22 +312,33 @@ CAPTOP_V3 = 267.95
 # 2026-07-23 光电大改配套: 柱 280→290 (+1cm, 光电叉顶 285.65 对臂底留 4.35),
 # 螺柱 Φ8×30→Φ8×40; 同日柱再内移 1 格 ±100→±75 (POST_R 106.07, frame 换 v3 短臂,
 # 转子 84.5 对柱内缘 102 留 17.6)。
-POST_H, POST_XY = 290.0, 75.0
-for px in (-POST_XY, POST_XY):
-    for py in (-POST_XY, POST_XY):
-        post = m3d.Manifold.cylinder(POST_H, 4.0, 4.0, 24, False).translate((px, py, 0.0))
-        parts.append((f"post @({px:+.0f},{py:+.0f})", mesh_tris(post)))
-FRAME_DIR = V3 / "models/top_bearing_v3"
-fa = read_stl(FRAME_DIR / "frame_A_v3.stl")
-fa = rot_z(fa, 135.0)
+# 2026-08-04: 跟 v4 对齐 —— 柱改坐**网格 M6 螺纹孔** (87.5,37.5) 族 (用户 08-01 圈图),
+#   POST_R 106.066 → 95.197, 角向 45+90k° → 23.199+90k°; 顶架换 top_bearing_v4。
+#   ⚠ 之前 v3.1 还停在 (±75,±75)+frame_v3, 与 v4 装不到同一块板上, 已同步。
+#   ⚠ 柱内缘 91.197 对 wifi 线缆母头扫掠 R90.51 只余 0.72 —— 装机时线必须往内收 (同 v4)。
+POST_H = 290.0
+POST_GRID = (87.5, 37.5)
+POST_R_V4 = math.hypot(*POST_GRID)                                    # 95.197
+POST_A0 = math.degrees(math.atan2(POST_GRID[1], POST_GRID[0]))        # 23.199°
+for k in range(4):
+    a = math.radians(POST_A0 + 90 * k)
+    px, py = POST_R_V4 * math.cos(a), POST_R_V4 * math.sin(a)
+    assert min(abs(abs(px) - g) for g in BB_GRID_ABS) < 1e-6 and \
+           min(abs(abs(py) - g) for g in BB_GRID_ABS) < 1e-6, \
+           f"柱 ({px:.3f},{py:.3f}) 不落在网格螺纹孔上"
+    post = m3d.Manifold.cylinder(POST_H, 4.0, 4.0, 24, False).translate((px, py, 0.0))
+    parts.append((f"post @({px:+.1f},{py:+.1f})", mesh_tris(post)))
+FRAME_DIR = ROOT.parent / "v4/models/top_bearing_v4"
+fa = read_stl(FRAME_DIR / "frame_A_v4.stl")
+fa = rot_z(fa, POST_A0 + 90.0)                          # 臂落 113.199 / 203.199
 fa[..., 2] += POST_H
-parts.append(("frame_A_v3 (SW+NW)", fa))
-fb = read_stl(FRAME_DIR / "frame_B_v3.stl")            # 打印翻转姿态
+parts.append(("frame_A_v4 (-X 两柱)", fa))
+fb = read_stl(FRAME_DIR / "frame_B_v4.stl")            # 打印翻转姿态
 fb[..., 1] = -fb[..., 1]
 fb[..., 2] = POST_H + 16.0 - fb[..., 2]
 fb = fb[:, ::-1, :].copy()
-fb = rot_z(fb, -45.0)
-parts.append(("frame_B_v3 (NE+SE)", fb))
+fb = rot_z(fb, POST_A0 + 270.0)                         # 臂落 293.199 / 23.199
+parts.append(("frame_B_v4 (+X 两柱)", fb))
 # 挡光滑片 vane_slider_v3 (静止; 终版: 两件都圆孔, 调节=刀片印长50装机剪短):
 # 锁 frame_B ang=90 臂筋 (asm 45°) 侧面, M3×20+螺母 ×2 穿筋孔 (r45.2/51.4,
 # 居中 z4 = asm 294); 板 8 高填满筋侧 (底平筋底 290, 顶抵臂底 298), 装配用已剪短孪生 (刀尖 280)
@@ -334,7 +346,7 @@ vs = read_stl(ROOT / "models/photo_sensor_v3_1/vane_slider_v3_1_asm.stl")
 vs = vs[..., [0, 2, 1]].copy()          # 打印姿态 (x,z,y-2) → 件系
 vs[..., 1] += 2.0
 vs = vs[:, ::-1, :]                     # 轴交换镜像 → 翻回绕向
-vs = rot_z(vs, 45.0)
+vs = rot_z(vs, POST_A0)                 # v4 柱位后: 随 frame_B ang=90 臂, asm 45° → 23.199°
 vs[..., 2] += 290.0
 parts.append(("vane_slider_v3_1", vs))
 # top_cap_v3_1 顶部薄压条 v3 (2026-07-22: 用户"做薄"):
@@ -355,7 +367,8 @@ for bz, tag in ((POST_H + 3.0, "688 lower (frame_A)"), (POST_H + 11.0, "688 uppe
     brg = (m3d.Manifold.cylinder(5.0, 8.0, 8.0, 64, False)
            - m3d.Manifold.cylinder(7.0, 4.0, 4.0, 64, False).translate((0, 0, -1.0)))
     parts.append((tag, mesh_tris(brg.translate((0.0, 0.0, bz)))))
-print(f"顶轴承 (柱±{POST_XY:.0f}×{POST_H:.0f}, POST_R 106.07): 柱顶 {POST_H:.0f}; 薄压条 260.95..{CAPTOP_V3:.2f} "
+print(f"顶轴承 (柱 网格{POST_GRID[0]:g},{POST_GRID[1]:g} × {POST_H:.0f}, POST_R {POST_R_V4:.3f} @{POST_A0:.3f}°+90k): "
+      f"柱顶 {POST_H:.0f}; 薄压条 260.95..{CAPTOP_V3:.2f} "
       f"(底=屏顶 {SCREEN_Z0+168.75:.2f}); 架臂底-条顶隙 {POST_H-CAPTOP_V3:.2f}; "
       f"轴承 {POST_H+3:.0f}..{POST_H+8:.0f} / {POST_H+11:.0f}..{POST_H+16:.0f}; "
       f"螺柱 Φ8×30 @{CAPTOP_V3:.2f}..{CAPTOP_V3+30:.2f}, M6×20 杆到 280.95 (旋入 13)")
