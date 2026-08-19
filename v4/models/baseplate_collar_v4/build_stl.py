@@ -22,7 +22,7 @@ import numpy as np
 import manifold3d as m3d
 
 # ===== Baseplate parameters =====
-BASE_SIDE  = 100.0
+# BASE_SIDE 见下面「外形裁切」一节 (2026-08-19: 100 → 93.5 + 四角圆弧)
 BASE_THICK = 5.0
 
 # 2026-07-29 v4: 底板改用 200×200×13 网格板 (M6 螺纹孔 距边12.5/节距25)。
@@ -33,6 +33,28 @@ BASE_THICK = 5.0
 M6_DIAG         = 75.0 * math.sqrt(2)                      # corner-hole diagonal spacing (user 2026-06-29)
 M6_PATTERN_SIDE = M6_DIAG / math.sqrt(2)     # ≈70.71 square side → diagonal 100
 M6_DIAM         = 6.5
+
+# ===== 外形裁切 (2026-08-19, 用户: 「这个件的四周是不是可以做调整」+ M6 大扁头实拍尺寸) =====
+# 角孔用 M6 大扁头 (头 Φ12.5 × 厚 2.6, 内六角对边 4), 头坐在底盘顶面 Z5..7.6, 无沉孔。
+# 底盘外形 100×100 方 → 「93.5 方 + 四角 R62.28 圆弧」:
+#   · 直边 = 孔心 ±37.5 + 头半径 6.25 + 壁 3.0 = ±46.75  ⇒ 边长 93.5
+#   · 角弧 = 孔心半径 53.033 + 6.25 + 3.0 = R62.283 (方角原在 R70.711 ⇒ 沿对角切掉 8.43)
+# 面积 10000 → 8682 mm² (−13.2%), 底盘减料 6.6 cm³ ≈ 8 g PLA。
+# ⚠ EDGE_WALL=3 是这四个角吃 M6 预紧力的最小肉厚, 不要再往下压 (2 mm 只多省 0.8%)。
+# ⚠ 能切的量被 v4 的角孔位置卡死: 节距 70.71→75 后孔心外移 3.03, 帽外缘到 R59.28,
+#   所以别拿旧 d100 图纸 (对角 100) 的余量来估 —— 那版可以切到 R59.25。
+TRIM_ENABLE = True
+M6_HEAD_D   = 12.5          # M6 大扁头 头径 (实测, 用户 2026-08-19 提供)
+EDGE_WALL   = 3.0           # 帽外缘到件外缘的最小肉厚
+CORNER_SEG  = 128           # 角弧分段 (整圆当量)
+
+_m6_hp     = M6_PATTERN_SIDE / 2                       # 37.5
+BASE_HALF  = _m6_hp + M6_HEAD_D / 2 + EDGE_WALL        # 46.75
+BASE_SIDE  = 2 * BASE_HALF if TRIM_ENABLE else 100.0   # 93.5
+CORNER_R   = math.hypot(_m6_hp, _m6_hp) + M6_HEAD_D / 2 + EDGE_WALL   # 62.283
+# manifold 的 cylinder 是**内接**正多边形 (顶点在圆上, 边中点内缩 cos(pi/n)),
+# 所以按外接放大, 保证多边形的**内切圆**正好是 CORNER_R (不吃掉那 0.02 mm 壁)。
+CORNER_R_POLY = CORNER_R / math.cos(math.pi / CORNER_SEG)
 
 # 2026-07-30 用户: 「定子电机的 4 个安装螺丝旋转 45°」
 # 原 4×M3 是对角 25 的方形阵 → 孔在 (±8.839, ±8.839) (即对角落在 ±X/±Y 轴上)。
@@ -92,6 +114,14 @@ COLLAR_TOP        = COLLAR_Z0 + COLLAR_H          # 18
 # ===== Base =====
 base = m3d.Manifold.cube((BASE_SIDE, BASE_SIDE, BASE_THICK), True)
 base = base.translate((0, 0, BASE_THICK / 2))
+
+if TRIM_ENABLE:
+    _corner_cyl = m3d.Manifold.cylinder(BASE_THICK + 2, CORNER_R_POLY,
+                                        CORNER_R_POLY, CORNER_SEG, False)
+    base = base ^ _corner_cyl.translate((0, 0, -1.0))
+
+# 无孔外形 (用于下面的螺丝帽落位校核)
+footprint = base
 
 # 4 × M6 corner holes (through)
 m6_hp = M6_PATTERN_SIDE / 2
@@ -174,6 +204,31 @@ for a in FLANGE_HOLE_ANGS:
                                FLANGE_CB_DIAM / 2, 32, False)
     part = part - cb.translate((hx, hy, COLLAR_TOP - FLANGE_CB_DEPTH))
     part = part - cb.translate((hx, hy, -1.0))
+
+# ===== 外形裁切校核 (2026-08-19) =====
+# ⚠ 教训 (记忆): 旋转/贴合类间隙不要用"半径带/占位网格"近似 —— 这里直接用布尔判定。
+if TRIM_ENABLE:
+    assert COLLAR_OD / 2 <= BASE_HALF - 1e-9, "套环 OD 超出收窄后的直边"
+    assert COLLAR_OD / 2 <= CORNER_R - 1e-9, "套环 OD 超出角弧"
+    assert BASE_HALF < 50.0, "没有真的收窄"
+    _head_out = 0.0
+    for _sx in (-1, 1):
+        for _sy in (-1, 1):
+            _head = m3d.Manifold.cylinder(BASE_THICK, M6_HEAD_D / 2,
+                                          M6_HEAD_D / 2, 96, False)
+            _head = _head.translate((_sx * _m6_hp, _sy * _m6_hp, 0.0))
+            _head_out += (_head - footprint).volume()
+    assert _head_out < 1e-3, (
+        f"M6 帽 (Φ{M6_HEAD_D:g}) 悬出件外 {_head_out:.4f} mm³ —— 外形切过头了"
+    )
+    _fp = np.asarray(footprint.to_mesh().vert_properties)[:, :2]
+    _r = np.hypot(_fp[:, 0], _fp[:, 1])
+    _wall = _r.max() - (math.hypot(_m6_hp, _m6_hp) + M6_HEAD_D / 2)
+    print(f"  外形裁切: 直边 ±{BASE_HALF:g} (边长 {BASE_SIDE:g}) + 四角 R{CORNER_R:.3f}"
+          f"  [多边形内切 {CORNER_R_POLY*math.cos(math.pi/CORNER_SEG):.3f}]")
+    print(f"    M6 帽 Φ{M6_HEAD_D:g} 落位: 4 角全部落在件内 (悬出 {_head_out:.6f} mm³)"
+          f", 帽外缘→件外缘壁厚 {_wall:.2f}")
+    print(f"    件外接半径 {_r.max():.3f} (原方角 {math.hypot(50.0, 50.0):.3f})")
 
 # ===== Export STL =====
 mesh  = part.to_mesh()

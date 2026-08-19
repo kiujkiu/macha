@@ -21,6 +21,10 @@
 其余全部沿用: v4/print 的定子**三件** (baseplate_collar_v4 / flange_disc_v4 / mounting_flange_v4)
 + **顶轴承架 frame_A_v4 / frame_B_v4** + v3/print 的 hub_disc / rim_ring / wifi_shell。
 
+⚠ **2026-08-19 baseplate_collar_v4 外形裁切**: 底盘 100×100 方 → **93.5 方 + 四角 R62.28 圆弧**
+(直边/角弧都按 M6 大扁头 Φ12.5 外缘 + 壁 3 定), 89.14 cm³ (−6.9%)。孔位/凸台/套环全没动,
+装配关系不变 —— 但 **v4/print 里那份要重新拿**, 旧 STL 作废。
+
 ⚠ **2026-08-04 已把 v3.1 的柱位同步到 v4**: 之前 v3.1 还停在 (±75,±75) + frame_v3,
 和 v4 装不到同一块板上。现在统一为 **网格 M6 螺纹孔 (87.5,37.5) 族, POST_R 95.197
 @23.199°+90k, 顶架 frame_A/B_v4** —— 柱脚用 M6 双头螺柱拧进螺纹孔。

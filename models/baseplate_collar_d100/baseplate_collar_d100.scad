@@ -1,16 +1,28 @@
 // POV 3D baseplate_collar — merged baseplate + ring collar (parametric)
 //
 // Combines:
-//   - baseplate (square 100×100×5, central boss Φ65/Φ55 H23)
+//   - baseplate (89.21×89.21×5 + 四角 R59.25, central boss Φ65/Φ55 H23)
 //   - ring collar Φ80/Φ65 H13, sleeved over boss
 // Both notches aligned at 75°–105° (+Y direction).
 
-base_side       = 100;
 base_thick      = 5;
 
 m6_diag         = 100;                 // 角孔对角间距 (user 2026-06-29)
 m6_pattern_side = m6_diag / sqrt(2);   // ≈70.71 方形边长 → 对角 100
 m6_diam         = 6.5;
+
+// 外形裁切 (2026-08-19): 角孔用 M6 大扁头 (Φ12.5×2.6), 头坐底盘顶面无沉孔。
+// 直边 = 35.355 + 6.25 + 壁3 = ±44.605 (边长 89.21); 角弧 = 50 + 6.25 + 3 = R59.25。
+// ⚠ 本件 v2/v2.1/v3 共用; 直边离套环 OD84 只剩 2.61, 别再收。
+trim_enable     = true;
+m6_head_d       = 12.5;
+edge_wall       = 3;
+base_half       = m6_pattern_side/2 + m6_head_d/2 + edge_wall;   // 44.605
+base_side       = trim_enable ? 2*base_half : 100;               // 89.21
+corner_r        = sqrt(2)*m6_pattern_side/2 + m6_head_d/2 + edge_wall;  // 59.25
+corner_seg      = 128;
+// $fn 多边形是内接的, 按外接放大, 让内切圆正好 = corner_r (与 build_stl.py 一致)
+corner_r_poly   = corner_r / cos(180/corner_seg);
 
 m3_diag         = 25;
 m3_diam         = 3.2;
@@ -51,8 +63,15 @@ module baseplate_collar_d100() {
     union() {
         // === base with holes (no notch cuts the base) ===
         difference() {
-            translate([-base_side/2, -base_side/2, 0])
-                cube([base_side, base_side, base_thick]);
+            intersection() {
+                translate([-base_side/2, -base_side/2, 0])
+                    cube([base_side, base_side, base_thick]);
+                if (trim_enable)
+                    cylinder(h = base_thick, r = corner_r_poly, $fn = corner_seg);
+                else
+                    translate([-base_side/2, -base_side/2, 0])
+                        cube([base_side, base_side, base_thick]);
+            }
             for (sx = [-1, 1]) for (sy = [-1, 1])
                 translate([sx * m6_pattern_side/2, sy * m6_pattern_side/2, -1])
                     cylinder(h = base_thick + 2, d = m6_diam, $fn = 48);

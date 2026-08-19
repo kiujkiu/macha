@@ -17,7 +17,6 @@ from pathlib import Path
 from fpdf import FPDF
 
 # ===== Geometry (must match build_stl.py / baseplate_collar.scad) =====
-BASE_SIDE  = 100.0
 BASE_THICK = 5.0
 # 2026-07-29 v4: 底板改用 200×200×13 网格板 (M6 螺纹孔 距边12.5/节距25)。
 # 4 个 M6 脚必须落到网格位 (±37.5,±37.5) → 方形节距 75 (= 3 个网格节距),
@@ -25,8 +24,17 @@ BASE_THICK = 5.0
 # 轴向孔 (±50,0)/(0,±50) 并在装配里转 45°; 新板是偶数孔网格, 无中心孔也无
 # ±50 轴向孔, 故改走对角网格位, 装配 ROT 45°→0°)。这是 v4 唯一的几何改动。
 M6_DIAG    = 75.0 * math.sqrt(2)                    # 角孔对角间距 (user 2026-06-29)
-M6_PATTERN = M6_DIAG / math.sqrt(2)   # ≈70.71
+M6_PATTERN = M6_DIAG / math.sqrt(2)   # = 75
 M6_DIAM    = 6.5
+# 外形裁切 (2026-08-19, 用户提供 M6 大扁头实测 Φ12.5×2.6): 底盘 100×100 →
+# 「93.5 方 + 四角 R62.28 圆弧」。直边 = 37.5+6.25+壁3 = ±46.75; 角弧 = 53.033+6.25+3。
+# 与 build_stl.py 的 TRIM_ENABLE/M6_HEAD_D/EDGE_WALL 必须一致 (本图纸参数是复刻不是 import)。
+TRIM_ENABLE = True
+M6_HEAD_D   = 12.5
+EDGE_WALL   = 3.0
+BASE_HALF   = M6_PATTERN / 2 + M6_HEAD_D / 2 + EDGE_WALL          # 46.75
+BASE_SIDE   = 2 * BASE_HALF if TRIM_ENABLE else 100.0             # 93.5
+CORNER_R    = math.hypot(M6_PATTERN / 2, M6_PATTERN / 2) + M6_HEAD_D / 2 + EDGE_WALL  # 62.283
 # 2026-07-30: 4×M3 电机孔整组转 45° → 孔落坐标轴 (±12.5,0)/(0,±12.5)
 # 与 build_stl.py 的 M3_ROT 必须一致 (本图纸参数是复刻不是 import)
 M3_ROT     = 0.0      # 2026-07-30 用户改回 0 (曾试 45° 让孔落坐标轴, 随即撤回)
@@ -167,10 +175,10 @@ def vdim(y1, y2, xg, xd, label):
 # ===== Page frame & title =====
 _w(0.3)
 pdf.rect(5, 5, PAGE_W - 10, PAGE_H - 10, style="D")
-text(PAGE_W/2, 14, "POV 3D 底盘+套环 合并件 (M6 方形节距75 / 对角106.07)  Baseplate + Ring Collar v4 (200x200 grid)",
+text(PAGE_W/2, 14, "POV 3D 底盘+套环 合并件 (M6 方形节距75 / 对角106.07, 外形 93.5 方+四角 R62.28)  Baseplate + Ring Collar v4",
      size=TXT_T, anchor="middle")
 text(PAGE_W/2, 19.5,
-     f"100×100×{BASE_THICK:g} 底盘 / 4×M6 (对角{M6_DIAG:g}) / 4×M3+Φ{CB_DIAM:g}×{CB_DEPTH:g} 沉孔 / "
+     f"{BASE_SIDE:g}×{BASE_SIDE:g}×{BASE_THICK:g} 底盘 (四角 R{CORNER_R:.2f}) / 4×M6 (对角{M6_DIAG:.2f}) / 4×M3+Φ{CB_DIAM:g}×{CB_DEPTH:g} 沉孔 / "
      f"中央 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g} 沉孔(顶) / "
      f"凸台 Φ{BOSS_OD:g}/Φ{BOSS_ID:g} H{BOSS_H:g} / "
      f"套环 Φ{COLLAR_OD:g}/Φ{COLLAR_ID:g} H{COLLAR_H:g} / "
@@ -193,10 +201,28 @@ pdf.set_dash_pattern()
 text(end2[0] - 5, end2[1] - 4, "A", size=5)
 text(end1[0] - 5, end1[1] + 8, "A", size=5)
 
-# Base square 100×100
+# Base outline: 93.5 方 + 四角 R62.28 圆弧 (2026-08-19 外形裁切)
 _w(GEOM_W)
-bx0, by0 = tv(-50, 50)
-pdf.rect(bx0, by0, 100, 100, style="D")
+if TRIM_ENABLE:
+    _y_arc = math.sqrt(CORNER_R**2 - BASE_HALF**2)      # 弧与直边交点 ±37.14
+    assert _y_arc < BASE_HALF, "角弧半径过小, 会切掉整条直边"
+    # 4 条直边 (被四角圆弧截短)
+    for _sx in (-1, 1):
+        line(*tv(_sx * BASE_HALF, -_y_arc), *tv(_sx * BASE_HALF, _y_arc), GEOM_W)
+        line(*tv(-_y_arc, _sx * BASE_HALF), *tv(_y_arc, _sx * BASE_HALF), GEOM_W)
+    # 4 段角弧
+    _a0 = math.degrees(math.atan2(_y_arc, BASE_HALF))
+    _a1 = math.degrees(math.atan2(BASE_HALF, _y_arc))
+    for _k in range(4):
+        _pts = []
+        for _i in range(17):
+            _a = math.radians(_k * 90 + _a0 + (_a1 - _a0) * _i / 16)
+            _pts.append(tv(CORNER_R * math.cos(_a), CORNER_R * math.sin(_a)))
+        for _i in range(len(_pts) - 1):
+            line(*_pts[_i], *_pts[_i + 1], GEOM_W)
+else:
+    bx0, by0 = tv(-BASE_HALF, BASE_HALF)
+    pdf.rect(bx0, by0, BASE_SIDE, BASE_SIDE, style="D")
 
 # Center cross
 pdf.set_dash_pattern(dash=4, gap=1.5); _w(0.13)
@@ -285,8 +311,10 @@ if NOTCH_ENABLE:
         text(lx, ly, f"{int(ang_d)}°", size=TXT_D, anchor="middle")
 
 # Top-view overall dims
-hdim(tv(-50, -50)[0], tv(50, -50)[0], tv(0, -50)[1], tv(0, -50)[1] + DIM_O2, "100")
-vdim(tv(0, -50)[1], tv(0, 50)[1], tv(50, 0)[0], tv(50, 0)[0] + DIM_O2, "100")
+hdim(tv(-BASE_HALF, -BASE_HALF)[0], tv(BASE_HALF, -BASE_HALF)[0],
+     tv(0, -BASE_HALF)[1], tv(0, -BASE_HALF)[1] + DIM_O2, f"{BASE_SIDE:g}")
+vdim(tv(0, -BASE_HALF)[1], tv(0, BASE_HALF)[1],
+     tv(BASE_HALF, 0)[0], tv(BASE_HALF, 0)[0] + DIM_O2, f"{BASE_SIDE:g}")
 hdim(tv(-m6_hp, m6_hp)[0], tv(m6_hp, m6_hp)[0],
      tv(0, m6_hp)[1], tv(0, m6_hp)[1] - DIM_O1, f"{M6_PATTERN:.1f}")
 vdim(tv(0, m6_hp)[1], tv(0, -m6_hp)[1],
@@ -301,6 +329,16 @@ arrow(diag_p1[0], diag_p1[1], -1, 1); arrow(diag_p2[0], diag_p2[1], 1, -1)
 
 # ----- Callouts (right side) -----
 _w(EXT_W)
+# 角弧 R + 壁厚说明 (2026-08-19 外形裁切)
+if TRIM_ENABLE:
+    _ca = math.radians(225)
+    _cx, _cy = tv(CORNER_R * math.cos(_ca), CORNER_R * math.sin(_ca))
+    lx, ly = tv(-58, -46)
+    pdf.line(_cx, _cy, lx, ly)
+    pdf.line(lx, ly, lx - 8, ly)
+    text(lx - 8, ly - 1, f"四角 R{CORNER_R:.2f} mm (4×)", size=TXT_D, anchor="end")
+    text(lx - 8, ly + 4,
+         f"= M6 帽 Φ{M6_HEAD_D:g} 外缘 + 壁 {EDGE_WALL:g} mm", size=TXT_D, anchor="end")
 # M6
 hx, hy = tv(m6_hp, m6_hp)
 lx, ly = tv(82, 32)
@@ -592,13 +630,13 @@ text(tb_x + tb_w - 4, tb_y + 6,
      "投影 1st-angle  /  比例 1:1 (俯, 剖) / 3:1 (详图 B) / 2:1 (详图 C)",
      size=TXT_I, anchor="end")
 text(tb_x + 4, tb_y + 14.5,
-     f"100×100×{BASE_THICK:g} / 4×M6 / 4×M3+Φ7×{CB_DEPTH:g} / 中央 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g}(顶) / "
+     f"{BASE_SIDE:g}×{BASE_SIDE:g}×{BASE_THICK:g} (四角 R{CORNER_R:.2f}) / 4×M6 / 4×M3+Φ7×{CB_DEPTH:g} / 中央 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g}(顶) / "
      f"凸台 Φ{BOSS_OD:g}/Φ{BOSS_ID:g} H{BOSS_H:g} / 套环 Φ{COLLAR_OD:g}/Φ{COLLAR_ID:g} H{COLLAR_H:g} / "
      + (f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° / " if NOTCH_ENABLE else "整圈无缺口 / ")
      + f"8×Φ{FL_M3_DIAM:g}+Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g}沉(顶+底)  /  单位 mm",
      size=TXT_I, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 14.5,
-     "2026-07-29  /  POV3D / v4 / baseplate_collar_v4 / baseplate_collar_v4.stl",
+     "2026-08-19  /  POV3D / v4 / baseplate_collar_v4 / baseplate_collar_v4.stl",
      size=TXT_I, anchor="end")
 
 out = Path(__file__).with_name("baseplate_collar_v4_drawing.pdf")

@@ -1,16 +1,28 @@
 // POV 3D baseplate_collar — merged baseplate + ring collar (parametric)
 //
 // Combines:
-//   - baseplate (square 100×100×5, central boss Φ65/Φ55 H23)
+//   - baseplate (93.5×93.5×5 + 四角 R62.28 圆弧, central boss Φ65/Φ55 H23)
 //   - ring collar Φ80/Φ65 H13, sleeved over boss
 // Both notches aligned at 75°–105° (+Y direction).
 
-base_side       = 100;
 base_thick      = 5;
 
 m6_diag         = 75 * sqrt(2);       // 106.07 (2026-07-29 v4: 配 200×200 网格板)
 m6_pattern_side = m6_diag / sqrt(2);   // = 75 方形边长 → 脚落网格位 (±37.5,±37.5)
 m6_diam         = 6.5;
+
+// 外形裁切 (2026-08-19): 角孔用 M6 大扁头 (Φ12.5×2.6), 头坐底盘顶面无沉孔。
+// 直边 = 37.5 + 6.25 + 壁3 = ±46.75 (边长 93.5); 角弧 = 53.033 + 6.25 + 3 = R62.283。
+// ⚠ 壁 3 是四角吃 M6 预紧力的最小肉厚, 别再压。
+trim_enable     = true;
+m6_head_d       = 12.5;
+edge_wall       = 3;
+base_half       = m6_pattern_side/2 + m6_head_d/2 + edge_wall;   // 46.75
+base_side       = trim_enable ? 2*base_half : 100;               // 93.5
+corner_r        = sqrt(2)*m6_pattern_side/2 + m6_head_d/2 + edge_wall;  // 62.283
+corner_seg      = 128;
+// $fn 多边形是内接的, 按外接放大, 让内切圆正好 = corner_r (与 build_stl.py 一致)
+corner_r_poly   = corner_r / cos(180/corner_seg);
 
 m3_rot          = 0;    // 2026-07-30: 曾试 45° (孔落坐标轴), 用户改回 0
 m3_diag         = 25;
@@ -58,8 +70,15 @@ module baseplate_collar_v4() {
     union() {
         // === base with holes (no notch cuts the base) ===
         difference() {
-            translate([-base_side/2, -base_side/2, 0])
-                cube([base_side, base_side, base_thick]);
+            intersection() {
+                translate([-base_side/2, -base_side/2, 0])
+                    cube([base_side, base_side, base_thick]);
+                if (trim_enable)
+                    cylinder(h = base_thick, r = corner_r_poly, $fn = corner_seg);
+                else
+                    translate([-base_side/2, -base_side/2, 0])
+                        cube([base_side, base_side, base_thick]);
+            }
             for (sx = [-1, 1]) for (sy = [-1, 1])
                 translate([sx * m6_pattern_side/2, sy * m6_pattern_side/2, -1])
                     cylinder(h = base_thick + 2, d = m6_diam, $fn = 48);
