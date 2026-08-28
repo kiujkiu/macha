@@ -35,7 +35,7 @@ center_cb_depth = 1;
 
 boss_od         = 65;
 boss_id         = 55;
-boss_h          = 23;
+boss_h          = 20.5; // 23 → 20.5 (2026-08-28 用户: 降幅 5 改 2.5)
 
 // 2026-07-29 v4 (用户"补成整圈"): 走线缺口取消 → 凸台/套环整圈连续。
 // ⚠ 该缺口原是电机线唯一出口, 关掉后需另想走线方案。
@@ -46,16 +46,19 @@ notch_h         = 8;
 
 collar_od         = 84;  // 80→84 (2026-07-10) 螺母孔加肉, M6帽Φ12.5留1.75
 collar_id         = 65;       // = boss_od
-collar_h          = 13;
+collar_h          = 10.5; // 13 → 10.5 (2026-08-28 用户: 降幅 5 改 2.5)
 collar_z0         = base_thick;
 collar_notch_h    = 8;  // 6→8 (2026-07-13) 与凸台同高
+                        // 降幅改 2.5 后套环 10.5 > 缺口 8, 缺口之上还留 2.5 过桥 (降 5 那版会吃满全高成 C 形)
 
 // flange_disc 连接孔 (2026-07-10): flange 内圈 8 孔 (PCD 72.5) 坐在套环顶面
 flange_hole_r   = 36.25;      // = PCD 72.5 / 2, 套环壁 32.5..40 正中
 flange_m3_diam  = 3.2;
 flange_cb_diam  = 4.2;        // M3×4×4.5 铜花螺母
 flange_cb_depth = 4;
-collar_top      = collar_z0 + collar_h;   // 18
+flange_cb_top   = false;      // 顶面沉孔 2026-08-28 用户取消 (true = 恢复)
+flange_cb_bot   = true;       // 底面沉孔 = 真正压铜花螺母的那 8 个
+collar_top      = collar_z0 + collar_h;   // 15.5 (降 2.5 后)
 
 // derived
 m3_side    = m3_diag / sqrt(2);
@@ -128,16 +131,18 @@ module baseplate_collar_v4() {
                     ));
         }
     }
-    // === 8× flange_disc 连接孔: Φ3.2 通 (Z0..18) + Φ4.2×4 沉孔 顶面+底面 ===
+    // === 8× flange_disc 连接孔: Φ3.2 通 (Z0..collar_top=13) + Φ4.2×4 沉孔 (2026-08-28 只剩底面) ===
     for (k = [0:7]) {
         a = 22.5 + 45 * k;
         translate([flange_hole_r*cos(a), flange_hole_r*sin(a), -1])
             cylinder(h = collar_top + 2, d = flange_m3_diam, $fn = 32);
-        translate([flange_hole_r*cos(a), flange_hole_r*sin(a),
-                   collar_top - flange_cb_depth])
-            cylinder(h = flange_cb_depth + 1, d = flange_cb_diam, $fn = 32);
-        translate([flange_hole_r*cos(a), flange_hole_r*sin(a), -1])
-            cylinder(h = flange_cb_depth + 1, d = flange_cb_diam, $fn = 32);
+        if (flange_cb_top)
+            translate([flange_hole_r*cos(a), flange_hole_r*sin(a),
+                       collar_top - flange_cb_depth])
+                cylinder(h = flange_cb_depth + 1, d = flange_cb_diam, $fn = 32);
+        if (flange_cb_bot)
+            translate([flange_hole_r*cos(a), flange_hole_r*sin(a), -1])
+                cylinder(h = flange_cb_depth + 1, d = flange_cb_diam, $fn = 32);
     }
   }
 }

@@ -1,0 +1,852 @@
+<title>POV3D V4 打印单</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+
+<style>
+:root{
+  --ground:#EDF1F3;
+  --surface:#FFFFFF;
+  --surface-2:#E4EAEE;
+  --ink:#15212B;
+  --ink-mid:#41535F;
+  --ink-mute:#6B7C88;
+  --rule:#C2CFD6;
+  --rule-soft:#DAE3E8;
+  --accent:#1B5E8F;
+  --accent-soft:#E2ECF4;
+  --signal:#A8501C;
+  --signal-soft:#F6E9DF;
+  --ok:#2F6B4F;
+
+  --f-display:"Barlow Semi Condensed","Noto Sans SC",system-ui,sans-serif;
+  --f-body:"Noto Sans SC",system-ui,-apple-system,sans-serif;
+  --f-data:"IBM Plex Mono","Noto Sans SC",ui-monospace,monospace;
+
+  --sp-1:.35rem; --sp-2:.7rem; --sp-3:1.1rem; --sp-4:1.7rem; --sp-5:2.6rem; --sp-6:4rem;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1418;
+    --surface:#161F26;
+    --surface-2:#1E2A33;
+    --ink:#DCE6EC;
+    --ink-mid:#A9BAC5;
+    --ink-mute:#7B8D99;
+    --rule:#2B3841;
+    --rule-soft:#212D35;
+    --accent:#63A9DA;
+    --accent-soft:#152935;
+    --signal:#D98A54;
+    --signal-soft:#2A1E15;
+    --ok:#69B08C;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1418;
+  --surface:#161F26;
+  --surface-2:#1E2A33;
+  --ink:#DCE6EC;
+  --ink-mid:#A9BAC5;
+  --ink-mute:#7B8D99;
+  --rule:#2B3841;
+  --rule-soft:#212D35;
+  --accent:#63A9DA;
+  --accent-soft:#152935;
+  --signal:#D98A54;
+  --signal-soft:#2A1E15;
+  --ok:#69B08C;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:15px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.sheet{
+  max-width:1080px;
+  margin:0 auto;
+  padding:clamp(var(--sp-3),4vw,var(--sp-5));
+}
+.frame{
+  background:var(--surface);
+  border:1px solid var(--rule);
+  box-shadow:0 1px 0 var(--rule-soft);
+}
+
+/* ---------- title block (borrowed from the project's A3 sheets) ---------- */
+.titleblock{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:var(--sp-3);
+  align-items:end;
+  padding:var(--sp-4);
+  border-bottom:2px solid var(--ink);
+}
+.eyebrow{
+  font-family:var(--f-data);
+  font-size:.7rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin:0 0 var(--sp-1);
+}
+h1{
+  font-family:var(--f-display);
+  font-weight:700;
+  font-size:clamp(2rem,5.5vw,3.1rem);
+  line-height:1.02;
+  letter-spacing:-.01em;
+  margin:0;
+  text-wrap:balance;
+}
+.subtitle{
+  margin:var(--sp-2) 0 0;
+  color:var(--ink-mid);
+  max-width:56ch;
+}
+.meta{
+  font-family:var(--f-data);
+  font-size:.74rem;
+  line-height:1.9;
+  color:var(--ink-mute);
+  text-align:right;
+  white-space:nowrap;
+}
+.meta b{color:var(--ink-mid);font-weight:500}
+
+/* ---------- units control ---------- */
+.control{
+  position:sticky;
+  top:0;
+  z-index:20;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:var(--sp-3);
+  padding:var(--sp-3) var(--sp-4);
+  background:var(--surface-2);
+  border-bottom:1px solid var(--rule);
+}
+.control-label{
+  font-family:var(--f-data);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-mute);
+}
+.chips{display:flex;gap:var(--sp-1);flex-wrap:wrap}
+.chip{
+  font-family:var(--f-data);
+  font-size:.9rem;
+  font-weight:500;
+  padding:.3rem .85rem;
+  border:1px solid var(--rule);
+  background:var(--surface);
+  color:var(--ink-mid);
+  cursor:pointer;
+  transition:background .12s,color .12s,border-color .12s;
+}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip[aria-pressed="true"]{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--surface);
+}
+.chip:focus-visible,.numbox:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.numbox{
+  font-family:var(--f-data);
+  font-size:.9rem;
+  width:4.5rem;
+  padding:.3rem .5rem;
+  border:1px solid var(--rule);
+  background:var(--surface);
+  color:var(--ink);
+}
+
+/* ---------- summary tiles ---------- */
+.tiles{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  border-bottom:1px solid var(--rule);
+}
+.tile{
+  padding:var(--sp-3) var(--sp-4);
+  border-right:1px solid var(--rule-soft);
+}
+.tile:last-child{border-right:none}
+.tile-k{
+  font-family:var(--f-data);
+  font-size:.68rem;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  color:var(--ink-mute);
+}
+.tile-v{
+  font-family:var(--f-display);
+  font-weight:600;
+  font-size:1.95rem;
+  line-height:1.2;
+  font-variant-numeric:tabular-nums;
+  margin-top:.1rem;
+}
+.tile-v small{
+  font-family:var(--f-data);
+  font-size:.8rem;
+  font-weight:400;
+  color:var(--ink-mute);
+  margin-left:.25rem;
+}
+
+/* ---------- sections ---------- */
+section{padding:var(--sp-5) var(--sp-4) var(--sp-4)}
+section+section{border-top:1px solid var(--rule-soft)}
+h2{
+  font-family:var(--f-display);
+  font-weight:600;
+  font-size:1.5rem;
+  letter-spacing:.01em;
+  margin:0 0 var(--sp-1);
+  display:flex;
+  align-items:baseline;
+  gap:var(--sp-2);
+}
+h2 .h2-note{
+  font-family:var(--f-data);
+  font-size:.72rem;
+  font-weight:400;
+  color:var(--ink-mute);
+  letter-spacing:.04em;
+}
+.lede{margin:0 0 var(--sp-3);color:var(--ink-mid);max-width:64ch}
+
+/* ---------- tables ---------- */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:.88rem;
+  min-width:640px;
+}
+thead th{
+  font-family:var(--f-data);
+  font-size:.68rem;
+  font-weight:500;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+  color:var(--ink-mute);
+  text-align:left;
+  padding:0 var(--sp-2) var(--sp-1);
+  border-bottom:1px solid var(--ink);
+  white-space:nowrap;
+}
+tbody td{
+  padding:.5rem var(--sp-2);
+  border-bottom:1px solid var(--rule-soft);
+  vertical-align:top;
+}
+tbody tr:hover td{background:var(--accent-soft)}
+.grp td{
+  font-family:var(--f-data);
+  font-size:.68rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--accent);
+  padding-top:var(--sp-3);
+  border-bottom:1px solid var(--rule);
+  background:none !important;
+}
+.part{font-family:var(--f-data);font-weight:500;white-space:nowrap}
+.num{font-family:var(--f-data);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.qty{font-family:var(--f-data);font-weight:600;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;color:var(--accent)}
+.dim{font-family:var(--f-data);font-size:.8rem;color:var(--ink-mute);white-space:nowrap}
+.note{color:var(--ink-mid);font-size:.84rem}
+tr.optional .part::after{
+  content:"可选";
+  font-family:var(--f-data);
+  font-size:.62rem;
+  letter-spacing:.08em;
+  margin-left:.4rem;
+  padding:.05rem .3rem;
+  border:1px dashed var(--rule);
+  color:var(--ink-mute);
+}
+tfoot td{
+  padding:var(--sp-2);
+  border-top:2px solid var(--ink);
+  font-family:var(--f-data);
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- plate plan ---------- */
+.plates{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(212px,1fr));
+  gap:var(--sp-2);
+  margin-top:var(--sp-3);
+}
+.plate{
+  border:1px solid var(--rule);
+  padding:var(--sp-2) var(--sp-3) var(--sp-3);
+  background:var(--surface);
+}
+.plate-h{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  font-family:var(--f-data);
+  font-size:.7rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--ink-mute);
+  border-bottom:1px solid var(--rule-soft);
+  padding-bottom:.3rem;
+  margin-bottom:.45rem;
+}
+.plate-h b{color:var(--accent);font-weight:600}
+.plate ul{margin:0;padding-left:1.05rem}
+.plate li{font-size:.84rem;margin:.15rem 0}
+.plate li code{font-family:var(--f-data);font-size:.82rem}
+.plate-foot{
+  margin-top:.5rem;
+  font-family:var(--f-data);
+  font-size:.72rem;
+  color:var(--ink-mute);
+}
+
+/* ---------- callouts ---------- */
+.warn{
+  border-left:3px solid var(--signal);
+  background:var(--signal-soft);
+  padding:var(--sp-2) var(--sp-3);
+  margin:var(--sp-3) 0 0;
+}
+.warn p{margin:.25rem 0;font-size:.88rem}
+.warn strong{color:var(--signal)}
+.warnlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--sp-2)}
+.warnlist li{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:var(--sp-2);
+  font-size:.9rem;
+  padding-bottom:var(--sp-2);
+  border-bottom:1px solid var(--rule-soft);
+}
+.warnlist li:last-child{border-bottom:none;padding-bottom:0}
+.warnlist .tag{
+  font-family:var(--f-data);
+  font-size:.64rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding:.15rem .45rem;
+  height:fit-content;
+  white-space:nowrap;
+  border:1px solid currentColor;
+  color:var(--signal);
+}
+.warnlist .tag.info{color:var(--accent)}
+code{
+  font-family:var(--f-data);
+  font-size:.86em;
+  background:var(--surface-2);
+  padding:.05em .3em;
+}
+footer{
+  padding:var(--sp-3) var(--sp-4) var(--sp-4);
+  border-top:2px solid var(--ink);
+  font-family:var(--f-data);
+  font-size:.72rem;
+  color:var(--ink-mute);
+  display:flex;
+  flex-wrap:wrap;
+  gap:var(--sp-1) var(--sp-4);
+  justify-content:space-between;
+}
+@media (max-width:640px){
+  .titleblock{grid-template-columns:1fr}
+  .meta{text-align:left}
+  .tile{border-right:none;border-bottom:1px solid var(--rule-soft)}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important;animation:none !important}
+}
+
+/* ---------- print / PDF ---------- */
+.print-only{display:none}
+@media print{
+  /* 打印一律走浅色, 不跟随查看者主题 */
+  :root, :root[data-theme="dark"]{
+    --ground:#FFFFFF; --surface:#FFFFFF; --surface-2:#F1F5F7;
+    --ink:#15212B; --ink-mid:#41535F; --ink-mute:#677884;
+    --rule:#9AAAB4; --rule-soft:#D4DDE3;
+    --accent:#1B5E8F; --accent-soft:#FFFFFF;
+    --signal:#A8501C; --signal-soft:#F7EFE8;
+  }
+  @page{margin:12mm 10mm}
+  body{font-size:9.5pt;line-height:1.45}
+  .sheet{max-width:none;padding:0}
+  .frame{border:none;box-shadow:none}
+  .control{display:none}
+  .print-only{display:block}
+  .titleblock{padding:0 0 var(--sp-2);border-bottom-width:1.5pt}
+  h1{font-size:26pt}
+  section{padding:var(--sp-3) 0 var(--sp-2);break-inside:auto}
+  h2{font-size:13pt;break-after:avoid}
+  .lede{break-after:avoid}
+  .tiles{border:1px solid var(--rule);border-bottom-width:1px}
+  .tile{padding:var(--sp-2)}
+  .tile-v{font-size:15pt}
+  /* 表格: 去掉横向滚动容器与最小宽度, 让它排满纸宽 */
+  .scroll{overflow:visible}
+  table{min-width:0;width:100%;font-size:8pt;table-layout:fixed}
+  thead{display:table-header-group}
+  tfoot{display:table-row-group}
+  tr{break-inside:avoid}
+  tbody td{padding:.22rem .3rem;word-break:break-word}
+  tbody tr:hover td{background:none}
+  .part{white-space:normal;font-size:7.6pt}
+  .dim{white-space:normal;font-size:7.4pt}
+  .note{font-size:7.6pt}
+  .plates{grid-template-columns:1fr 1fr;gap:var(--sp-2)}
+  .plate,.warn,.warnlist li{break-inside:avoid}
+  a{text-decoration:none;color:inherit}
+  footer{padding:var(--sp-2) 0 0}
+  #t-parts th:nth-child(1){width:17%} #t-parts th:nth-child(2){width:6%}
+  #t-parts th:nth-child(3){width:13%} #t-parts th:nth-child(4){width:9%}
+  #t-parts th:nth-child(5){width:8%}  #t-parts th:nth-child(6){width:14%}
+  #t-parts th:nth-child(7){width:33%}
+  #t-bom th:nth-child(1){width:34%} #t-bom th:nth-child(2){width:8%}
+  #t-bom th:nth-child(3){width:58%}
+}
+</style>
+
+<div class="sheet">
+<div class="frame">
+
+  <div class="titleblock">
+    <div>
+      <p class="eyebrow">POV3D / V4 / 打印交付</p>
+      <h1>V4 整机打印单</h1>
+      <p class="subtitle">一台 V4 需要 <b>14 个 STL / 15 个打印件</b>。<b>居中和偏心两种屏装法共用同一套件</b>——拧不同的孔即可切换。选台数，下面所有数量、耗料和采购数跟着乘。</p>
+    </div>
+    <div class="meta">
+      源目录 <b>pov3d/v4/print/</b><br>
+      底板 <b>200×200×13 网格板</b>（外购）<br>
+      屏 <b>双面模组 13.4×150×168.75</b>（外购）<br>
+      核对日期 <b>2026-08-24</b>
+    </div>
+  </div>
+
+  <div class="control">
+    <span class="control-label">台数</span>
+    <div class="chips" role="group" aria-label="选择台数">
+      <button class="chip" data-n="1" aria-pressed="false">1</button>
+      <button class="chip" data-n="2" aria-pressed="false">2</button>
+      <button class="chip" data-n="3" aria-pressed="true">3</button>
+      <button class="chip" data-n="4" aria-pressed="false">4</button>
+      <button class="chip" data-n="5" aria-pressed="false">5</button>
+    </div>
+    <label class="control-label" for="custom">自定义</label>
+    <input class="numbox" id="custom" type="number" min="1" max="99" step="1" value="3" aria-label="自定义台数">
+  </div>
+
+  <p class="print-only" style="font-family:var(--f-data);font-size:.8rem;letter-spacing:.1em;
+     text-transform:uppercase;color:var(--accent);margin:var(--sp-2) 0 0">
+    本单按 <b data-nout>3</b> 台换算 — 换台数请打开 html 版重选后再打印
+  </p>
+
+  <div class="tiles">
+    <div class="tile">
+      <div class="tile-k">打印件</div>
+      <div class="tile-v"><span data-scale="15">45</span><small>件</small></div>
+    </div>
+    <div class="tile">
+      <div class="tile-k">实心用料（上限）</div>
+      <div class="tile-v"><span data-scale="947.4" data-fmt="kg">2.84</span><small>kg</small></div>
+    </div>
+    <div class="tile">
+      <div class="tile-k">1 kg 料盘</div>
+      <div class="tile-v"><span data-spool>4</span><small>盘（含 15% 余量）</small></div>
+    </div>
+    <div class="tile">
+      <div class="tile-k">打印床次</div>
+      <div class="tile-v"><span data-plates>19</span><small>床</small></div>
+    </div>
+  </div>
+
+  <section>
+    <h2>打印件清单 <span class="h2-note">按装配分组 · 姿态照抄即可零支撑</span></h2>
+    <p class="lede">重量是<b>实心体积 × 1.24</b>（PLA），是<b>上限</b>——按常规壁厚+填充实际会更少，用来估料盘够用，别当切片结果。</p>
+    <div class="scroll">
+      <table id="t-parts">
+        <thead>
+          <tr>
+            <th>零件</th>
+            <th class="num">数量</th>
+            <th>切片姿态</th>
+            <th class="num">体积</th>
+            <th class="num">实心重</th>
+            <th>外形 X×Y×Z</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="grp"><td colspan="7">定子 · 不转</td></tr>
+          <tr>
+            <td class="part">baseplate_collar_v4</td>
+            <td class="qty" data-scale="1">3</td>
+            <td>原姿态，底面贴床</td>
+            <td class="num">89.14 cm³</td>
+            <td class="num" data-scale="110.5">331 g</td>
+            <td class="dim">93.5×93.5×28</td>
+            <td class="note">底盘+套环合并件。外形已按 M6 大扁头裁成 93.5 方+四角 R62.28</td>
+          </tr>
+          <tr>
+            <td class="part">flange_disc_v4</td>
+            <td class="qty" data-scale="1">3</td>
+            <td>原姿态</td>
+            <td class="num">96.15 cm³</td>
+            <td class="num" data-scale="119.2">358 g</td>
+            <td class="dim">165×165×7</td>
+            <td class="note">走线槽 R40–50 深 2.5；外圈凸缘整圈，外圈 8 孔</td>
+          </tr>
+          <tr>
+            <td class="part">mounting_flange_v4</td>
+            <td class="qty" data-scale="1">3</td>
+            <td>原姿态</td>
+            <td class="num">65.98 cm³</td>
+            <td class="num" data-scale="81.8">245 g</td>
+            <td class="dim">170×170×10</td>
+            <td class="note">安装法兰，翻转扣顶；外圈凸台整圈无缺口</td>
+          </tr>
+
+          <tr class="grp"><td colspan="7">转子盘 · 随电机转</td></tr>
+          <tr>
+            <td class="part">hub_disc</td>
+            <td class="qty" data-scale="1">3</td>
+            <td>原姿态，正放贴电机</td>
+            <td class="num">90.46 cm³</td>
+            <td class="num" data-scale="112.2">337 g</td>
+            <td class="dim">165×165×9</td>
+            <td class="note">毂盘。底面 Φ4.2 窝要压铜花螺母，T 脚和罩子都拧进这里</td>
+          </tr>
+          <tr>
+            <td class="part">rim_ring</td>
+            <td class="qty" data-scale="1">3</td>
+            <td>承载面朝下</td>
+            <td class="num">111.88 cm³</td>
+            <td class="num" data-scale="138.7">416 g</td>
+            <td class="dim">170×170×10.5</td>
+            <td class="note">Φ170 托盘环，<b>最重的一件</b>。11 个铜花螺母 + 4 个头沉孔</td>
+          </tr>
+          <tr>
+            <td class="part">wifi_shell</td>
+            <td class="qty" data-scale="1">3</td>
+            <td>倒扣，开口朝下，零支撑</td>
+            <td class="num">23.39 cm³</td>
+            <td class="num" data-scale="29.0">87 g</td>
+            <td class="dim">18.1×96.6×46.4</td>
+            <td class="note">WiFi 网卡壳，已按盘缘 R83.5 砍脚</td>
+          </tr>
+
+          <tr class="grp"><td colspan="7">转子电路罩 + 配重</td></tr>
+          <tr>
+            <td class="part">shroud_half_A_v3_1</td>
+            <td class="qty" data-scale="1">3</td>
+            <td>绕 X 翻 180°，顶板贴床</td>
+            <td class="num">68.05 cm³</td>
+            <td class="num" data-scale="84.4">253 g</td>
+            <td class="dim">170×84.8×50</td>
+            <td class="note">A/B <b>不是同件</b>：A 含 wifi 壳让位窝</td>
+          </tr>
+          <tr>
+            <td class="part">shroud_half_B_v3_1</td>
+            <td class="qty" data-scale="1">3</td>
+            <td>绕 X 翻 180°，顶板贴床</td>
+            <td class="num">68.22 cm³</td>
+            <td class="num" data-scale="84.6">254 g</td>
+            <td class="dim">170×84.8×50</td>
+            <td class="note">B 含线缆出口槽。屏缝改非对称 <b>X −7.0..+13.7</b>，同时覆盖居中与偏心</td>
+          </tr>
+          <tr class="optional">
+            <td class="part">counterweight_arm</td>
+            <td class="qty" data-scale="1">3</td>
+            <td>底面贴床，零支撑</td>
+            <td class="num">11.75 cm³</td>
+            <td class="num" data-scale="14.6">44 g</td>
+            <td class="dim">41×52×6</td>
+            <td class="note"><b>居中装法可不装</b>；<b>偏心装法必装</b>（不平衡量 = m<sub>屏</sub> × 6.7）。装上顺带把罩子两半在顶部连成一体</td>
+          </tr>
+
+          <tr class="grp"><td colspan="7">屏支撑</td></tr>
+          <tr>
+            <td class="part">portal_tee_v3_1</td>
+            <td class="qty" data-scale="2">6</td>
+            <td>平躺，外侧平整面贴床</td>
+            <td class="num">16.40 cm³</td>
+            <td class="num" data-scale="40.7">122 g</td>
+            <td class="dim">67×17×50</td>
+            <td class="note"><b>每台 2 件同件</b>，装配时第二件转 180°。顶托等宽 ±16 + <b>3 个离散屏孔</b>（−6.7/0/+6.7）</td>
+          </tr>
+          <tr>
+            <td class="part">top_cap_v3_1_1</td>
+            <td class="qty" data-scale="1">3</td>
+            <td>平躺，顶面贴床，零支撑</td>
+            <td class="num">27.69 cm³</td>
+            <td class="num" data-scale="34.3">103 g</td>
+            <td class="dim">32×140×7</td>
+            <td class="note">顶部压条，条宽 18→32（原 ±9 盖不住偏心后的屏）。屏孔 3×2 离散位；光电斜置，光轴过圆心</td>
+          </tr>
+
+          <tr class="grp"><td colspan="7">顶轴承架</td></tr>
+          <tr>
+            <td class="part">frame_A_v4</td>
+            <td class="qty" data-scale="1">3</td>
+            <td><b>正立</b>打印</td>
+            <td class="num">37.03 cm³</td>
+            <td class="num" data-scale="45.9">138 g</td>
+            <td class="dim">126.2×126.2×16</td>
+            <td class="note">−X 两柱。筋在臂上，688 窝朝上，垫柱 8 → 配 M6×16。<b>2026-08-24 没变</b></td>
+          </tr>
+          <tr>
+            <td class="part">frame_B_v4</td>
+            <td class="qty" data-scale="1">3</td>
+            <td><b>翻转</b>姿态（已导出好）</td>
+            <td class="num">40.51 cm³</td>
+            <td class="num" data-scale="50.2">151 g</td>
+            <td class="dim">126.2×126.2×16</td>
+            <td class="note">+X 两柱。垫柱 16 → 配 M6×30，且多 2 个挡光滑片挂孔——<b>2026-08-24 这两孔外移 2.0 → r38.7/48.7</b>（配对称版滑片），已印过的要重印</td>
+          </tr>
+
+          <tr class="grp"><td colspan="7">光电</td></tr>
+          <tr>
+            <td class="part">vane_slider_v4</td>
+            <td class="qty" data-scale="1">3</td>
+            <td>平躺，侧面贴床，零支撑</td>
+            <td class="num">0.89 cm³</td>
+            <td class="num" data-scale="1.1">3 g</td>
+            <td class="dim">16×50×4</td>
+            <td class="note">挡光滑片，<b>左右对称版</b>：板/孔/刀片同心于 X=43.7，<b>装不反</b>。<b>装机时按实际架高剪短刀片</b>，刀尖距压条顶 12 mm</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>合计</td>
+            <td class="qty" data-scale="15">45</td>
+            <td colspan="2"></td>
+            <td class="num" data-scale="947.4">2842 g</td>
+            <td colspan="2" class="note">其中必打 <span data-scale="932.8">2798</span> g，配重件 <span data-scale="14.6">44</span> g <b>偏心装法必装</b></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>两种屏装法 <span class="h2-note">同一套打印件 · 拧不同的孔切换</span></h2>
+    <p class="lede">双面屏两个 LED 面在 X=±6.7，中心必然有个 <b>Φ13.4 盲柱</b>。把屏整体偏 6.7 能让贴轴那面盲区归零。屏支撑三件都做成「同时覆盖两种落位」+ X 向 3 个离散孔，<b>不用重印</b>。</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th></th><th>居中 SCR_ECC = 0</th><th>偏心 SCR_ECC = 6.7</th></tr></thead>
+        <tbody>
+          <tr><td class="note">屏占位</td><td class="num">X −6.7 .. +6.7</td><td class="num">X 0 .. +13.4</td></tr>
+          <tr><td class="note">中心盲区</td><td class="num">Φ13.4（两面对称）</td><td class="num">贴轴面 <b>0</b> / 另一面 Φ26.8</td></tr>
+          <tr><td class="note">拧哪个孔</td><td class="num">tee / cap 的 <b>X=0</b> 孔</td><td class="num">两件的 <b>X=+6.7</b> 孔</td></tr>
+          <tr><td class="note">罩缝余量</td><td class="num">−X 侧 0.30 / +X 敞 7.00</td><td class="num">−X 敞 7.00 / +X 侧 0.30</td></tr>
+          <tr><td class="note">配重臂</td><td class="num">可不装（对称）</td><td class="num"><b>必装</b>（不平衡量 = m<sub>屏</sub> × 6.7）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="warn">
+      <p><strong>为什么是 3 个离散孔而不是长槽：</strong>两个 T 件是<b>同件转 180°</b> 放的。若把锁屏孔直接挪到 (+6.7,+64)，转 180° 后第二件的孔落在 (−6.7,−64)——<b>两件把屏往相反方向拉，装不上</b>。顶托对称加宽 + 3 个离散孔之后，两件都有 +6.7 可用。</p>
+      <p><strong>光电位置不跟着屏走：</strong>模块拧在压条上，孔位打印时就烧死了，所以两种装法<b>共用同一个光电位、同一片挡光滑片</b>。通用解保证光轴恒过圆心，索引脉冲两种装法都准。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>排版建议 <span class="h2-note">按 256×256 床（X2D）· 每台 7 床</span></h2>
+    <p class="lede">四个 Φ165–170 的大盘只能一床一件，这是床次的下限。顶架和小件可以两台并一床。</p>
+    <div class="plates">
+      <div class="plate">
+        <div class="plate-h"><span>床 1–4</span><b>大盘 · 各 1 件</b></div>
+        <ul>
+          <li><code>rim_ring</code> 170²</li>
+          <li><code>mounting_flange_v4</code> 170²</li>
+          <li><code>flange_disc_v4</code> 165²</li>
+          <li><code>hub_disc</code> 165²</li>
+        </ul>
+        <div class="plate-foot">每台 4 床 → <span data-scale="4">12</span> 床</div>
+      </div>
+      <div class="plate">
+        <div class="plate-h"><span>床 5</span><b>罩子一对</b></div>
+        <ul>
+          <li><code>shroud_half_A_v3_1</code></li>
+          <li><code>shroud_half_B_v3_1</code></li>
+        </ul>
+        <div class="plate-foot">两半并排 170×170，一床装一台份 → <span data-scale="1">3</span> 床</div>
+      </div>
+      <div class="plate">
+        <div class="plate-h"><span>床 6</span><b>顶架一对</b></div>
+        <ul>
+          <li><code>frame_A_v4</code>（正立）</li>
+          <li><code>frame_B_v4</code>（翻转）</li>
+        </ul>
+        <div class="plate-foot">126.2² ×4 = 252.4² 还能塞下，<b>两台可并一床</b> → <span data-half>2</span> 床</div>
+      </div>
+      <div class="plate">
+        <div class="plate-h"><span>床 7</span><b>小件全家桶</b></div>
+        <ul>
+          <li><code>baseplate_collar_v4</code> 93.5²</li>
+          <li><code>portal_tee_v3_1</code> ×2</li>
+          <li><code>top_cap_v3_1_1</code>、<code>wifi_shell</code></li>
+          <li><code>vane_slider_v4</code>、<code>counterweight_arm</code></li>
+        </ul>
+        <div class="plate-foot">按面积能塞两台份 → <span data-half>2</span> 床</div>
+      </div>
+    </div>
+    <div class="warn">
+      <p><strong>拼盘的代价：</strong>一床多件，翘边或断料会一次废掉好几件。<code>rim_ring</code> 和两个罩子半是最贵的（各 84–139 g），单独打更稳。<code>frame_A</code> 正立、<code>frame_B</code> 翻转是两种姿态，同床没问题但别搞混。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>外购五金 <span class="h2-note">数量已按台数换算</span></h2>
+    <p class="lede">螺丝按台数乘完再加一点余量——转速下会掉、会滑丝。铜花螺母尤其要多备。</p>
+    <div class="scroll">
+      <table id="t-bom">
+        <thead>
+          <tr><th>件</th><th class="num">数量</th><th>用在哪</th></tr>
+        </thead>
+        <tbody>
+          <tr class="grp"><td colspan="3">大件</td></tr>
+          <tr><td class="part">双面屏模组 13.4×150×168.75</td><td class="qty" data-scale="1">3</td><td class="note">LED 双外侧面；底/顶面各 3×M3 通孔 @间距 64</td></tr>
+          <tr><td class="part">网格板 200×200×13</td><td class="qty" data-scale="1">3</td><td class="note">M6 螺纹孔 距边 12.5 / 节距 25。<b>4 个安装孔留给锁桌面/机架</b></td></tr>
+          <tr><td class="part">电机 C4110 320KV/6S</td><td class="qty" data-scale="1">3</td><td class="note">Φ50×26.7</td></tr>
+          <tr><td class="part">Φ8×290 柱（轴向 M6 内丝）</td><td class="qty" data-scale="4">12</td><td class="note">坐网格孔 (87.5,37.5) 族。<b>装前量内丝深度</b></td></tr>
+          <tr><td class="part">688 轴承</td><td class="qty" data-scale="2">6</td><td class="note">293–298 / 301–306</td></tr>
+
+          <tr class="grp"><td colspan="3">M6</td></tr>
+          <tr><td class="part">M6 双头螺柱 ×25（或 ×20）</td><td class="qty" data-scale="4">12</td><td class="note">柱脚：一头拧板一头拧柱底内丝，板底不凸、不用螺母</td></tr>
+          <tr><td class="part">M6×16 大扁头（头 Φ12.5×2.6）</td><td class="qty" data-scale="4">12</td><td class="note">底座 4 脚穿底盘拧入网格螺纹孔。<b>底盘外形就是按这个头径裁的</b></td></tr>
+          <tr><td class="part">M6×20 平头</td><td class="qty" data-scale="1">3</td><td class="note">中间轴，<b>必须在压屏前装进压条底头窝</b></td></tr>
+          <tr><td class="part">Φ8×40 单头内丝螺柱</td><td class="qty" data-scale="1">3</td><td class="note">中间轴上段</td></tr>
+
+          <tr class="grp"><td colspan="3">M3</td></tr>
+          <tr><td class="part">M3×30 + 垫圈叠 4.5 mm</td><td class="qty" data-scale="8">24</td><td class="note">定子锁紧：法兰顶穿 flange_disc + 套环，入底盘底面铜花螺母。夹持 25.5，<b>垫圈必须叠到 4.5</b>，否则螺杆会从底盘底面顶出来</td></tr>
+          <tr><td class="part">M3×20</td><td class="qty" data-scale="4">12</td><td class="note">T 件脚 → hub 底铜花螺母</td></tr>
+          <tr><td class="part">M3×20 + 螺母</td><td class="qty" data-scale="2">6</td><td class="note">挡光滑片锁 frame_B 臂筋侧</td></tr>
+          <tr><td class="part">M3×12（头 Φ7.5）</td><td class="qty" data-scale="4">12</td><td class="note">转子罩，顺 Φ9 沉井（深 47）下去拧。<b>M3×14 会顶到电机</b></td></tr>
+          <tr><td class="part">M3×12</td><td class="qty" data-scale="4">12</td><td class="note">屏幕固定：底 2 + 顶 2（中央孔空置）</td></tr>
+          <tr><td class="part">M3×12 + 螺母</td><td class="qty" data-scale="2">6</td><td class="note">光电对射模块，自下经压条底头窝穿上来</td></tr>
+          <tr><td class="part">M3×8</td><td class="qty" data-scale="4">12</td><td class="note">wifi 壳</td></tr>
+          <tr class="optional"><td class="part">M3×16</td><td class="qty" data-scale="4">12</td><td class="note">配重臂：2 颗进半 A、2 颗进半 B</td></tr>
+
+          <tr class="grp"><td colspan="3">铜花螺母 M3×4×4.5（热熔）</td></tr>
+          <tr><td class="part">rim_ring</td><td class="qty" data-scale="11">33</td><td class="note">7 个 pi2hub + 4 个 wifi</td></tr>
+          <tr><td class="part">baseplate_collar_v4</td><td class="qty" data-scale="8">24</td><td class="note">底面（顶面那 8 个沉孔 2026-08-28 已取消，件上不再有）</td></tr>
+          <tr><td class="part">hub_disc 底外圈</td><td class="qty" data-scale="8">24</td><td class="note">4 个给 T 脚 + 4 个给转子罩</td></tr>
+          <tr class="optional"><td class="part">罩子配重凸台</td><td class="qty" data-scale="4">12</td><td class="note"><b>扣半罩之前从罩内压进去</b>，扣上就够不着了</td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>铜花螺母合计</td>
+            <td class="qty" data-scale="31">93</td>
+            <td class="note">含配重则 <span data-scale="35">105</span> 个 —— 建议直接按 <span data-scale="45">135</span> 备（会烫歪、会拔出）</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>装配前必看 <span class="h2-note">这些都是踩过的坑</span></h2>
+    <ul class="warnlist">
+      <li><span class="tag">顺序</span><div><b>铜花螺母要先压。</b>罩子那 4 个配重螺母必须在扣合两半<b>之前</b>从罩内压入；中间轴的 M6×20 必须在压屏<b>之前</b>装进压条底头窝。这两步漏了就得全拆。</div></li>
+      <li><span class="tag">长度</span><div><b>转子罩用 M3×12，不能用 M3×14。</b>×14 会探出 hub 底 0.5 mm 顶到电机端面。</div></li>
+      <li><span class="tag">头径</span><div><b>底座 4 颗必须是 M6 大扁头（头 Φ12.5）。</b>底盘外形就是按这个头径 + 壁 3 裁出来的，换圆柱头或加平垫会顶出件外。要换先改 <code>M6_HEAD_D</code>/<code>EDGE_WALL</code> 重生成。手上若是 M6×10，穿完 5 厚底盘只剩 5 mm 旋入，偏弱。</div></li>
+      <li><span class="tag">间隙</span><div><b>wifi 那根插合线缆的母头扫掠到 R90.51，对柱内缘只余 0.72 mm。</b>装机必须把这根线往内收（缩短 / 改角度 / 贴罩壁走），不能让它甩到 R&gt;91。</div></li>
+      <li><span class="tag">现场</span><div><b>vane_slider 的刀片是印长的，装机按实际架高剪短</b>，规则是刀尖距压条顶面 12 mm。打印件是全长件，直接装进去会撞压条。</div></li>
+      <li><span class="tag info">可选</span><div><b>V4 是居中屏，理论上不需要配重</b>，<code>counterweight_arm</code> 和那 4 颗 M3×16 可以不装。真要装，转速下必须防松（尼龙锁紧螺母或螺纹胶）。</div></li>
+      <li><span class="tag info">整机</span><div><b>底板从 8.5 kg 降到 4.1 kg 对涡动是负面的</b>（f₁≈20–27 Hz，临界 1200–1600 RPM）。强烈建议用网格板空出来的 4 个安装孔从下方把整板锁死在桌面或机架上——锁上之后比原来自由放置的重板更好。</div></li>
+    </ul>
+  </section>
+
+  <footer>
+    <span>POV3D V4 · 14 STL / 15 件每台 · 全部件均有 A3 图纸（罩子 A/B 共用一张）</span>
+    <span>pov3d/v4/print/ · sync_print --check 全绿</span>
+  </footer>
+
+</div>
+</div>
+
+<script>
+(function(){
+  var N = 3;
+  var q = parseInt(new URLSearchParams(location.search).get('n'), 10);
+  if (!isNaN(q) && q >= 1 && q <= 99) N = q;
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+  var custom = document.getElementById('custom');
+
+  function fmtWeight(g){
+    if (g >= 1000) return (g/1000).toFixed(2);
+    return Math.round(g);
+  }
+
+  function render(){
+    document.querySelectorAll('[data-scale]').forEach(function(el){
+      var per = parseFloat(el.getAttribute('data-scale'));
+      var total = per * N;
+      if (el.getAttribute('data-fmt') === 'kg'){
+        el.textContent = (total/1000).toFixed(2);
+        return;
+      }
+      // preserve a trailing unit like " g" if the original had one
+      var unit = (el.dataset.unit !== undefined) ? el.dataset.unit : (/\s*g$/.test(el.textContent) ? ' g' : '');
+      el.dataset.unit = unit;
+      if (unit === ' g'){
+        el.textContent = Math.round(total) + ' g';
+      } else {
+        el.textContent = (Math.abs(total - Math.round(total)) < 0.05)
+          ? String(Math.round(total))
+          : total.toFixed(1);
+      }
+    });
+
+    var grams = 947.4 * N;
+    document.querySelectorAll('[data-spool]').forEach(function(el){
+      el.textContent = Math.ceil(grams * 1.15 / 1000);
+    });
+    document.querySelectorAll('[data-half]').forEach(function(el){
+      el.textContent = Math.ceil(N / 2);
+    });
+    document.querySelectorAll('[data-plates]').forEach(function(el){
+      el.textContent = (5 * N) + 2 * Math.ceil(N / 2);
+    });
+
+    document.querySelectorAll('[data-nout]').forEach(function(el){ el.textContent = N; });
+    chips.forEach(function(c){
+      c.setAttribute('aria-pressed', String(parseInt(c.dataset.n, 10) === N));
+    });
+    if (document.activeElement !== custom) custom.value = N;
+  }
+
+  chips.forEach(function(c){
+    c.addEventListener('click', function(){
+      N = parseInt(c.dataset.n, 10);
+      render();
+    });
+  });
+  custom.addEventListener('input', function(){
+    var v = parseInt(custom.value, 10);
+    if (!isNaN(v) && v >= 1 && v <= 99){ N = v; render(); }
+  });
+
+  render();
+})();
+</script>

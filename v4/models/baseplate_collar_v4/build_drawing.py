@@ -4,13 +4,14 @@ A3 landscape 2D engineering drawing for POV3D baseplate_collar
   1) TOP VIEW (1:1) — base square, all holes, boss Φ65/Φ55, collar Φ80,
                        both notches aligned at 75°–105° (dashed)
   2) SECTION A-A (1:1) — cut along +Y axis through notch bisector. Shows
-                          combined boss+collar annulus Z=5..18, boss alone
-                          Z=18..28, base profile with central Φ12 pocket,
+                          combined boss+collar annulus Z=5..15.5, boss alone
+                          Z=15.5..25.5, base profile with central Φ12 pocket,
                           and floating right-side pieces at the notch.
+     (2026-08-27 降高后: 合并环 Z=5..13, 凸台单独 Z=13..23。)
   3) DETAIL B (3:1) — M3 + Φ7 CB stepped hole.
-  4) DETAIL C (2:1) — flange 连接孔 (2026-07-10): 套环壁剖面, Φ3.2 通 (Z0..18)
-                       + Φ4.2×4 沉孔 顶面+底面 (压 M3×4×4.5 铜花螺母;
-                       底面沉孔同日晚追加, 中段 Φ3.2 仅 Z4..14)。
+  4) DETAIL C (2:1) — flange 连接孔 (2026-07-10): 套环壁剖面, Φ3.2 通 (Z0..COLLAR_TOP)
+                       + Φ4.2×4 沉孔 (2026-08-28 起只剩底面) (压 M3×4×4.5 铜花螺母;
+                       底面沉孔同日晚追加)。降高后中段 Φ3.2 剩 Z4..9。
 """
 import math
 from pathlib import Path
@@ -47,7 +48,7 @@ CENTER_CB_DIAM  = 12.0
 CENTER_CB_DEPTH = 1.0
 BOSS_OD    = 65.0
 BOSS_ID    = 55.0
-BOSS_H     = 23.0
+BOSS_H     = 20.5     # 23 → 20.5 (2026-08-28 用户: 降幅 5 改 2.5)
 # 2026-07-29 v4 (用户"补成整圈"): 走线缺口取消, 凸台/套环整圈连续。
 # 与 build_stl.py 的 NOTCH_ENABLE 必须一致 (本图纸参数是复刻不是 import)。
 NOTCH_ENABLE = True
@@ -57,9 +58,9 @@ NOTCH_H    = 8.0
 
 COLLAR_OD  = 84.0
 COLLAR_ID  = 65.0           # = BOSS_OD
-COLLAR_H   = 13.0
+COLLAR_H   = 10.5     # 13 → 10.5 (2026-08-28 用户: 降幅 5 改 2.5)
 COLLAR_Z0  = BASE_THICK     # 5
-COLLAR_Z1  = COLLAR_Z0 + COLLAR_H  # 18
+COLLAR_Z1  = COLLAR_Z0 + COLLAR_H  # 13 (降高后)
 COLLAR_NOTCH_H = 8.0
 
 # flange_disc 连接孔 (2026-07-10)
@@ -68,6 +69,13 @@ FL_ANGS      = [22.5 + 45.0 * k for k in range(8)]
 FL_M3_DIAM   = 3.2
 FL_CB_DIAM   = 4.2
 FL_CB_DEPTH  = 4.0
+# 2026-08-28 用户圈了详图 C 上面那个沉孔:「这个沉孔取消」(8 个) ⇒ 顶面沉孔关掉,
+# 只留底面那 8 个 (本来 BOM 也只备了底面 8 颗铜花螺母)。与 build_stl.py 的
+# FLANGE_CB_TOP_ENABLE / FLANGE_CB_BOT_ENABLE 必须一致 (本图纸参数是复刻不是 import)。
+FL_CB_TOP    = False
+FL_CB_BOT    = True
+_CB_FACES    = "+".join([f for f, on in (("顶面", FL_CB_TOP), ("底面", FL_CB_BOT)) if on]) or "无"
+_CB_FACES_S  = "".join([f for f, on in (("顶", FL_CB_TOP), ("底", FL_CB_BOT)) if on]) or "无"
 
 T_BASE = BASE_SIDE / 2      # 50
 T_CO   = COLLAR_OD / 2      # 40 (collar outer)
@@ -77,8 +85,8 @@ T_CCB  = CENTER_CB_DIAM / 2 # 6
 
 # Notch ceiling Z (absolute)
 Z_BOSS_NOTCH_CEIL   = BASE_THICK + NOTCH_H          # 13
-Z_COLLAR_NOTCH_CEIL = COLLAR_Z0 + COLLAR_NOTCH_H    # 11
-Z_BOSS_TOP          = BASE_THICK + BOSS_H           # 28
+Z_COLLAR_NOTCH_CEIL = COLLAR_Z0 + COLLAR_NOTCH_H    # 13 = 套环顶 ⇒ 缺口吃满套环全高
+Z_BOSS_TOP          = BASE_THICK + BOSS_H           # 23 (降高后)
 
 # ===== PDF setup =====
 PAGE_W, PAGE_H = 420.0, 297.0
@@ -114,12 +122,22 @@ def arrow(tx, ty, dx, dy):
     pdf.set_fill_color(0, 0, 0)
     pdf.polygon([(tx, ty), (bx + ARR_W*px, by + ARR_W*py),
                  (bx - ARR_W*px, by - ARR_W*py)], style="F")
+# SimHei 没有这几个字形 (fontTools 查 cmap 实锤, fpdf2 也会 warn): − U+2212 / ⇒ U+21D2 /
+# ⚠ U+26A0 / Ø / • —— 直接渲染成空白, 图上「−X」会印成「X」。所有落笔的字符串统一替换。
+_GLYPH_FIX = {"−": "-", "⇒": "=>", "⚠": "※", "Ø": "Φ", "ø": "Φ", "•": "·", "⨯": "×", "∅": "Φ"}
+def _g(s):
+    s = str(s)
+    for a, b in _GLYPH_FIX.items():
+        if a in s: s = s.replace(a, b)
+    return s
 def text(x, y, s, size=TXT_D, anchor="start"):
+    s = _g(s)
     pdf.set_font("SimHei", "", size)
     if   anchor == "middle": x -= pdf.get_string_width(s)/2
     elif anchor == "end":    x -= pdf.get_string_width(s)
     pdf.text(x, y, s)
 def rot_text(cx, cy, s, angle_deg, size=TXT_D, anchor="middle"):
+    s = _g(s)
     pdf.set_font("SimHei", "", size)
     sw = pdf.get_string_width(s)
     with pdf.rotation(angle=angle_deg, x=cx, y=cy):
@@ -183,7 +201,7 @@ text(PAGE_W/2, 19.5,
      f"凸台 Φ{BOSS_OD:g}/Φ{BOSS_ID:g} H{BOSS_H:g} / "
      f"套环 Φ{COLLAR_OD:g}/Φ{COLLAR_ID:g} H{COLLAR_H:g} / "
      + (f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° 对齐 / " if NOTCH_ENABLE else "凸台/套环整圈无缺口 (v4) / ")
-     + f"8×Φ{FL_M3_DIAM:g}+Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g}沉(顶+底) PCD Φ{2*FL_HOLE_R:g}",
+     + f"8×Φ{FL_M3_DIAM:g}+Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g}沉({_CB_FACES_S}) PCD Φ{2*FL_HOLE_R:g}",
      size=TXT_I, anchor="middle")
 
 # ===== TOP VIEW (1:1) =====
@@ -371,7 +389,7 @@ lx, ly = tv(82, -16)
 pdf.line(fl_x, fl_y, lx, ly)
 pdf.line(lx, ly, lx + 8, ly)
 text(lx + 8, ly - 1,
-     f"8 × Φ{FL_M3_DIAM:g} 通孔 + Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g} 沉孔(顶面+底面)",
+     f"8 × Φ{FL_M3_DIAM:g} 通孔 + Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g} 沉孔({_CB_FACES})",
      size=TXT_D, anchor="start")
 text(lx + 8, ly + 4,
      f"PCD Φ{2*FL_HOLE_R:g}, 22.5°+45k° (对 flange_disc 内圈孔) → 详图 C",
@@ -403,7 +421,8 @@ if NOTCH_ENABLE:
     pdf.line(nx, ny, lx, ly)
     pdf.line(lx, ly, lx + 10, ly)
     text(lx + 10, ly - 1,
-         f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° (对齐): 凸台/套环同高 H{NOTCH_H:g}",
+         f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° (对齐): 凸台/套环同高 H{NOTCH_H:g}"
+         + ("  ⚠ = 套环全高 ⇒ 套环在此段是 30° 开口" if COLLAR_NOTCH_H >= COLLAR_H - 1e-9 else ""),
          size=TXT_D, anchor="start")
 
 # ===== SECTION A-A (1:1) =====
@@ -464,13 +483,20 @@ line(*sa(-T_BI, Z_BOSS_TOP), *sa(-T_BI, BASE_THICK), GEOM_W) # boss inner wall
 #   (T_BO, COLLAR_Z1) -> (T_BO, Z_BOSS_TOP)  boss outer above collar
 #   (T_BO, Z_BOSS_TOP) -> (T_BI, Z_BOSS_TOP)  boss top
 #   (T_BI, Z_BOSS_TOP) -> (T_BI, Z_BOSS_NOTCH_CEIL)  boss inner wall down
+# ⚠ 2026-08-27 降高后 COLLAR_NOTCH_H(8) == COLLAR_H(8) ⇒ 缺口吃满套环全高, 缺口这一侧
+#   **套环整段没了**, 上面那段"套环缺口顶 → 套环外壁 → 套环顶"的轮廓会画出一块并不存在
+#   的 r32.5..42 台阶。所以按"缺口之上套环还剩不剩肉"分支画。
+_COLLAR_ABOVE_NOTCH = COLLAR_Z1 - Z_COLLAR_NOTCH_CEIL > 1e-9
 if NOTCH_ENABLE:
-    line(*sa(T_BI, Z_BOSS_NOTCH_CEIL),   *sa(T_BO, Z_BOSS_NOTCH_CEIL),   GEOM_W)
-    line(*sa(T_BO, Z_BOSS_NOTCH_CEIL),   *sa(T_BO, Z_COLLAR_NOTCH_CEIL), GEOM_W)
-    line(*sa(T_BO, Z_COLLAR_NOTCH_CEIL), *sa(T_CO, Z_COLLAR_NOTCH_CEIL), GEOM_W)
-    line(*sa(T_CO, Z_COLLAR_NOTCH_CEIL), *sa(T_CO, COLLAR_Z1),           GEOM_W)
-    line(*sa(T_CO, COLLAR_Z1),           *sa(T_BO, COLLAR_Z1),           GEOM_W)
-    line(*sa(T_BO, COLLAR_Z1),           *sa(T_BO, Z_BOSS_TOP),          GEOM_W)
+    line(*sa(T_BI, Z_BOSS_NOTCH_CEIL),   *sa(T_BO, Z_BOSS_NOTCH_CEIL),   GEOM_W)  # 凸台缺口顶
+    if _COLLAR_ABOVE_NOTCH:
+        line(*sa(T_BO, Z_BOSS_NOTCH_CEIL),   *sa(T_BO, Z_COLLAR_NOTCH_CEIL), GEOM_W)
+        line(*sa(T_BO, Z_COLLAR_NOTCH_CEIL), *sa(T_CO, Z_COLLAR_NOTCH_CEIL), GEOM_W)
+        line(*sa(T_CO, Z_COLLAR_NOTCH_CEIL), *sa(T_CO, COLLAR_Z1),           GEOM_W)
+        line(*sa(T_CO, COLLAR_Z1),           *sa(T_BO, COLLAR_Z1),           GEOM_W)
+        line(*sa(T_BO, COLLAR_Z1),           *sa(T_BO, Z_BOSS_TOP),          GEOM_W)
+    else:
+        line(*sa(T_BO, Z_BOSS_NOTCH_CEIL),   *sa(T_BO, Z_BOSS_TOP),          GEOM_W)
     line(*sa(T_BO, Z_BOSS_TOP),          *sa(T_BI, Z_BOSS_TOP),          GEOM_W)
     line(*sa(T_BI, Z_BOSS_TOP),          *sa(T_BI, Z_BOSS_NOTCH_CEIL),   GEOM_W)
 else:
@@ -518,7 +544,8 @@ hdim(sa(-T_BASE, 0)[0], sa(T_BASE, 0)[0],
 
 # ===== DETAIL B (3:1) — M3 + Φ7 CB stepped hole =====
 DB_SCALE = 3.0
-db_cx, db_cy = sa_t_zero_x, 248
+db_cx, db_cy = sa_t_zero_x - 22, 248   # 2026-08-27 左移 22: 降高后详图 C 的总高
+                                       # 尺寸 (18→13) 标签正好落到详图 B 的板厚尺寸上
 DB_DIM_O = 12.0
 def db(t, z): return (db_cx + t * DB_SCALE, db_cy - z * DB_SCALE)
 
@@ -569,34 +596,37 @@ DC_HALF_WALL = (COLLAR_OD - BOSS_OD) / 4   # 3.75 (壁 32.5..40 → 孔居中 ±
 DC_HALF_BASE = 7.0
 DC_HALF_M3   = FL_M3_DIAM / 2
 DC_HALF_CB   = FL_CB_DIAM / 2
-Z_CB0 = COLLAR_Z1 - FL_CB_DEPTH            # 14
-
-Z_CB1 = FL_CB_DEPTH                        # 4 : 底面沉孔顶 (z 0..4)
+Z_CB0 = (COLLAR_Z1 - FL_CB_DEPTH) if FL_CB_TOP else COLLAR_Z1   # Φ3.2 中段的上端
+Z_CB1 = FL_CB_DEPTH if FL_CB_BOT else 0.0                       # Φ3.2 中段的下端 (底沉孔顶)
+DC_HALF_TOP = DC_HALF_CB if FL_CB_TOP else DC_HALF_M3           # 套环顶面开口半径
+DC_HALF_BOT = DC_HALF_CB if FL_CB_BOT else DC_HALF_M3
 
 _w(GEOM_W)
 # 底板条 (z 0..5, 局部) — 底面开口 = Φ4.2 底沉孔
-line(*dc(-DC_HALF_BASE, 0), *dc(-DC_HALF_CB, 0), GEOM_W)
-line(*dc( DC_HALF_CB,   0), *dc( DC_HALF_BASE, 0), GEOM_W)
+line(*dc(-DC_HALF_BASE, 0), *dc(-DC_HALF_BOT, 0), GEOM_W)
+line(*dc( DC_HALF_BOT,  0), *dc( DC_HALF_BASE, 0), GEOM_W)
 line(*dc(-DC_HALF_BASE, 0), *dc(-DC_HALF_BASE, BASE_THICK), GEOM_W)
 line(*dc( DC_HALF_BASE, 0), *dc( DC_HALF_BASE, BASE_THICK), GEOM_W)
 line(*dc(-DC_HALF_BASE, BASE_THICK), *dc(-DC_HALF_WALL, BASE_THICK), GEOM_W)
 line(*dc( DC_HALF_WALL, BASE_THICK), *dc( DC_HALF_BASE, BASE_THICK), GEOM_W)
-# 套环壁 (z 5..18)
+# 套环壁 (z 5..COLLAR_Z1)
 line(*dc(-DC_HALF_WALL, BASE_THICK), *dc(-DC_HALF_WALL, COLLAR_Z1), GEOM_W)
 line(*dc( DC_HALF_WALL, BASE_THICK), *dc( DC_HALF_WALL, COLLAR_Z1), GEOM_W)
-line(*dc(-DC_HALF_WALL, COLLAR_Z1), *dc(-DC_HALF_CB, COLLAR_Z1), GEOM_W)
-line(*dc( DC_HALF_CB,   COLLAR_Z1), *dc( DC_HALF_WALL, COLLAR_Z1), GEOM_W)
-# 顶面沉孔 Φ4.2 (z 14..18)
-line(*dc(-DC_HALF_CB, COLLAR_Z1), *dc(-DC_HALF_CB, Z_CB0), GEOM_W)
-line(*dc( DC_HALF_CB, COLLAR_Z1), *dc( DC_HALF_CB, Z_CB0), GEOM_W)
-line(*dc(-DC_HALF_CB, Z_CB0), *dc(-DC_HALF_M3, Z_CB0), GEOM_W)
-line(*dc( DC_HALF_M3, Z_CB0), *dc( DC_HALF_CB, Z_CB0), GEOM_W)
+line(*dc(-DC_HALF_WALL, COLLAR_Z1), *dc(-DC_HALF_TOP, COLLAR_Z1), GEOM_W)
+line(*dc( DC_HALF_TOP,  COLLAR_Z1), *dc( DC_HALF_WALL, COLLAR_Z1), GEOM_W)
+# 顶面沉孔 Φ4.2 — 2026-08-28 取消, 开关打开才画
+if FL_CB_TOP:
+    line(*dc(-DC_HALF_CB, COLLAR_Z1), *dc(-DC_HALF_CB, Z_CB0), GEOM_W)
+    line(*dc( DC_HALF_CB, COLLAR_Z1), *dc( DC_HALF_CB, Z_CB0), GEOM_W)
+    line(*dc(-DC_HALF_CB, Z_CB0), *dc(-DC_HALF_M3, Z_CB0), GEOM_W)
+    line(*dc( DC_HALF_M3, Z_CB0), *dc( DC_HALF_CB, Z_CB0), GEOM_W)
 # 底面沉孔 Φ4.2 (z 0..4)
-line(*dc(-DC_HALF_CB, 0), *dc(-DC_HALF_CB, Z_CB1), GEOM_W)
-line(*dc( DC_HALF_CB, 0), *dc( DC_HALF_CB, Z_CB1), GEOM_W)
-line(*dc(-DC_HALF_CB, Z_CB1), *dc(-DC_HALF_M3, Z_CB1), GEOM_W)
-line(*dc( DC_HALF_M3, Z_CB1), *dc( DC_HALF_CB, Z_CB1), GEOM_W)
-# Φ3.2 通孔壁 (z 4..14)
+if FL_CB_BOT:
+    line(*dc(-DC_HALF_CB, 0), *dc(-DC_HALF_CB, Z_CB1), GEOM_W)
+    line(*dc( DC_HALF_CB, 0), *dc( DC_HALF_CB, Z_CB1), GEOM_W)
+    line(*dc(-DC_HALF_CB, Z_CB1), *dc(-DC_HALF_M3, Z_CB1), GEOM_W)
+    line(*dc( DC_HALF_M3, Z_CB1), *dc( DC_HALF_CB, Z_CB1), GEOM_W)
+# Φ3.2 通孔壁 (z 4..COLLAR_Z1-4)
 line(*dc(-DC_HALF_M3, Z_CB0), *dc(-DC_HALF_M3, Z_CB1), GEOM_W)
 line(*dc( DC_HALF_M3, Z_CB0), *dc( DC_HALF_M3, Z_CB1), GEOM_W)
 # 孔轴线
@@ -604,18 +634,34 @@ pdf.set_dash_pattern(dash=3, gap=1.2); _w(0.13)
 pdf.line(dc(0, -2)[0], dc(0, -2)[1], dc(0, COLLAR_Z1 + 2)[0], dc(0, COLLAR_Z1 + 2)[1])
 pdf.set_dash_pattern(); _w(GEOM_W)
 # 尺寸
-vdim(dc(0, COLLAR_Z1)[1], dc(0, Z_CB0)[1],
-     dc(DC_HALF_BASE, 0)[0], dc(DC_HALF_BASE, 0)[0] + DC_DIM_O, f"{FL_CB_DEPTH:g}")
-vdim(dc(0, Z_CB1)[1], dc(0, 0)[1],
-     dc(DC_HALF_BASE, 0)[0], dc(DC_HALF_BASE, 0)[0] + DC_DIM_O, f"{FL_CB_DEPTH:g}")
+if FL_CB_TOP:
+    vdim(dc(0, COLLAR_Z1)[1], dc(0, Z_CB0)[1],
+         dc(DC_HALF_BASE, 0)[0], dc(DC_HALF_BASE, 0)[0] + DC_DIM_O, f"{FL_CB_DEPTH:g}")
+if FL_CB_BOT:
+    vdim(dc(0, Z_CB1)[1], dc(0, 0)[1],
+         dc(DC_HALF_BASE, 0)[0], dc(DC_HALF_BASE, 0)[0] + DC_DIM_O, f"{FL_CB_DEPTH:g}")
 vdim(dc(0, COLLAR_Z1)[1], dc(0, 0)[1],
      dc(-DC_HALF_BASE, 0)[0], dc(-DC_HALF_BASE, 0)[0] - DC_DIM_O, f"{COLLAR_Z1:g}")
-hdim(dc(-DC_HALF_CB, 0)[0], dc(DC_HALF_CB, 0)[0],
-     dc(0, COLLAR_Z1)[1], dc(0, COLLAR_Z1)[1] - DC_DIM_O, f"Φ{FL_CB_DIAM:g}")
-hdim(dc(-DC_HALF_M3, 0)[0], dc(DC_HALF_M3, 0)[0],
-     dc(0, Z_CB1)[1], dc(0, 0)[1] + DC_DIM_O, f"Φ{FL_M3_DIAM:g}")
+# Φ 标注: 顶沉孔取消后, 顶端露出来的是 Φ3.2 通孔, Φ4.2 挪到底端标底沉孔
+hdim(dc(-DC_HALF_TOP, 0)[0], dc(DC_HALF_TOP, 0)[0],
+     dc(0, COLLAR_Z1)[1], dc(0, COLLAR_Z1)[1] - DC_DIM_O,
+     f"Φ{FL_CB_DIAM if FL_CB_TOP else FL_M3_DIAM:g}")
+hdim(dc(-DC_HALF_BOT, 0)[0], dc(DC_HALF_BOT, 0)[0],
+     dc(0, 0)[1], dc(0, 0)[1] + DC_DIM_O,
+     f"Φ{FL_CB_DIAM if FL_CB_BOT else FL_M3_DIAM:g}")
 text(dc_cx, dc_cy + DC_DIM_O + 8,
-     "压 M3×4×4.5 铜花螺母 (顶面+底面, 沉孔同规格)", size=TXT_D, anchor="middle")
+     f"{_CB_FACES}压 M3×4×4.5 铜花螺母", size=TXT_D, anchor="middle")
+# 2026-08-28: 顶面沉孔取消的来龙去脉 (给对着旧图看的人)
+if not FL_CB_TOP:
+    _lo = max(a for a in FL_ANGS if a < NOTCH_A_S)          # 67.5
+    _hi = min(a for a in FL_ANGS if a > NOTCH_A_E)          # 112.5
+    _half = math.degrees(math.asin((FL_M3_DIAM / 2) / FL_HOLE_R))
+    _rem = math.radians(NOTCH_A_S - (_lo + _half)) * FL_HOLE_R
+    text(30, 258, f"※ 2026-08-28 顶面 Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g} 沉孔 ×8 取消 (用户): 铜花螺母本来就只压底面那 8 个, "
+         f"顶面窝一直空着; 套环降到 {COLLAR_H:g} 后它整段落进走线缺口的 Z 区, {_lo:g}°/{_hi:g}° 两颗到缺口切面只剩 2.64 肉且整深临空。",
+         size=4.5)
+    text(30, 263, f"   取消后该处只有 Φ{FL_M3_DIAM:g} 通孔, 肉厚回到 {_rem:.2f}; 8 颗 M3×25 的路径不变 (法兰顶 → 底盘底面铜花螺母)。",
+         size=4.5)
 
 # ===== Title block =====
 tb_y = PAGE_H - 32
@@ -633,10 +679,10 @@ text(tb_x + 4, tb_y + 14.5,
      f"{BASE_SIDE:g}×{BASE_SIDE:g}×{BASE_THICK:g} (四角 R{CORNER_R:.2f}) / 4×M6 / 4×M3+Φ7×{CB_DEPTH:g} / 中央 Φ{CENTER_CB_DIAM:g}×{CENTER_CB_DEPTH:g}(顶) / "
      f"凸台 Φ{BOSS_OD:g}/Φ{BOSS_ID:g} H{BOSS_H:g} / 套环 Φ{COLLAR_OD:g}/Φ{COLLAR_ID:g} H{COLLAR_H:g} / "
      + (f"槽口 {NOTCH_A_S:g}°–{NOTCH_A_E:g}° / " if NOTCH_ENABLE else "整圈无缺口 / ")
-     + f"8×Φ{FL_M3_DIAM:g}+Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g}沉(顶+底)  /  单位 mm",
+     + f"8×Φ{FL_M3_DIAM:g}+Φ{FL_CB_DIAM:g}×{FL_CB_DEPTH:g}沉({_CB_FACES_S})  /  单位 mm",
      size=TXT_I, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 14.5,
-     "2026-08-19  /  POV3D / v4 / baseplate_collar_v4 / baseplate_collar_v4.stl",
+     "2026-08-28  /  POV3D / v4 / baseplate_collar_v4 / baseplate_collar_v4.stl",
      size=TXT_I, anchor="end")
 
 out = Path(__file__).with_name("baseplate_collar_v4_drawing.pdf")

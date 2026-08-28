@@ -149,20 +149,27 @@ for mx in (-BB_MOUNT, BB_MOUNT):
         bb -= m3d.Manifold.cylinder(6.0 + 1.0, 5.5, 5.5, 32, False).translate((mx, my, -BB_T - 1.0))
 parts.append(("grid plate 200x200x13", mesh_tris(bb)))
 
+# ---- baseplate_collar_v4 的两个基准高度 (2026-08-27 降 5, 2026-08-28 用户改成降 2.5) ----
+# 套环顶 18→15.5, 凸台顶 28→25.5。**两者同降 ⇒ 中间 10 的落差不变**, mounting_flange
+# (总高 10, 底 3 + 凸圈 7) 仍然正好卡在套环顶与凸台顶之间 —— 不用重印, 只是整体下移 2.5。
+# 电机坐底盘顶 Z5、转子面 31.7 都不动 ⇒ **转子及以上整栈不受影响**。
+BPC_COLLAR_TOP = 15.5
+BPC_BOSS_TOP   = 25.5
+
 # 2) baseplate_collar_d100 居中转 45° (对脚菱形), 底面坐 Z=0
 bpc = read_stl(V4 / "models/baseplate_collar_v4/baseplate_collar_v4.stl")
 bpc = rot_z(bpc, ROT)
 parts.append(("baseplate_collar_v4", bpc))
 
-# 3) flange_disc +18 直立 (随转 45°)
-fd = read_stl(V4 / "models/flange_disc_v4/flange_disc_v4.stl") + np.array([0.0, 0.0, 18.0])
+# 3) flange_disc 坐套环顶 (BPC_COLLAR_TOP) 直立 (随转 45°)
+fd = read_stl(V4 / "models/flange_disc_v4/flange_disc_v4.stl") + np.array([0.0, 0.0, BPC_COLLAR_TOP])
 fd = rot_z(fd, ROT)
 parts.append(("flange_disc_v4", fd))
 
-# 3) mounting_flange 翻转 180°(绕 X) 扣顶 (壁 18..25, 底 25..28), 随转 45°
+# 3) mounting_flange 翻转 180°(绕 X) 扣顶 (壁 15.5..22.5, 底 22.5..25.5 = 套环顶→凸台顶), 随转 45°
 mf = read_stl(V4 / "models/mounting_flange_v4/mounting_flange_v4.stl")
 mf[..., 1] = -mf[..., 1]
-mf[..., 2] = 28.0 - mf[..., 2]
+mf[..., 2] = BPC_BOSS_TOP - mf[..., 2]
 mf = mf[:, ::-1, :].copy()
 mf = rot_z(mf, ROT)
 parts.append(("mounting_flange_v4", mf))
@@ -342,13 +349,15 @@ parts.append(("frame_B_v4 (+X 两柱)", fb))
 # 挡光滑片 vane_slider_v3 (静止; 终版: 两件都圆孔, 调节=刀片印长50装机剪短):
 # 锁 frame_B ang=90 臂筋 (asm 45°) 侧面, M3×20+螺母 ×2 穿筋孔 (r45.2/51.4,
 # 居中 z4 = asm 294); 板 8 高填满筋侧 (底平筋底 290, 顶抵臂底 298), 装配用已剪短孪生 (刀尖 280)
-vs = read_stl(ROOT / "models/photo_sensor_v3_1/vane_slider_v3_1_asm.stl")
+# 2026-08-24: 换对称版 vane_slider_v4 (在 v4 下) —— v3.1 与 v4 共用 frame_B_v4,
+# 而 frame_B 的挂孔已外移到 38.7/48.7, 所以这条线必须一起换。
+vs = read_stl(V4 / "models/photo_sensor_v4/vane_slider_v4_asm.stl")
 vs = vs[..., [0, 2, 1]].copy()          # 打印姿态 (x,z,y-2) → 件系
 vs[..., 1] += 2.0
 vs = vs[:, ::-1, :]                     # 轴交换镜像 → 翻回绕向
 vs = rot_z(vs, POST_A0)                 # v4 柱位后: 随 frame_B ang=90 臂, asm 45° → 23.199°
 vs[..., 2] += 290.0
-parts.append(("vane_slider_v3_1", vs))
+parts.append(("vane_slider_v4", vs))
 # top_cap_v3_1 顶部薄压条 v3 (2026-07-22: 用户"做薄"):
 # 扁条 18×140×7 (底 260.95 = 屏顶, 压住双屏; 顶 267.95 = CAPTOP),
 # 2× 盘头 M3×12~14 经 Φ3.2 平面通孔拧进屏顶孔 (0,±64) (中央孔被轴占);
@@ -420,7 +429,7 @@ COLORS = {"grid plate 200x200x13": "#333333", "baseplate_collar_v4": "#777777",
           "frame_A_v3 (SW+NW)": "#5577aa", "frame_B_v3 (NE+SE)": "#5577aa",
           "top_cap_v3_1 (rotor)": "#cc8888", "M6x20 screw (rotor)": "#888888",
           "standoff Φ8×30 (rotor)": "#888888",
-          "vane_slider_v3_1": "#cc6644", "688 lower (frame_A)": "#999999", "688 upper (frame_B)": "#999999"}
+          "vane_slider_v4": "#cc6644", "688 lower (frame_A)": "#999999", "688 upper (frame_B)": "#999999"}
 for px in (-75, 75):
     for py in (-75, 75):
         COLORS[f"post @({px:+.0f},{py:+.0f})"] = "#666666"

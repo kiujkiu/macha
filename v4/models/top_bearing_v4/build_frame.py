@@ -9,7 +9,7 @@ top_bearing frame v4 — STATIC bearing frames frame_A_v4 / frame_B_v4. PLA.
  与 v3 的区别**只有柱半径和柱角向**: 臂/筋再短 10.87, 件更小更硬。
  ⚠ 柱内缘 91.197 对转动件: 罩/托盘 R85 余 6.20; wifi 线缆母头扫掠 R90.51
    只余 0.69 —— **用户明确认可, 线自行处理** (往内收/改短线/走内侧)。
- ⚠ 挡光滑片仍锁 frame_B 的 ang=90 臂筋 (孔 r36.7/46.7 不变, 滑片不用重印);
+ ⚠ 挡光滑片锁 frame_B 的 ang=90 臂筋 (孔 2026-08-24 外移到 r38.7/48.7, 配对称版 vane_slider_v4);
    它在装配里的角向随之从 asm 45° 变为 asm 23.199° —— 光电模块随转子扫全圈,
    角向无所谓, 只有半径/Z 有约束, 那两项都没动。
 
@@ -99,7 +99,13 @@ frame_b = frame_piece(upper=True)
 # 2×Φ3.2 沿 X 贯穿圆孔, 居中在筋 8 高的中点 z4 (asm 294) @ y 36.7 / 46.7
 # (孔距 1cm; 六改: 模块绕孔中点转 22.19° 光轴过圆心 → 刀片中心 r41.7, 净通道 r36.78..46.66);
 # M3×20+螺母 ×2 把滑片 (vane_slider_v3) 夹在侧面。
-VANE_BOLT_RS, VANE_BOLT_Z = (36.7, 46.7), 4.0
+# 2026-08-24 (用户: 「vane_slider 能做成对称的吗」): 两孔外移 2.0 → 38.7/48.7,
+# 使孔心 = 刀片中心 = 43.7 ⇒ 滑片左右镜像对称、**装不反**。
+# 原来孔心 41.7 / 刀片中心 43.465 差 1.765, 翻 180° 装反时刀片落到 r38.6..41.3,
+# 不碰任何东西但挡不到光轴 —— 静默失效。
+# ⚠ 只有 frame_B 有这两个孔 ⇒ **只重印 frame_B_v4, frame_A_v4 逐字节不变**。
+# ⚠ 必须与 v4/models/photo_sensor_v4/build_vane_slider.py 的 HOLE_XS 一致。
+VANE_BOLT_RS, VANE_BOLT_Z = (38.7, 48.7), 4.0
 for br in VANE_BOLT_RS:
     h = m3d.Manifold.cylinder(RIB_W + 2, M3_TIGHT/2, M3_TIGHT/2, 24, False)
     frame_b = frame_b - h.rotate((0, 90, 0)).translate((-RIB_W/2 - 1, br, VANE_BOLT_Z))
@@ -146,7 +152,7 @@ print(f"POST_A0 = {POST_A0:.3f}°  → 柱角向 {POST_A0:.3f} / {POST_A0+90:.3f
 write_stl(frame_a, "frame_A_v4.stl")
 write_stl(fb_print, "frame_B_v4.stl")
 print(f"臂条长 {POST_R-18:.2f} (v3 88.07), 筋 R{RIB_R0:g}..{RIB_R1:.2f} (v3 24..93.29); "
-      f"挡光滑片孔 r{VANE_BOLT_RS[0]:g}/{VANE_BOLT_RS[1]:g} 不变 → vane_slider_v3_1 不用重印")
+      f"挡光滑片孔 r{VANE_BOLT_RS[0]:g}/{VANE_BOLT_RS[1]:g} (2026-08-24 外移 2.0) → 配对称版 vane_slider_v4")
 print("asm heights: 柱顶 290 / A hub 290..298 (688 #1 293..298) / "
       "B hub 298..306 (688 #2 301..306)")
 print("BOM v4: 688 ×2, M6×16 ×2 (A垫) + M6×30 ×2 (B柱垫), M3×20+螺母 ×4;"

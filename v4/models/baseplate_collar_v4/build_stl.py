@@ -70,9 +70,30 @@ CB_DEPTH        = 2.0
 CENTER_CB_DIAM  = 12.0
 CENTER_CB_DEPTH = 1.0
 
+# ===== 降高 (2026-08-27 先降 5, 用户 2026-08-28 改口「减少 5mm 多了, 改成减少 2.5mm」) =====
+# **现行降幅 = 2.5** (都是相对原始的 23 / 13 量的):
+#   BOSS_H  23 → 20.5  (凸台顶 Z28 → Z25.5)
+#   COLLAR_H 13 → 10.5 (套环顶 = COLLAR_TOP Z18 → Z15.5)
+# 底盘 5 厚、各 OD/ID、孔位全不动。
+# ★ **转子及以上整栈不动**: 电机 C4110 坐在**底盘顶 Z5**(不是套环顶), 转子面仍 31.7
+#   ⇒ 承载面 42.2 / 屏 92.2..260.9 / 立柱 290 / 顶轴承 293..306 全部不变, 轴长不用重算。
+# ★ **凸台顶与套环顶同降 ⇒ 中间 10 的落差不变**: mounting_flange 总高正好 10 (底 3 +
+#   凸圈 7), 仍卡在两面之间; flange_disc(7) 同理。**两件都不用重印, 只是整体下移 2.5**。
+#   动的只有装配里两个基准: assembly_v4.py / assembly_v3_1.py 的 BPC_COLLAR_TOP 18→15.5、
+#   BPC_BOSS_TOP 28→25.5 (⚠ v3.1 也用这个件; v2/v2.1/v3 用的是 baseplate_collar_d100)。
+# ⚠ 连带 1 (BOM): 8 颗定子锁紧螺丝夹持 3+7+COLLAR_H+5, 由 28 变 **25.5**。原配是
+#   「M3×30 + 2mm 垫圈」(= 夹持 28 齐平)。**螺丝不用换, 把垫圈叠厚到 4.5** (30−4.5=25.5)
+#   即可; 硬要单垫圈就得 M3×27.5 这种非标长度。不补这 2.5 会从底盘底面伸出去把定子顶起来。
+# ⚠ 连带 2 (降幅改 2.5 后已不成立): 降 5 那版 COLLAR_H 正好 = COLLAR_NOTCH_H = 8,
+#   走线缺口吃满套环全高, 套环成开口 30° 的 C 形弧。现在套环 10.5 > 缺口 8,
+#   缺口之上还留 **2.5 过桥**, 套环回到"带槽的整环"。
+# ⚠ 连带 3 (2026-08-28 用户已直接取消该沉孔): 降高会把顶面 Φ4.2×4 铜花窝从 Z14..18 往下带
+#   (降 2.5 ⇒ Z6.5..10.5), 整段落进走线缺口 (Z5..13) 的 Z 区间, 67.5°/112.5° 那两颗到缺口
+#   切面只剩 2.65 肉且整深临空。→ **「这个沉孔取消」(8 个)** ⇒ `FLANGE_CB_TOP_ENABLE = False`。
+
 BOSS_OD = 65.0
 BOSS_ID = 55.0
-BOSS_H  = 23.0
+BOSS_H  = 20.5        # 23 → 20.5 (2026-08-28 用户: 降幅 5 改 2.5)
 
 # 2026-07-29 v4 (用户: "补成整圈"): 凸台+套环的 75..105° 走线缺口取消 → 整圈连续。
 # ⚠⚠ 这个缺口原是**电机线唯一的出口** —— C4110 坐在凸台腔 (ID55) 里, 底盘 5mm 实心,
@@ -88,7 +109,7 @@ NOTCH_SEG     = 24
 # ===== Ring collar parameters (aligned with baseplate) =====
 COLLAR_OD = 84.0   # 80→84 (2026-07-10): 铜花螺母孔外侧肉厚 1.65→3.65; M6 帽(Φ12.5)内缘 R43.75 留 1.75
 COLLAR_ID = 65.0                  # = BOSS_OD → press-fit alignment
-COLLAR_H  = 13.0
+COLLAR_H  = 10.5                  # 13 → 10.5 (2026-08-28 用户: 降幅 5 改 2.5)
 COLLAR_Z0 = BASE_THICK            # ring bottom sits on base top (Z=5)
 COLLAR_NOTCH_A_START = NOTCH_A_START
 COLLAR_NOTCH_A_END   = NOTCH_A_END
@@ -100,8 +121,13 @@ assert abs(COLLAR_ID - BOSS_OD) < 1e-9, "collar ID must equal boss OD for alignm
 
 # ===== flange_disc 连接孔 (2026-07-10) =====
 # flange_disc 内圈 8 孔 (PCD 72.5, R36.25, 22.5°+45k°) 坐在套环顶面上 —
-# 对应加 8× Φ3.2 通孔 + Φ4.2×4 沉孔从套环顶面 (Z18) 向下开
-# (压 M3×4×4.5 注塑铜花螺母, flange_disc 用 M3 从上锁入)。
+# 对应加 8× Φ3.2 通孔 + Φ4.2×4 沉孔。
+# **2026-08-28 用户「这个沉孔取消」(圈的是详图 C 上面那个, 8 个): 顶面沉孔关掉,
+#   只保留底面那 8 个。** 本来 BOM 里也只备了底面 8 颗铜花螺母 (print sheet 原文
+#   「这个方案不压顶面那 8 个」), 顶面窝一直是空着的; 降高后它又整段落进走线缺口的
+#   Z 区、67.5°/112.5° 两颗只剩 2.65 肉临空 —— 取消掉正好把这个薄壁隐患一并消掉
+#   (只剩 Φ3.2 时该处肉厚 4.75−1.6 = **3.15**)。
+#   螺丝路径不受影响: 8 颗 M3×25 本来就是从法兰顶一路进**底盘底面**的铜花螺母。
 # R36.25 在套环壁 R32.5..40 正中; 最近孔 (67.5°/112.5°) 距缺口边 (75°/105°)
 # 弧向 4.73, 沉孔 Z14..18 与缺口 Z5..11 也不重叠。
 FLANGE_HOLE_R     = 36.25            # = flange_disc PCD 72.5 / 2
@@ -109,6 +135,8 @@ FLANGE_HOLE_ANGS  = [22.5 + 45.0 * k for k in range(8)]
 FLANGE_M3_DIAM    = 3.2
 FLANGE_CB_DIAM    = 4.2
 FLANGE_CB_DEPTH   = 4.0
+FLANGE_CB_TOP_ENABLE = False   # 顶面沉孔 (2026-08-28 用户取消; True = 恢复)
+FLANGE_CB_BOT_ENABLE = True    # 底面沉孔 = 真正压铜花螺母的那 8 个
 COLLAR_TOP        = COLLAR_Z0 + COLLAR_H          # 18
 
 # ===== Base =====
@@ -192,8 +220,8 @@ if NOTCH_ENABLE:
 # ===== Combine =====
 part = base + boss + collar
 
-# ===== 8× flange_disc 连接孔: Φ3.2 通 (Z0..18) + Φ4.2×4 沉孔 顶面+底面 =====
-# (底面沉孔 2026-07-10 晚追加: 同规格 Φ4.2×4 从底面向上; 中段 Φ3.2 仅剩 Z4..14)
+# ===== 8× flange_disc 连接孔: Φ3.2 通 (Z0..COLLAR_TOP) + Φ4.2×4 沉孔 =====
+# 顶面沉孔 2026-08-28 取消 ⇒ 只剩底面那 8 个 (Z0..4), Φ3.2 中段 Z4..COLLAR_TOP
 for a in FLANGE_HOLE_ANGS:
     hx = FLANGE_HOLE_R * math.cos(math.radians(a))
     hy = FLANGE_HOLE_R * math.sin(math.radians(a))
@@ -202,8 +230,10 @@ for a in FLANGE_HOLE_ANGS:
     part = part - thr.translate((hx, hy, -1.0))
     cb = m3d.Manifold.cylinder(FLANGE_CB_DEPTH + 1, FLANGE_CB_DIAM / 2,
                                FLANGE_CB_DIAM / 2, 32, False)
-    part = part - cb.translate((hx, hy, COLLAR_TOP - FLANGE_CB_DEPTH))
-    part = part - cb.translate((hx, hy, -1.0))
+    if FLANGE_CB_TOP_ENABLE:
+        part = part - cb.translate((hx, hy, COLLAR_TOP - FLANGE_CB_DEPTH))
+    if FLANGE_CB_BOT_ENABLE:
+        part = part - cb.translate((hx, hy, -1.0))
 
 # ===== 外形裁切校核 (2026-08-19) =====
 # ⚠ 教训 (记忆): 旋转/贴合类间隙不要用"半径带/占位网格"近似 —— 这里直接用布尔判定。
@@ -262,8 +292,10 @@ print(f"  surface area:  {part.surface_area():8.2f} mm^2")
 print(f"  走线缺口: {'开 '+str(NOTCH_A_START)+chr(176)+'-'+str(NOTCH_A_END)+chr(176) if NOTCH_ENABLE else '已关闭 → 凸台/套环整圈连续 (v4)'}")
 print(f"  4×M3 电机孔 (转 {M3_ROT:g}°): " + ", ".join(f"({x:+.2f},{y:+.2f})" for x,y in M3_HOLES)
       + f"  (半径 {M3_DIAG/2:g})")
-print(f"  flange 连接孔 8× Φ{FLANGE_M3_DIAM:g} 通 + Φ{FLANGE_CB_DIAM:g}×{FLANGE_CB_DEPTH:g} 沉孔 顶面+底面 "
-      f"@ R{FLANGE_HOLE_R:g}, {FLANGE_HOLE_ANGS[0]:g}°+45k° (配 M3×4×4.5 铜花螺母)")
+_cb_faces = "+".join([f for f, on in (("顶面", FLANGE_CB_TOP_ENABLE), ("底面", FLANGE_CB_BOT_ENABLE)) if on]) or "无"
+print(f"  flange 连接孔 8× Φ{FLANGE_M3_DIAM:g} 通 + Φ{FLANGE_CB_DIAM:g}×{FLANGE_CB_DEPTH:g} 沉孔 **{_cb_faces}** "
+      f"@ R{FLANGE_HOLE_R:g}, {FLANGE_HOLE_ANGS[0]:g}°+45k° (配 M3×4×4.5 铜花螺母)"
+      + ("" if FLANGE_CB_TOP_ENABLE else "  [顶面沉孔 2026-08-28 取消]"))
 
 # Sanity-check binary STL size
 _expected = 84 + len(tris) * 50

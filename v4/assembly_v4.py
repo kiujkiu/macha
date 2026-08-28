@@ -64,13 +64,33 @@ mlkpai_carrier_disc / pi2hub+尼龙柱+米联派堆叠 / 光电同步 / usb_wifi
 """
 import math
 import struct
+import sys
 from pathlib import Path
 import numpy as np
 import manifold3d as m3d
 
+# ===== ★ 屏幕装法开关 (2026-08-24: v4 改成居中/偏心两用) =====
+# v4 原本只有居中装法; v3.1 为了消掉中心 Φ13.4 成像盲柱做了偏心装法 (屏整体 +6.7,
+# 让贴轴那面盲区归零)。两种装法的**打印件是同一套** —— 屏支撑三件 (portal_tee /
+# top_cap / shroud) 都做了「同时覆盖两种落位」的几何 + X 向 3 个离散孔,
+# 拧不同的孔就能在居中↔偏心之间切换, **不用重印**。
+#   居中: python assembly_v4.py            (SCR_ECC = 0,   屏占 X ±6.7)
+#   偏心: python assembly_v4.py --ecc      (SCR_ECC = 6.7, 屏占 X 0..13.4)
+SCR_ECC = 6.7 if "--ecc" in sys.argv else 0.0
+_MODE = "偏心 (一面贴轴)" if SCR_ECC else "居中"
+print(f"★ 屏幕装法: {_MODE}  SCR_ECC = {SCR_ECC:g}")
+
+# ⚠ 光电模块的位置**不跟着 SCR_ECC 走**。模块是拧在压条 (top_cap_v3_1_1) 上的,
+#   孔位在打印时就烧死在 M=(6.7,-45) 那一解上 (见 top_cap_v3_1_1/build_stl.py:
+#   SEN_M = (SCR_ECC, -45))。所以两种装法共用同一个光电位置、同一片挡光滑片。
+#   通用解保证光轴恒过圆心, 索引脉冲两种装法都准; 居中装时只是「孔线中点不再落在
+#   屏顶两颗 M3 的连线上」(那是 v3.1 的外观要求, 不影响功能)。
+SEN_M_FIXED = (6.7, -45.0)      # ← 压条上烧死的光电孔线中点, 与 SCR_ECC 无关
+
 ROOT = Path(__file__).parent            # pov3d/v4
 MODELS = ROOT.parent / "models"         # v1/v2 共享零件库
-V3 = ROOT.parent / "v3"                 # v4 沿用的 v3 专属件 (转子/屏/顶部全套)
+V3 = ROOT.parent / "v3"                 # v4 沿用的 v3 专属件 (转子/顶部)
+V31 = ROOT.parent / "v3.1"              # 屏支撑三件 + 挡光滑片 (居中/偏心两用版)
 STL_TRI = np.dtype([("normal", "<f4", 3), ("verts", "<f4", (3, 3)), ("attr", "<u2")])
 
 def read_stl(path):
@@ -122,20 +142,27 @@ for mx in (-BB_MOUNT, BB_MOUNT):
         bb -= m3d.Manifold.cylinder(6.0 + 1.0, 5.5, 5.5, 32, False).translate((mx, my, -BB_T - 1.0))
 parts.append(("grid plate 200x200x13", mesh_tris(bb)))
 
+# ---- baseplate_collar_v4 的两个基准高度 (2026-08-27 降 5, 2026-08-28 用户改成降 2.5) ----
+# 套环顶 18→15.5, 凸台顶 28→25.5。**两者同降 ⇒ 中间 10 的落差不变**, mounting_flange
+# (总高 10, 底 3 + 凸圈 7) 仍然正好卡在套环顶与凸台顶之间 —— 不用重印, 只是整体下移 2.5。
+# 电机坐底盘顶 Z5、转子面 31.7 都不动 ⇒ **转子及以上整栈不受影响**。
+BPC_COLLAR_TOP = 15.5
+BPC_BOSS_TOP   = 25.5
+
 # 2) baseplate_collar_d100 居中转 45° (对脚菱形), 底面坐 Z=0
 bpc = read_stl(ROOT / "models/baseplate_collar_v4/baseplate_collar_v4.stl")
 bpc = rot_z(bpc, ROT)
 parts.append(("baseplate_collar_v4", bpc))
 
-# 3) flange_disc +18 直立 (随转 45°)
-fd = read_stl(ROOT / "models/flange_disc_v4/flange_disc_v4.stl") + np.array([0.0, 0.0, 18.0])
+# 3) flange_disc 坐套环顶 (BPC_COLLAR_TOP) 直立 (随转 45°)
+fd = read_stl(ROOT / "models/flange_disc_v4/flange_disc_v4.stl") + np.array([0.0, 0.0, BPC_COLLAR_TOP])
 fd = rot_z(fd, ROT)
 parts.append(("flange_disc_v4", fd))
 
-# 3) mounting_flange 翻转 180°(绕 X) 扣顶 (壁 18..25, 底 25..28), 随转 45°
+# 3) mounting_flange 翻转 180°(绕 X) 扣顶 (壁 15.5..22.5, 底 22.5..25.5 = 套环顶→凸台顶), 随转 45°
 mf = read_stl(ROOT / "models/mounting_flange_v4/mounting_flange_v4.stl")
 mf[..., 1] = -mf[..., 1]
-mf[..., 2] = 28.0 - mf[..., 2]
+mf[..., 2] = BPC_BOSS_TOP - mf[..., 2]
 mf = mf[:, ::-1, :].copy()
 mf = rot_z(mf, ROT)
 parts.append(("mounting_flange_v4", mf))
@@ -206,7 +233,11 @@ print(f"承载面(rim_ring 托盘顶) {DISC_TOP:.1f}; 垫柱顶 {BOSS_TOP:.1f}; 
 # 两端→梃顶大三角筋 (厚5) + 顶托内伸盖屏底 ±64 孔 (M3×12 经 Φ6.5 头窝井
 # 向上锁屏, 托下 45° 小筋); 屏每侧只锁 1 颗, 中央孔空置, 模组自身为梁。
 V3_SCR_ROT = -45.0
-te = read_stl(V3 / "models/bottom_portal_v3/portal_tee_v3.stl") + np.array([0.0, 0.0, DISC_TOP])
+# 2026-08-24: 换成两用版 portal_tee_v3_1 —— 顶托由梯形(内13.4/外20)改等宽 ±16
+# (同时盖住屏在 0..13.4 与转 180° 后的 -13.4..0), 屏孔 3 个离散位 (-6.7/0/+6.7)。
+# ★ 两件是**同件转 180°**: 若把孔直接挪到 +6.7, 转 180° 后第二件的孔落到 -6.7,
+#   两件会把屏往相反方向拉、装不上 —— 3 个离散孔就是为了解这个死结。
+te = read_stl(V31 / "models/bottom_portal_v3_1/portal_tee_v3_1.stl") + np.array([0.0, 0.0, DISC_TOP])
 parts.append(("portal_tee A", rot_z(te.copy(), ROTOR_ROT + V3_SCR_ROT)))
 parts.append(("portal_tee B", rot_z(te.copy(), ROTOR_ROT + V3_SCR_ROT + 180.0)))
 
@@ -216,7 +247,7 @@ parts.append(("portal_tee B", rot_z(te.copy(), ROTOR_ROT + V3_SCR_ROT + 180.0)))
 SCREEN_T = 13.4
 SCREEN_Z0 = DISC_TOP + 50.0                 # 92.2
 sc = read_stl(MODELS / "screen_150x169_t13/screen_150x169_t13.stl") \
-     + np.array([0.0, 0.0, SCREEN_Z0])
+     + np.array([SCR_ECC, 0.0, SCREEN_Z0])      # ★ SCR_ECC=6.7 时一面贴轴 X=0
 sc = rot_z(sc, ROTOR_ROT + V3_SCR_ROT)
 parts.append(("dual_screen", sc))
 MLK_TOP = PCB_Z0 + 1.6 + 1.2                # 64.6 米联派板顶+针尾
@@ -226,10 +257,13 @@ MLK_TOP = PCB_Z0 + 1.6 + 1.2                # 64.6 米联派板顶+针尾
 #      两半对开 + 3 厚封顶带屏缝; 每半 2× M3×55 经内立柱拧进 rim_ring 4 个
 #      空闲外圈环孔 (装配 112.5/157.5/292.5/337.5°) 到 hub 底铜花螺母。
 #      随屏组转 V3_SCR_ROT (立柱角 = 零件系 22.5/157.5/202.5/337.5°)。
-SHROUD_DIR = V3 / "models/rotor_shroud_v3"
+# 2026-08-24: 换成两用版 —— 屏缝改非对称 X -7.0..+13.7, 同时覆盖居中 (±6.7) 与
+# 偏心 (0..13.4) 两种落位; T 顶托让位区随 portal_tee 加宽到 ±16.3。
+# ⚠ 居中装时 +X 侧会多出约 7mm 的敞口 (只是漏灰, 不影响结构)。
+SHROUD_DIR = V31 / "models/rotor_shroud_v3_1"
 for _tag in ("A", "B"):
-    _sh = read_stl(SHROUD_DIR / f"shroud_half_{_tag}_v3.stl") + np.array([0.0, 0.0, DISC_TOP])
-    parts.append((f"shroud_half_{_tag}_v3", rot_z(_sh, ROTOR_ROT + V3_SCR_ROT)))
+    _sh = read_stl(SHROUD_DIR / f"shroud_half_{_tag}_v3_1.stl") + np.array([0.0, 0.0, DISC_TOP])
+    parts.append((f"shroud_half_{_tag}_v3_1", rot_z(_sh, ROTOR_ROT + V3_SCR_ROT)))
 
 # 10c) 配重臂 counterweight_arm (2026-08-03, 共享件): 骑在罩顶面 (Z 92.2) 跨接缝,
 #      4× M3×16 里 2 颗进半 A、2 颗进半 B → 把两半在顶部连成一体; M6 六角头朝下卡
@@ -248,11 +282,15 @@ print(f"支架翼板底 {DISC_TOP+21.0:.1f} / 中央缺口顶(±60内) {DISC_TOP
 #     刀尖调到 asm 280 (光轴 ~282.4, 叉顶 285.65 对筋底 290 留 4.35)。
 sm = read_stl(MODELS / "photo_sensor/sensor_module.stl")
 sm = sm[..., [1, 0, 2]] * np.array([1.0, -1.0, 1.0])   # rotZ-90: (x,y)->(y,-x)
-sm = sm + np.array([-3.0, -45.0, 267.95])
-# 六改: 绕孔线中点 M(0,-45) 转 22.196° → 光轴过圆心 (sin th = 17/45)
-_th = np.arcsin(17.0 / 45.0)   # 22.196°
+# 2026-08-24: 位置由压条烧死 (SEN_M_FIXED), **不随 SCR_ECC 变** —— 见文件头说明。
+sm = sm + np.array([-3.0 + SEN_M_FIXED[0], SEN_M_FIXED[1], 267.95])
+# 通用解: 光轴 = 平行孔线、垂距 17 的直线; 要它过原点 ⇔ 原点到孔线垂距 = 17
+#   ⇒ ∠(OM,u) = asin(17/|OM|)。|OM|=45.4960 → 21.9414° (居中版 45 → 22.196°)
+_M = np.array(SEN_M_FIXED)
+_th = np.arcsin(17.0 / float(np.hypot(*_M)))
 _R = np.array([[np.cos(_th), -np.sin(_th)], [np.sin(_th), np.cos(_th)]])
-_M = np.array([0.0, -45.0])
+assert abs(abs(_M[0]*np.sin(_th + np.arctan2(_M[1], _M[0]))
+               - _M[1]*np.cos(_th + np.arctan2(_M[1], _M[0]))) - 17.0) < 1e-9, "光轴未过圆心"
 sm[..., :2] = (sm[..., :2] - _M) @ _R.T + _M   # 2026-07-23: 孔挪条中线 (capX0), 梁线 capX+17
 parts.append(("sensor_module", rot_z(sm, ROTOR_ROT + V3_SCR_ROT)))
 # (2026-07-23 曾长死在 frame_B 筋底; 2026-07-24 改独立滑片, 见 frame 段后。)
@@ -317,23 +355,29 @@ parts.append(("frame_B_v4 (+X 两柱)", fb))
 # 挡光滑片 vane_slider_v3 (静止; 终版: 两件都圆孔, 调节=刀片印长50装机剪短):
 # 锁 frame_B ang=90 臂筋 (asm 45°) 侧面, M3×20+螺母 ×2 穿筋孔 (r45.2/51.4,
 # 居中 z4 = asm 294); 板 8 高填满筋侧 (底平筋底 290, 顶抵臂底 298), 装配用已剪短孪生 (刀尖 280)
-vs = read_stl(V3 / "models/photo_sensor_v3/vane_slider_v3_asm.stl")
+# 2026-08-24 二改 (用户: 「能做成对称的吗」): 换**左右对称版 vane_slider_v4**。
+# 孔心/刀片/板三者同心于 X=43.7 ⇒ 翻 180° 装反也一样, 消掉「装反不报错但挡不到
+# 光轴」的静默失效。代价 = frame_B_v4 的两个挂孔外移 2.0 (36.7/46.7 → 38.7/48.7),
+# **只重印 frame_B 一件, frame_A_v4 逐字节不变**。刀片半径带 42.20..45.18 → 42.43..45.41。
+vs = read_stl(ROOT / "models/photo_sensor_v4/vane_slider_v4_asm.stl")
 vs = vs[..., [0, 2, 1]].copy()          # 打印姿态 (x,z,y-2) → 件系
 vs[..., 1] += 2.0
 vs = vs[:, ::-1, :]                     # 轴交换镜像 → 翻回绕向
 vs = rot_z(vs, POST_A0)                 # v4: 随 frame_B ang=90 臂, asm 45° → 23.199°
 vs[..., 2] += 290.0
-parts.append(("vane_slider_v3", vs))
+parts.append(("vane_slider_v4", vs))
 # top_cap_v3_1 顶部薄压条 v3 (2026-07-22: 用户"做薄"):
 # 扁条 18×140×7 (底 260.95 = 屏顶, 压住双屏; 顶 267.95 = CAPTOP),
 # 2× 盘头 M3×12~14 经 Φ3.2 平面通孔拧进屏顶孔 (0,±64) (中央孔被轴占);
 # M6×20 平头藏底面 Φ13×2.7 头窝 (⚠ 先装 M6 再压屏), 头 260.95..263.65。
-cap = read_stl(V3 / "models/top_cap_v3_1/top_cap_v3_1.stl")  # 打印翻转姿态
+# 2026-08-24: 换两用版 top_cap_v3_1_1 —— 条宽 18→32 (±16, 原 ±9 盖不住偏心后的屏),
+# 屏孔 3×2 个离散位; -X 悬空区带 9×Φ6.5 配重孔 (力臂 11, 只够细调)。
+cap = read_stl(V31 / "models/top_cap_v3_1_1/top_cap_v3_1_1.stl")  # 打印翻转姿态
 cap[..., 1] = -cap[..., 1]
 cap[..., 2] = CAPTOP_V3 - cap[..., 2]
 cap = cap[:, ::-1, :].copy()
 cap = rot_z(cap, ROTOR_ROT + V3_SCR_ROT)
-parts.append(("top_cap_v3_1 (rotor)", cap))
+parts.append(("top_cap_v3_1_1 (rotor)", cap))
 scr = m3d.Manifold.cylinder(17.3, 3.0, 3.0, 32, False).translate((0, 0, 263.65))
 parts.append(("M6x20 screw (rotor)", mesh_tris(scr)))
 sto = m3d.Manifold.cylinder(40.0, 4.0, 4.0, 48, False).translate((0, 0, 267.95))
@@ -356,7 +400,7 @@ print("底座 4×M6 脚 (转%g° 后, 应落网格位 ±37.5):" % ROT,
 
 # ===== merge + export =====
 all_tris = np.concatenate([t for (_, t) in parts], axis=0)
-out = ROOT / "assembly_v4.stl"
+out = ROOT / ("assembly_v4_ecc.stl" if SCR_ECC else "assembly_v4.stl")
 _header = b"POV3D assembly_v4"
 with out.open("wb") as f:
     f.write(_header.ljust(80, b" "))
@@ -389,13 +433,13 @@ COLORS = {"grid plate 200x200x13": "#333333", "baseplate_collar_v4": "#777777",
           "portal_tee A": "#aa6622", "portal_tee B": "#aa6622",
           "sensor_module": "#222266",
           "dual_screen": "#3355cc",
-          "counterweight_arm": "#cc7722", "shroud_half_A_v3": "#b0b8c8", "shroud_half_B_v3": "#98a0b0",
+          "counterweight_arm": "#cc7722", "shroud_half_A_v3_1": "#b0b8c8", "shroud_half_B_v3_1": "#98a0b0",
           "wifi_shell": "#22aaaa",
           "usb_wifi_module": "#111111",
           "frame_A_v3 (SW+NW)": "#5577aa", "frame_B_v3 (NE+SE)": "#5577aa",
-          "top_cap_v3_1 (rotor)": "#cc8888", "M6x20 screw (rotor)": "#888888",
+          "top_cap_v3_1_1 (rotor)": "#cc8888", "M6x20 screw (rotor)": "#888888",
           "standoff Φ8×30 (rotor)": "#888888",
-          "vane_slider_v3": "#cc6644", "688 lower (frame_A)": "#999999", "688 upper (frame_B)": "#999999"}
+          "vane_slider_v4": "#cc6644", "688 lower (frame_A)": "#999999", "688 upper (frame_B)": "#999999"}
 for px in (-75, 75):
     for py in (-75, 75):
         COLORS[f"post @({px:+.0f},{py:+.0f})"] = "#666666"
@@ -408,6 +452,6 @@ for i, (elev, azim, title) in enumerate([(22, -60, "iso"), (89, -90, "top")]):
     ax.set_box_aspect((1, 1, 1.28)); ax.view_init(elev=elev, azim=azim)
     ax.set_title(title); ax.set_xlabel("X"); ax.set_ylabel("Y"); ax.set_zlabel("Z")
 fig.tight_layout()
-png = ROOT / "assembly_v4_preview.png"
+png = ROOT / ("assembly_v4_ecc_preview.png" if SCR_ECC else "assembly_v4_preview.png")
 fig.savefig(png, dpi=110)
 print(f"wrote {png}")
