@@ -36,6 +36,11 @@ N_HOLES = 8
 HOLE_ROTATION = -22.5  # CW 20°
 M42_DIAM = 4.2
 M42_DEPTH = 4.0
+# 底面 Φ4.2×4 沉孔开关 — 与 build_stl.py 的 INNER_CB_ENABLE / OUTER_CB_ENABLE
+# 必须一致 (本图纸参数是复刻不是 import)。
+# 2026-08-31 用户: 内圈 8 个沉孔取消, 只留外圈 8 个。
+FL_CB_INNER = False
+FL_CB_OUTER = True
 
 INNER_HOLE_R = (INNER_BOSS_ID/2 + INNER_BOSS_OD/2) / 2   # 36.25
 OUTER_HOLE_R = (OUTER_BOSS_ID/2 + OUTER_BOSS_OD/2) / 2   # 77.5
@@ -297,12 +302,13 @@ for k in range(N_HOLES):
     cy = ccy - INNER_HOLE_R * math.sin(a)
     inner_hole_centers.append((cx, cy, ang_d))
     draw_hole(cx, cy)
-    # M4.2 counterbore (dashed circle, 沉孔 from bottom)
-    pdf.set_dash_pattern(dash=2, gap=1)
-    _w(0.15)
-    pdf.circle(cx, cy, M42_DIAM/2, style="D")
-    pdf.set_dash_pattern()
-    _w(GEOM_W)
+    # M4.2 counterbore (dashed circle, 沉孔 from bottom) — 2026-08-31 内圈取消
+    if FL_CB_INNER:
+        pdf.set_dash_pattern(dash=2, gap=1)
+        _w(0.15)
+        pdf.circle(cx, cy, M42_DIAM/2, style="D")
+        pdf.set_dash_pattern()
+        _w(GEOM_W)
 
 outer_hole_centers = []
 for k in range(N_HOLES):
@@ -316,11 +322,12 @@ for k in range(N_HOLES):
     outer_hole_centers.append((cx, cy, ang_d))
     draw_hole(cx, cy)
     # M4.2 counterbore (dashed circle, 沉孔 from bottom)
-    pdf.set_dash_pattern(dash=2, gap=1)
-    _w(0.15)
-    pdf.circle(cx, cy, M42_DIAM/2, style="D")
-    pdf.set_dash_pattern()
-    _w(GEOM_W)
+    if FL_CB_OUTER:
+        pdf.set_dash_pattern(dash=2, gap=1)
+        _w(0.15)
+        pdf.circle(cx, cy, M42_DIAM/2, style="D")
+        pdf.set_dash_pattern()
+        _w(GEOM_W)
 
 # Center cross (axis lines) — dashed
 pdf.set_dash_pattern(dash=4, gap=1.5); _w(0.15)
@@ -409,7 +416,8 @@ _w(EXT_W)
 pdf.line(ih_x, ih_y, ih_lx, ih_ly)
 pdf.line(ih_lx, ih_ly, ih_lx + 8, ih_ly)
 text(ih_lx + 8, ih_ly - 1.2,
-     f"8 × Φ{M3_DIAM:g} 内圈通孔, PCD Φ{2*INNER_HOLE_R:g}",
+     f"8 × Φ{M3_DIAM:g} 内圈通孔, PCD Φ{2*INNER_HOLE_R:g}"
+     + (f" + 底面沉孔 Φ{M42_DIAM:g}×{M42_DEPTH:g}" if FL_CB_INNER else " (无沉孔)"),
      size=TXT_D, anchor="start")
 
 # Outer-hole PCD callout — leader from SW outer hole (225°), goes down-left further out
@@ -420,7 +428,9 @@ oh_lx, oh_ly = tv(-65, -93)
 pdf.line(oh_x, oh_y, oh_lx, oh_ly)
 pdf.line(oh_lx, oh_ly, oh_lx + 8, oh_ly)
 text(oh_lx + 8, oh_ly - 1.2,
-     f"8 × Φ{M3_DIAM:g} 外圈通孔, PCD Φ{2*OUTER_HOLE_R:g} (45° 位置被缺口截除)",
+     f"8 × Φ{M3_DIAM:g} 外圈通孔, PCD Φ{2*OUTER_HOLE_R:g}"
+     + (f" (45° 位置被缺口截除)" if OUTER_CUTOUT_ENABLE else "")
+     + (f" + 底面沉孔 Φ{M42_DIAM:g}×{M42_DEPTH:g}" if FL_CB_OUTER else " (无沉孔)"),
      size=TXT_D, anchor="start")
 
 if OUTER_CUTOUT_ENABLE:
@@ -611,7 +621,7 @@ text(tb_x + 4, tb_y + 14.5,
      + "  /  单位 mm",
      size=TXT_I, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 14.5,
-     "2026-07-29  /  POV3D / v4 / flange_disc_v4 / flange_disc_v4.stl",
+     "2026-08-31  /  POV3D / v4 / flange_disc_v4 / flange_disc_v4.stl",
      size=TXT_I, anchor="end")
 
 out = Path(__file__).with_name("flange_disc_v4_drawing.pdf")

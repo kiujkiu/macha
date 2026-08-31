@@ -7,6 +7,7 @@ Geometry (all dimensions mm, axis along +Z):
   - Inner boss ring:     ID 65, OD 80,  thickness 2      (Z = 5 .. 7)
                          8 × M3 (Φ3.2) through-holes (depth 7 mm, through boss + base)
                          on a PCD = 72.5 (R = 36.25), at 0°, 45°, ..., 315°
+                         (2026-08-31: 这 8 个孔底面的 Φ4.2×4 沉孔已取消)
   - Outer boss ring:     ID 145, OD 165, thickness 2     (Z = 5 .. 7)
                          8 × M3 (Φ3.2) through-holes (depth 7 mm, through boss + base)
                          on a PCD = 155 (R = 77.5), at 0°, 45°, ..., 315°
@@ -46,8 +47,14 @@ TOTAL_H       = BASE_T + BOSS_T   # 7.5
 M3_DIAM = 3.2
 N_HOLES = 8
 HOLE_ROTATION = -22.5  # 16 通孔顺时针旋转 20° (CW 负角)
-M42_DIAM = 4.2         # 外圈 8 个沉孔直径
+M42_DIAM = 4.2         # 沉孔直径
 M42_DEPTH = 4.0        # 沉孔深度 (从底部 z=0 向上)
+# 2026-08-31 用户: 内侧 8 个 M3 通孔的沉孔取消 (只留外圈 8 个)。
+# 这 8 个底面 Φ4.2×4 原本对着 baseplate_collar 套环顶面 —— 套环顶面的铜花螺母窝
+# 已于 2026-08-28 取消 (那里本来就没压螺母), 这边的让位窝也就没有对应物了;
+# 而基盘只有 4.5 厚, 挖掉 4 只剩 0.5 mm 槽底 (+2.5 凸台) 很薄。True = 恢复。
+INNER_CB_ENABLE = False
+OUTER_CB_ENABLE = True
 
 INNER_HOLE_R = (INNER_BOSS_ID/2 + INNER_BOSS_OD/2) / 2   # 36.25
 OUTER_HOLE_R = (OUTER_BOSS_ID/2 + OUTER_BOSS_OD/2) / 2   # 77.5
@@ -173,24 +180,26 @@ for k in range(N_HOLES):
                      -1.0))
     part = part - h
 
-# ===== M4.2 沉孔 — 内圈 8 个孔位置, 从底部 z=0 向上 4mm =====
+# ===== M4.2 沉孔 — 内圈 8 个孔位置, 从底部 z=0 向上 4mm (2026-08-31 取消) =====
 cbore_h = M42_DEPTH + 0.1
-for k in range(N_HOLES):
-    ang = math.radians(k * 360.0 / N_HOLES + HOLE_ROTATION)
-    cb = m3d.Manifold.cylinder(cbore_h, M42_DIAM/2, M42_DIAM/2, HOLE_SEG, False)
-    cb = cb.translate((INNER_HOLE_R * math.cos(ang),
-                       INNER_HOLE_R * math.sin(ang),
-                       -0.1))
-    part = part - cb
+if INNER_CB_ENABLE:
+    for k in range(N_HOLES):
+        ang = math.radians(k * 360.0 / N_HOLES + HOLE_ROTATION)
+        cb = m3d.Manifold.cylinder(cbore_h, M42_DIAM/2, M42_DIAM/2, HOLE_SEG, False)
+        cb = cb.translate((INNER_HOLE_R * math.cos(ang),
+                           INNER_HOLE_R * math.sin(ang),
+                           -0.1))
+        part = part - cb
 
 # ===== M4.2 沉孔 — 外圈 8 个孔位置, 从底部 z=0 向上 4mm =====
-for k in range(N_HOLES):
-    ang = math.radians(k * 360.0 / N_HOLES + HOLE_ROTATION)
-    cb = m3d.Manifold.cylinder(cbore_h, M42_DIAM/2, M42_DIAM/2, HOLE_SEG, False)
-    cb = cb.translate((OUTER_HOLE_R * math.cos(ang),
-                       OUTER_HOLE_R * math.sin(ang),
-                       -0.1))
-    part = part - cb
+if OUTER_CB_ENABLE:
+    for k in range(N_HOLES):
+        ang = math.radians(k * 360.0 / N_HOLES + HOLE_ROTATION)
+        cb = m3d.Manifold.cylinder(cbore_h, M42_DIAM/2, M42_DIAM/2, HOLE_SEG, False)
+        cb = cb.translate((OUTER_HOLE_R * math.cos(ang),
+                           OUTER_HOLE_R * math.sin(ang),
+                           -0.1))
+        part = part - cb
 
 # ===== Export STL =====
 # ===== 2 × M4 通孔 =====
@@ -228,3 +237,6 @@ print(f"  surface area:  {part.surface_area():10.2f} mm^2")
 print(f"  inner hole PCD R = {INNER_HOLE_R}  ({N_HOLES} holes @ 0°,45°,...,315°)")
 print("  额外 M4 通孔: " + (", ".join(f"Φ{EXTRA_HOLE_D:g}@({a:g}°,R{R:g})" for a,R in EXTRA_HOLES_POLAR) if EXTRA_HOLES_POLAR else "无 (待定位)"))
 print(f"  outer hole PCD R = {OUTER_HOLE_R}  ({'7 effective (45° eaten by cutout)' if OUTER_CUTOUT_ENABLE else '8 holes, 整圈无缺口'})")
+_cb = "+".join([f for f, on in (("内圈", INNER_CB_ENABLE), ("外圈", OUTER_CB_ENABLE)) if on]) or "无"
+print(f"  底面 Φ{M42_DIAM:g}×{M42_DEPTH:g} 沉孔: {_cb}"
+      + ("" if INNER_CB_ENABLE else "  [内圈沉孔 2026-08-31 取消]"))

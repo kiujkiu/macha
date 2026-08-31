@@ -15,6 +15,8 @@ n_holes         = 8;
 hole_rotation = -22.5;  // 16 通孔顺时针旋转 20° (CW 为负角)
 m42_diam        = 4.2;  // 沉孔直径
 m42_depth       = 4;    // 沉孔深度 (从底部 z=0 向上)
+inner_cb_enable = false; // 内圈 8 个底面沉孔 2026-08-31 用户取消 (true = 恢复)
+outer_cb_enable = true;  // 外圈 8 个底面沉孔
 
 // 2026-07-29 v4 (用户"补成整圈"): 走线槽 + 外缘缺口取消 → 整圈连续, 外圈 8 孔
 // 2 个 M4 通孔 (2026-07-29): 位置避开下方 100×100 方底盘 (对角伸到 r70.7)
@@ -112,13 +114,15 @@ module flange_disc_v4() {
             translate([outer_hole_r*cos(a), outer_hole_r*sin(a), -1])
                 cylinder(h = total_h + 2, d = m3_diam, $fn = 32);
         }
-        // ----- 8 × M4.2 沉孔 内圈孔位 (从底部 z=0 向上 4mm) -----
+        // ----- 8 × M4.2 沉孔 内圈孔位 (从底部 z=0 向上 4mm) — 2026-08-31 取消 -----
+        if (inner_cb_enable)
         for (k = [0 : n_holes - 1]) {
             a = k * 360 / n_holes + hole_rotation;
             translate([inner_hole_r*cos(a), inner_hole_r*sin(a), -0.1])
                 cylinder(h = m42_depth + 0.1, d = m42_diam, $fn = 32);
         }
         // ----- 8 × M4.2 沉孔 外圈孔位 (从底部 z=0 向上 4mm) -----
+        if (outer_cb_enable)
         for (k = [0 : n_holes - 1]) {
             a = k * 360 / n_holes + hole_rotation;
             translate([outer_hole_r*cos(a), outer_hole_r*sin(a), -0.1])
