@@ -31,12 +31,20 @@ TOTAL_H = BASE_T + BOSS_H   # 10
 
 M3_DIAM  = 3.2
 CB_DIAM  = 7.0
-CB_DEPTH = 2.0
+# 与 build_stl.py 的 INNER_CB_DEPTH / OUTER_CB_DEPTH 必须一致
+# (本图纸参数是复刻不是 import)。2026-09-01 用户: 内圈 8 个由 2 改 0.5。
+INNER_CB_DEPTH = 0.5
+OUTER_CB_DEPTH = 2.0
+CB_DEPTHS_EQUAL = (INNER_CB_DEPTH == OUTER_CB_DEPTH)
 N_HOLES  = 8
 HOLE_ROTATION = 22.5  # CCW 22.5°
 
 INNER_HOLE_R = 36.25      # PCD 72.5
 OUTER_HOLE_R = 77.5       # PCD 155
+
+def cb_depth_at(hole_R):
+    """Which counterbore depth applies at radius hole_R (inner vs outer ring)."""
+    return INNER_CB_DEPTH if abs(hole_R) < (INNER_HOLE_R + OUTER_HOLE_R) / 2 else OUTER_CB_DEPTH
 INNER_PCD = 2 * INNER_HOLE_R
 OUTER_PCD = 2 * OUTER_HOLE_R
 
@@ -162,7 +170,7 @@ text(PAGE_W/2, 13, "POV 3D 安装法兰  Mounting Flange",
      size=TXT_T, anchor="middle")
 text(PAGE_W/2, 19,
      f"基环 Φ{BASE_OD:g}/Φ{BASE_ID:g}×{BASE_T:g} / 外缘凸圈 Φ{BOSS_OD:g}/Φ{BOSS_ID:g}×{BOSS_H:g} / "
-     + f"16×Φ{M3_DIAM:g} 通孔 + Φ{CB_DIAM:g}×{CB_DEPTH:g} 沉孔 (底面) / "
+     + f"16×Φ{M3_DIAM:g} 通孔 + 底面沉孔 Φ{CB_DIAM:g} (内圈×{INNER_CB_DEPTH:g} / 外圈×{OUTER_CB_DEPTH:g}) / "
      + ((f"凸圈缺口 {CUT1_A_S:g}°–{CUT1_A_E:g}° 及 {CUT2_A_S:g}°–{CUT2_A_E:g}°") if CUTOUT_ENABLE else "外圈凸台整圈无缺口 (v4)"),
      size=TXT_I, anchor="middle")
 
@@ -320,20 +328,27 @@ hc_lx, hc_ly = tv(-75, -78)
 pdf.line(hc_x, hc_y, hc_lx, hc_ly)
 pdf.line(hc_lx, hc_ly, hc_lx - 30, hc_ly)
 text(hc_lx - 30 + 1, hc_ly - 1.2,
-     f"16 × Φ{M3_DIAM:g} 通孔 + Φ{CB_DIAM:g}×{CB_DEPTH:g} 沉孔 (底面)",
+     f"16 × Φ{M3_DIAM:g} 通孔 + 底面沉孔 Φ{CB_DIAM:g}",
+     size=TXT_D, anchor="start")
+text(hc_lx - 30 + 1, hc_ly + 4.0,
+     (f"内圈 8× 深 {INNER_CB_DEPTH:g} / 外圈 8× 深 {OUTER_CB_DEPTH:g}"
+      if not CB_DEPTHS_EQUAL else f"16× 深 {INNER_CB_DEPTH:g}"),
      size=TXT_D, anchor="start")
 
 # Boss-cutout group callout — leader from cutout 1 midpoint (~5°), to the
 # right-of-disc area, sitting BELOW the section view's upper boundary.
-cm_a = math.radians((CUT1_A_S + CUT1_A_E) / 2)
-cm_x = ccx + (R_BO - 4) * math.cos(cm_a)
-cm_y = ccy - (R_BO - 4) * math.sin(cm_a)
-cm_lx, cm_ly = tv(110, -78)
-pdf.line(cm_x, cm_y, cm_lx, cm_ly)
-pdf.line(cm_lx, cm_ly, cm_lx + 8, cm_ly)
-text(cm_lx + 8 + 1, cm_ly - 1.2,
-     f"凸圈缺口 {CUT1_A_S:g}°–{CUT1_A_E:g}° / {CUT2_A_S:g}°–{CUT2_A_E:g}° (仅去除凸圈)",
-     size=TXT_D, anchor="start")
+# v4 (2026-07-30) 已把两个缺口去掉 → CUTOUT_ENABLE=False 时整条引注不画
+# (2026-09-01 修: 原来这块没套 guard, 图上一直标着实件没有的缺口)。
+if CUTOUT_ENABLE:
+    cm_a = math.radians((CUT1_A_S + CUT1_A_E) / 2)
+    cm_x = ccx + (R_BO - 4) * math.cos(cm_a)
+    cm_y = ccy - (R_BO - 4) * math.sin(cm_a)
+    cm_lx, cm_ly = tv(110, -78)
+    pdf.line(cm_x, cm_y, cm_lx, cm_ly)
+    pdf.line(cm_lx, cm_ly, cm_lx + 8, cm_ly)
+    text(cm_lx + 8 + 1, cm_ly - 1.2,
+         f"凸圈缺口 {CUT1_A_S:g}°–{CUT1_A_E:g}° / {CUT2_A_S:g}°–{CUT2_A_E:g}° (仅去除凸圈)",
+         size=TXT_D, anchor="start")
 
 # ===== SECTION A-A (1:1) =====
 # Layout: page is 420 wide. Section center at 295. Right edge of dim chain at
@@ -366,8 +381,9 @@ _w(GEOM_W)
 # "void" through the base; rim boss does NOT cover the hole since hole stays
 # inside R_OBI radially: 36.25 < 82.5 and 77.5 < 82.5).
 def draw_hole_profile(t0):
-    # CB sits at Z=0..CB_DEPTH, half-width CB_DIAM/2
-    # M3 sits at Z=CB_DEPTH..BASE_T, half-width M3_DIAM/2
+    # CB sits at Z=0..cb_d, half-width CB_DIAM/2   (cb_d 内外圈不同)
+    # M3 sits at Z=cb_d..BASE_T, half-width M3_DIAM/2
+    CB_DEPTH = cb_depth_at(t0)
     hcb = CB_DIAM / 2
     hm3 = M3_DIAM / 2
     # Left CB wall + step + M3 wall
@@ -501,12 +517,16 @@ DB_DIM_O = 12.0
 def db(t, z): return (db_cx + t * DB_SCALE, db_cy - z * DB_SCALE)
 
 text(db_cx, db_cy - BASE_T * DB_SCALE - DB_DIM_O - 6,
-     "详图 B  Detail B  (3:1)   尺寸单位: mm",
+     ("详图 B  Detail B  (3:1)   内圈孔 (PCD Φ%g)   尺寸单位: mm" % INNER_PCD
+      if not CB_DEPTHS_EQUAL else "详图 B  Detail B  (3:1)   尺寸单位: mm"),
      size=TXT_L, anchor="middle")
 
 DB_HALF_BASE = 8.0           # 16mm wide base context
 DB_HALF_CB   = CB_DIAM / 2   # 3.5
 DB_HALF_M3   = M3_DIAM / 2   # 1.6
+# 两圈沉孔深度不同时, 详图 B 画的是内圈那 8 个 (定子锁紧螺丝的头窝);
+# 外圈在下方用一行文字注明, 剖视图 A-A 里两种深度都按实画。
+CB_DEPTH     = INNER_CB_DEPTH
 
 _w(GEOM_W)
 # Bottom edge with CB gap
@@ -548,6 +568,11 @@ hdim(db(-DB_HALF_M3, 0)[0], db(DB_HALF_M3, 0)[0],
      db(0, BASE_T)[1], db(0, BASE_T)[1] - DB_DIM_O,
      f"Φ{M3_DIAM:g}")
 
+if not CB_DEPTHS_EQUAL:
+    text(db_cx, db_cy + DB_DIM_O + 6.5,
+         f"外圈 8 孔 (PCD Φ{OUTER_PCD:g}) 同, 沉孔 Φ{CB_DIAM:g} × 深 {OUTER_CB_DEPTH:g}",
+         size=TXT_D, anchor="middle")
+
 # ===== Title block =====
 tb_y = PAGE_H - 32
 tb_x, tb_w, tb_h = 20, PAGE_W - 40, 18
@@ -562,11 +587,12 @@ text(tb_x + tb_w - 4, tb_y + 6,
      size=TXT_I, anchor="end")
 text(tb_x + 4, tb_y + 14.5,
      f"Φ{BASE_OD:g}/Φ{BASE_ID:g}×{BASE_T:g} 基环 / 凸圈 Φ{BOSS_OD:g}/Φ{BOSS_ID:g}×{BOSS_H:g} / "
-     f"16×Φ{M3_DIAM:g} + Φ{CB_DIAM:g}×{CB_DEPTH:g} 沉孔 / "
-     f"凸圈缺口 {CUT1_A_S:g}°–{CUT1_A_E:g}°, {CUT2_A_S:g}°–{CUT2_A_E:g}°  /  单位 mm",
+     f"16×Φ{M3_DIAM:g} + 沉孔 Φ{CB_DIAM:g} (内 {INNER_CB_DEPTH:g} / 外 {OUTER_CB_DEPTH:g}) / "
+     + (f"凸圈缺口 {CUT1_A_S:g}°–{CUT1_A_E:g}°, {CUT2_A_S:g}°–{CUT2_A_E:g}°"
+        if CUTOUT_ENABLE else "凸圈整圈无缺口 (v4)") + "  /  单位 mm",
      size=TXT_I, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 14.5,
-     "2026-06-04  /  POV3D / models / mounting_flange / mounting_flange_v4.stl",
+     "2026-09-01  /  POV3D / v4 / mounting_flange_v4 / mounting_flange_v4.stl",
      size=TXT_I, anchor="end")
 
 out = Path(__file__).with_name("mounting_flange_v4_drawing.pdf")

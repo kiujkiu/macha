@@ -37,7 +37,10 @@ TOTAL_H   = BASE_T + BOSS_H   # 10
 
 M3_DIAM   = 3.2
 CB_DIAM   = 7.0
-CB_DEPTH  = 2.0
+# 2026-09-01 用户: 中间 (内圈 PCD Φ72.5) 那 8 个沉孔深度 2 → 0.5。
+# 外圈 (PCD Φ155) 8 个保持 2。基盘只有 3 厚, 内圈挖 0.5 后底下还剩 2.5 (原来只剩 1)。
+INNER_CB_DEPTH = 0.5
+OUTER_CB_DEPTH = 2.0
 N_HOLES   = 8
 HOLE_ROTATION = 22.5  # CCW 22.5°
 
@@ -98,9 +101,10 @@ part = base + rim_boss
 
 # ===== Hole pattern: 16 M3 + Φ7 counterbore (from bottom) =====
 hole_h = BASE_T + 2.0
-cb_h   = CB_DEPTH + 1.0
 
-for hole_R in (INNER_HOLE_R, OUTER_HOLE_R):
+for hole_R, cb_depth in ((INNER_HOLE_R, INNER_CB_DEPTH),
+                         (OUTER_HOLE_R, OUTER_CB_DEPTH)):
+    cb_h = cb_depth + 1.0
     for k in range(N_HOLES):
         ang = math.radians(k * 360.0 / N_HOLES + HOLE_ROTATION)
         cx = hole_R * math.cos(ang)
@@ -109,7 +113,7 @@ for hole_R in (INNER_HOLE_R, OUTER_HOLE_R):
         h = m3d.Manifold.cylinder(hole_h, M3_DIAM / 2, M3_DIAM / 2, HOLE_SEG, False)
         h = h.translate((cx, cy, -1.0))
         part = part - h
-        # Φ7 counterbore (from Z=0 up to Z=CB_DEPTH, with 1mm undercut)
+        # Φ7 counterbore (from Z=0 up to Z=cb_depth, with 1mm undercut)
         cb = m3d.Manifold.cylinder(cb_h, CB_DIAM / 2, CB_DIAM / 2, HOLE_SEG, False)
         cb = cb.translate((cx, cy, -1.0))
         part = part - cb
@@ -143,4 +147,7 @@ print(f"  volume:        {part.volume():10.2f} mm^3")
 print(f"  surface area:  {part.surface_area():10.2f} mm^2")
 print(f"  inner hole PCD R = {INNER_HOLE_R}  ({N_HOLES} holes @ 0°,45°,...,315°)")
 print(f"  outer hole PCD R = {OUTER_HOLE_R}  ({N_HOLES} holes @ 0°,45°,...,315°)")
+print(f"  底面沉孔 Φ{CB_DIAM:g}: 内圈 8× 深 {INNER_CB_DEPTH:g} (剩肉 {BASE_T-INNER_CB_DEPTH:g}) / "
+      f"外圈 8× 深 {OUTER_CB_DEPTH:g} (剩肉 {BASE_T-OUTER_CB_DEPTH:g})"
+      + ("" if INNER_CB_DEPTH == OUTER_CB_DEPTH else "   [内圈 2026-09-01 由 2 改 0.5]"))
 print("  rim boss cutouts: " + (f"{CUT1_A_S:g}°..{CUT1_A_E:g}° and {CUT2_A_S:g}°..{CUT2_A_E:g}° (boss only)" if CUTOUT_ENABLE else "已去掉 → 外圈凸台整圈 (v4)"))
