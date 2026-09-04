@@ -1,0 +1,150 @@
+// POV 3D baseplate_collar — merged baseplate + ring collar (parametric)
+//
+// Combines:
+//   - baseplate (93.5×93.5×5 + 四角 R62.28 圆弧, central boss Φ65/Φ55 H23)
+//   - ring collar Φ80/Φ65 H13, sleeved over boss
+// Both notches aligned at 75°–105° (+Y direction).
+
+base_thick      = 5;
+
+m6_diag         = 75 * sqrt(2);       // 106.07 (2026-07-29 v4: 配 200×200 网格板)
+m6_pattern_side = m6_diag / sqrt(2);   // = 75 方形边长 → 脚落网格位 (±37.5,±37.5)
+m6_diam         = 6.5;
+
+// 外形裁切 (2026-08-19): 角孔用 M6 大扁头 (Φ12.5×2.6), 头坐底盘顶面无沉孔。
+// 直边 = 37.5 + 6.25 + 壁3 = ±46.75 (边长 93.5); 角弧 = 53.033 + 6.25 + 3 = R62.283。
+// ⚠ 壁 3 是四角吃 M6 预紧力的最小肉厚, 别再压。
+trim_enable     = true;
+m6_head_d       = 12.5;
+edge_wall       = 3;
+base_half       = m6_pattern_side/2 + m6_head_d/2 + edge_wall;   // 46.75
+base_side       = trim_enable ? 2*base_half : 100;               // 93.5
+corner_r        = sqrt(2)*m6_pattern_side/2 + m6_head_d/2 + edge_wall;  // 62.283
+corner_seg      = 128;
+// $fn 多边形是内接的, 按外接放大, 让内切圆正好 = corner_r (与 build_stl.py 一致)
+corner_r_poly   = corner_r / cos(180/corner_seg);
+
+m3_rot          = 0;    // 2026-07-30: 曾试 45° (孔落坐标轴), 用户改回 0
+m3_diag         = 25;
+m3_diam         = 3.2;
+cb_diam         = 7;
+cb_depth        = 2;
+
+center_cb_diam  = 12;
+center_cb_depth = 1;
+
+boss_od         = 65;
+boss_id         = 55;
+boss_h          = 23;   // h28 变体: 降高前的 23 (现行件 20.5)
+
+// 2026-07-29 v4 (用户"补成整圈"): 走线缺口取消 → 凸台/套环整圈连续。
+// ⚠ 该缺口原是电机线唯一出口, 关掉后需另想走线方案。
+notch_enable    = true;
+notch_a_start   = 75;
+notch_a_end     = 105;
+notch_h         = 8;
+
+collar_od         = 84;  // 80→84 (2026-07-10) 螺母孔加肉, M6帽Φ12.5留1.75
+collar_id         = 65;       // = boss_od
+collar_h          = 13;   // h28 变体: 降高前的 13 (现行件 10.5)
+collar_z0         = base_thick;
+collar_notch_h    = 8;  // 6→8 (2026-07-13) 与凸台同高
+                        // 降幅改 2.5 后套环 10.5 > 缺口 8, 缺口之上还留 2.5 过桥 (降 5 那版会吃满全高成 C 形)
+
+// flange_disc 连接孔 (2026-07-10): flange 内圈 8 孔 (PCD 72.5) 坐在套环顶面
+flange_hole_r   = 36.25;      // = PCD 72.5 / 2, 套环壁 32.5..40 正中
+flange_m3_diam  = 3.2;
+flange_cb_diam  = 4.2;        // M3×4×4.5 铜花螺母
+flange_cb_depth = 4;
+flange_cb_top   = false;      // 顶面沉孔 2026-08-28 用户取消 (true = 恢复)
+flange_cb_bot   = true;       // 底面沉孔 = 真正压铜花螺母的那 8 个
+collar_top      = collar_z0 + collar_h;   // 15.5 (降 2.5 后)
+
+// derived
+m3_side    = m3_diag / sqrt(2);
+m3_holes   = [ for (sx = [-1,1], sy = [-1,1])
+               [ sx*m3_side/2*cos(m3_rot) - sy*m3_side/2*sin(m3_rot),
+                 sx*m3_side/2*sin(m3_rot) + sy*m3_side/2*cos(m3_rot) ] ];
+notch_r    = boss_od / 2 + 2;
+collar_notch_r = collar_od / 2 + 2;
+
+module baseplate_collar_v4_h28() {
+  difference() {
+    union() {
+        // === base with holes (no notch cuts the base) ===
+        difference() {
+            intersection() {
+                translate([-base_side/2, -base_side/2, 0])
+                    cube([base_side, base_side, base_thick]);
+                if (trim_enable)
+                    cylinder(h = base_thick, r = corner_r_poly, $fn = corner_seg);
+                else
+                    translate([-base_side/2, -base_side/2, 0])
+                        cube([base_side, base_side, base_thick]);
+            }
+            for (sx = [-1, 1]) for (sy = [-1, 1])
+                translate([sx * m6_pattern_side/2, sy * m6_pattern_side/2, -1])
+                    cylinder(h = base_thick + 2, d = m6_diam, $fn = 48);
+            for (h3 = m3_holes) {                    // 4×M3 电机孔 (整组转 m3_rot)
+                translate([h3[0], h3[1], -1])
+                    cylinder(h = base_thick + 2, d = m3_diam, $fn = 32);
+                translate([h3[0], h3[1], -1])
+                    cylinder(h = cb_depth + 1, d = cb_diam, $fn = 48);
+            }
+            // 中央 Φ12 沉孔（顶面向下 1mm）
+            translate([0, 0, base_thick - center_cb_depth])
+                cylinder(h = center_cb_depth + 1, d = center_cb_diam, $fn = 64);
+        }
+
+        // === boss with notch ===
+        translate([0, 0, base_thick]) difference() {
+            difference() {
+                cylinder(h = boss_h, d = boss_od, $fn = 96);
+                translate([0, 0, -1])
+                    cylinder(h = boss_h + 2, d = boss_id, $fn = 96);
+            }
+            if (notch_enable)
+            linear_extrude(height = notch_h + 0.1)
+                polygon(concat(
+                    [[0, 0]],
+                    [for (i = [0:24])
+                        let (a = notch_a_start + i*(notch_a_end - notch_a_start)/24)
+                        [notch_r*cos(a), notch_r*sin(a)]]
+                ));
+        }
+
+        // === ring collar (sleeved over boss) with aligned notch ===
+        translate([0, 0, collar_z0]) difference() {
+            difference() {
+                cylinder(h = collar_h, d = collar_od, $fn = 128);
+                translate([0, 0, -1])
+                    cylinder(h = collar_h + 2, d = collar_id, $fn = 128);
+            }
+            if (notch_enable)
+            translate([0, 0, -0.05])
+                linear_extrude(height = collar_notch_h + 0.1)
+                    polygon(concat(
+                        [[0, 0]],
+                        [for (i = [0:28])
+                            let (a = notch_a_start + i*(notch_a_end - notch_a_start)/28)
+                            [collar_notch_r*cos(a), collar_notch_r*sin(a)]]
+                    ));
+        }
+    }
+    // === 8× flange_disc 连接孔: Φ3.2 通 (Z0..collar_top=13) + Φ4.2×4 沉孔 (2026-08-28 只剩底面) ===
+    for (k = [0:7]) {
+        a = 22.5 + 45 * k;
+        translate([flange_hole_r*cos(a), flange_hole_r*sin(a), -1])
+            cylinder(h = collar_top + 2, d = flange_m3_diam, $fn = 32);
+        if (flange_cb_top)
+            translate([flange_hole_r*cos(a), flange_hole_r*sin(a),
+                       collar_top - flange_cb_depth])
+                cylinder(h = flange_cb_depth + 1, d = flange_cb_diam, $fn = 32);
+        if (flange_cb_bot)
+            translate([flange_hole_r*cos(a), flange_hole_r*sin(a), -1])
+                cylinder(h = flange_cb_depth + 1, d = flange_cb_diam, $fn = 32);
+    }
+  }
+}
+
+baseplate_collar_v4_h28();
