@@ -3,16 +3,20 @@ Generate a 2D engineering drawing (PDF, A3 landscape) for the POV3D
 mounting flange.
 
 Two views + one detail:
-  1) TOP VIEW       (俯视图, 1:1)        — disc outline, rim-boss ring (broken
-                                          in two angular wedges at 0°-10° and
-                                          40°-50°), all 16 M3+CB holes with
-                                          dashed Φ7 CB and crosshair, PCD
-                                          arcs.
+  1) TOP VIEW       (俯视图, 1:1)        — disc outline, rim-boss ring (full
+                                          ring in v4), all 16 Φ3.2 holes with
+                                          crosshair + PCD arcs. Only the outer
+                                          8 carry a dashed Φ7 CB (hidden, on
+                                          the bottom face); the inner 8 are
+                                          plain through-holes since 2026-09-07.
   2) SECTION A-A    (剖视图 A-A, 1:1)    — cut at 90° (+Y axis), which passes
                                           through the inner-PCD and outer-PCD
                                           holes at 90°. Rim boss is intact on
                                           both sides.
-  3) DETAIL B       (详图 B, 3:1)        — zoom on one M3+CB stepped hole.
+  3) DETAIL B       (详图 B, 3:1)        — zoom on one OUTER M3+CB stepped
+                                          hole (the only counterbored ones
+                                          left). 内圈 8 个是纯通孔, 按项目规则
+                                          不需要详图。
 """
 
 import math
@@ -31,20 +35,40 @@ TOTAL_H = BASE_T + BOSS_H   # 10
 
 M3_DIAM  = 3.2
 CB_DIAM  = 7.0
-# 与 build_stl.py 的 INNER_CB_DEPTH / OUTER_CB_DEPTH 必须一致
-# (本图纸参数是复刻不是 import)。2026-09-01 用户: 内圈 8 个由 2 改 0.5。
-INNER_CB_DEPTH = 0.5
+# 与 build_stl.py 的 INNER/OUTER_CB_ENABLE + _DEPTH 必须一致
+# (本图纸参数是复刻不是 import)。内圈那 8 个改过三轮:
+#   2026-09-01 深度 2 → 0.5
+#   2026-09-07 「中间8个沉孔取消」⇒ 成纯 Φ3.2 通孔
+#   2026-09-07 「恢复, 深度 2mm」⇒ **回到 Φ7×2, 与外圈同规格** (CB_SAME=True,
+#              详图 B 随之回到不分内外的通用画法)
+INNER_CB_ENABLE = True
+OUTER_CB_ENABLE = True
+INNER_CB_DEPTH = 2.0      # 2026-09-07 恢复
 OUTER_CB_DEPTH = 2.0
-CB_DEPTHS_EQUAL = (INNER_CB_DEPTH == OUTER_CB_DEPTH)
+CB_SAME = (INNER_CB_ENABLE == OUTER_CB_ENABLE
+           and (not INNER_CB_ENABLE or INNER_CB_DEPTH == OUTER_CB_DEPTH))
 N_HOLES  = 8
 HOLE_ROTATION = 22.5  # CCW 22.5°
 
 INNER_HOLE_R = 36.25      # PCD 72.5
 OUTER_HOLE_R = 77.5       # PCD 155
 
+def is_inner(hole_R):
+    return abs(hole_R) < (INNER_HOLE_R + OUTER_HOLE_R) / 2
+
+def has_cb(hole_R):
+    """这一圈还有没有沉孔 (内圈 2026-09-07 起没有了)。"""
+    return INNER_CB_ENABLE if is_inner(hole_R) else OUTER_CB_ENABLE
+
 def cb_depth_at(hole_R):
-    """Which counterbore depth applies at radius hole_R (inner vs outer ring)."""
-    return INNER_CB_DEPTH if abs(hole_R) < (INNER_HOLE_R + OUTER_HOLE_R) / 2 else OUTER_CB_DEPTH
+    """沉孔深度; 没有沉孔的返回 0 (调用方按纯通孔画)。"""
+    if not has_cb(hole_R):
+        return 0.0
+    return INNER_CB_DEPTH if is_inner(hole_R) else OUTER_CB_DEPTH
+
+# 底面开口半宽: 有沉孔的是 Φ7, 没有的就是通孔 Φ3.2
+def bottom_half_at(hole_R):
+    return (CB_DIAM if has_cb(hole_R) else M3_DIAM) / 2
 INNER_PCD = 2 * INNER_HOLE_R
 OUTER_PCD = 2 * OUTER_HOLE_R
 
@@ -170,7 +194,7 @@ text(PAGE_W/2, 13, "POV 3D 安装法兰  Mounting Flange",
      size=TXT_T, anchor="middle")
 text(PAGE_W/2, 19,
      f"基环 Φ{BASE_OD:g}/Φ{BASE_ID:g}×{BASE_T:g} / 外缘凸圈 Φ{BOSS_OD:g}/Φ{BOSS_ID:g}×{BOSS_H:g} / "
-     + f"16×Φ{M3_DIAM:g} 通孔 + 底面沉孔 Φ{CB_DIAM:g} (内圈×{INNER_CB_DEPTH:g} / 外圈×{OUTER_CB_DEPTH:g}) / "
+     + f"16×Φ{M3_DIAM:g} 通孔 + 底面沉孔 Φ{CB_DIAM:g}×{OUTER_CB_DEPTH:g} (内外圈 16 个同规格) / "
      + ((f"凸圈缺口 {CUT1_A_S:g}°–{CUT1_A_E:g}° 及 {CUT2_A_S:g}°–{CUT2_A_E:g}°") if CUTOUT_ENABLE else "外圈凸台整圈无缺口 (v4)"),
      size=TXT_I, anchor="middle")
 
@@ -188,7 +212,8 @@ end2 = tv(0, -R_BO - 14)   # bot  (270°)
 pdf.line(end1[0], end1[1], end2[0], end2[1])
 pdf.set_dash_pattern()
 text(end1[0] + 3, end1[1] + 4, "A", size=6)
-text(end2[0] + 3, end2[1] - 1, "A", size=6)
+# 下端的 A 上移 8: 原位置正好压在底部 Φ65 尺寸标签上 (2026-09-07 修)
+text(end2[0] + 3, end2[1] - 9, "A", size=6)
 
 # ---- Geometry circles ----
 _w(GEOM_W)
@@ -232,14 +257,15 @@ pdf.circle(ccx, ccy, OUTER_HOLE_R, style="D")
 pdf.set_dash_pattern()
 _w(GEOM_W)
 
-# ---- 16 × M3 holes with dashed Φ7 CB (CB is on bottom face = hidden) ----
-def draw_hole(cx, cy):
+# ---- 16 × M3 holes; 只有带沉孔的那圈画虚线 Φ7 (CB 在底面 = 不可见) ----
+def draw_hole(cx, cy, with_cb):
     # M3 through-hole — solid Φ3.2
     pdf.circle(cx, cy, M3_DIAM/2, style="D")
     # CB dashed (hidden from top)
-    pdf.set_dash_pattern(dash=1.5, gap=1.0); _w(HID_W)
-    pdf.circle(cx, cy, CB_DIAM/2, style="D")
-    pdf.set_dash_pattern()
+    if with_cb:
+        pdf.set_dash_pattern(dash=1.5, gap=1.0); _w(HID_W)
+        pdf.circle(cx, cy, CB_DIAM/2, style="D")
+        pdf.set_dash_pattern()
     # tiny crosshair
     pdf.set_dash_pattern(dash=1.2, gap=0.6); _w(0.12)
     pdf.line(cx-4.5, cy, cx+4.5, cy)
@@ -253,7 +279,7 @@ for hole_R in (INNER_HOLE_R, OUTER_HOLE_R):
         a = math.radians(ang_d)
         cx = ccx + hole_R * math.cos(a)
         cy = ccy - hole_R * math.sin(a)
-        draw_hole(cx, cy)
+        draw_hole(cx, cy, has_cb(hole_R))
 
 # Center cross (axis lines) — dashed
 pdf.set_dash_pattern(dash=4, gap=1.5); _w(0.15)
@@ -331,8 +357,8 @@ text(hc_lx - 30 + 1, hc_ly - 1.2,
      f"16 × Φ{M3_DIAM:g} 通孔 + 底面沉孔 Φ{CB_DIAM:g}",
      size=TXT_D, anchor="start")
 text(hc_lx - 30 + 1, hc_ly + 4.0,
-     (f"内圈 8× 深 {INNER_CB_DEPTH:g} / 外圈 8× 深 {OUTER_CB_DEPTH:g}"
-      if not CB_DEPTHS_EQUAL else f"16× 深 {INNER_CB_DEPTH:g}"),
+     (f"16× 深 {INNER_CB_DEPTH:g} (详图 B)" if CB_SAME else
+      f"内圈 8× 深 {INNER_CB_DEPTH:g} / 外圈 8× 深 {OUTER_CB_DEPTH:g} (详图 B)"),
      size=TXT_D, anchor="start")
 
 # Boss-cutout group callout — leader from cutout 1 midpoint (~5°), to the
@@ -349,6 +375,18 @@ if CUTOUT_ENABLE:
     text(cm_lx + 8 + 1, cm_ly - 1.2,
          f"凸圈缺口 {CUT1_A_S:g}°–{CUT1_A_E:g}° / {CUT2_A_S:g}°–{CUT2_A_E:g}° (仅去除凸圈)",
          size=TXT_D, anchor="start")
+
+# ---- 详图 B 标记圆: 圈住 292.5° 那个外圈孔 (下方空白区, 避开左侧引注) ----
+if OUTER_CB_ENABLE:
+    _db_a = math.radians(292.5)
+    _db_x = ccx + OUTER_HOLE_R * math.cos(_db_a)
+    _db_y = ccy - OUTER_HOLE_R * math.sin(_db_a)
+    pdf.set_dash_pattern(dash=2.0, gap=1.2); _w(0.25)
+    pdf.circle(_db_x, _db_y, 6.5, style="D")
+    pdf.set_dash_pattern()
+    _w(EXT_W)
+    pdf.line(_db_x + 4.6, _db_y + 4.6, _db_x + 13, _db_y + 13)
+    text(_db_x + 14.5, _db_y + 15.5, "B", size=TXT_L, anchor="start")
 
 # ===== SECTION A-A (1:1) =====
 # Layout: page is 420 wide. Section center at 295. Right edge of dim chain at
@@ -381,19 +419,23 @@ _w(GEOM_W)
 # "void" through the base; rim boss does NOT cover the hole since hole stays
 # inside R_OBI radially: 36.25 < 82.5 and 77.5 < 82.5).
 def draw_hole_profile(t0):
-    # CB sits at Z=0..cb_d, half-width CB_DIAM/2   (cb_d 内外圈不同)
-    # M3 sits at Z=cb_d..BASE_T, half-width M3_DIAM/2
+    # 有沉孔: CB 在 Z=0..cb_d (半宽 Φ7/2), M3 在 Z=cb_d..BASE_T (半宽 Φ3.2/2)
+    # 无沉孔 (内圈, 2026-09-07 起): 就是两条到顶的直壁
     CB_DEPTH = cb_depth_at(t0)
     hcb = CB_DIAM / 2
     hm3 = M3_DIAM / 2
-    # Left CB wall + step + M3 wall
-    line(*sa(t0 - hcb, 0),         *sa(t0 - hcb, CB_DEPTH), GEOM_W)
-    line(*sa(t0 - hcb, CB_DEPTH),  *sa(t0 - hm3, CB_DEPTH), GEOM_W)
-    line(*sa(t0 - hm3, CB_DEPTH),  *sa(t0 - hm3, BASE_T),   GEOM_W)
-    # Right side
-    line(*sa(t0 + hcb, 0),         *sa(t0 + hcb, CB_DEPTH), GEOM_W)
-    line(*sa(t0 + hcb, CB_DEPTH),  *sa(t0 + hm3, CB_DEPTH), GEOM_W)
-    line(*sa(t0 + hm3, CB_DEPTH),  *sa(t0 + hm3, BASE_T),   GEOM_W)
+    if CB_DEPTH <= 0:
+        line(*sa(t0 - hm3, 0), *sa(t0 - hm3, BASE_T), GEOM_W)
+        line(*sa(t0 + hm3, 0), *sa(t0 + hm3, BASE_T), GEOM_W)
+    else:
+        # Left CB wall + step + M3 wall
+        line(*sa(t0 - hcb, 0),         *sa(t0 - hcb, CB_DEPTH), GEOM_W)
+        line(*sa(t0 - hcb, CB_DEPTH),  *sa(t0 - hm3, CB_DEPTH), GEOM_W)
+        line(*sa(t0 - hm3, CB_DEPTH),  *sa(t0 - hm3, BASE_T),   GEOM_W)
+        # Right side
+        line(*sa(t0 + hcb, 0),         *sa(t0 + hcb, CB_DEPTH), GEOM_W)
+        line(*sa(t0 + hcb, CB_DEPTH),  *sa(t0 + hm3, CB_DEPTH), GEOM_W)
+        line(*sa(t0 + hm3, CB_DEPTH),  *sa(t0 + hm3, BASE_T),   GEOM_W)
     # tiny centerline (dashed)
     pdf.set_dash_pattern(dash=2, gap=1); _w(0.12)
     pdf.line(*sa(t0, -2), *sa(t0, BASE_T + 2))
@@ -408,7 +450,8 @@ hole_t = sorted([-OUTER_HOLE_R, -INNER_HOLE_R, INNER_HOLE_R, OUTER_HOLE_R])
 # Build a list of "gap" intervals on z=0
 gaps_bot = []
 for t0 in hole_t:
-    gaps_bot.append((t0 - CB_DIAM/2, t0 + CB_DIAM/2))
+    _h = bottom_half_at(t0)
+    gaps_bot.append((t0 - _h, t0 + _h))
 gaps_bot.sort()
 
 t_prev = -R_BO
@@ -512,21 +555,22 @@ hdim(sa(-R_BO, 0)[0], sa(R_BO, 0)[0],
 
 # ===== DETAIL B (3:1) — M3 + Φ7 CB stepped hole stack =====
 DB_SCALE = 3.0
-db_cx, db_cy = sa_t_zero_x, 248
+db_cx, db_cy = sa_t_zero_x, 236
 DB_DIM_O = 12.0
 def db(t, z): return (db_cx + t * DB_SCALE, db_cy - z * DB_SCALE)
 
 text(db_cx, db_cy - BASE_T * DB_SCALE - DB_DIM_O - 6,
-     ("详图 B  Detail B  (3:1)   内圈孔 (PCD Φ%g)   尺寸单位: mm" % INNER_PCD
-      if not CB_DEPTHS_EQUAL else "详图 B  Detail B  (3:1)   尺寸单位: mm"),
+     ("详图 B  Detail B  (3:1)   外圈孔 (PCD Φ%g)   尺寸单位: mm" % OUTER_PCD
+      if not CB_SAME else "详图 B  Detail B  (3:1)   尺寸单位: mm"),
      size=TXT_L, anchor="middle")
 
 DB_HALF_BASE = 8.0           # 16mm wide base context
 DB_HALF_CB   = CB_DIAM / 2   # 3.5
 DB_HALF_M3   = M3_DIAM / 2   # 1.6
-# 两圈沉孔深度不同时, 详图 B 画的是内圈那 8 个 (定子锁紧螺丝的头窝);
-# 外圈在下方用一行文字注明, 剖视图 A-A 里两种深度都按实画。
-CB_DEPTH     = INNER_CB_DEPTH
+# 2026-09-07 内圈恢复成 Φ7×2 后, 内外圈 16 个孔完全同规格 → 详图 B 一张通用,
+# 下方不再需要那行「内圈另有说明」(由 CB_SAME 控制)。
+# 剖视图 A-A 里两圈按各自 cb_depth_at() 画, 现在自然一致。
+CB_DEPTH     = OUTER_CB_DEPTH
 
 _w(GEOM_W)
 # Bottom edge with CB gap
@@ -568,9 +612,11 @@ hdim(db(-DB_HALF_M3, 0)[0], db(DB_HALF_M3, 0)[0],
      db(0, BASE_T)[1], db(0, BASE_T)[1] - DB_DIM_O,
      f"Φ{M3_DIAM:g}")
 
-if not CB_DEPTHS_EQUAL:
+if not CB_SAME:
     text(db_cx, db_cy + DB_DIM_O + 6.5,
-         f"外圈 8 孔 (PCD Φ{OUTER_PCD:g}) 同, 沉孔 Φ{CB_DIAM:g} × 深 {OUTER_CB_DEPTH:g}",
+         (f"内圈 8 孔 (PCD Φ{INNER_PCD:g}) 为 Φ{M3_DIAM:g} 纯通孔, 无沉孔 (2026-09-07 取消)"
+          if not INNER_CB_ENABLE else
+          f"内圈 8 孔 (PCD Φ{INNER_PCD:g}) 沉孔 Φ{CB_DIAM:g} × 深 {INNER_CB_DEPTH:g}"),
          size=TXT_D, anchor="middle")
 
 # ===== Title block =====
@@ -587,12 +633,13 @@ text(tb_x + tb_w - 4, tb_y + 6,
      size=TXT_I, anchor="end")
 text(tb_x + 4, tb_y + 14.5,
      f"Φ{BASE_OD:g}/Φ{BASE_ID:g}×{BASE_T:g} 基环 / 凸圈 Φ{BOSS_OD:g}/Φ{BOSS_ID:g}×{BOSS_H:g} / "
-     f"16×Φ{M3_DIAM:g} + 沉孔 Φ{CB_DIAM:g} (内 {INNER_CB_DEPTH:g} / 外 {OUTER_CB_DEPTH:g}) / "
+     + (f"16×Φ{M3_DIAM:g} + 沉孔 Φ{CB_DIAM:g}×{INNER_CB_DEPTH:g} (内外圈同) / " if CB_SAME else
+        f"16×Φ{M3_DIAM:g} + 沉孔 Φ{CB_DIAM:g} (内 {INNER_CB_DEPTH:g} / 外 {OUTER_CB_DEPTH:g}) / ")
      + (f"凸圈缺口 {CUT1_A_S:g}°–{CUT1_A_E:g}°, {CUT2_A_S:g}°–{CUT2_A_E:g}°"
         if CUTOUT_ENABLE else "凸圈整圈无缺口 (v4)") + "  /  单位 mm",
      size=TXT_I, anchor="start")
 text(tb_x + tb_w - 4, tb_y + 14.5,
-     "2026-09-01  /  POV3D / v4 / mounting_flange_v4 / mounting_flange_v4.stl",
+     "2026-09-07  /  POV3D / v4 / mounting_flange_v4 / mounting_flange_v4.stl",
      size=TXT_I, anchor="end")
 
 out = Path(__file__).with_name("mounting_flange_v4_drawing.pdf")

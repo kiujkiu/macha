@@ -10,7 +10,9 @@ boss_h          = 7;
 
 m3_diam         = 3.2;
 cb_diam         = 7;
-cb_depth_inner  = 0.5;  // 内圈 (PCD Φ72.5) 沉孔深 — 2026-09-01 用户由 2 改 0.5
+inner_cb_enable = true;  // 内圈 (PCD Φ72.5) 沉孔 — 2026-09-07 用户「恢复, 深度 2mm」
+outer_cb_enable = true;
+cb_depth_inner  = 2;    // 2026-09-07 恢复成 2 (曾 0.5, 曾整个取消) ⇒ 与外圈同规格
 cb_depth_outer  = 2;    // 外圈 (PCD Φ155) 沉孔深
 n_holes         = 8;
 hole_rotation   = 22.5;  // CCW 22.5°
@@ -69,16 +71,18 @@ module mounting_flange_v4() {
             a = k * 360 / n_holes + hole_rotation;
             translate([inner_hole_r*cos(a), inner_hole_r*sin(a), -1])
                 cylinder(h = base_t + 2, d = m3_diam, $fn = 32);
-            translate([inner_hole_r*cos(a), inner_hole_r*sin(a), -1])
-                cylinder(h = cb_depth_inner + 1, d = cb_diam, $fn = 48);
+            if (inner_cb_enable)
+                translate([inner_hole_r*cos(a), inner_hole_r*sin(a), -1])
+                    cylinder(h = cb_depth_inner + 1, d = cb_diam, $fn = 48);
         }
         // ----- 8 × M3 outer holes + Φ7 counterbore -----
         for (k = [0 : n_holes - 1]) {
             a = k * 360 / n_holes + hole_rotation;
             translate([outer_hole_r*cos(a), outer_hole_r*sin(a), -1])
                 cylinder(h = base_t + 2, d = m3_diam, $fn = 32);
-            translate([outer_hole_r*cos(a), outer_hole_r*sin(a), -1])
-                cylinder(h = cb_depth_outer + 1, d = cb_diam, $fn = 48);
+            if (outer_cb_enable)
+                translate([outer_hole_r*cos(a), outer_hole_r*sin(a), -1])
+                    cylinder(h = cb_depth_outer + 1, d = cb_diam, $fn = 48);
         }
     }
 }

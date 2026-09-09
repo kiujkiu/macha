@@ -10,10 +10,11 @@ Geometry (all dimensions mm, axis along +Z):
                             -  0° .. 10° (10° wedge)
                             - 40° .. 50° (10° wedge)
                          The base remains intact under both cutouts.
-  - Hole pattern (16 total, each M3 + Φ7×2 counterbore opening from bottom):
+  - Hole pattern (16 total, all Φ3.2 through Z=0..3, all with Φ7×2 bottom CB):
        Outer PCD 155 (R=77.5), 8 holes at 0°, 45°, ..., 315°
+                              + Φ7 counterbore from bottom, Z=0..2
        Inner PCD 72.5 (R=36.25), 8 holes at 0°, 45°, ..., 315°
-       Each hole: Φ3.2 through (Z=0..3) + Φ7 counterbore (Z=0..2).
+                              + Φ7 counterbore from bottom, Z=0..2
 
 Final orientation: base bottom at Z=0, top of rim boss at Z=10.
 Print orientation: flat on bed, base down.
@@ -37,9 +38,14 @@ TOTAL_H   = BASE_T + BOSS_H   # 10
 
 M3_DIAM   = 3.2
 CB_DIAM   = 7.0
-# 2026-09-01 用户: 中间 (内圈 PCD Φ72.5) 那 8 个沉孔深度 2 → 0.5。
-# 外圈 (PCD Φ155) 8 个保持 2。基盘只有 3 厚, 内圈挖 0.5 后底下还剩 2.5 (原来只剩 1)。
-INNER_CB_DEPTH = 0.5
+# 内圈 (PCD Φ72.5) 那 8 个沉孔 —— 反复改过三轮, 现已回到最初状态:
+#   2026-09-01 用户把深度 2 → 0.5;
+#   2026-09-07 用户「中间8个沉孔取消」⇒ 整个去掉, 成纯 Φ3.2 通孔;
+#   2026-09-07 同日用户「恢复, 深度 2mm」⇒ **回到 Φ7 × 深 2, 与外圈同规格**。
+# 现在内外圈完全一样 (Φ7 × 2), 图纸的详图 B 也随之回到不分内外的通用画法。
+INNER_CB_ENABLE = True
+OUTER_CB_ENABLE = True
+INNER_CB_DEPTH = 2.0      # 2026-09-07 恢复 (曾 0.5, 曾取消)
 OUTER_CB_DEPTH = 2.0
 N_HOLES   = 8
 HOLE_ROTATION = 22.5  # CCW 22.5°
@@ -60,6 +66,10 @@ CUT1_A_S = -5.0
 CUT1_A_E = 0.0
 CUT2_A_S = -45.0
 CUT2_A_E = -40.0
+
+assert CB_DIAM > M3_DIAM, "沉孔必须大于通孔"
+assert not INNER_CB_ENABLE or INNER_CB_DEPTH < BASE_T, "内圈沉孔挖穿了基盘"
+assert not OUTER_CB_ENABLE or OUTER_CB_DEPTH < BASE_T, "外圈沉孔挖穿了基盘"
 
 CYL_SEG   = 192       # facets for the big disc
 HOLE_SEG  = 32
@@ -102,8 +112,8 @@ part = base + rim_boss
 # ===== Hole pattern: 16 M3 + Φ7 counterbore (from bottom) =====
 hole_h = BASE_T + 2.0
 
-for hole_R, cb_depth in ((INNER_HOLE_R, INNER_CB_DEPTH),
-                         (OUTER_HOLE_R, OUTER_CB_DEPTH)):
+for hole_R, cb_depth, cb_on in ((INNER_HOLE_R, INNER_CB_DEPTH, INNER_CB_ENABLE),
+                                (OUTER_HOLE_R, OUTER_CB_DEPTH, OUTER_CB_ENABLE)):
     cb_h = cb_depth + 1.0
     for k in range(N_HOLES):
         ang = math.radians(k * 360.0 / N_HOLES + HOLE_ROTATION)
@@ -114,9 +124,10 @@ for hole_R, cb_depth in ((INNER_HOLE_R, INNER_CB_DEPTH),
         h = h.translate((cx, cy, -1.0))
         part = part - h
         # Φ7 counterbore (from Z=0 up to Z=cb_depth, with 1mm undercut)
-        cb = m3d.Manifold.cylinder(cb_h, CB_DIAM / 2, CB_DIAM / 2, HOLE_SEG, False)
-        cb = cb.translate((cx, cy, -1.0))
-        part = part - cb
+        if cb_on:
+            cb = m3d.Manifold.cylinder(cb_h, CB_DIAM / 2, CB_DIAM / 2, HOLE_SEG, False)
+            cb = cb.translate((cx, cy, -1.0))
+            part = part - cb
 
 # ===== Export STL =====
 mesh = part.to_mesh()
@@ -125,7 +136,8 @@ tris  = np.asarray(mesh.tri_verts)
 
 out = Path(__file__).with_name("mounting_flange_v4.stl")
 with out.open("wb") as f:
-    f.write(b"POV3D mounting_flange_v4 OD170 ID65 T3 / rim boss H7 / 2 cutouts / 16 M3+CB".ljust(80, b" "))
+    _hdr = b"POV3D mounting_flange_v4 OD170 ID65 T3 / rim boss H7 full ring / 16 M3"
+    f.write(_hdr.ljust(80, b" ")[:80])   # STL 头必须 <=80 字节并截断
     f.write(struct.pack("<I", len(tris)))
     for t in tris:
         v0, v1, v2 = verts[t[0]], verts[t[1]], verts[t[2]]
@@ -139,6 +151,10 @@ with out.open("wb") as f:
         f.write(struct.pack("<3f", *v2))
         f.write(struct.pack("<H", 0))
 
+_expected = 84 + len(tris) * 50
+assert out.stat().st_size == _expected, \
+    f"STL 大小不对: {out.stat().st_size} != {_expected} (STL 头溢出?)"
+
 print(f"wrote {out}  ({len(tris)} triangles, {len(verts)} vertices)")
 print(f"  bbox X: {verts[:,0].min():8.3f} .. {verts[:,0].max():8.3f}")
 print(f"  bbox Y: {verts[:,1].min():8.3f} .. {verts[:,1].max():8.3f}")
@@ -147,7 +163,10 @@ print(f"  volume:        {part.volume():10.2f} mm^3")
 print(f"  surface area:  {part.surface_area():10.2f} mm^2")
 print(f"  inner hole PCD R = {INNER_HOLE_R}  ({N_HOLES} holes @ 0°,45°,...,315°)")
 print(f"  outer hole PCD R = {OUTER_HOLE_R}  ({N_HOLES} holes @ 0°,45°,...,315°)")
-print(f"  底面沉孔 Φ{CB_DIAM:g}: 内圈 8× 深 {INNER_CB_DEPTH:g} (剩肉 {BASE_T-INNER_CB_DEPTH:g}) / "
-      f"外圈 8× 深 {OUTER_CB_DEPTH:g} (剩肉 {BASE_T-OUTER_CB_DEPTH:g})"
-      + ("" if INNER_CB_DEPTH == OUTER_CB_DEPTH else "   [内圈 2026-09-01 由 2 改 0.5]"))
+_cb_parts = []
+_cb_parts.append(f"内圈 8× 深 {INNER_CB_DEPTH:g} (剩肉 {BASE_T-INNER_CB_DEPTH:g})"
+                 if INNER_CB_ENABLE else "内圈 8× 无 (2026-09-07 取消, 纯 Φ3.2 通孔)")
+_cb_parts.append(f"外圈 8× 深 {OUTER_CB_DEPTH:g} (剩肉 {BASE_T-OUTER_CB_DEPTH:g})"
+                 if OUTER_CB_ENABLE else "外圈 8× 无")
+print(f"  底面沉孔 Φ{CB_DIAM:g}: " + " / ".join(_cb_parts))
 print("  rim boss cutouts: " + (f"{CUT1_A_S:g}°..{CUT1_A_E:g}° and {CUT2_A_S:g}°..{CUT2_A_E:g}° (boss only)" if CUTOUT_ENABLE else "已去掉 → 外圈凸台整圈 (v4)"))
