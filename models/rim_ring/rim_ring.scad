@@ -2,7 +2,7 @@
 // 零件系: Z0 = 托盘承载面 (装配绕 X 翻转后朝上), Z5 = 唇侧面, 总高 10.5。
 // 2026-07-20/21/22: 承载盘并入 (7 pi2hub 孔), 中孔 ID60->50, 内圈 8 孔 R35->30,
 // 内凸台环 OD80/ID70x2.5 (唇侧, 落 hub 底板顶兼径向定心), 挖槽 R40..61,
-// wifi 定稿单组 4 沿孔 (盒 XC43 + 长边平移-13; -15→-13 消除沉孔侵内凸台环), 4 环孔头沉孔 Φ7.5x2.0 (承载面侧, R30+R77.5 @202.5/247.5)。
+// wifi 定稿单组 4 沿孔 (盒 XC43 + 长边平移-13; -15→-13 消除沉孔侵内凸台环), 2 环孔头沉孔 Φ7.5x2.0 (承载面侧, R30 @202.5/247.5; 外圈 R77.5 那 2 个 2026-09-07 取消)。
 // 孔位坐标由 build_stl.py 公式导出 (改参数请以它为准再同步这里)。
 
 base_id  = 50;   base_od = 170;  base_h = 5;      // 托盘环
@@ -13,7 +13,9 @@ notch_a0 = -45;  notch_a1 = -40; notch_deep = 2;  // -45..-40 deg, 唇侧深 2 (
 m3 = 3.2;  inner_pcd_r = 30;  outer_pcd_r = 77.5; // 16 环孔 PCD Φ60 + Φ155
 insert_d = 4.2;  insert_deep = 4.5;               // 铜螺母沉孔 (唇侧往下, 台肩 0.5)
 head_cb_d = 7.5; head_cb_deep = 2.0;              // 4 环孔头沉孔 (承载面侧, 内圈+外圈)
-head_cb_angles = [202.5, 247.5];                  // wifi 角落 4 颗锁紧螺丝 (内圈 2 在模块底下, 外圈 2 挨盒东侧)
+head_cb_angles = [202.5, 247.5];                  // wifi 角落的锁紧螺丝
+head_cb_radii  = [inner_pcd_r];                   // 2026-09-07 用户: 最外层 (outer_pcd_r) 那 2 个沉孔去掉
+                                                  // 原为 [inner_pcd_r, outer_pcd_r]
 extra_d = 4;                                      // 2 Φ4 通孔
 extra_polar = [[-10, 72], [-42.5, 56]];           // (deg, R)
 pi_holes = [[71.418,4.95],[38.184,38.184],[4.95,71.418],[52.679,-3.182],
@@ -49,8 +51,8 @@ difference(){
     thru(inner_pcd_r*cos(a), inner_pcd_r*sin(a));
     thru(outer_pcd_r*cos(a), outer_pcd_r*sin(a));
   }
-  // 4 环孔头沉孔 (承载面 Z0 侧, 内圈 + 外圈)
-  for(a=head_cb_angles) for(r=[inner_pcd_r, outer_pcd_r])
+  // 环孔头沉孔 (承载面 Z0 侧; 2026-09-07 起只剩内圈 2 个)
+  for(a=head_cb_angles) for(r=head_cb_radii)
     translate([r*cos(a), r*sin(a), -1])
       cylinder(h=head_cb_deep+1, d=head_cb_d, $fn=48);
   // 7 pi2hub 孔 + 4 wifi 沿孔 (Φ3.2 通 + 铜螺母沉孔)

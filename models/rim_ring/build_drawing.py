@@ -66,22 +66,28 @@ _WIFI_LOCAL = [(x, y) for (x, y) in _WIFI_LOCAL
                if math.hypot(x, y) <= 85.0 - 1.6 - 1.0]   # 孔边距盘边 ≥1
 WIFI_HOLES = [(x, -y) for (x, y) in _rot_o(_WIFI_LOCAL, WIFI_ROT)]
 
-# 4 个环孔螺丝头沉孔 (2026-07-22 晚: Φ6.5×2.2 ×2 改 Φ7.5×2.0 ×4): wifi 角落
-# 的 4 颗 ring→hub 锁紧 M3 —— 内圈 R30 + 外圈 R77.5 的 202.5°/247.5° 各 2 孔,
-# 从托盘承载面 (part Z0) 加头沉。内圈 2 颗在放平 wifi 模块肚子底下 (沉平才能
-# 放模块), 外圈 2 颗紧挨盒东侧。其余 12 环孔头仍外露。
+# 环孔螺丝头沉孔 (2026-07-22 晚 Φ6.5×2.2 ×2 → Φ7.5×2.0 ×4; 2026-09-07 砍到 ×2):
+# wifi 角落的 ring→hub 锁紧 M3, 从托盘承载面 (part Z0) 加头沉。
+#   内圈 R30 @202.5°/247.5° 保留 —— 这 2 颗在放平的 wifi 模块肚子底下, 不沉平放不下。
+#   外圈 R77.5 那 2 颗 **2026-09-07 用户取消沉孔**, 成纯 Φ3.2 通孔, 螺丝头外露
+#   (和其余 12 个环孔一样)。与 build_stl.py 的 HEAD_CB_RADII 必须一致。
 HEAD_CB_D, HEAD_CB_DEEP = 7.5, 2.0
 HEAD_CB_ANGLES = (202.5, 247.5)
+HEAD_CB_RADII = (INNER_PCD_R,)          # 2026-09-07: 原 (INNER_PCD_R, OUTER_PCD_R)
 HEAD_CB_XY = [(round(r * math.cos(math.radians(a)), 3),
                round(r * math.sin(math.radians(a)), 3))
-              for r in (INNER_PCD_R, OUTER_PCD_R) for a in HEAD_CB_ANGLES]
+              for r in HEAD_CB_RADII for a in HEAD_CB_ANGLES]
+def head_cb_on(r):
+    """这一圈 (R30 / R77.5) 的 202.5°/247.5° 两孔还有没有头沉孔。"""
+    return r in HEAD_CB_RADII
 
 # sanity: 与 build_stl.py 2026-07-22 定稿输出核对
 assert PI_HOLES[0] == (71.418, 4.95) and PI_HOLES[6] == (-38.537, 17.324)
 assert WIFI_HOLES == [(-42.992, -0.141), (18.243, -61.377),
                       (-60.67, -17.819), (0.566, -79.055)]
-assert HEAD_CB_XY == [(-27.716, -11.481), (-11.481, -27.716),
-                      (-71.601, -29.658), (-29.658, -71.601)]
+_HEAD_CB_ALL = {INNER_PCD_R: [(-27.716, -11.481), (-11.481, -27.716)],
+                OUTER_PCD_R: [(-71.601, -29.658), (-29.658, -71.601)]}
+assert HEAD_CB_XY == [xy for r in HEAD_CB_RADII for xy in _HEAD_CB_ALL[r]]
 
 # ===== PDF setup =====
 _font_paths = ["/mnt/c/Windows/Fonts/simhei.ttf", r"C:\Windows\Fonts\simhei.ttf"]
@@ -184,7 +190,7 @@ text(PAGE_W/2, 20,
      size=TXT_I, anchor="middle")
 text(PAGE_W/2, 25,
      f"扇形挖槽 R{NOTCH_R_MIN:g}..R{NOTCH_R_MAX:g} × {NOTCH_A_S:g}°..{NOTCH_A_E:g}° × 深 {NOTCH_DEPTH:g} / "
-     f"16×Φ{M3_DIAM:g} 通 (PCD Φ60+Φ155, 4 孔加 Φ{HEAD_CB_D:g}×{HEAD_CB_DEEP:g} 头沉) / 7 pi2hub + 4 wifi 沉孔 / 2×Φ{EXTRA_HOLE_D:g} — "
+     f"16×Φ{M3_DIAM:g} 通 (PCD Φ60+Φ155, 其中 {len(HEAD_CB_XY)} 孔加 Φ{HEAD_CB_D:g}×{HEAD_CB_DEEP:g} 头沉) / 7 pi2hub + 4 wifi 沉孔 / 2×Φ{EXTRA_HOLE_D:g} — "
      "注意: 零件系 Z0 托盘面 = 装配后朝上的承载面 (装配绕 X 翻转)",
      size=TXT_I, anchor="middle")
 
@@ -265,7 +271,7 @@ for i, (x, y) in enumerate(PI_HOLES):
 for i, (x, y) in enumerate(WIFI_HOLES):
     dy = -2.8 if i == 0 else -2.0   # W1 标号稍抬, 避开水平中心线
     marked_hole(x, y, f"W{i+1}", 2.4, dy)
-# 4×Φ7.5×2 头沉孔 (承载面 Z0 侧开 → 俯视为隐藏, 虚线) @ 内/外圈 202.5°/247.5°
+# Φ7.5×2 头沉孔 (承载面 Z0 侧开 → 俯视为隐藏, 虚线); 2026-09-07 起只剩内圈 2 个
 # H2 标号下移避开 Φ50 圆; H3 标号上移避开 A-A 剖切线
 _H_OFF = {1: (2.4, 4.2), 2: (2.4, -4.6)}
 for i, (x, y) in enumerate(HEAD_CB_XY):
@@ -289,7 +295,11 @@ note(*pv(*_h155), 14, 26, f"8×Φ{M3_DIAM:g} 通孔 均布 PCD Φ{2*OUTER_PCD_R:
 _h60 = (INNER_PCD_R*math.cos(math.radians(157.5)), INNER_PCD_R*math.sin(math.radians(157.5)))
 note(*pv(*_h60), 14, 34, f"8×Φ{M3_DIAM:g} 通孔 均布 PCD Φ{2*INNER_PCD_R:g} (22.5°+k·45°)")
 note(*pv(*HEAD_CB_XY[0]), 14, 42,
-     f"4×Φ{HEAD_CB_D:g}×{HEAD_CB_DEEP:g} 头沉孔 (承载面 Z0 侧, 内圈 2 在 wifi 模块底下 / 外圈 2 挨盒东侧), 见表④")
+     f"{len(HEAD_CB_XY)}×Φ{HEAD_CB_D:g}×{HEAD_CB_DEEP:g} 头沉孔 (承载面 Z0 侧, 内圈 PCD Φ{2*INNER_PCD_R:g} 的 2 颗, 在 wifi 模块底下), 见表④")
+if not head_cb_on(OUTER_PCD_R):
+    note(*pv(OUTER_PCD_R*math.cos(math.radians(202.5)),
+             OUTER_PCD_R*math.sin(math.radians(202.5))), 14, 50,
+         f"外圈 PCD Φ{2*OUTER_PCD_R:g} @202.5°/247.5° 那 2 颗: 沉孔已取消 (2026-09-07), 纯 Φ{M3_DIAM:g} 通孔")
 # 引出说明 — 底部
 note(*pv(*PI_HOLES[5]), 12, 246,
      f"7×pi2hub 孔: Φ{PI_THRU_D:g} 通 + Φ{PI_INSERT_D:g}×{PI_INSERT_DEEP:g} 沉孔 (唇侧), 孔位见表①")
@@ -334,15 +344,17 @@ for sgn in (1, -1):
     line(*sa(X(R_RI), BASE_H), *sa(X(R_RI), TOTAL_H), GEOM_W)
     line(*sa(X(R_RI), TOTAL_H), *sa(X(R_BO), TOTAL_H), GEOM_W)
     line(*sa(X(R_BO), TOTAL_H), *sa(X(R_BO), 0), GEOM_W)
-    # 底面 Z0 — 剖切面左半 (202.5°) 内+外圈孔均有 Φ7.5 头沉开口 (H1/H3),
-    # 右半 (22.5°) 两孔为全程 Φ3.2 (对照)
-    has_cb = sgn < 0
-    bw = HCB6 if has_cb else HM3
+    # 底面 Z0 — 剖切面左半 (202.5°): 内圈孔有 Φ7.5 头沉开口 (H1); 外圈孔
+    # 2026-09-07 起沉孔取消 → 全程 Φ3.2。右半 (22.5°) 两孔本来就是纯通孔。
+    cb_in  = sgn < 0 and head_cb_on(INNER_PCD_R)
+    cb_out = sgn < 0 and head_cb_on(OUTER_PCD_R)
     xin = sgn * INNER_PCD_R
     xout = sgn * OUTER_PCD_R
+    w_in  = HCB6 if cb_in  else HM3
+    w_out = HCB6 if cb_out else HM3
     # 底边分段 (按孔开口打断)
     edges = sorted([X(R_BI), X(R_BO)])
-    gaps = sorted([(xin - bw, xin + bw), (xout - bw, xout + bw)])
+    gaps = sorted([(xin - w_in, xin + w_in), (xout - w_out, xout + w_out)])
     t_prev = edges[0]
     for gl, gr in gaps:
         if gl > t_prev:
@@ -351,7 +363,7 @@ for sgn in (1, -1):
     if edges[1] > t_prev:
         line(*sa(t_prev, 0), *sa(edges[1], 0), GEOM_W)
     # 孔壁
-    for xc_ in (xin, xout):
+    for xc_, has_cb in ((xin, cb_in), (xout, cb_out)):
         if has_cb:
             for sg2 in (1, -1):
                 line(*sa(xc_ + sg2*HCB6, 0), *sa(xc_ + sg2*HCB6, HEAD_CB_DEEP), GEOM_W)
@@ -390,7 +402,7 @@ note(*sa(-(R_IB_I + R_IB_O)/2, BASE_H + IBOSS_H), 228, 50,
 note(*sa((R_RI + R_BO)/2, TOTAL_H - 1.5), 408, 46,
      f"外唇 Φ{RIM_OD:g}/Φ{RIM_ID:g}×{RIM_H:g} (Z5..10.5, 整圈)", anchor="end")
 note(*sa(-INNER_PCD_R, HEAD_CB_DEEP/2), 211, 112,
-     f"Φ{HEAD_CB_D:g}×{HEAD_CB_DEEP:g} 头沉孔 (Z0 承载面侧, 内+外圈 202.5°/247.5° 共 4 孔, 剖切面过 H1/H3)")
+     f"Φ{HEAD_CB_D:g}×{HEAD_CB_DEEP:g} 头沉孔 (Z0 承载面侧, 内圈 202.5°/247.5° 共 {len(HEAD_CB_XY)} 孔, 剖切面过 H1)")
 
 # =====================================================================
 # 剖面 B–B (2:1) — 沿 -42.5° 半径半剖: 挖槽 + Φ4 孔 + 内凸台环
@@ -499,9 +511,11 @@ text(T2X, 197, "表② wifi_shell 孔位 ×4 (mm)", size=TXT_I)
 text(T2X, 202, "定稿单组: 盒 XC43 + 长边平移 -13", size=TXT_I)
 for i, (x, y) in enumerate(WIFI_HOLES):
     text(T2X, 208 + i*5.5, f"W{i+1}:  {x:+.3f}, {y:+.3f}", size=TXT_I)
-text(T2X, 231, f"表④ Φ{HEAD_CB_D:g}×{HEAD_CB_DEEP:g} 头沉孔 ×4 (承载面 Z0 侧)", size=TXT_I)
-text(T2X, 236, "内圈 2 在 wifi 模块底下 / 外圈 2 挨盒东侧", size=TXT_I)
-_H_RA = [(r, a) for r in (INNER_PCD_R, OUTER_PCD_R) for a in HEAD_CB_ANGLES]
+text(T2X, 231, f"表④ Φ{HEAD_CB_D:g}×{HEAD_CB_DEEP:g} 头沉孔 ×{len(HEAD_CB_XY)} (承载面 Z0 侧)", size=TXT_I)
+text(T2X, 236, ("内圈 2 在 wifi 模块底下; 外圈 2 已取消 (2026-09-07)"
+                if not head_cb_on(OUTER_PCD_R) else
+                "内圈 2 在 wifi 模块底下 / 外圈 2 挨盒东侧"), size=TXT_I)
+_H_RA = [(r, a) for r in HEAD_CB_RADII for a in HEAD_CB_ANGLES]
 for i, ((r, a), (x, y)) in enumerate(zip(_H_RA, HEAD_CB_XY)):
     text(T2X, 242 + i*5.5, f"H{i+1}: R{r:g} @{a:g}° → {x:+.3f}, {y:+.3f}",
          size=TXT_I)
@@ -517,10 +531,10 @@ text(tb_x + tb_w - 4, tb_y + 6,
      anchor="end")
 text(tb_x + 4, tb_y + 14.5,
      f"Φ{BASE_OD:g}×总高 {TOTAL_H:g} / 托盘 {BASE_H:g} + 唇 {RIM_H:g} / 内凸台环 Φ{IBOSS_OD:g}/Φ{IBOSS_ID:g}×{IBOSS_H:g} / "
-     f"挖槽 R{NOTCH_R_MIN:g}..{NOTCH_R_MAX:g} 深 {NOTCH_DEPTH:g} / 16×Φ{M3_DIAM:g} (4 孔加 Φ{HEAD_CB_D:g}×{HEAD_CB_DEEP:g} 头沉) + 11×(Φ{PI_THRU_D:g}+Φ{PI_INSERT_D:g}×{PI_INSERT_DEEP:g} 沉, 7 pi + 4 wifi) + 2×Φ{EXTRA_HOLE_D:g} / "
+     f"挖槽 R{NOTCH_R_MIN:g}..{NOTCH_R_MAX:g} 深 {NOTCH_DEPTH:g} / 16×Φ{M3_DIAM:g} ({len(HEAD_CB_XY)} 孔加 Φ{HEAD_CB_D:g}×{HEAD_CB_DEEP:g} 头沉) + 11×(Φ{PI_THRU_D:g}+Φ{PI_INSERT_D:g}×{PI_INSERT_DEEP:g} 沉, 7 pi + 4 wifi) + 2×Φ{EXTRA_HOLE_D:g} / "
      "Z0 托盘面 = 装配后朝上承载面 (翻转装) / 平放打印 / PETG / 单位 mm", size=TXT_I)
 text(tb_x + tb_w - 4, tb_y + 14.5,
-     "2026-07-22  /  POV3D / models / rim_ring / rim_ring.stl", size=TXT_I,
+     "2026-09-07  /  POV3D / models / rim_ring / rim_ring.stl", size=TXT_I,
      anchor="end")
 
 try:

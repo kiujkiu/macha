@@ -150,15 +150,20 @@ _WIFI_LOCAL = [(x, y) for (x, y) in _WIFI_LOCAL
 _WIFI_ASM = _rot_about_origin(_WIFI_LOCAL, WIFI_ROT)
 WIFI_HOLES = [(x, -y) for (x, y) in _WIFI_ASM]
 
-# ===== 4 个环孔螺丝头沉孔 (2026-07-22; 当晚用户图纸红圈改版) =====
-# wifi 角落的 4 颗 ring→hub 锁紧 M3: 内圈 R30 + 外圈 R77.5 的 202.5°/247.5°
-# 各 2 孔, 从托盘承载面 (part Z0) 统一加 Φ7.5×2.0 头沉孔 (先前 H1/H2 的
-# Φ6.5×2.2 被此规格取代)。内圈 2 颗在放平 wifi 模块肚子底下 (沉平才能放模块),
-# 外圈 2 颗紧挨盒东侧 (CB 边距壳壁 1.65)。其余 12 环孔头仍外露。
+# ===== 环孔螺丝头沉孔 (2026-07-22 定 4 个; 2026-09-07 砍到 2 个) =====
+# wifi 角落的 ring→hub 锁紧 M3, 从托盘承载面 (part Z0) 加 Φ7.5×2.0 头沉孔
+# (先前 H1/H2 的 Φ6.5×2.2 被此规格取代)。
+#   内圈 R30 @202.5°/247.5° —— 保留, 这 2 颗在放平的 wifi 模块肚子底下,
+#                              不沉平放不下模块。
+#   外圈 R77.5 @202.5°/247.5° —— **2026-09-07 用户「最外层那 2 个沉孔去掉」**,
+#                              这 2 颗紧挨盒东侧 (原 CB 边距壳壁 1.65), 改成
+#                              和其余 12 个环孔一样的纯 Φ3.2 通孔, 螺丝头外露。
+# 要恢复就把 OUTER_PCD_R 加回 HEAD_CB_RADII。
 HEAD_CB_D, HEAD_CB_DEEP = 7.5, 2.0
 HEAD_CB_ANGLES = (202.5, 247.5)
+HEAD_CB_RADII = (INNER_PCD_R,)          # 2026-09-07: 原 (INNER_PCD_R, OUTER_PCD_R)
 HEAD_CB_XY = [(r * math.cos(math.radians(a)), r * math.sin(math.radians(a)))
-              for r in (INNER_PCD_R, OUTER_PCD_R) for a in HEAD_CB_ANGLES]
+              for r in HEAD_CB_RADII for a in HEAD_CB_ANGLES]
 # 沉孔从装配下方 (唇侧面 Z=BASE_H) 往上 4.5 -> 占 Z 0.5..5, 朝上的托盘面留 0.5 台肩。
 # (2026-07-20 用户定 4.5, 与 hub_disc 环孔 2026-07-14 的 4->4.5 一致。)
 # 铜螺母 (M3x4x4.5, OD4.5) 从 hub_disc 那圈 r40..72.5 的空槽里往上压入。
@@ -284,7 +289,10 @@ print(f"  中孔 ID{BASE_ID:g}; 内凸台环 OD{IBOSS_OD:g}/ID{IBOSS_ID:g}x{IBOS
 print(f"  angles: 22.5 + k*45 (k=0..7) = {[round(a,1) for a in HOLE_ANGLES]}")
 print(f"  7 pi2hub 孔: Phi{PI_THRU_D:g} 通 + Phi{PI_INSERT_D:g}x{PI_INSERT_DEEP:g} 沉(从唇侧)")
 print(f"  {len(WIFI_HOLES)} wifi_shell 沿孔 (同款, 定稿单组: XC43 + 长边平移−13): 零件系 {WIFI_HOLES}")
-print(f"  {len(HEAD_CB_XY)} 环孔头沉孔 Φ{HEAD_CB_D:g}×{HEAD_CB_DEEP:g} (承载面侧, R30+R77.5 @{HEAD_CB_ANGLES}): {[(round(x,3),round(y,3)) for (x,y) in HEAD_CB_XY]}")
+_r_txt = "+".join(f"R{r:g}" for r in HEAD_CB_RADII) or "无"
+print(f"  {len(HEAD_CB_XY)} 环孔头沉孔 Φ{HEAD_CB_D:g}×{HEAD_CB_DEEP:g} (承载面侧, {_r_txt} @{HEAD_CB_ANGLES}): {[(round(x,3),round(y,3)) for (x,y) in HEAD_CB_XY]}")
+if OUTER_PCD_R not in HEAD_CB_RADII:
+    print(f"  ⚠ 外圈 R{OUTER_PCD_R:g} @{HEAD_CB_ANGLES} 的 2 颗已改纯通孔 (2026-09-07 用户取消沉孔) → 螺丝头凸出承载面")
 print(f"  2 Phi{EXTRA_HOLE_D:g} 通孔 @ (deg,R)={EXTRA_HOLES_POLAR}")
 
 print(f"  外唇缺口全部取消 -> 完整整圈")
