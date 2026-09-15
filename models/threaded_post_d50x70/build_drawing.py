@@ -1,7 +1,7 @@
 """
 A3 landscape 2D engineering drawing for threaded_post_d50x70 (螺纹柱).
 
-  1) 主视图 沿 0° 筋全剖 (2:1) — Φ50 空心下柱 (壁/筋/顶板/过渡为 100 kg 受力分析定稿值) + 外螺纹柱高 15 (实心),
+  1) 主视图 沿 0° 筋全剖 (2:1) — Φ50 空心下柱 (壁/筋/顶板/过渡为 50 kg 受力分析定稿 FB) + 外螺纹柱高 15 (中空壁厚 3),
                                  顶端倒角 C1.5; GB: 肋纵剖不画剖面线, 螺纹剖面线画到大径粗实线
   2) B-B 横剖 (1:1)            — 筒壁环 + 米字加强筋 ×4 (厚 RIB_T)
   3) 详图 A (20:1)             — 螺纹牙型轴向剖面: 螺距 3 / 牙顶、牙底平台 / 牙高 1 / 牙型角 60°
@@ -22,20 +22,21 @@ from shapely.ops import polylabel, unary_union
 BASE_D   = 50.0
 BASE_H   = 70.0
 THR_H    = 15.0
-THR_MAJ  = 26.5
+THR_MAJ  = 27.5     # 改⑥ (原 26.5)
 THR_MIN  = 24.5
 PITCH    = 3.0
-WALL     = 2.94     # 2026-09-15 单件 100 kg 受力分析定稿 (原 5)
-RIB_T    = 3.36     # (原 5)
-THR_CLEAR = 0.4
-BOT_CH    = 0.3     # (原 0.6)
-GUSSET    = 6.0     # (原 5)
+WALL     = 2.52     # 改⑥ 50 kg 定稿 FB (F1 2.94)
+RIB_T    = 3.36
+THR_CLEAR = 0.0     # 改⑥ 直接按 27.5/24.5 建模 (F1 0.4)
+BOT_CH    = 0.3
+GUSSET    = 6.2     # 改⑥ (F1 6.0)
 FLANK_ANGLE = 60.0
 RIGHT_HAND  = True
-CHAMFER     = 1.5
-PLATE_T     = 3.36  # 与 WALL 解耦 (原 = WALL = 5)
-BORE_D      = 0.0   # 螺纹柱内孔直径, 0 = 实心 (原 Φ14.5)
-BORE_DEPTH  = 0.0
+CHAMFER     = 1.75  # 改⑥ (F1 1.5; 牙高 1.5 时 C1.5 顶端半径 = 小径半径)
+PLATE_T     = 2.52  # 改⑥ (F1 3.36)
+STUD_WALL   = 3.0   # 改⑥ 螺纹柱中空, 壁厚从牙底量
+BORE_D      = THR_MIN - 2 * STUD_WALL   # 18.5
+BORE_DEPTH  = THR_H                     # 盲孔深 15, 孔底在台阶面
 RIB_ANGLES  = (0, 45, 90, 135)
 
 R_BASE = BASE_D / 2
@@ -257,7 +258,7 @@ text(PAGE_W/2, 14,
 text(PAGE_W/2, 19.5,
      f"下部圆柱 Φ{BASE_D:g} / 高 {BASE_H:g}  ·  上部外螺纹柱高 {THR_H:g}, 大径 Φ{THR_MAJ:g} / 小径 Φ{THR_MIN:g} / "
      f"螺距 {PITCH:g}  ·  壁 {WALL:g} / 米字筋 {RIB_T:g} / 顶板 {PLATE_T:g}  ·  总高 {Z_TOP:g}  ·  "
-     f"单件承重 100 kg 减薄版 (PETG, 100% 实心)",
+     f"单件承重 50 kg 定稿 (PETG, 100% 实心; 螺纹柱中空壁厚 {STUD_WALL:g})",
      size=TXT_I, anchor="middle")
 
 # ===== 主视图 沿 0° 筋全剖 (2:1) =====
@@ -311,7 +312,8 @@ if BORE_D > 0:                         # 内孔深: 画在孔内左半
 # 螺纹 + 倒角: 左侧引线
 _th_tip = fv(-R_MAJ, BASE_H + 7)
 leader(_th_tip, (_th_tip[0] - 8, _th_tip[1]), 28, f"大径 Φ{2*R_MAJ:g} / 小径 Φ{2*R_MIN:g} / P{PITCH:g}")
-_th_note = f"(名义 Φ{THR_MAJ:g}/Φ{THR_MIN:g}, 已缩 {THR_CLEAR:g} 打印间隙)"
+_th_note = (f"(名义 Φ{THR_MAJ:g}/Φ{THR_MIN:g}, 已缩 {THR_CLEAR:g} 打印间隙)" if THR_CLEAR > 0
+            else "(直接按此尺寸建模, 不留打印间隙)")
 assert 30 + str_w(_th_note, TXT_I) < fv(-R_MAJ, 0)[0] - 3, "螺纹名义尺寸注释压到螺纹柱"
 text(30, _th_tip[1] + 5.0, _th_note, size=TXT_I)
 _ch_mid = fv(-(R_MAJ - CHAMFER / 2), Z_TOP - CHAMFER / 2)
@@ -436,18 +438,17 @@ text(_apx + _R_ARC + 3.0, _apy + 2.0, f"{FLANK_ANGLE:g}°")
 NX, NY = 218, 206
 text(NX, NY, "说明 / Notes", size=TXT_L)
 _notes = [
-    f"1) 设计载荷: 单件静载 100 kg (2026-09-15 受力分析定稿); 下柱 Φ{BASE_D:g}×{BASE_H:g}, 外螺纹柱高 {THR_H:g}, "
-    f"名义 Φ{THR_MAJ:g}/Φ{THR_MIN:g}×P{PITCH:g}。",
-    f"2) 减薄定稿: 筒壁 {WALL:g} / 米字筋 {RIB_T:g} / 顶板 {PLATE_T:g} (腔深 {Z_CEIL:g}) / 45° 过渡 {GUSSET:g} (详图 C) / "
-    + ("螺纹柱实心" if BORE_D == 0 else f"螺纹柱内孔 Φ{BORE_D:g} 深 {BORE_DEPTH:g}") + f" / 底边 C{BOT_CH:g}。",
-    "3) 最弱处是螺纹柱根部 Z=70 层面: 使用时必须拧到被支撑物压实台阶面 (接触 ≥Φ48), 不可半旋出当调平脚。",
-    f"4) 材料只用 PETG; 必须 100% 实心 (墙 ≥8 圈 / 填充 100% / 顶底 ≥5 层), 称重 ≥98 g 才合格 "
-    f"(CAD 实心约 {VOL*1.27e-3:.0f} g)。",
-    "5) 打印: 底口贴床、螺纹朝上、关闭支撑; 螺纹段层高 0.12; Z69–71 关熨烫、低风扇、升温 5 到 10°C; 象脚补偿 0–0.1。",
-    "6) 使用: 指尖拧到贴合即止 + 点硅酮胶防松, 隔天/一周复查; 地面加毡垫或橡胶垫; 抬起挪动不拖拽; 长期 ≤35°C。",
-    f"7) 螺纹: {FLANK_ANGLE:g}° 对称梯形 (牙高 {DEPTH:g}, 平台 {CREST:.2f}), {HAND}旋, 顶端 C{CHAMFER:g}; "
-    f"大径/小径各缩 {THR_CLEAR:g} 打印间隙 (建模 Φ{2*R_MAJ:g}/Φ{2*R_MIN:g})。",
-    f"8) 主视图沿 0° 筋全剖, 肋纵剖不画剖面线; 螺纹剖面线画到大径粗实线 (GB/T 4459.1)。 体积 {VOL/1000:.1f} cm³。",
+    f"1) 设计载荷: 单件静载 50 kg (2026-09-15 定稿 FB); 下柱 Φ{BASE_D:g}×{BASE_H:g}; 外螺纹柱高 {THR_H:g}, "
+    f"凸起 Φ{2*R_MAJ:g} / 凹陷 Φ{2*R_MIN:g} × P{PITCH:g}" + (" 直接建模 (不留间隙)。" if THR_CLEAR == 0 else "。"),
+    f"2) 筒壁 {WALL:g} / 米字筋 {RIB_T:g} / 顶板 {PLATE_T:g} (腔深 {Z_CEIL:g}) / 45° 过渡 {GUSSET:g} (详图 C) / 底边 C{BOT_CH:g}; "
+    + ("螺纹柱实心。" if BORE_D == 0 else f"螺纹柱中空壁厚 {STUD_WALL:g} (内孔 Φ{BORE_D:g} 深 {BORE_DEPTH:g})。"),
+    "3) 最弱处是螺纹柱根部 Z=70 层面: 必须拧到被支撑物压实台阶面 (接触 ≥Φ48), 不可半旋出当调平脚。",
+    "4) 只用 PETG, 100% 实心: Arachne 周长 / 墙 ≥8 圈 / 填充 100% / 象脚补偿 0 / 每盘 1 件; 称重在切片估算质量 0.97–1.03 倍内。",
+    "5) 打印: 底口贴床、螺纹朝上、关闭支撑; 螺纹段层高 0.12; Z61–67 悬垂风扇降到常规; Z69–71 关熨烫、低风扇、升温 5 到 10°C。",
+    "6) 地面只用 ≥3 mm 毡垫或邵 A≤40 ≥6 mm 软橡胶垫; 放下时整体平放贴地再松手, 禁单边先着地; 抬起挪动不拖拽。",
+    "7) 指尖拧到贴合即止 + 点硅酮胶防松 (禁厌氧胶), 隔天/一周复查; 软底面家具在台阶处加 ≥Φ48 硬垫圈; 长期 ≤35°C。",
+    f"8) 螺纹 {FLANK_ANGLE:g}° 对称梯形 (牙高 {DEPTH:g}, 平台 {CREST:.2f}), {HAND}旋, 顶端 C{CHAMFER:g}; "
+    f"主视图沿 0° 筋全剖, 肋纵剖不画剖面线。 体积 {VOL/1000:.1f} cm³。",
 ]
 NOTE_SZ = 5.0
 for i, s in enumerate(_notes):
@@ -465,8 +466,8 @@ text(tb_x + tb_w - 4, tb_y + 6,
      "投影 1st-angle  /  比例 2:1 (主视), 1:1 (B-B), 20:1 (详图 A), 2.5:1 (详图 C)", size=TXT_I, anchor="end")
 text(tb_x + 4, tb_y + 14.5,
      f"Φ{BASE_D:g}/Φ{2*R_CAV:g}×{BASE_H:g} + 外螺纹 Φ{2*R_MAJ:g}/Φ{2*R_MIN:g}×P{PITCH:g}×{THR_H:g} {HAND}旋 "
-     f"(名义 {THR_MAJ:g}/{THR_MIN:g}) / 壁 {WALL:g} / 筋 {RIB_T:g} / 顶板 {PLATE_T:g} / 底边 C{BOT_CH:g} / "
-     f"PETG 100% 实心 / 单件 100 kg  /  单位 mm",
+     f"内孔 Φ{BORE_D:g}×{BORE_DEPTH:g} / 壁 {WALL:g} / 筋 {RIB_T:g} / 顶板 {PLATE_T:g} / 底边 C{BOT_CH:g} / "
+     f"PETG 100% 实心 / 单件 50 kg  /  单位 mm",
      size=TXT_I)
 text(tb_x + tb_w - 4, tb_y + 14.5,
      "2026-09-15  /  pov3d / models / threaded_post_d50x70 / threaded_post_d50x70.stl",

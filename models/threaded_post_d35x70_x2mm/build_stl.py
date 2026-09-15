@@ -1,24 +1,42 @@
 """
-螺纹柱 threaded_post_d50x70 (2026-09-14 建; 2026-09-15 改⑥)
+螺纹柱 简单试打版 threaded_post_d35x70_x2mm (2026-09-15, 用户要求: 先打出来试; 原名 threaded_post_d50x70_x2mm)
 
-演变 (都由用户逐步指定):
-  - 最初: 下部圆柱 Φ50×70 + 上部外螺纹柱高 15 (名义 Φ26.5/Φ24.5 × P3), 实心
-  - 改① 上下两柱壁厚 5 (空心) / 改② 米字加强筋 / 改③ 打印优化 (底边倒角、螺纹缩 0.4 打印间隙)
-  - 改④ 筋两侧与筒壁的 45° 过渡 ⇒ 腔顶无水平面, 打印免支撑
-  - 改⑤ 单件 100 kg 受力分析定稿 F1: 壁 2.94 / 筋 3.36 / 顶板 3.36 (与壁解耦) / 过渡 6.0 / 底边 C0.3 / 螺纹柱实心
-  - 改⑥ (本版) 2026-09-15:
-      · 设计载荷改单件 50 kg, 用第二轮受力分析定稿 FB: 壁 2.52 / 米字筋 3.36 / 顶板 2.52 / 过渡 6.2 / 底边 C0.3
-      · 螺纹改为凸起 Φ27.5 / 凹陷 Φ24.5 直接建模, 不留间隙 (牙高 1.5, 60° 牙型平台 0.634), 顶端倒角 C1.75
-        (牙高 1.5 时 C1.5 的倒角顶端半径 = 小径半径, 边线重合)
-      · 螺纹柱中空 (用户要求): 壁厚 STUD_WALL 3 从牙底量 ⇒ 内孔 Φ18.5 盲孔深 15, 孔底在 Z=70 台阶面
-        ⚠ FB 分析时螺纹柱是实心、螺纹 Φ26.1/Φ24.1; 中空 + 新螺纹下的根部强度需另行复核
-      · 移植自 x2mm 版脚本: 45° 过渡棱柱裁到筒壁中线 (否则 FB 下筋端过渡半径 ≈25.18, 从外壁凸出 8 处共 0.15 mm³),
-        外轮廓最大半径断言, float32_clean_mesh (导出前去掉约 2300 个 float32 退化碎三角)
-用户未指定、由我按常规补的: 60° 对称梯形牙、右旋单线、顶端导向倒角; 底部敞口; 45° 过渡直角边按格内切圆半径取。
+= 已提交的 threaded_post_d50x70 "100 kg 定稿 F1" 的简化变体:
+  十字筋 / 厚度统一 2 mm / 螺纹 Φ27.5/Φ24.5 直接建模 (不留间隙)。
+  ⚠ 本版未做受力分析 / 仿真, 承载能力未知, 只供试打。
+  本脚本由 ../threaded_post_d50x70/build_stl.py 复制后改参数; 建模做法与校核逻辑同 F1 (F1 目录不动)。
+
+与 F1 的差异 (用户指定):
+  - 加强筋: 米字 (0/45/90/135°) → 十字 RIB_ANGLES = (0, 90)
+  - 筒壁 WALL 2.94 / 筋 RIB_T 3.36 / 顶板 PLATE_T 3.36 → 统一 2.0
+  - 螺纹: 名义 Φ26.5/Φ24.5 + 间隙 0.4 (建模 Φ26.1/Φ24.1) → THR_MAJ 27.5 / THR_MIN 24.5 / THR_CLEAR 0,
+    直接按 Φ27.5/Φ24.5 建模 ⇒ 牙高 1.0 → 1.5, 60° 牙型下牙顶/牙底平台 0.923 → (3 − 2·1.5·tan30°)/2 ≈ 0.634
+
+由参数派生 / 替用户定的取舍 (用户未指定):
+  - 45° 过渡 GUSSET 6.0 → 9.5: 十字 + 壁 2 + 筋 2 时格内切圆半径 r_insc ≈ 8.941 (下面 polylabel 实算),
+    取 ceil((r_insc + 0.5 + 0.001)·10)/10 = 9.5, 满足硬约束 GUSSET > r_insc + 0.5 (腔顶无水平面、免支撑), 断言保留
+  - 顶端倒角 CHAMFER 1.5 → 1.75: 牙高 1.5 时 C1.5 倒角顶端半径 = 小径半径 12.25, 锥面顶边与芯柱棱线重合易出退化;
+    改 1.75 ⇒ 倒角顶端 Φ24.0, 比小径低 0.5
+  - 底边倒角 BOT_CH 0.3 → 0.2: 壁厚 2 时首层筒壁环宽 WALL − (BOT_CH − 0.1) = 1.9 ≥ 4 线 1.68
+    (按首层底面 z=0 算再扣切片象脚补偿 0.1 为 2 − 0.2 − 0.1 = 1.7, 仍 ≥ 1.68)
+  - 过渡棱柱裁剪 (新增几何): GUSSET 大了以后, 筋两侧的 45° 三角棱柱沿筋长 RIB_L、两端在筒壁中线处,
+    三角形顶宽 RIB_T/2 + GUSSET + E, 在筋端点处半径可达 √(24² + 11²) ≈ 26.4 > R_BASE 25, 会从外壁凸出去
+    ⇒ 全部 45° 过渡先与半径 R_CAV + WALL/2 (= 24, 筒壁中线) 的圆柱求交再并入; 腔内部分不变 (有断言核对),
+    与筒壁仍重叠 WALL/2 融合。新增断言: 成品网格所有顶点到 Z 轴半径 ≤ R_BASE + 1e-6 (不超出 Φ50), bbox X/Y 在 ±25 内
+  - 体积断言容差: 原计划因"大 GUSSET 时 offset 积分 vs revolve 多边形约 2e-4 系统误差"放宽到 1e-3,
+    实测后**保持 F1 的 1e-4 不放宽**: 裁剪后实际相对差只有 2.8e-6; 不裁剪时是 5.3e-4 (多出 28.8 mm³ 正是凸出外壁的
+    过渡棱柱), 即那 "2e-4 量级误差" 是几何真错, 放宽到 1e-3 会把凸出放过去
+  - 2026-09-15 追加 (用户要求): 螺纹柱中空, 壁厚 3 (从牙底量) ⇒ 内孔 Φ18.5 盲孔深 15, 孔底在 Z=70 台阶面
+  - 2026-09-15 再追加 (用户要求): 下部圆柱直径 Φ50 → Φ35 (内腔 Φ31, 台阶面环宽只剩 17.5−13.75 = 3.75);
+    GUSSET 按规则 9.5 → 6.4 (十字格内切圆半径 8.941 → 5.834)。上面各条里 23/24/26.4/9.5/8.941 等数是 Φ50 时的值
+  - 2026-09-15 再追加 (用户要求): 文件夹改名 threaded_post_d35x70_x2mm; 底部封死 (底板 BOT_T 2, 厚度同统一 2 mm),
+    从外面看是完整圆柱。内腔 Z 2–68 被十字筋隔成 4 个密闭格腔 (manifold decompose 多出 4 个负体积块, 断言已按此改)。
+    打印仍底面贴床: 底板是首层实心, 腔顶靠 45° 过渡闭合, 免支撑
+  - 其余同 F1: 下柱高 70, P3 60° 对称梯形右旋单线, 分段数
+
 坐标: 轴 = Z, 大圆柱底面 Z=0 (贴床), 螺纹朝上; 右旋 = 俯视逆时针转一圈上升一个螺距; 0° 筋沿 X。
 建模: 牙型梯形沿螺旋线扫掠成"牙条" + 小径芯柱 → 与带倒角的回转包络求交 → 并上大圆柱
-      → 减内腔 → 并米字筋 → 并 45° 过渡 (裁到 R_CAV + WALL/2 以内) → (BORE_D > 0 时) 减螺纹柱内孔。
-必须 100% 实心打印 (PETG); 使用约束见图纸说明。
+      → 减内腔 → 并十字筋 → 并 45° 过渡 (已裁到 R_CAV + WALL/2 以内) → (BORE_D > 0 时) 减螺纹柱内孔。
 """
 import math
 import struct
@@ -30,28 +48,29 @@ from shapely.geometry import Polygon, box
 from shapely.affinity import rotate as s_rotate
 from shapely.ops import polylabel, unary_union
 
-# ===== 参数 (改⑥ 2026-09-15: 50 kg 定稿 FB + 新螺纹 + 螺纹柱中空; 括号里是 F1 原值) =====
-BASE_D   = 50.0     # 下部圆柱直径
+# ===== 参数 (2026-09-15 x2mm 简单试打版; 括号里是 F1 原值) =====
+BASE_D   = 35.0     # 下部圆柱直径 (F1 50; 2026-09-15 用户要求改成 35)
 BASE_H   = 70.0     # 下部圆柱高
 THR_H    = 15.0     # 螺纹柱高
-THR_MAJ  = 27.5     # 螺纹大径 (牙顶) (F1 26.5; 改⑥ 用户要求凸起 27.5, 直接建模)
+THR_MAJ  = 27.5     # 螺纹大径 (牙顶) (F1 26.5; 用户要求凸起 27.5)
 THR_MIN  = 24.5     # 螺纹小径 (牙底) (同 F1; 用户要求凹陷 24.5)
 PITCH    = 3.0      # 螺距
-WALL     = 2.52     # 下柱筒壁厚 (F1 2.94; 50 kg 定稿 FB 2.52 = 6 线)
-RIB_T    = 3.36     # 米字加强筋厚 (F1 3.36; 50 kg 定稿 FB 不变 = 8 线)
+WALL     = 2.0      # 下柱筒壁厚 (F1 2.94; 用户要求统一 2 mm)
+RIB_T    = 2.0      # 十字加强筋厚 (F1 3.36; 用户要求统一 2 mm)
 THR_CLEAR = 0.0     # 打印间隙 (直径) (F1 0.4; 用户要求按 27.5/24.5 直接建模, 不留间隙)
-BOT_CH    = 0.3     # 底边外圈 45° 倒角, 防首层象脚 (同 F1; 首层环宽 WALL−(BOT_CH−0.1) = 2.32), 0 = 不倒
-GUSSET    = 6.2     # 筋/筒壁与腔顶交角 45° 过渡的直角边 (F1 6.0; FB 6.2); 须 > r_insc (≈5.007) + 0.5, T_eff = PLATE_T + GUSSET − r_insc ≈ 3.71 ≥ 3.0
+BOT_CH    = 0.2     # 底边外圈 45° 倒角, 防首层象脚 (F1 0.3; 壁 2 时首层环宽 1.9 ≥ 4 线 1.68), 0 = 不倒
+GUSSET    = 6.4     # 筋/筒壁与腔顶交角 45° 过渡的直角边 (F1 6.0); = ceil((r_insc + 0.5 + 0.001)·10)/10, Φ35 时 r_insc ≈ 5.834 (Φ50 时 8.941 → 9.5)
 
 # ===== 补充参数 (用户未指定) =====
 FLANK_ANGLE = 60.0  # 牙型角 (两侧牙面夹角)
 RIGHT_HAND  = True
 CHAMFER     = 1.75  # 顶端 45° 倒角 (径向=轴向) (F1 1.5; 牙高 1.5 时 C1.5 顶端半径 = 小径半径易退化 ⇒ 1.75, 顶端 Φ24.0), 0 = 不倒
-PLATE_T     = 2.52  # 下柱腔顶顶板厚 (F1 3.36; 50 kg 定稿 FB 2.52)
+PLATE_T     = 2.0   # 下柱腔顶顶板厚 (F1 3.36; 用户要求统一 2 mm)
+BOT_T       = 2.0   # 底板厚: 底部封死, 从外面看是完整圆柱 (用户要求; 0 = 底口敞开)
 STUD_WALL   = 3.0   # 螺纹柱壁厚, 从牙底 (小径) 量到内孔 (2026-09-15 用户要求: 螺纹柱中空, 厚度 3 mm)
 BORE_D      = THR_MIN - 2 * STUD_WALL   # 螺纹柱内孔直径 18.5 (F1 实心 0); 牙顶处壁厚 = STUD_WALL + 牙高 = 4.5
-BORE_DEPTH  = THR_H                     # 盲孔深 15, 孔底在 Z=70 台阶面 (不穿顶板: 下面是加强筋交叉与 45° 过渡)
-RIB_ANGLES  = (0, 45, 90, 135)   # 米字筋 (同 F1)
+BORE_DEPTH  = THR_H                     # 盲孔深 15, 孔底在 Z=70 台阶面 (不穿顶板: 下面是十字筋交叉与 45° 过渡)
+RIB_ANGLES  = (0, 90)   # 十字筋 (F1 (0, 45, 90, 135); 用户要求)
 
 SEG_TURN = 180      # 每圈分段 (螺旋扫掠 + 芯柱 + 包络共用, 让顶点角度对齐)
 BASE_SEG = 256      # 大圆柱 + 内腔
@@ -65,14 +84,14 @@ CREST  = (PITCH - 2 * FLANK_RUN) / 2                    # 牙顶平台 0.634
 ROOT   = PITCH - 2 * FLANK_RUN - CREST                  # 牙底平台 0.634
 Z_TOP  = BASE_H + THR_H                                 # 85
 R_CH_TOP = R_MAJ - CHAMFER                              # 倒角顶端半径 12.0
-R_CAV  = R_BASE - WALL                                  # 下腔半径 22.48
+R_CAV  = R_BASE - WALL                                  # 下腔半径 15.5
 HAS_BORE = BORE_D > 0 and BORE_DEPTH > 0
 R_BORE = BORE_D / 2 if HAS_BORE else 0.0                # 螺纹柱内孔半径 (0 = 实心)
 Z_BORE_BOT = Z_TOP - BORE_DEPTH if HAS_BORE else Z_TOP  # 孔底高度
-Z_CEIL = BASE_H - PLATE_T                               # 腔顶 67.48
+Z_CEIL = BASE_H - PLATE_T                               # 腔顶 68
 RIB_L  = R_CAV + R_BASE                                 # 筋条总长: 两端各伸进壁厚中线
 RIB_TOP = Z_CEIL + PLATE_T / 2                          # 筋顶伸进顶板一半, 免共面
-R_GCLIP = R_CAV + WALL / 2                              # 45° 过渡裁剪圆柱半径 = 筒壁中线 23.74 (来自 x2mm 版)
+R_GCLIP = R_CAV + WALL / 2                              # 45° 过渡裁剪圆柱半径 = 筒壁中线 16.5 (x2mm 新增)
 
 assert THR_MIN < THR_MAJ < BASE_D
 assert CREST > 0 and ROOT > 0, "牙型角/牙高/螺距组合不成立"
@@ -80,6 +99,7 @@ assert 0 <= CHAMFER < THR_H
 assert CHAMFER == 0 or abs(R_CH_TOP - R_MIN) > 0.1, "倒角顶端半径与小径重合, 锥面顶边会压在芯柱棱线上 (x2mm 新增)"
 assert R_BORE >= 0 and R_CAV > R_MAJ, "壁厚太大"          # 实心螺纹柱 R_BORE = 0 合法
 assert 0 < PLATE_T < BASE_H and Z_CEIL - GUSSET > 5, "顶板/过渡太厚"
+assert 0 <= BOT_T < Z_CEIL - GUSSET - 5, "底板太厚, 与腔顶过渡相撞"
 assert not HAS_BORE or BORE_DEPTH <= THR_H, "内孔不能穿进顶板 (孔底须 ≥ 台阶面)"
 assert R_BORE < R_CH_TOP - 1, "内孔吃到顶端倒角"
 assert RIB_TOP < BASE_H, "筋顶穿进螺纹柱内孔"
@@ -162,7 +182,10 @@ else:
     base = m3d.Manifold.cylinder(BASE_H, R_BASE, R_BASE, BASE_SEG, False)
 solid = base + stud
 
-cavity = m3d.Manifold.cylinder(Z_CEIL + 1, R_CAV, R_CAV, BASE_SEG, False).translate((0, 0, -1))
+if BOT_T > 0:                           # 底部封死: 内腔从底板顶面开始, 成密闭空腔
+    cavity = m3d.Manifold.cylinder(Z_CEIL - BOT_T, R_CAV, R_CAV, BASE_SEG, False).translate((0, 0, BOT_T))
+else:
+    cavity = m3d.Manifold.cylinder(Z_CEIL + 1, R_CAV, R_CAV, BASE_SEG, False).translate((0, 0, -1))
 bar = m3d.Manifold.cube((RIB_L, RIB_T, RIB_TOP), False).translate((-RIB_L / 2, -RIB_T / 2, 0))
 ribs = bar.rotate((0, 0, RIB_ANGLES[0]))
 for a in RIB_ANGLES[1:]:
@@ -188,7 +211,7 @@ for a in RIB_ANGLES[1:]:
     gussets = gussets + g_rib.rotate((0, 0, a))
 _tri_wall = _ccw([(R_CAV - GUSSET - E, Z_CEIL + E), (R_CAV + E, Z_CEIL - GUSSET - E), (R_CAV + E, Z_CEIL + E)])
 gussets = gussets + m3d.CrossSection([_tri_wall]).revolve(BASE_SEG)    # 筒壁一圈
-# (来自 x2mm 版) 筋侧棱柱两端 (筒壁中线处) 顶宽 RIB_T/2+GUSSET+E, 端点半径可超 R_BASE (FB: √(23.74²+8.38²) ≈ 25.18),
+# x2mm 新增: 筋侧棱柱两端 (筒壁中线处) 顶宽 RIB_T/2+GUSSET+E, 端点半径会超 R_BASE (Φ35 版 √(16.5²+7.9²) ≈ 18.3 > 17.5),
 # 会从外壁凸出 ⇒ 裁到半径 R_GCLIP = R_CAV + WALL/2 的圆柱以内 (腔内 r ≤ R_CAV 部分不受影响, 下面有断言)
 gussets_raw = gussets
 _gclip = m3d.Manifold.cylinder(BASE_H + 2, R_GCLIP, R_GCLIP, BASE_SEG, False).translate((0, 0, -1))
@@ -200,7 +223,12 @@ if HAS_BORE:
 
 # ===== 校核 =====
 assert part.status() == m3d.Error.NoError, f"成品非流形: {part.status()}"
-assert len(part.decompose()) == 1, "件不是一整块"
+_comps = part.decompose()                 # 封底后每格是一个密闭空腔: manifold 每格拆出 1 个负体积块
+_pos = [c for c in _comps if c.volume() > 0]
+_neg = [c for c in _comps if c.volume() < 0]
+assert len(_pos) == 1, f"件不是一整块 (正体积块 {len(_pos)})"
+assert len(_neg) == (2 * len(RIB_ANGLES) if BOT_T > 0 else 0), \
+    f"密闭空腔个数不对: {len(_neg)} (筋从底板通到顶板且两端并入筒壁, 每格各自密闭, 应为 {2 * len(RIB_ANGLES)})"
 
 # 0) x2mm 新增: 外轮廓不超出 Φ50 (double 精度网格), 且过渡裁剪没有动到腔内部分
 _v64 = np.asarray(part.to_mesh64().vert_properties)[:, :3]
@@ -217,12 +245,12 @@ assert abs(_gv_raw - _gv_clip) < 1e-6 * _gv_raw, f"过渡裁剪动到了腔内�
 def radii(cs):
     return [np.hypot(p[:, 0], p[:, 1]) for p in cs.to_polygons()]
 
-# 加强筋落在内腔 (多边形, 顶点取自 manifold 自己的圆) 里的面积
+# 十字筋落在内腔 (多边形, 顶点取自 manifold 自己的圆) 里的面积
 _cav_poly = Polygon(m3d.CrossSection.circle(R_CAV, BASE_SEG).to_polygons()[0])
 _strip = box(-RIB_L / 2, -RIB_T / 2, RIB_L / 2, RIB_T / 2)
 _ribs_poly = unary_union([s_rotate(_strip, a, origin=(0, 0)) for a in RIB_ANGLES])
 rib_area = _ribs_poly.intersection(_cav_poly).area
-# 腔被筋分成 2·len(RIB_ANGLES) 格; 格内切圆半径 = 45° 过渡要盖满腔顶所需的最小直角边
+# 腔被筋分成 2·len(RIB_ANGLES) 格 (十字 4 格); 格内切圆半径 = 45° 过渡要盖满腔顶所需的最小直角边
 _cells = _cav_poly.difference(_ribs_poly)
 assert len(_cells.geoms) == 2 * len(RIB_ANGLES)
 r_insc = max(c.exterior.distance(polylabel(c, 1e-4)) for c in _cells.geoms)
@@ -255,7 +283,7 @@ assert abs(wall_thread - (R_MIN - (R_BORE if bore_in_mid else 0.0))) < 0.05, f"�
 if not HAS_BORE:
     assert len(part.slice(Z_TOP - 0.3).to_polygons()) == 1, "实心螺纹柱顶端不应有孔"
 
-# 2) 下柱分层截面: 筋区 (筒壁环 + 加强筋, 扇形空格) / 顶板 (实心) / 内孔底 (Z=70 以下无孔)
+# 2) 下柱分层截面: 筋区 (筒壁环 + 十字筋, 4 个扇形空格) / 顶板 (实心) / 内孔底 (Z=70 以下无孔)
 cs_rib = part.slice(Z_CEIL / 2)
 a_rib  = cs_rib.area()
 a_rib_expect = poly_area(R_BASE, BASE_SEG) - poly_area(R_CAV, BASE_SEG) + rib_area
@@ -269,13 +297,17 @@ assert len(part.slice(BASE_H - 0.1).to_polygons()) == 1, "内孔穿进了顶板"
 if BOT_CH > 0:
     _z0 = 1e-3
     a_l0 = part.slice(_z0).area()
-    a_l0_expect = poly_area(R_BASE - BOT_CH + _z0, BASE_SEG) - poly_area(R_CAV, BASE_SEG) + rib_area
+    a_l0_expect = poly_area(R_BASE - BOT_CH + _z0, BASE_SEG) - (0.0 if BOT_T > 0 else poly_area(R_CAV, BASE_SEG) - rib_area)
     assert abs(a_l0 - a_l0_expect) < 0.05, f"首层截面积不对 {a_l0} vs {a_l0_expect}"
-    assert abs(part.slice(BOT_CH + 0.01).area() - a_rib_expect) < 0.05, "倒角以上应恢复全截面"
+    _a_above = poly_area(R_BASE, BASE_SEG) if BOT_T > BOT_CH + 0.01 else a_rib_expect
+    assert abs(part.slice(BOT_CH + 0.01).area() - _a_above) < 0.05, "倒角以上应恢复全截面"
+if BOT_T > 0:                           # 底板实心 / 底板以上才是筋区
+    assert len(part.slice(BOT_T - 0.1).to_polygons()) == 1, "底板应为实心整圆"
+    assert len(part.slice(BOT_T + 0.3).to_polygons()) == 1 + 2 * len(RIB_ANGLES), "底板以上应是外轮廓 + 各格空腔"
 
 # 2c) 45° 过渡段: 距过渡起点 t 处, 腔截面 = 各格向内偏移 t (manifold 自己的截面做基准);
 #     t 超过内切圆半径后格子全闭合 ⇒ 腔顶以下已是整圆, 没有水平天花板
-#     (补测 4.5, 接近闭合处 r_insc ≈ 5.0)
+#     (补测到接近闭合处; t 必须 < GUSSET, 否则切面高过 Z=BASE_H 会切到螺纹柱)
 _disk_cs  = m3d.CrossSection.circle(R_CAV, BASE_SEG)
 _ribs_cs  = m3d.CrossSection.square((RIB_L, RIB_T), True).rotate(RIB_ANGLES[0])
 for a in RIB_ANGLES[1:]:
@@ -283,7 +315,7 @@ for a in RIB_ANGLES[1:]:
 cells_cs = _disk_cs - _ribs_cs
 def cells_area(t):
     return cells_cs.offset(-t, m3d.JoinType.Miter).area() if t > 0 else cells_cs.area()
-for t in (1.0, 2.5, 3.5, 4.5):
+for t in (1.0, 2.5, 3.5, 5.0, min(r_insc + 0.3, GUSSET - 0.1)):
     a_g = part.slice(Z_CEIL - GUSSET + t).area()
     a_g_expect = poly_area(R_BASE, BASE_SEG) - cells_area(t)
     assert abs(a_g - a_g_expect) < 0.2, f"过渡段 t={t} 截面积不对 {a_g} vs {a_g_expect}"
@@ -294,7 +326,7 @@ assert len(part.slice(z_closed).to_polygons()) == 1, "腔顶还剩没被 45° �
 v_solid = solid.volume()
 _ts = (np.arange(500) + 0.5) / 500 * GUSSET
 v_gus_cav = float(np.mean([cells_area(t) for t in _ts])) * GUSSET
-v_expect = (v_solid - (poly_area(R_CAV, BASE_SEG) - rib_area) * (Z_CEIL - GUSSET) - v_gus_cav
+v_expect = (v_solid - (poly_area(R_CAV, BASE_SEG) - rib_area) * (Z_CEIL - GUSSET - BOT_T) - v_gus_cav
             - (poly_area(R_BORE, BORE_SEG) * BORE_DEPTH if HAS_BORE else 0.0))
 v_gusset_added = (poly_area(R_CAV, BASE_SEG) - rib_area) * GUSSET - v_gus_cav
 vol = part.volume()
@@ -340,14 +372,14 @@ def float32_clean_mesh(m):
     t = t[ok].astype(np.uint32)
     mm = m3d.Manifold(m3d.Mesh(vert_properties=uniq, tri_verts=t))
     assert mm.status() == m3d.Error.NoError, f"float32 清理后非流形: {mm.status()}"
-    assert len(mm.decompose()) == 1, "float32 清理后不是一整块"
+    assert sum(1 for c in mm.decompose() if c.volume() > 0) == 1, "float32 清理后不是一整块"
     assert abs(mm.volume() - m.volume()) < 1e-6 * m.volume(), f"float32 清理后体积变了 {mm.volume()} vs {m.volume()}"
     return uniq, t, int((~ok).sum())
 
 verts, tris, n_degen = float32_clean_mesh(part)
 
-out = Path(__file__).with_name("threaded_post_d50x70.stl")
-_hdr = (f"threaded_post D{BASE_D:g}x{BASE_H:g} thr{THR_MAJ:g}/{THR_MIN:g}xP{PITCH:g}x{THR_H:g} "
+out = Path(__file__).with_name("threaded_post_d35x70_x2mm.stl")
+_hdr = (f"threaded_post_x2mm D{BASE_D:g}x{BASE_H:g} thr{THR_MAJ:g}/{THR_MIN:g}xP{PITCH:g}x{THR_H:g} "
         f"c{THR_CLEAR:g} w{WALL:g} r{RIB_T:g} p{PLATE_T:g} g{GUSSET:g} b{BORE_D:g}").encode("ascii")
 assert len(_hdr) <= 80, f"STL 头 {len(_hdr)} 字节 > 80, 会被截断"
 with out.open("wb") as f:
@@ -393,10 +425,10 @@ print(f"  牙型: {FLANK_ANGLE:g}° 梯形, 牙高 {DEPTH:.3f}, 牙面轴向 {FL
 print(f"  打印间隙 {THR_CLEAR:g}: 建模大径 Φ{2*R_MAJ:.2f} / 小径 Φ{2*R_MIN:.2f} (名义 Φ{THR_MAJ:g}/Φ{THR_MIN:g}), "
       f"顶端倒到 Φ{2*R_CH_TOP:.2f};  底边倒角 C{BOT_CH:g}"
       + (f", 首层截面 {a_l0:.2f} (理论 {a_l0_expect:.2f})" if BOT_CH > 0 else ""))
-print(f"  壁厚 {WALL:g}: 下柱 Φ{BASE_D:g}/Φ{2*R_CAV:g} 腔深 {Z_CEIL:g} 顶板 {PLATE_T:g}; "
+print(f"  壁厚 {WALL:g}: 下柱 Φ{BASE_D:g}/Φ{2*R_CAV:g} 底板 {BOT_T:g} 密闭腔 Z {BOT_T:g}–{Z_CEIL:g} 顶板 {PLATE_T:g}; "
       + (f"螺纹柱内孔 Φ{2*R_BORE:g} 深 {BORE_DEPTH:g} (孔底 Z={Z_BORE_BOT:g})" if HAS_BORE else "螺纹柱实心 (无内孔)")
       + f", 牙底处实测壁厚/半径 {wall_thread:.3f}")
-print(f"  加强筋 ×{len(RIB_ANGLES)} {RIB_ANGLES} 厚 {RIB_T:g}, Z 0→{Z_CEIL:g} 并入顶板; 腔内筋面积 {rib_area:.2f} mm^2")
+print(f"  十字筋 ×{len(RIB_ANGLES)} {RIB_ANGLES} 厚 {RIB_T:g}, Z 0→{Z_CEIL:g} 并入顶板; 腔内筋面积 {rib_area:.2f} mm^2")
 print(f"  45° 过渡 ×{GUSSET:g} (规则 ceil((r_insc+0.501)·10)/10 = {GUSSET_RULE:g}): 格内切圆半径 {r_insc:.3f} "
       f"⇒ 腔在 Z={Z_CEIL - GUSSET + r_insc:.2f} 全闭合 (无水平腔顶), 加料 {v_gusset_added:.1f} mm^3")
 print(f"  悬垂: 下柱最大 {ov_body_max:.2f}° (≤45 免支撑); 螺纹段朝下面积 {_ar[_thr].sum():.1f} mm^2, "
