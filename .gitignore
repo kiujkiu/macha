@@ -1,2 +1,12 @@
 # 打包产物 (随时可由 tools/sync_print.py + 各 build 脚本重生成)
 *_print.zip
+
+# V1.0 验证板: 原始 STEP 与全精度 STL 太大 (各 5~50 MB), 只留 *_lite / *_board STL
+v1.0/boards/step/
+v1.0/boards/*_2026-10-1?.stl
+v1.0/boards/led_icn2260_v01_260921.stl
+v1.0/assembly_v1_0*.stl
+
+# V1.0: 根目录装配 3MF 与 print/assembly 里那份重复
+v1.0/assembly_v1_0.3mf
+__pycache__/

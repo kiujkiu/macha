@@ -2,7 +2,7 @@
 """Sync built artifacts (*.stl / *.pdf) from their model sources into the
 per-version print/ folders.
 
-The print/ trees (v2/print, v2.1/print, v3/print) hold hand-copied duplicates
+The print/ trees (v0.2/print, v0.2.1/print, v0.3/print, ...) hold hand-copied duplicates
 of files that are actually *built* under a model source dir (models/,
 v2/models, v3/models, ...). After rebuilding a part it is easy to forget to
 refresh those copies, so they silently drift. This script re-copies every
