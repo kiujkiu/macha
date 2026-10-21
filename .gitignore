@@ -6,7 +6,9 @@ v1.0/boards/step/
 v1.0/boards/*_2026-10-1?.stl
 v1.0/boards/led_icn2260_v01_260921.stl
 v1.0/assembly_v1_0*.stl
+v1.1/assembly_v1_1*.stl
 
 # V1.0: 根目录装配 3MF 与 print/assembly 里那份重复
 v1.0/assembly_v1_0.3mf
 __pycache__/
+v1.1/assembly_v1_1_noglass.3mf
