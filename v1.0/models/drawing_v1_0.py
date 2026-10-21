@@ -302,7 +302,7 @@ def draw(spec):
 
     pg = Page()
     pg.rect(5, 5, PAGE_W - 5, PAGE_H - 5, lw=0.5)
-    pg.text(PAGE_W / 2, PAGE_H - 13, f"POV3D V1.0 — {spec['code']}  {spec['title']}", size=5.5, ha="center")
+    pg.text(PAGE_W / 2, PAGE_H - 13, f"POV3D {spec.get('proj', 'V1.0')} — {spec['code']}  {spec['title']}", size=5.5, ha="center")
     if spec.get("subtitle"):
         pg.text(PAGE_W / 2, PAGE_H - 19, spec["subtitle"], size=3.0, ha="center")
 
@@ -396,7 +396,7 @@ def draw(spec):
     pg.text(184, 29, f"比例 {slabel}", size=3.4)
     pg.text(184, 15.5, "单位 mm / 第一角", size=3.0)
     pg.text(232, 29, spec.get("date", "2026-10-20"), size=3.0)
-    pg.text(232, 15.5, "POV3D V1.0", size=3.0)
+    pg.text(232, 15.5, "POV3D " + spec.get("proj", "V1.0"), size=3.0)
     pg.text(272, 29, "打印姿态:", size=3.0)
     pg.text(272, 15.5, spec["orient"], size=2.8)
     pg.text(14, 6.5, f"STL: {spec['src']}   (线: 实线 = 可见棱/轮廓, 灰虚线 = 不可见)", size=2.4)
