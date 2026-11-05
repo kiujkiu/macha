@@ -81,6 +81,26 @@ MOTOR_D, MOTOR_H, MOTOR_Z0 = 50.0, 26.7, 5.0
 ROTOR_Z0 = MOTOR_Z0 + MOTOR_H                 # 31.7
 parts.append(("motor (placeholder)", mesh_tris(
     m3d.Manifold.cylinder(MOTOR_H, MOTOR_D/2, MOTOR_D/2, 64, False).translate((0, 0, MOTOR_Z0)))))
+# 2026-11-04 用户: 电机控制板 (定子, 不转) 靠定子方块放 +Y: 托板 motor_tray_v1_0 + 散热片 + 真实板 (10-23 STEP, 转 180°)
+import importlib.util as _ilu
+_sp = _ilu.spec_from_file_location("motor_tray_build", ROOT / "models/motor_tray_v1_0/build_stl.py")
+MT = _ilu.module_from_spec(_sp); _sp.loader.exec_module(MT)
+parts.append(("motor_tray_v1_0", read_stl(ROOT / "models/motor_tray_v1_0/motor_tray_v1_0.stl")))
+parts.append(("motor heat sink 40x20x6", mesh_tris(MT.sink())))
+_mb = read_stl(ROOT / "boards/motor_ctrl_2026-10-23_lite.stl") - np.array([20.01, 10.01, 0.0])   # 板系
+# 2026-11-04 用户: XT60 (电源) / MR30 (三相) 两个座不焊, 直接焊线 ⇒ 孪生里去掉 (否则顶法兰 8.1 / 2.5)
+_nop = np.zeros(len(_mb), bool)
+for _x0, _x1, _y0, _y1 in ((0.1, 8.4, 14.7, 31.0), (74.0, 79.5, 18.9, 31.0)):
+    _in = ((_mb[..., 0] >= _x0) & (_mb[..., 0] <= _x1) & (_mb[..., 1] >= _y0) & (_mb[..., 1] <= _y1)).all(axis=1)
+    _nop |= _in & ((_mb[..., 2].max(axis=1) > 1.61) | (_mb[..., 2].min(axis=1) < -0.02))
+_mb = _mb[~_nop]
+_top = (_mb[..., 2].max() + MT.TRAY_T)
+_w = _mb.reshape(-1, 3) * [-1, -1, 1] + [MT.CX + MT.PCB_L / 2, MT.CY + MT.PCB_W / 2, MT.TRAY_T]
+_hit = (np.hypot(_w[:, 0], _w[:, 1]) < 85.0) & (_w[:, 2] > 15.5)
+assert not _hit.any(), f"电机板器件顶到法兰 (Z15.5): {_hit.sum()} 顶点, 最高 Z{_w[_hit, 2].max():.2f}"
+print(f"电机板: 去掉 XT60/MR30 后最高 Z{_top:.2f}; 法兰 r85 内最高 Z{_w[np.hypot(_w[:, 0], _w[:, 1]) < 85.0, 2].max():.2f} (法兰底 15.5)")
+parts.append(("motor ctrl board", xform(_mb, np.diag([-1.0, -1.0, 1.0]),
+                                        (MT.CX + MT.PCB_L / 2, MT.CY + MT.PCB_W / 2, MT.TRAY_T))))
 # 2026-10-20 用户: 转子盘 Φ170 → Φ180, 外圈 8 孔 R77.5 → 82.5 ⇒ hub_disc_v1_0 / rim_ring_v1_0
 parts.append(("hub_disc_v1_0", read_stl(ROOT / "models/hub_disc_v1_0/hub_disc_v1_0.stl") + np.array([0.0, 0.0, ROTOR_Z0])))
 DISC_TOP = ROTOR_Z0 + 10.5                    # 42.2 承载面
@@ -675,7 +695,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-COL = {"grid": "#333333", "base": "#777777", "flange": "#88aacc", "mounting": "#cccc77", "motor": "#444444",
+COL = {"motor_tray": "#ff9f40", "motor heat": "#c0c0c0", "motor ctrl": "#2a7d2a", "grid": "#333333", "base": "#777777", "flange": "#88aacc", "mounting": "#cccc77", "motor": "#444444",
        "hub": "#ccaa55", "rim": "#9ccf9c", "DR1M90": "#2a7d2a", "FS03": "#e03020", "LED": "#3355cc",
        "bridge": "#1f9a6a", "ACG525": "#d9a400", "wifi_plate": "#bbbbbb", "nylon": "#f2f2e6", "wifi_shell": "#22aaaa", "wifi module": "#111111", "post": "#666666", "frame": "#5577aa", "FPC": "#e07b00",
        "hex nut": "#d4a017", "screen screw": "#202020", "screen_foot": "#ff7f2a", "top_cap": "#c05cd6",

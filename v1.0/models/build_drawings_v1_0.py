@@ -15,6 +15,9 @@ from rim_ring_v1_0.build_stl import (BASE_HOLES, EXTRA_HOLES, HEAD_CB_XY, INSERT
 from screen_foot_v1_0.build_stl import AXIS_BAR_D, RING_HOLES as FOOT_RING, WELL_D  # noqa: E402
 from top_cap_v1_0.build_stl import SEN_CB_D, SEN_CB_T, SEN_HOLES, SEN_SLOT_L, SEN_SLOT_W, SEN_TH  # noqa: E402
 from wifi_plate_v1_0.build_stl import HOLES as PLATE_HOLES, NOTCH_HX, NOTCH_Y0, SHELL_HOLES  # noqa: E402
+from balance_block_v1_0.build_stl import M3_HOLES as BB_M3, M6_HOLES as BB_M6  # noqa: E402
+from motor_tray_v1_0.build_stl import (M6_HOLES as MT_M6, PCB_HOLES as MT_INS, SINK_X as MT_SX,  # noqa: E402
+                                       SINK_Y as MT_SY, Y0 as MT_Y0)
 
 DATE = "2026-10-20"
 
@@ -135,6 +138,40 @@ SPECS.append(dict(
     notes=[f"H 口 {2 * NOTCH_HX:g} 宽, 从 |Y|={NOTCH_Y0:g} 开到板端; +Y 口穿扁平 USB 延长线",
            "板 70×128×3",
            "装法: 托板+罩+模块先用 4 颗 M3 锁成一组, 再整组拧上尼龙柱"],
+    dims=[]))
+
+# ---------------- balance_block_v1_0 ----------------
+SPECS.append(dict(
+    stl=HERE / "balance_block_v1_0/balance_block_v1_0_asm.stl", code="balance_block_v1_0", short="M6 配重块", qty="1", date="2026-11-05",
+    title="无屏动平衡 M6 配重块 (贴 rim_ring 顶面, 借相邻两个 R82.5 孔), 2026-11-05",
+    orient="顶面贴床 (打印 STL 已翻好), 零支撑", src="v1.0/models/balance_block_v1_0/balance_block_v1_0.stl",
+    origin_note="原点 = 转轴, 块中心在 +Y, 底面 Z0 贴 rim_ring 顶面。图为装配姿态。",
+    holes=[
+        dict(tag="A", pts=BB_M3, spec="Φ3.2 通 + 顶面 Φ7.5×2 头沉 — M3×14 拧进 hub 铜螺母", where=xy_lines(BB_M3)),
+        dict(tag="B", pts=BB_M6, spec="Φ6.5 通 + 底面 Φ13×2.8 头窝 — M6 大扁头, 螺杆朝上叠螺母", where=xy_lines(BB_M6)),
+    ],
+    notes=["弧 r76..90 (不超转子盘), ±29°, 厚 4.8, 顶比 DR1M90 板底低 0.2",
+           "M6 @ r83, ±5° / ±15°, 窝底留 2.0; M3 微调用其余环孔",
+           "先装 M6 再上转子; 上屏前要拆"],
+))
+
+# ---------------- motor_tray_v1_0 ----------------
+SPECS.append(dict(
+    stl=HERE / "motor_tray_v1_0/motor_tray_v1_0.stl", code="motor_tray_v1_0", short="电机板托板", qty="1",  date="2026-11-04",
+    title="电机控制板托板 (贴洞洞板 +Y 边; 散热片嵌槽, PCB 器件面朝上), 2026-11-04",
+    orient="底面贴床, 零支撑", src="v1.0/models/motor_tray_v1_0/motor_tray_v1_0.stl",
+    origin_note="原点 = 转轴 (世界 XY), 托板底 Z0 = 洞洞板顶面。",
+    holes=[
+        dict(tag="A", pts=MT_M6, spec="Φ6.5 通 + Φ13 头窝 (窝底留 2.5) — M6 大扁头锁网格",
+             where=xy_lines(MT_M6)),
+        dict(tag="B", pts=MT_INS, spec="Φ3.2 通 + 底面 Φ4.2×4.5 沉孔 — M3 铜螺母, PCB 孔距 71×31",
+             where=xy_lines(MT_INS)),
+    ],
+    notes=[f"80×45×6, Y{MT_Y0:g}..100, 外边齐底板边, 靠 2 颗 M6 定位",
+           "中心 X+35, PCB 外边离底板边 2, 按键 r≈100 露出转子",
+           f"散热片槽 20×40 通槽, 四周闭合, 零间隙: X {MT_SX[0]:g}..{MT_SX[1]:g}, Y {MT_SY[0]:.2f}..{MT_SY[1]:.2f}",
+           "3 处背面焊点/针让位, 深 3; XT60 / MR30 座不焊, 线直接焊板上",
+           "BOM: M6 大扁头 ×2, M3 铜螺母 ×4, M3×6 ×4, 散热片 40×20×6 ×1"],
     dims=[]))
 
 # ---------------- frame_A / frame_B ----------------
