@@ -15,7 +15,7 @@ from rim_ring_v1_0.build_stl import (BASE_HOLES, EXTRA_HOLES, HEAD_CB_XY, INSERT
 from screen_foot_v1_0.build_stl import AXIS_BAR_D, RING_HOLES as FOOT_RING, WELL_D  # noqa: E402
 from top_cap_v1_0.build_stl import SEN_CB_D, SEN_CB_T, SEN_HOLES, SEN_SLOT_L, SEN_SLOT_W, SEN_TH  # noqa: E402
 from wifi_plate_v1_0.build_stl import HOLES as PLATE_HOLES, NOTCH_HX, NOTCH_Y0, SHELL_HOLES  # noqa: E402
-from balance_block_v1_0.build_stl import M3_HOLES as BB_M3, M6_HOLES as BB_M6  # noqa: E402
+from balance_block_v1_0.build_stl import M3_HOLES as BB_M3, M6_HOLES as BB_M6, TRIM_HOLES as BB_TR  # noqa: E402
 from motor_tray_v1_0.build_stl import (M6_HOLES as MT_M6, PCB_HOLES as MT_INS, SINK_X as MT_SX,  # noqa: E402
                                        SINK_Y as MT_SY, Y0 as MT_Y0)
 
@@ -149,9 +149,10 @@ SPECS.append(dict(
     holes=[
         dict(tag="A", pts=BB_M3, spec="Φ3.2 通 + 顶面 Φ7.5×2 头沉 — M3×14 拧进 hub 铜螺母", where=xy_lines(BB_M3)),
         dict(tag="B", pts=BB_M6, spec="Φ6.5 通 + 底面 Φ13×2.8 头窝 — M6 大扁头, 螺杆朝上叠螺母", where=xy_lines(BB_M6)),
+        dict(tag="C", pts=BB_TR, spec="Φ3.2 通 + 底面 Φ7×1.5 头窝 — M3 配重, 螺纹朝上锁螺母", where="r64, 每 8° (-24..+24)"),
     ],
-    notes=["弧 r76..90 (不超转子盘), ±29°, 厚 4.8, 顶比 DR1M90 板底低 0.2",
-           "M6 @ r83, ±5° / ±15°, 窝底留 2.0; M3 微调用其余环孔",
+    notes=["扇形 r56..90 (不超转子盘), ±29°, 厚 4.8, 顶比 DR1M90 板底低 0.2",
+           "M6 @ r83, ±5° / ±15°, 窝底留 2.0; M3 配重 r64 (上方须无板)",
            "先装 M6 再上转子; 上屏前要拆"],
 ))
 

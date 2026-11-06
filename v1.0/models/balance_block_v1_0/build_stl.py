@@ -6,7 +6,7 @@ balance_block_v1_0 —— V1.0 无屏动平衡 M6 配重块 (2026-11-05 用户: 
   · 4×M6 @ r83, 中心 ±5° / ±15°; 底面 Φ13 头窝, M6 大扁头 (Φ12.5×2.5) 头朝下藏窝里, 螺杆朝上, 上面叠螺母配重。
   · 全部在 R90 内 (用户定)。M6 螺母柱 (对角 11.5) 只有世界角 56.8°~65° (及镜像) 会碰 DR1M90 板角 r80.6: 块中心在 45°/135°/225°/315° 时靠 ±Y 的端列不能用。
   · 厚 4.8: 顶 Z47.0, 比 DR1M90 板底 Z47.2 低 0.2, 块本身不碰板。
-  · M3 微调不在块上: 用其余 R82.5 环孔 + 块上 2 颗 M3 头下加垫片。
+  · M3 配重 7 孔 @ r64, 每 8°: 只放在板长边一侧 (CAD 中心 0°/180°) 上方才空, 用户 11-05 实物确认空; 底面 Φ7×1.5 头窝, M3 头朝下嵌入, 螺纹朝上锁螺母微调。
   · 上屏前要拆: 上屏后不平衡完全不同 (见 balance_v1_0.py)。
 零件系: 块中心在 +Y (90°), 原点 = 转轴, 底面 Z0 贴 rim_ring。
 打印: 顶面贴床 (窝口朝上), 零支撑; 主 STL 已是打印姿态, *_asm.stl 是装配姿态。
@@ -21,14 +21,17 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from params_v1_0 import RING_OUTER_PCD_R, write_stl  # noqa: E402
 
-R_IN, R_OUT, T = 76.0, 90.0, 4.8       # 用户 11-05: 不能超转子盘 R90 (尺寸尽头)
-HALF = 29.0                       # 弧半角
+R_IN, R_OUT, T = 56.0, 90.0, 4.8       # 用户 11-05: 不能超转子盘 R90 (尺寸尽头)
+HALF = 29.0                       # 弧半角 (用户 11-05 圈图: 去两端, 往内加宽放 M3)
 M3_DEG = 22.5                     # 相邻环孔相隔 45°
 M3_D = 3.2
 M3_CB_D, M3_CB_DEEP = 7.5, 2.0     # 用户 11-05: M3 头 Φ7×1.5 要沉 (同 rim_ring 头沉 Φ7.5×2)
 M6_R, M6_D = 83.0, 6.5
 M6_DEG = (-15.0, -5.0, 5.0, 15.0)
 CB_D, CB_DEEP = 13.0, 2.8         # 头窝: 大扁头 Φ12.5×2.5
+TRIM_R, TRIM_D = 64.0, 3.2         # M3 配重孔: 同 M6, 头朝下嵌块底, 螺纹朝上锁螺母 (用户 11-05)
+TRIM_CB_D, TRIM_CB_DEEP = 7.0, 1.5  # 头 Φ7×1.5
+TRIM_DEG = tuple(-24.0 + 8.0 * k for k in range(7))
 RHO = 1.10                        # g/cm³, 打印件等效 (同 balance_v1_0.PRINT_RHO)
 
 
@@ -39,6 +42,7 @@ def pol(r, a):
 
 M3_HOLES = [pol(RING_OUTER_PCD_R, s * M3_DEG) for s in (-1, 1)]
 M6_HOLES = [pol(M6_R, a) for a in M6_DEG]
+TRIM_HOLES = [pol(TRIM_R, a) for a in TRIM_DEG]
 
 
 def outline(n=48):
@@ -59,6 +63,9 @@ def build():
     for x, y in M6_HOLES:
         p -= cyl(M6_D, x, y, -1, T + 1)
         p -= cyl(CB_D, x, y, -1, CB_DEEP)
+    for x, y in TRIM_HOLES:
+        p -= cyl(TRIM_D, x, y, -1, T + 1)
+        p -= cyl(TRIM_CB_D, x, y, -1, TRIM_CB_DEEP)
     return p
 
 
@@ -77,3 +84,4 @@ if __name__ == "__main__":
     print(f"体积 {p.volume():.0f} mm³, 估重 {m:.1f} g, 质心 r{cg[1]:.1f}, 块自身 {m * cg[1]:.0f} g·mm; genus {p.genus()}")
     print(f"窝-M3 孔壁 {gap:.2f}, 窝-窝壁 {gap6:.2f}, 外壁 {R_OUT - M6_R - CB_D / 2:.2f}, 内壁 {M6_R - CB_D / 2 - R_IN:.2f}, 窝底 {T - CB_DEEP:.1f}")
     print("Z", v[:, 2].min(), v[:, 2].max())
+    print(f"M3 窝间壁 {math.dist(TRIM_HOLES[0], TRIM_HOLES[1]) - TRIM_CB_D:.2f}, 窝-M6 窝壁 {min(math.dist(a, b) for a in TRIM_HOLES for b in M6_HOLES) - (TRIM_CB_D + CB_D) / 2:.2f}, 内壁 {TRIM_R - TRIM_CB_D / 2 - R_IN:.2f}")
