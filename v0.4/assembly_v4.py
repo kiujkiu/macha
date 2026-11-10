@@ -268,9 +268,16 @@ for _tag in ("A", "B"):
 # 10c) 配重臂 counterweight_arm (2026-08-03, 共享件): 骑在罩顶面 (Z 92.2) 跨接缝,
 #      4× M3×16 里 2 颗进半 A、2 颗进半 B → 把两半在顶部连成一体; M6 六角头朝下卡
 #      六角窝, 杆朝上叠垫圈当配重 (方向 = 零件系 −X, 正是偏心屏要修正的方向)。
-_arm = read_stl(MODELS / "counterweight_arm/counterweight_arm.stl") \
-    + np.array([0.0, 0.0, DISC_TOP + 50.0])
-parts.append(("counterweight_arm", rot_z(_arm, ROTOR_ROT + V3_SCR_ROT)))
+# 2026-11-09: 带屏动平衡 → 换扇形配重块 counterweight_fan_v4 (同 4 个 M3 点, 零件角 100..260°,
+#   13+1 个 M6 + 18 个 M3 微调)。`--arm` 退回旧配重臂。
+if "--arm" in sys.argv:
+    _arm = read_stl(MODELS / "counterweight_arm/counterweight_arm.stl") \
+        + np.array([0.0, 0.0, DISC_TOP + 50.0])
+    parts.append(("counterweight_arm", rot_z(_arm, ROTOR_ROT + V3_SCR_ROT)))
+else:
+    _arm = read_stl(ROOT / "models/counterweight_fan_v4/counterweight_fan_v4_asm.stl") \
+        + np.array([0.0, 0.0, DISC_TOP + 50.0])
+    parts.append(("counterweight_fan_v4", rot_z(_arm, ROTOR_ROT + V3_SCR_ROT)))
 print(f"支架翼板底 {DISC_TOP+21.0:.1f} / 中央缺口顶(±60内) {DISC_TOP+50.0:.1f} (米联派顶 {MLK_TOP:.1f}); "
       f"双面屏模组 {SCREEN_Z0:.1f}..{SCREEN_Z0+168.75:.1f} (LED 面 X=±{SCREEN_T/2:.2f})")
 
@@ -372,12 +379,13 @@ parts.append(("vane_slider_v4", vs))
 # M6×20 平头藏底面 Φ13×2.7 头窝 (⚠ 先装 M6 再压屏), 头 260.95..263.65。
 # 2026-08-24: 换两用版 top_cap_v3_1_1 —— 条宽 18→32 (±16, 原 ±9 盖不住偏心后的屏),
 # 屏孔 3×2 个离散位; -X 悬空区带 9×Φ6.5 配重孔 (力臂 11, 只够细调)。
-cap = read_stl(V31 / "models/top_cap_v3_1_1/top_cap_v3_1_1.stl")  # 打印翻转姿态
+# 2026-10-29: 换 top_cap_v4 = v3_1_1 + -X 梯形配重翼 (翼尖 3×M6 @ X-55, 动平衡上平面)。
+cap = read_stl(ROOT / "models/top_cap_v4/top_cap_v4.stl")  # 打印翻转姿态
 cap[..., 1] = -cap[..., 1]
 cap[..., 2] = CAPTOP_V3 - cap[..., 2]
 cap = cap[:, ::-1, :].copy()
 cap = rot_z(cap, ROTOR_ROT + V3_SCR_ROT)
-parts.append(("top_cap_v3_1_1 (rotor)", cap))
+parts.append(("top_cap_v4 (rotor)", cap))
 scr = m3d.Manifold.cylinder(17.3, 3.0, 3.0, 32, False).translate((0, 0, 263.65))
 parts.append(("M6x20 screw (rotor)", mesh_tris(scr)))
 sto = m3d.Manifold.cylinder(40.0, 4.0, 4.0, 48, False).translate((0, 0, 267.95))
@@ -433,11 +441,11 @@ COLORS = {"grid plate 200x200x13": "#333333", "baseplate_collar_v4": "#777777",
           "portal_tee A": "#aa6622", "portal_tee B": "#aa6622",
           "sensor_module": "#222266",
           "dual_screen": "#3355cc",
-          "counterweight_arm": "#cc7722", "shroud_half_A_v3_1": "#b0b8c8", "shroud_half_B_v3_1": "#98a0b0",
+          "counterweight_arm": "#cc7722", "shroud_half_A_v3_1": "#b0b8c8", "shroud_half_B_v3_1": "#98a0b0", "counterweight_fan_v4": "#dd3333",
           "wifi_shell": "#22aaaa",
           "usb_wifi_module": "#111111",
           "frame_A_v3 (SW+NW)": "#5577aa", "frame_B_v3 (NE+SE)": "#5577aa",
-          "top_cap_v3_1_1 (rotor)": "#cc8888", "M6x20 screw (rotor)": "#888888",
+          "top_cap_v4 (rotor)": "#cc8888", "M6x20 screw (rotor)": "#888888",
           "standoff Φ8×30 (rotor)": "#888888",
           "vane_slider_v4": "#cc6644", "688 lower (frame_A)": "#999999", "688 upper (frame_B)": "#999999"}
 for px in (-75, 75):
