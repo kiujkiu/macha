@@ -12,3 +12,6 @@ v1.1/assembly_v1_1*.stl
 v1.0/assembly_v1_0.3mf
 __pycache__/
 v1.1/assembly_v1_1_noglass.3mf
+
+# V1.2: 临时输出
+v1.2/out/
