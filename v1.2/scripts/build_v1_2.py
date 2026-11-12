@@ -62,18 +62,19 @@ DROP = 10.2
 MOTOR_Z0 = 0.0
 ROTOR_TOP = MOTOR_Z0 + MOTOR_H                 # 21.5 (原 31.7)
 FL_THIN = 3.0                                  # 用户 11-11: flange_disc 底板减 3 (4.5→1.5), 顶面不动, 底面上抬
-FL_UP = 1.0                                    # 用户 11-11: 定子法兰盘整体上移 1 (线圈环套环加高)
-FL_Z0 = 15.5 + FL_THIN - DROP + FL_UP          # 法兰盘底 9.3
+FL_UP = 1.2                                    # 用户 11-11 上移 1; 11-12 再 +0.2: 方座顶 9.5, 内管顶 = 安装法兰顶 = 总高 16
+FL_Z0 = 15.5 + FL_THIN - DROP + FL_UP          # 法兰盘底 9.5
 MF_THIN = 0.5                                  # 用户 11-11: mounting_flange 板厚 3→2.5 (顶面去 0.5)
 MF_CB = 1.5                                    # 用户 11-11: 安装法兰 16 个 Φ7 沉孔深 2.0→1.5
-FL_TOP = 22.5 - DROP + FL_UP                   # 法兰盘顶 13.3 (= 安装法兰底)
-MF_TOP = 25.5 - MF_THIN - DROP + FL_UP         # 安装法兰顶 15.8
-TUBE_TOP = FL_TOP                              # 用户 11-11 螺丝内移: 内管只到法兰盘顶 (不再穿安装法兰, 让螺丝头)
-R_SCREW = 34.0                                 # 用户 11-11: 线圈环/法兰 8×M3 r36.3 → r34
+FL_TOP = 22.5 - DROP + FL_UP                   # 法兰盘顶 13.5 (= 安装法兰底)
+MF_TOP = 25.5 - MF_THIN - DROP + FL_UP         # 安装法兰顶 16.0
+TUBE_TOP = MF_TOP                              # 用户 11-12: 内管穿定子盘+安装法兰到 Z16 (6.5); 螺丝 r35.2 的 Φ7 沉孔内缘 r31.7 让开内管 r31.5
+CB7 = 7.0                                      # 用户 11-12: 安装法兰 A/B 沉孔 Φ7 = 定子盘内外墙宽
+R_SCREW = 31.7 + CB7 / 2                       # 用户 11-12: r34 → r35.2 (Φ7 沉孔从中心孔边 r31.7 起; 原 11-11 r36.3 → r34)
 TUBE_OD = 63.0                                 # 内管 r29.5–31.5 (壁 2)
 COLLAR_D = 77.0                                # 套环 Φ84 → Φ77 (r38.5), 控制板跟着内移
 FL_HOLE_R = TUBE_OD / 2 + 0.2                  # 法兰盘中心孔补到 r31.7
-MF_HOLE_R = BORE_D / 2 + 0.2                   # 安装法兰中心孔补到 r29.7
+MF_HOLE_R = TUBE_OD / 2 + 0.2                  # 用户 11-12: 内管要穿安装法兰 ⇒ 中心孔 r29.7 → r31.7 (同定子盘)
 BOARD_ANG = 90.0
 COLLAR_M6 = []
 FLANGE_SCREWS = [(R_SCREW * math.cos(math.radians(22.5 + 45 * k)), R_SCREW * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]
@@ -100,6 +101,9 @@ for x, y in FLANGE_SCREWS:
     r_ = cut(r_, cyl(x, y, 3.2, -1, TUBE_TOP + 1))
 for x, y in RING_M3:
     r_ = cut(r_, cyl(x, y, 3.2, -1, FL_Z0 + 1))
+RING_NUT_CLR_D = 8.2  # 用户 11-12 方案 a: 圆台四角让 M3 法兰螺母 Φ7.6 (+0.3 单边)
+for x, y in RING_M3:
+    r_ = cut(r_, cyl(x, y, RING_NUT_CLR_D, RING_CORNER_T, FL_Z0 + 1))
 ring = clean(r_); collar = ring; LOG['ring'] = dict(v=vol(ring))
 def zdown(sh, dz=DROP):
     t = gp_Trsf(); t.SetTranslation(gp_Vec(0, 0, -dz)); return xf(sh, t)
@@ -193,7 +197,8 @@ def sink_shape():                                                   # 40x20x6: �
         sh = fuse(sh, bl(x0, SINK[1], x0 + 1.4, SINK[3], -6.0, -2.0))
     return sh
 heatsink = sink_shape()
-SH_R = 85.0                                        # 11-11 用户: M3 螺母让位圆 Φ14 贴下罩内墙 (r92-7)
+SH_NUT_D = 8.0                                     # 用户 11-12: 下罩 A 孔螺母 Φ8 (含余量), 贴墙内面
+SH_R = 90.8 - SH_NUT_D / 2                         # 用户 11-12: = r86.8 (墙内面 r90.8 直下 - 4, 孔心到内圆 4); 曾 r88 / r85
 SH_R_OLD = 83.0                                        # 用户 11-11: 下罩 M6 用 V1.1 四孔 (±62.5,±62.5) 往里挪到 r83, 下罩内侧加 4 个耳片
 SH_M6 = [(SH_R * math.cos(math.radians(a)), SH_R * math.sin(math.radians(a))) for a in (45, 135, 225, 315)]
 _bb = bbox(board)
@@ -217,7 +222,7 @@ def _inkeep(x, y):
     _kc.Perform(gp_Pnt(x, y, 0), 1e-4); return _kc.State() != TopAbs_OUT
 FIXED = COLLAR_M6                                  # 用户 11-12: 下罩 4 孔改 M3 (SH_M6 位置不变, 单独开 M3 孔)
 MOTOR_HOLES = [(sx * STATOR_R * s45, sy * STATOR_R * s45) for sx in (1, -1) for sy in (1, -1)]
-M3_D, M3_CB_D, M3_CB_H = 3.2, 6.5, 3.5           # 内六角 M3 头 Φ5.5x3
+M3_D, M3_CB_D, M3_CB_H = 3.2, 7.0, 2.0           # 内六角 M3 头 Φ5.5x3; 盘底往上装沉孔 用户 11-12: Φ6.5×3.5 → Φ7×2
 def _loc(X, Y):      # 全局 -> 板本地
     p = gp_Pnt(X, Y, BOARD_Z).Transformed(BT.Inverted()); return p.X(), p.Y()
 def _rect_hit(x, y, rad, r):   # 圆 (x,y,rad) 与本地矩形 r=(x0,y0,x1,y1) 相交
@@ -269,13 +274,13 @@ def ann(r0, r1, z0, z1): return cut(cyl(0, 0, 2 * r1, z0, z1), cyl(0, 0, 2 * r0,
 GL_OD, GL_T, GL_H = 200.0, 5.0, 245.0
 Z_G = round(bbox(rim)[5], 2)                       # 玻璃下端 = 承载盘顶 32.0
 SH_OUT = DISC_D / 2                                # 用户草图 11-11: 外面与底盘外缘齐平 r110
-SPIG_IN = 92.0                                     # 墙内面 r92 竖直到底 (控制板最外角 r90.4, 承载盘 r89)
 SPIG_T = 4.0                                       # 用户 11-11 嫌内卡薄: 2.8 → 4.0, 往里加 (内卡 r90.8–94.8, 离承载盘外缘 1.8)
 GL_CLR = 0.2                                       # 玻璃单边间隙
 IN_DEPTH, OUT_DEPTH = 20.0, 10.0                   # 内卡 20, 外卡贴玻璃处 10, 顶面 45° 往外降
 TAB_T, TAB_W = 3.5, 18.0                           # 耳片厚 / 宽; M6x10 从盘底, 螺母压耳片顶 (z3.5–8.5, 法兰底 9.3)
 NUT_T = 2.4                                        # M3 螺母
 gi, go = GL_OD / 2 - GL_T - GL_CLR, GL_OD / 2 + GL_CLR    # 94.8 / 100.2
+SPIG_IN = gi - SPIG_T                              # 用户 11-12: 墙内面 = 内卡内面 r90.8 一条直线到底 (原 r92 有 1.2 台阶); 控制板最外角 r90.4, 承载盘 r89
 from OCP.BRepPrimAPI import BRepPrimAPI_MakeCone
 LIP_EDGE = 1.5                                     # 外卡外缘留 1.5 直边 (分体环不出 0.2 薄边), 斜面 ≈41°
 _r1 = SH_OUT + LIP_EDGE * (SH_OUT - go) / (OUT_DEPTH - LIP_EDGE)
@@ -290,11 +295,12 @@ TRI_T = 5.0
 _cross = fuse(gbox(-200, -P_N, -1, 200, P_N, 20), gbox(-P_N, -200, -1, P_N, 200, 20))
 s_ = fuse(s_, cut(cyl(0, 0, 2 * SPIG_IN + 1, 0, TRI_T), _cross))                # 四角三角块
 NUT_Z0 = TRI_T                                     # 用户 11-12 改 M3: M3x10 从盘底沉孔往上, 穿底盘+三角块, M3 螺母压三角块顶 (z5–7.4)
-NUT_CLR_D = 10.0                                   # 定子盘/安装法兰在 M3 螺母处开 Φ10 让位 (原 M6 Φ14)
+assert abs(SH_R - (SPIG_IN - SH_NUT_D / 2)) < 1e-9, '下罩螺母要贴墙内面'
+NUT_CLR_D = 0.0                                    # 用户 11-12: 螺母 r84–92 在定子盘 r82.5 外、顶 Z7.4 < 定子盘底 Z9.3 ⇒ 定子盘/安装法兰不再开让位 (原 Φ10)
 for x, y in SH_M6:
     s_ = cut(s_, cyl(x, y, 3.4, -1, TRI_T + 1))
 SUP_W, SUP_IN = 12.0, 76.0                         # 用户 11-11: 托块加大, 宽 12, 从 r76 到墙, 端头 Φ12
-for x, y in OUT_SCREWS:
+for x, y in []:                                    # 用户 11-12: 托块 B 取消 (定子盘靠中央 8×M3 + 线圈环托住)
     a_ = math.degrees(math.atan2(y, x))
     _sp = fuse(xf(gbox(SUP_IN + SUP_W / 2, -SUP_W / 2, 0, SPIG_IN + 1.0, SUP_W / 2, FL_Z0), rotz(a_)), cyl((SUP_IN + SUP_W / 2) * math.cos(math.radians(a_)), (SUP_IN + SUP_W / 2) * math.sin(math.radians(a_)), SUP_W, 0, FL_Z0))
     s_ = fuse(s_, _sp)                                 # 用户 11-12: 托块不开 M3 通孔
@@ -328,14 +334,20 @@ LOG['xt60'] = dict(ang=XT_ANG, holes=[(round(x, 2), round(y, 2)) for x, y in XT_
 _fd = flange_disc                                  # 用户 11-12: 定子盘外径改回原尺寸 (不再扩 Φ181)
 _fd = cut(_fd, xf(gbox(-XT_HW - 0.5, XT_Y0 - 5, -1, XT_HW + 0.5, XT_Y1 + 0.5, 30), XT_T))   # XT60 压块处让位
 # 用户 11-12: 外圈 r78 8 孔保留 (原 V0.4 定子盘/安装法兰上下盖互锁螺丝), 不再补实
-LID_SCREWS = [(78.0 * math.cos(math.radians(22.5 + 45 * k)), 78.0 * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]   # 外圈 r78 8 孔 (上下盖互锁)
+CAV_R0 = 31.7 + CB7                                # 线圈腔内壁 r40 → r38.7 (内墙 r31.7–38.7)
+CAV_R1 = 82.5 - CB7                                # 线圈腔外壁 r72.6 → r75.5 (外墙 r75.5–82.5)
+CAV_Z0 = FL_Z0 + 1.5                               # 腔底 Z10.8 (底板 1.5)
+LID_R = 82.5 - CB7 / 2                             # 用户 11-12: 上下盖孔居中到外墙 r79 (原 V0.4 r77.5, 曾误开 r78)
+LID_SCREWS = [(LID_R * math.cos(math.radians(22.5 + 45 * k)), LID_R * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]   # 外圈 r79 8 孔 (上下盖互锁)
 LID_INS_D, LID_INS_H = 4.2, 3.0                    # 原 Φ2.5 攻牙孔 → M3x5 + 铜螺母 Φ4.2x3 从定子盘底面压 (顶留 1)
+_V04_OUT = [(77.5 * math.cos(math.radians(22.5 + 45 * k)), 77.5 * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]   # V0.4 原外圈孔
+for x, y in _V04_OUT: _fd = fuse(_fd, cyl(x, y, 4.6, FL_Z0, FL_TOP))         # 原 r77.5 孔补实 (先补再挖腔, 免补进腔里)
+_fd = cut(_fd, ann(CAV_R0, CAV_R1, CAV_Z0, FL_TOP + 1))                       # 用户 11-12: 内外墙都收到 7 宽 (= Φ7 沉孔)
 for x, y in LID_SCREWS: _fd = cut(_fd, cyl(x, y, 3.2, 0, 30), cyl(x, y, LID_INS_D, FL_Z0 - 1, FL_Z0 + LID_INS_H))
-for x, y in SH_M6: _fd = cut(_fd, cyl(x, y, NUT_CLR_D, 0, 30))                # 下罩 M3 螺母让位
 flange_disc = clean(_fd)
 _mf2 = mounting_flange                             # 11-12 外径回原 Φ170: 保留 V0.4 原外裙 r82.5–85 (已同步短到 z9.3 = 定子盘底); 原先 cut ann(82.8,86) 是错的, 还留 0.3 薄片
-for x, y in LID_SCREWS: _mf2 = cut(_mf2, cyl(x, y, 3.2, 0, 30))                # 上盖外圈 Φ3.2 通孔 (原 Φ7 沉孔保留)
-for x, y in SH_M6: _mf2 = cut(_mf2, cyl(x, y, NUT_CLR_D, 0, 30))
+for x, y in _V04_OUT: _mf2 = fuse(_mf2, cyl(x, y, CB7 + 0.4, FL_TOP, MF_TOP))  # 原 r77.5 Φ7 沉孔 + 孔补实 (板内)
+for x, y in LID_SCREWS: _mf2 = cut(_mf2, cyl(x, y, 3.2, 0, 30), cyl(x, y, CB7, MF_TOP - MF_CB, 40))   # 上盖 r79: Φ3.2 + 顶面 Φ7×1.5
 mounting_flange = clean(_mf2)
 seat = clean(s_); LOG['seat'] = dict(v=vol(seat), z_g=Z_G)          # 合并版 (下罩+外卡一体)
 # 分体版 (用户 11-11): 外卡三角区单独一个环, 玻璃先套内卡再从上套环; 环底 2x2 凸筋插下罩顶槽 (单边 0.1)
@@ -346,7 +358,7 @@ shroud_split = clean(cut(seat, _lip, ann(TG_R0 - TG_CLR, TG_R0 + TG_W + TG_CLR, 
 LOG['split'] = dict(ring=vol(clamp_ring), shroud=vol(shroud_split))
 tube = ann(GL_OD / 2 - GL_T, GL_OD / 2, Z_G, Z_G + GL_H)                     # 玻璃罩 OD200x5 高 245
 nuts = []
-seat_nuts = [cyl(x, y, 6.35, NUT_Z0, NUT_Z0 + NUT_T) for x, y in SH_M6]
+seat_nuts = [cyl(x, y, SH_NUT_D, NUT_Z0, NUT_Z0 + NUT_T) for x, y in SH_M6]
 hang_nuts = [cyl(x, y, 6.35, FL_Z0 - 2.4, FL_Z0) for x, y in OUT_HANG]          # M3 螺母 (对角 6.35 x 2.4) 吊在定子盘底
 hang_tips = [cyl(x, y, 3.0, MF_TOP - MF_CB - 8.0, FL_Z0) for x, y in OUT_HANG]   # M3x8 螺杆 (头座沉孔底)
 LOG['hang'] = OUT_HANG
