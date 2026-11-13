@@ -1,0 +1,7 @@
+(version 1)
+# 豁免 (2026-11-13): 下键 SW2 焊盘外包 (9.5x5.6) 与三色 D1 焊盘只差 ~0.4 —— 两者位置是结构 (key_board_outline_v1_2.py, 用户定) 卡死的,
+# 只是庭院 (courtyard) 重叠, 铜间隙仍 >= 0.15 (由 clearance 规则照常检查)。贴片可行: SW 本体 6x6 与 1615 本体不重叠。
+(rule "waive_courtyard_D1_SW2"
+  (constraint courtyard_clearance)
+  (condition "(A.Reference == 'D1' && B.Reference == 'SW2') || (A.Reference == 'SW2' && B.Reference == 'D1')")
+  (severity ignore))

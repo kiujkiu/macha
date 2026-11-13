@@ -208,6 +208,43 @@ def make_key_bracket(p=None):
         stem_env.append((x - KB.BTN_STEM_D / 2, x + KB.BTN_STEM_D / 2, yF, yF + KB.BTN_H, z + KB.BTN_STEM_D / 2))
     for (nm, x, z, w, l, hgt), hd in zip(led, [P['HOLE_RGB']] + [P['HOLE_LED']] * len(KB.LED)):
         parts.append(box(x - w / 2, yF, z - l / 2, x + w / 2, yF + hgt, z + l / 2)); holes.append((x, z, hd))
+    # ---- 背面 J1 (GH 12P 卧贴, 插口朝下) + 插头 + 线弯 / 走线 外包 (11-13 晚) ----
+    g = KB.j1_geom()
+    def gb(X0, Y0, X1, Y1, y0, y1):            # 板系矩形 → 整机 box (y 方向 y0..y1)
+        return box(20.0 - X1, y0, KB.Z0 + Y0, 20.0 - X0, y1, KB.Z0 + Y1)
+    yJ = yB - KB.J1_H                                                            # 座 / 插头背面 y94.75
+    j1 = [gb(*g['body'], yJ, yB), gb(g['body'][0] + 1.0, g['body'][3], g['body'][2] - 1.0, g['pad_tip_Y'], yB - 0.4, yB)]   # 本体 + 脚尾 (焊盘区高 0.4)
+    plug = gb(*g['plug'], yJ, yB)                                                # GHR-12V-S 外包 (露出插口 5.0, 宽 17.25, 厚 4.25)
+    zP = KB.Z0 + g['plug'][1]                                                    # 插头端 Z4.0
+    cw, ct = KB.CABLE_W / 2, KB.CABLE_T
+    y_bar = P['BAR_Y0'] - 0.3                                                    # 线弯离支架底条背面 0.3
+    cab_y0 = P['SPIG_IN'] - 4.8                                                  # 走线外包画到墙内面里 4.8 (y86)
+    bend = box(-cw, yJ - 1.25, 0.2, cw, y_bar, zP)                               # 插头下 线弯 (Z0.2..4.0, 高 3.8 ≥ BEND)
+    run = box(-cw, cab_y0, 0.2, cw, y_bar, 0.2 + ct)                             # 贴底盘往 −Y 出下罩
+    cable = fuse(bend, run)
+    # 背面贴片件 (PCB agent 出的 pcb/key_board_v1_2/back_parts.json: courtyard 外包 + 离板背高度; 0603 R ≈0.6 / C1 ≈0.9)
+    import json
+    bpj = V12 / 'pcb' / 'key_board_v1_2' / 'back_parts.json'
+    back_parts = {}
+    if bpj.exists():
+        for nm, d in json.loads(bpj.read_text(encoding='utf-8'))['parts'].items():
+            if nm == 'J1': continue
+            u0, v0, u1, v1 = d['courtyard_board_XY']                           # (别用 X1: 是平板半宽)
+            back_parts[nm] = (u0, v0, u1, v1, d['height'])
+            parts.append(gb(u0, v0, u1, v1, yB - d['height'], yB))
+            assert d['height'] <= KB.BACK_MAX - 0.5 and all(math.hypot(max(u0 - mx, 0, mx - u1), max(v0 - my, 0, my - v1)) >= KB.BACK_KO_D / 2 for mx, my in KB.MH), f'{nm} 碰螺母禁布'
+    parts += j1 + [plug, cable]
+    assert zP - 0.2 >= KB.BEND, '插头下线弯不足 3'
+    assert yJ - 1.25 >= KB.Y_BACK_MAX + 0.3 - 1e-9, '线弯出背面让位腔'
+    j1_nut_gap = abs(MH[0][0]) - P['NUT_FL_D'] / 2 - KB.J1_W / 2                 # 座边到螺母法兰 (x 向)
+    assert j1_nut_gap >= 1.0, j1_nut_gap
+    assert zP - P['BAR_Z1'] >= 0.5, '插头碰支架底条'                              # 插头 y 跨到 99, 底条 y98..99 Z≤3
+    # 下罩内壁底部出线缺口: 线 外包 +CLR_N 往里开穿墙内面 (底开, 下罩竖直罩下时从线上滑过)
+    CLR_N = 2.0
+    notch = box(-cw - CLR_N, cab_y0 - 1.0, -1.0, cw + CLR_N, yB - KB.BACK_MAX, 0.2 + ct + 1.2)   # x ±9, Z−1..3.0, y85..93
+    j1info = dict(center_x=0.0, mate_z=KB.Z0 + KB.J1_MATE_Y, body_z=(KB.Z0 + g['body'][1], KB.Z0 + g['body'][3]), y=(yJ, yB), plug_z=(zP, KB.Z0 + KB.J1_MATE_Y),
+                  bend=(round(zP - 0.2, 2), round(yJ - 1.25, 2), round(y_bar, 2)), run_z=(0.2, 0.2 + ct), notch=dict(x=round(cw + CLR_N, 2), z=(0.0, round(0.2 + ct + 1.2, 2)), y=(round(cab_y0 - 1.0, 2), round(yB - KB.BACK_MAX, 2))),
+                  back_parts=back_parts, nut_gap=round(j1_nut_gap, 2), bar_gap=round(zP - P['BAR_Z1'], 2), pin1_x=round(20 - g['pins'][0][1], 3), pin12_x=round(20 - g['pins'][-1][1], 3))
     board = comp(parts)
     # ---- 紧固件位置 ----
     foot_tip = -P['DISC_T'] + P['M3_CB_H'] + P['FOOT_SCREW_L']                    # Z8
@@ -264,7 +301,7 @@ def make_key_bracket(p=None):
     nubs = [ycyl(xb, zlo, P['NUB_D'], y_nub, y_thin_b + 0.01), ycyl(xb, zhi, P['NUB_D'], y_nub, y_thin + 0.01)]
     recess = cut(fuse(box(rx0, Y0, -1.0, rx1, y_thin, P['FLAP_TOP_Z1']),
                       box(rx0, Y0, -1.0, rx1, y_thin_b, zb1)), *nubs)             # 两段都底开 (无倒扣)
-    skin_holes += slots + [recess]
+    skin_holes += slots + [recess, notch]                                   # notch = J1 出线缺口 (下罩内壁底部)
     yo = [math.sqrt(P['SH_OUT'] ** 2 - xx ** 2) for xx in (abs(xb) - w2, abs(xb) + w2)]
     def force(yt, a):   # 悬臂在杆位置的弹性力 (不含开关力): F = 3EIδ/a³, 厚度沿宽线性 ⇒ I = b·mean(t³)/12; δ = 凸点间隙 + 行程
         t0, t1 = min(yo) - yt, max(yo) - yt
@@ -288,6 +325,7 @@ def make_key_bracket(p=None):
         board_screws=[dict(x=x, z=z, bear_y=yBear, L=P['BOARD_SCREW_L'], nut_y=yB) for x, z in MH],
         holes=holes, leds=led, flap=flap, walls=walls, nut_chamfer=round(nut_ch, 2), plate=dict(x1=X1, y0=yF, y1=yP, z1=P['PL_Z1'], t=round(yP - yF, 2)),
         roof_span_flat=round(span, 2), skin=round(skin, 3), pocket_bbox=[round(v, 2) for v in bb], pocket_rmin=round(r_min, 2), pocket_front=round(yP + c, 3),
+        j1=j1info, j1_shapes=dict(j1=comp(j1), plug=plug, cable=cable, notch=notch),
         rib=rib, bracket_ymin=P['FOOT_Y0'], bracket_rmin=round(math.hypot(P['FOOT_X0'], P['FOOT_Y0']), 2),
         bracket_vol=round(vol(bracket), 1), params=P)
     return res
@@ -382,6 +420,40 @@ def preview(r, sh, path):
     fig.tight_layout(rect=(0, 0.03, 1, 0.95)); fig.savefig(path); plt.close(fig)
 
 
+def j1_preview(r, sh, path):
+    """J1 + 插头 + 线弯 / 出线 vs 支架 / 下罩 / 底盘: 侧剖 x=0, 背面立剖 y(插头中), 俯剖 Z1.0"""
+    from matplotlib.patches import Patch
+    plt = _font()
+    P = r['params']; j = r['j1']; J = r['j1_shapes']
+    disc = op(BRepAlgoAPI_Common, cyl(0, 0, 2 * P['SH_OUT'], -P['DISC_T'], 0), box(-40, 70, -7, 40, 115, 1))
+    nuts = comp([ycyl(s_['x'], s_['z'], P['NUT_FL_D'], s_['nut_y'] - P['NUT_T'], s_['nut_y']) for s_ in r['board_screws']])
+    C_J, C_P, C_C, C_D, C_N = (0.1, 0.1, 0.1), (0.85, 0.85, 0.85), (0.9, 0.3, 0.2), (0.55, 0.45, 0.35), (0.45, 0.45, 0.5)
+    L = [(disc, C_D), (sh, C_SH), (r['bracket'], C_BR), (r['board'], C_BD), (nuts, C_N), (J['plug'], C_P), (J['j1'], C_J), (J['cable'], C_C)]
+    fig, axs = plt.subplots(1, 3, figsize=(21, 8.5), dpi=100)
+    def show(ax, img, u, v, title, xl, yl, invert=False):
+        ax.imshow(img, origin='lower', extent=(u[0], u[1], v[0], v[1]), interpolation='nearest')
+        ax.set_title(title, fontsize=10); ax.set_xlabel(xl); ax.set_ylabel(yl); ax.grid(alpha=.25)
+        if invert: ax.invert_xaxis()
+    U, V = (82, 112), (-7, 30)
+    show(axs[0], raster(L, ('x', 0.0), U, V, 0.12), U, V, '侧视剖面 x=0 (过 J1 中线); 外面在右', 'y', 'Z')
+    a = axs[0]
+    a.axvline(P['SPIG_IN'], color='b', lw=.6, ls=':'); a.text(P['SPIG_IN'] - 0.3, 27, f"墙内面 r{P['SPIG_IN']:g}", ha='right', fontsize=7, color='b')
+    a.annotate(f"J1 座 Z{j['body_z'][0]:g}–{j['body_z'][1]:.2f}", (96.9, 11), (84, 16), fontsize=8, arrowprops=dict(arrowstyle='->'))
+    a.annotate(f"插头 GHR-12V-S 外包 Z{j['plug_z'][0]:g}–{j['plug_z'][1]:g}", (96.9, 6.5), (83, 10), fontsize=8, arrowprops=dict(arrowstyle='->'))
+    a.annotate(f"线弯 Z0.2–{j['plug_z'][0]:g} (≥3), 离底条 0.3", (95.5, 2.5), (83, 6), fontsize=8, arrowprops=dict(arrowstyle='->'))
+    a.annotate(f"下罩出线缺口 Z0–{j['notch']['z'][1]:g}, x ±{j['notch']['x']:g}", (91.5, 2.2), (83, -4.5), fontsize=8, arrowprops=dict(arrowstyle='->'))
+    yc = (j['y'][0] + j['y'][1]) / 2
+    U2, V2 = (-30, 30), (-7, 30)
+    show(axs[1], raster(L, ('y', yc), U2, V2, 0.15), U2, V2, f'背面立剖 y{yc:.2f} (过插头, 从机器里往外看)', 'x', 'Z')
+    axs[1].text(0, 27.5, f"pin1 x{j['pin1_x']:+g} / pin12 x{j['pin12_x']:+g}; 座边离螺母法兰 {j['nut_gap']:g}", ha='center', fontsize=8)
+    U3, V3 = (-30, 30), (82, 112)
+    show(axs[2], raster(L[1:], ('z', 1.0), U3, V3, 0.15), U3, V3, '俯视剖面 Z1.0 (线贴底盘穿下罩内壁缺口)', 'x', 'y')
+    fig.legend(handles=[Patch(fc=c, label=n) for n, c in (('底盘', C_D), ('下罩 (局部)', C_SH), ('支架', C_BR), ('按键板', C_BD), ('M3 法兰螺母', C_N), ('J1 SM12B-GHS-TB', C_J), ('插头外包', C_P), ('线 (弯 + 出线) 外包', C_C))],
+               loc='lower center', ncol=8, fontsize=9)
+    fig.suptitle(f"按键板背面 J1 (JST GH 12P 卧贴, 插口朝下) 中心 x0, 插口面 Z{j['mate_z']:g}; 插头端 Z{j['plug_z'][0]:g}, 下面 {j['bend'][0]:g} 给线弯; 线贴底盘从下罩内壁底缺口出, 去电机控制板 U24", fontsize=11)
+    fig.tight_layout(rect=(0, 0.05, 1, 0.94)); fig.savefig(path); plt.close(fig)
+
+
 def flap_front(r, sh, path):
     """外皮舌片正视图 (从外面看): r109.9 柱面上采样 (切穿的缝 / 孔 = 白), r 外皮 −1.0 处 (挖薄区 = 浅色)"""
     import numpy as np
@@ -435,6 +507,8 @@ def main():
     sh = shroud_local(r)
     preview(r, sh, OUT / 'key_bracket_v1_2_preview.png')
     flap_front(r, sh, OUT / 'key_flap_front.png')
+    j1_preview(r, sh, OUT / 'key_j1_preview.png')
+    print('J1', r['j1'])
     print('支架 bbox', [round(v, 2) for v in b], '体积', r['bracket_vol'], 'mm3', '平板', r['plate'])
     print('底盘 M3 / 脚孔', r['disc_m3'], '脚螺母 Z', r['foot_nut_z'], '脚螺丝尖 Z', r['foot_screw_tip'], '脚螺母离倒角', r['nut_chamfer'],
           '板螺丝', [(s['x'], s['z'], s['bear_y'], s['L']) for s in r['board_screws']])

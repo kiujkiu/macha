@@ -1,5 +1,5 @@
 """
-XT60 压块 + 底垫 V1.2 (V1.2-f) A3 工程图, 2 页 PDF (2026-11-12; 11-13 V1.2-f 外端 R110 圆弧, 接头口面 r109.7 内接 R110)
+XT60 压块 + 底垫 V1.2 (V1.2-g; 11-13 晚 M3 孔外移 2.8 对上已打印底盘 x100 孔) A3 工程图, 2 页 PDF (2026-11-12; 11-13 V1.2-f 外端 R110 圆弧, 接头口面 r109.7 内接 R110)
     cd v1.2/scripts && ../../.venv/bin/python drawing_xt60_clamp_v1_2.py
 输出 v1.2/models/xt60_clamp_v1_2/xt60_clamp_v1_2_drawing.pdf (+ _preview.png 第 1 页, _p2_preview.png 第 2 页)
 
@@ -67,7 +67,7 @@ RIM_C = g.RIM_W + g.ASSY_CLR                          # 压块止口台阶宽 2.
 KEY_X_SHIM = g.CH_W_B / 2 - g.ASSY_CLR                # 底垫下角防呆外侧 7.7
 NUT_TOP_L = g.HTOP + g.NUT_T                          # 螺母顶 (压块局部 z)
 TIP_L = g.TIP_G - g.Z_GLOBAL                          # 螺丝尖 (局部 z)
-HEAD_L = -g.DISC_T + g.DISC_CB_H - g.Z_GLOBAL         # 头支承面 (局部 z) = −6
+HEAD_L = -g.DISC_T + g.DISC_CB_H - g.WASHER_T - g.Z_GLOBAL   # 头支承面 (局部 z) = −5.8 (V1.2-g: Φ13×3 沉孔顶下垫片 0.8)
 DISC_L0 = -g.DISC_T - g.Z_GLOBAL                      # 底盘底 (局部) = −8
 
 
@@ -364,7 +364,7 @@ leader(pg, TB(Y_FC + 1.0, g.HTOP - 0.8), (xR + 2, TB(0, g.HTOP)[1] + 7),
 # ---- 剖视 D-D (Y = 孔心) + M3 / 法兰螺母 / 底盘 ----
 DX, DZ = 225.0, 131.0
 TD = lambda x, z: (DX + x * S, DZ + z * S)  # noqa: E731
-view_title(pg, DX, 186, "D-D 剖视 2.5:1", f"过孔心 Y={F(g.HOLE_Y)} (护套段), 沿 +Y 看; 灰 = M3×{F(g.SCREW_L)} + 法兰螺母 + 底盘 (示意)")
+view_title(pg, DX, 186, "D-D 剖视 2.5:1", f"过孔心 Y={F(g.HOLE_Y)} (本体段), 沿 +Y 看; 灰 = M3×{F(g.SCREW_L)} + 垫片 + 法兰螺母 + 底盘 (示意)")
 sec_patch(pg, sec_y(PART, g.HOLE_Y).to_polygons(), TD, hatch="////")
 sec_patch(pg, sec_y(SHIM, g.HOLE_Y).to_polygons(), TD, hatch="\\\\\\\\", lw=0.3)
 GR = dict(lw=0.25, color="0.45")
@@ -374,7 +374,9 @@ for sx in (-1, 1):
     r, rh, rn = g.M3_SHANK_D / 2, g.M3_HEAD_D / 2, g.NUT_AF / 2
     poly(pg, [(x - r, HEAD_L), (x - r, TIP_L), (x + r, TIP_L), (x + r, HEAD_L)], TD, ls=(0, (4, 1.2)), **GR)
     poly(pg, [(x - rh, HEAD_L - g.M3_HEAD_H), (x + rh, HEAD_L - g.M3_HEAD_H), (x + rh, HEAD_L), (x - rh, HEAD_L)], TD, closed=True, **GR)
-    poly(pg, [(x - 3.5, DISC_L0), (x - 3.5, HEAD_L), (x + 3.5, HEAD_L), (x + 3.5, DISC_L0)], TD, lw=0.2, color="0.55")
+    _cb = 6.5; _cbt = HEAD_L + g.WASHER_T                                 # 底盘 Φ13×3 沉孔顶 (已打印); 垫片 Φ9×0.8 在头和沉孔顶之间
+    poly(pg, [(x - _cb, DISC_L0), (x - _cb, _cbt), (x + _cb, _cbt), (x + _cb, DISC_L0)], TD, lw=0.2, color="0.55")
+    poly(pg, [(x - 4.5, _cbt), (x + 4.5, _cbt), (x + 4.5, HEAD_L), (x - 4.5, HEAD_L)], TD, closed=True, **GR)
     rf = g.NUT_FL_D / 2
     poly(pg, [(x - rf, g.HTOP), (x - rf, g.HTOP + g.NUT_FL_H), (x - rn, g.HTOP + g.NUT_FL_H), (x - rn, NUT_TOP_L),
               (x + rn, NUT_TOP_L), (x + rn, g.HTOP + g.NUT_FL_H), (x + rf, g.HTOP + g.NUT_FL_H), (x + rf, g.HTOP)], TD, closed=True, **GR)
@@ -395,11 +397,11 @@ vd(pg, TD(0, DISC_L0)[1], TD(0, -g.BASE_T)[1], xl - 3, xl - 3, xl - 6, f"{F(g.DI
 leader(pg, TD(-g.HALF_L + RIM_C / 2, g.RIM_H / 2), (xl - 3, TD(0, DISC_L0)[1] - 4),
        f"侧止口: 压块台阶 {F(RIM_C)}×{F(g.RIM_H)}\n底垫边框 {F(g.RIM_W)}×{F(g.RIM_H)}", ha="right", size=2.2)
 yb = TD(0, DISC_L0)[1]
-hd(pg, TD(-g.CH_W_S / 2, 0)[0], TD(g.CH_W_S / 2, 0)[0], TD(0, 0)[1], TD(0, 0)[1], yb - 5, f"{F(g.CH_W_S)} (护套段槽)")
+hd(pg, TD(-g.CH_W_B / 2, 0)[0], TD(g.CH_W_B / 2, 0)[0], TD(0, 0)[1], TD(0, 0)[1], yb - 5, f"{F(g.CH_W_B)} (本体段槽)")
 hd(pg, TD(-g.HX, 0)[0], TD(g.HX, 0)[0], yb, yb, yb - 12, F(g.PITCH))
 leader(pg, TD(g.HX - g.HOLE_D / 2, 5.5), (TD(g.HX, 0)[0] - 14, TD(0, 5.5)[1] + 0.01),
        f"Φ{F(g.HOLE_D)}", ha="right", dot=False)
-pg.text(DX, yb - 18.5, f"护套段槽 {F(g.CH_W_S)}×{F(g.CH_H_S)} 紧配 (间隙 0); 孔壁到槽壁 {F(g.WEB_S)}; M3 杆到护套 {F(g.SHANK_GAP)}",
+pg.text(DX, yb - 18.5, f"本体段槽 {F(g.CH_W_B)}×{F(g.CH_H_B)} 紧配 (间隙 0); 孔壁到槽壁 {F(g.WEB_B)}; 孔壁到 R110 外弧 {F(g.WALL_ARC)}",
         size=2.2, ha="center")
 
 # ---- 详图 K (剖 C-C, Y=−5, +X 侧两角) ----
@@ -478,7 +480,7 @@ y = notes(pg, 16, 86, "技术要求 / 说明", [
     f"3. 防呆 (详图 K): 接头本体一短边两角大圆角 → 槽 +X 侧上下两角各一条凹弧三角 R{F(g.KEY_R)}, Y 长 {F(g.KEY_LEN)} (开口面 → 槽台阶, 不被圆弧剪)。"
     f"上角属压块; 下角属底垫 (外侧 x≤{F(KEY_X_SHIM)}, 离槽壁 {F(g.ASSY_CLR)})。",
     f"   正插零干涉; 反插两角各吃进约 {F(g.KEY_PEN)} (对角), 合计 {F(g.ov_rev, 1)} mm^3 → 插不进。R{F(g.KEY_R)} / R{F(g.KEY_R_SM)} 按图估, 待卡尺确认; 极性反了改 KEY_SIDE = −1。",
-    f"4. 紧固: 2×M3×{F(g.SCREW_L)} 超薄头从底盘底 Φ7×{F(g.DISC_CB_H)} 沉孔往上, 穿 底盘 {F(g.DISC_T)} + 底垫 {F(g.BASE_T)} + 压块 {F(g.HTOP)}; M3 法兰螺母平坐压块顶面 (无螺母座), "
+    f"4. 紧固: 2×M3×{F(g.SCREW_L)} 超薄头 + M3 大垫片 Φ9×{F(g.WASHER_T)} 从底盘底 Φ13×{F(g.DISC_CB_H)} 沉孔 (11-12 已打印底盘原样) 往上, 穿 底盘 {F(g.DISC_T)} + 底垫 {F(g.BASE_T)} + 压块 {F(g.HTOP)}; M3 法兰螺母平坐压块顶面 (无螺母座), "
     f"全局 Z{F(g.NUT_Z0_G)}..{F(g.NUT_Z1_G)}, 尖 Z{F(g.TIP_G)} → 啮合 {g.ENGAGE:.1f}/{F(g.NUT_T)} (尖低于螺母顶 {F(g.NUT_Z1_G - g.TIP_G)})。",
     f"5. 打印 (压块): 顶面朝下平放, 免支撑。脚本按 mesh 统计悬空 (朝下 >45°, 不计贴床面): 顶面朝下 {F(OH_CLAMP_TOPDOWN, 1)} mm^2 —— 槽/止口/U 口都开口朝上, 上角防呆变成贴床侧的圆角, 顶面已无螺母座;",
     f"   若底面朝下则有 {F(OH_CLAMP_TOPUP, 0)} mm^2 悬空 (槽顶 {F(g.CH_W_S)} 宽桥接会塌, 正好是零间隙配合面; 侧止口 {F(RIM_C)} 悬臂; U 口拱顶), 不推荐。",

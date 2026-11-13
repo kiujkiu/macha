@@ -1,0 +1,195 @@
+(footprint "LED_XL-1615RGBC"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(descr "XINGLIGHT XL-1615RGBC-RF RGB LED 1.6x1.5x0.6 common anode; 1=R(K) 2=A 3=G(K) 4=B(K); recommended land datasheet p.8; LCSC C965840")
+	(tags "LED RGB 1615 common anode")
+	(property "Reference" "REF**"
+		(at 0 -1.7 0)
+		(layer "F.SilkS")
+		(uuid "1db91e6d-4f5e-49a2-910d-036724d2b38b")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "LED_XL-1615RGBC"
+		(at 0 1.7 0)
+		(layer "F.Fab")
+		(uuid "70f86e08-307a-435a-a08c-f94c05928851")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "eda01afe-94f4-4c6c-8b7f-7b4f30323581")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "2b8653d7-3f38-49b4-ae93-675546a44d42")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_line
+		(start -1.1 -0.95)
+		(end -1.1 0.95)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "e96ed49f-4c15-428f-992b-45587f96bcf1")
+	)
+	(fp_line
+		(start -1.1 -0.95)
+		(end -0.6 -0.95)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "ccc98a0c-1d28-444f-8c31-c4ee486d9506")
+	)
+	(fp_rect
+		(start -1.2 -1)
+		(end 1 1)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.CrtYd")
+		(uuid "27459872-6eef-4042-bb68-3641f8da07e4")
+	)
+	(fp_poly
+		(pts
+			(xy -0.8 -0.15) (xy -0.55 0) (xy -0.8 0.15)
+		)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(fill yes)
+		(layer "F.Fab")
+		(uuid "15b5b979-79bf-4317-97cf-c5345a86eeef")
+	)
+	(fp_poly
+		(pts
+			(xy -0.8 -0.45) (xy -0.5 -0.75) (xy 0.8 -0.75) (xy 0.8 0.75) (xy -0.8 0.75)
+		)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.Fab")
+		(uuid "310ca496-5bc7-4a6d-8fe7-bf53d220077c")
+	)
+	(fp_text user "R"
+		(at -0.25 -0.45 0)
+		(layer "F.Fab")
+		(uuid "e388c96d-bd71-4a31-af7c-73698220ede1")
+		(effects
+			(font
+				(size 0.3 0.3)
+				(thickness 0.045)
+			)
+		)
+	)
+	(fp_text user "A"
+		(at -0.25 0.45 0)
+		(layer "F.Fab")
+		(uuid "cb6427b3-542c-421c-be86-f9e146e3a987")
+		(effects
+			(font
+				(size 0.3 0.3)
+				(thickness 0.045)
+			)
+		)
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0 0 0)
+		(layer "F.Fab")
+		(uuid "8e62f9ea-a607-497a-9f69-bb02b3bbf843")
+		(effects
+			(font
+				(size 0.3 0.3)
+				(thickness 0.045)
+			)
+		)
+	)
+	(fp_text user "G"
+		(at 0.25 -0.45 0)
+		(layer "F.Fab")
+		(uuid "0a9a9295-1429-475a-8fa8-b26110577074")
+		(effects
+			(font
+				(size 0.3 0.3)
+				(thickness 0.045)
+			)
+		)
+	)
+	(fp_text user "B"
+		(at 0.25 0.45 0)
+		(layer "F.Fab")
+		(uuid "45c6bd33-bee2-470e-9d90-011c34ae3b09")
+		(effects
+			(font
+				(size 0.3 0.3)
+				(thickness 0.045)
+			)
+		)
+	)
+	(pad "1" smd roundrect
+		(at -0.625 -0.475)
+		(size 0.45 0.65)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(roundrect_rratio 0.25)
+		(uuid "fad9457b-a16b-4666-b6a6-c83cd4155e35")
+	)
+	(pad "2" smd roundrect
+		(at -0.625 0.475)
+		(size 0.45 0.65)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(roundrect_rratio 0.25)
+		(uuid "d1a09838-9883-45e0-b985-1dd237eaaa71")
+	)
+	(pad "3" smd roundrect
+		(at 0.625 -0.475)
+		(size 0.45 0.65)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(roundrect_rratio 0.25)
+		(uuid "41470b3b-9bff-4717-a6a4-bc6c80f14131")
+	)
+	(pad "4" smd roundrect
+		(at 0.625 0.475)
+		(size 0.45 0.65)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(roundrect_rratio 0.25)
+		(uuid "050a6ee8-49d4-4022-9c90-e0b871de4e2d")
+	)
+	(embedded_fonts no)
+)

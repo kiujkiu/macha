@@ -131,10 +131,13 @@ for i, (bx, by) in enumerate(B.BHOLES):
     add(f"M3 法兰螺母 控制板 #{i}", flange_nut(p.X(), p.Y(), BOARD_TOP), "#707070")
 # 7 XT60 2×M3 (用户 11-12 晚, 原 M6×20 + M6 螺母): 盘底 Φ7×2 沉孔往上, 穿底盘+底垫+压块 (叠高 13),
 #   11-12 晚 (二): 压块顶螺母座取消, M3 法兰螺母直接坐压块顶 Z13..16.7, 尖 Z16 ⇒ 啮合 3.0; 下罩 Φ8.2 井到 Z17.5
+#   11-13 晚 (V1.2-g): 底盘已打印, XT60 孔仍是 M6 Φ6.4 + 底面 Φ13×3 (沉孔顶 Z−3) ⇒ M3 大垫片 Φ9×0.8 顶在沉孔顶 (Z−3.8..−3), 头支承 Z−3.8, M3×20 尖 Z16.2 ⇒ 啮合 3.2
 L_XT = 20.0
 XT_NUT_Z0 = B.XT_H                                 # 13 (螺母座取消, 原 XT_H - XT_NUT_SEAT_H = 12)
+XT_BEAR = ZB + B.CB_H - B.XT_WASHER_T              # −3.8 (垫片在头和沉孔顶之间)
 for i, (x, y) in enumerate(B.XT_GHOLES_DISC):
-    screw("M3x20 XT60", i, x, y, CB_BEAR, L_XT, True, engage=("法兰螺母", XT_NUT_Z0, XT_NUT_Z0 + NUT_T))
+    add(f"M3 大垫片 Φ9×0.8 XT60 #{i}", cut(cyl(x, y, B.XT_WASHER_D, XT_BEAR, ZB + B.CB_H), cyl(x, y, 3.2, ZB, 0)), "#909090")
+    screw("M3x20 XT60", i, x, y, XT_BEAR, L_XT, True, engage=("法兰螺母", XT_NUT_Z0, XT_NUT_Z0 + NUT_T))
     add(f"M3 法兰螺母 XT60 #{i}", flange_nut(x, y, XT_NUT_Z0), "#707070")
 
 # 8 线圈驱动板 MOS 压块 / 电容卡件各 2×M3 (用户 11-12 夜): 盘底 Φ7×2 沉孔往上, 穿底盘 + 件 (Φ3.4 通)

@@ -43,6 +43,11 @@ V1.2-f (用户 11-13, 纠正 V1.2-d 的理解): 「只要 XT60 接头口面在 r
         圆弧在中线处落在开口面外 ~0.3 (|x| ≲ 8.1 段不剪), 往 X 端才剪进开口端止口条 (x=19 处剪进 1.35, 剩 ~0.65 宽):
         止口条只剩 X 端附近一部分, 底垫 −Y/±X 照样卡, +Y 方向报数值 (有就 assert)。防呆两条仍从 Y_OPEN 起 (被圆弧剪的话一起剪)。
      校核: 两件全部顶点 r ≤ 110 且有顶点到 110 (圆弧存在); 接头口面四角 (本体 15.6 宽, 护套也报) r ≤ 110, 报最大值与中线缩进。
+V1.2-g (用户 11-13 晚): 底盘已按 b0a79b0 (11-12) 打印, XT60 两孔在全局 (100.0, ±12.5) (M6 Φ6.4 通 + 底面 Φ13×3 沉孔), 底盘不改。
+     => XT_RF 109.7 / r110 圆弧 / 接头口面都不动, 只把压块 + 底垫的 2 个 M3 孔 (及坐在孔上的法兰螺母) 在局部系 Y 0.55 → −2.25
+        (= 全局径向外移 2.8, 孔心 x 97.2 → 100.0)。孔心从护套段移进本体段 (原 assert「孔心应落在护套段」改为壁厚校核):
+        孔壁到本体段槽壁 / 防呆三角 / 护套段槽壁 / r110 外圆弧 / 止口台阶 全部 ≥ 1.2, 法兰螺母离外圆弧 ≥ 1.0。
+        五金: 底盘 Φ13×3 沉孔 (顶 Z−3) 里垫 M3 大垫片 Φ9×0.8 (DIN 9021), 头支承 全局 Z−3.8, M3×20 尖 Z16.2 ⇒ 啮合 3.2 (下罩螺母井 Φ8.2 Z13→17.5 跟孔走)。
   旧 assert 里依赖长方体外形 / 理论体积 / 6 面外观 / 开口端止口的, 在修剪、加防呆、挖螺母座**之前**的中间体
   (part0 / shim0) 上照跑; 之后另写 V1.2 校核 (单件连通 / 两件零干涉 / 圆角接头就位零干涉 / 反插干涉 / 外端在 r110 /
   M3 杆穿过零干涉 / 法兰螺母坐座零干涉且法兰底全支承 / 底垫被 M3 杆定位)。
@@ -120,7 +125,7 @@ from pathlib import Path
 import numpy as np
 import manifold3d as m3d
 
-VERSION = "V1.2-f"
+VERSION = "V1.2-g"
 
 # ===== 参数 =====
 # 接头 (AMASS 图纸 + 卡尺)
@@ -156,15 +161,16 @@ WIRE_ZC     = SHEATH_H / 2   # U 口圆心高 = 针轴线 4.6 (用户「出线�
 PITCH       = 25.0    # 孔距 = 网格节距 (用户选定, 横跨接头)
 HOLE_D      = 3.4     # V1.2: M3 通孔 (同下罩 M3 孔; v4 为 M6 Φ6.5)
 END         = 6.5     # 孔心到 X 端面 (>= 头半径 6.25)
-HOLE_Y_OPEN = 12.5    # 孔心到开口面 (用户指定)
+HOLE_Y_OPEN = 9.7     # 孔心到开口面 (v4 用户指定 12.5; V1.2-g 外移 2.8 对上已打印底盘 x100 孔)
 
 # 五金 (V1.2: M3, 用户实物; 只用于校核, 螺母座除外)
 NUT_FL_D, NUT_FL_H = 7.6, 1.0   # M3 法兰螺母 法兰 Φ7.6 (法兰朝下)
 NUT_AF, NUT_T      = 5.9, 3.7   # 对边 5.9 (外接 6.81), 总厚 3.7
 M3_SHANK_D = 3.0                # M3 螺杆外径
 M3_HEAD_D, M3_HEAD_H = 7.0, 1.5 # 超薄头 Φ7×1.5 (在底盘沉孔里, 不碰本件)
-SCREW_L    = 20.0               # M3×20 (BOM 已有这个长度)
-DISC_T, DISC_CB_H = 6.0, 2.0    # 底盘厚 6 (全局 Z−6..0), 底面 Φ7×2 沉孔 ⇒ 头支承面全局 Z−4
+SCREW_L    = 20.0               # M3×20 (V1.2-g: 底盘 Φ13×3 沉孔 + 垫片 0.8, 头支承 Z−3.8)
+DISC_T, DISC_CB_H = 6.0, 3.0    # 底盘厚 6 (全局 Z−6..0), V1.2-g: 已打印底盘 XT60 孔 = 底面 Φ13×3 沉孔 (原 Φ7×2)
+WASHER_T   = 0.8                # M3 大垫片 Φ9×0.8 (DIN 9021) 顶在沉孔顶 (Z−3) ⇒ 头支承面全局 Z−3.8
 # V1.2-c: 螺母座取消 (原 Φ7.8 深 1.0), 法兰螺母平坐压块顶面
 
 # 防呆 (V1.2): 接头本体外壳一个短边两角大圆角, 另一短边两角小圆角
@@ -217,7 +223,12 @@ assert WEB_S > 0.5, f"孔已经破进护套段槽里: {WEB_S}"
 assert WEB_B > WEB_S, "本体段槽更窄, 肉应该更厚"
 assert SHANK_GAP > 0.5, f"螺杆离接头太近: {SHANK_GAP}"
 assert HX + NUT_FL_D / 2 <= HALF_L - 1.0, "螺母法兰离 X 端面不足 1"
-assert HOLE_Y > Y_XSTEP, "孔心应落在护套段"
+# V1.2-g: 孔心可落在本体段 (原「孔心应落在护套段」), 改为壁厚 ≥ 1.2 校核 (本体段槽壁 / 护套段槽壁 / 防呆三角在槽内 ⇒ 不近于槽壁)
+WALL_MIN = 1.2
+_hy0, _hy1 = HOLE_Y - HOLE_D / 2, HOLE_Y + HOLE_D / 2
+WALL_B = HX - HOLE_D / 2 - CH_W_B / 2 if _hy0 < Y_XSTEP else None          # 孔与本体段 Y 区间有重叠才算
+WALL_S = HX - HOLE_D / 2 - CH_W_S / 2 if _hy1 > Y_XSTEP else math.hypot(HX - CH_W_S / 2, Y_XSTEP - HOLE_Y) - HOLE_D / 2   # 护套段槽角
+assert (WALL_B is None or WALL_B >= WALL_MIN) and WALL_S >= WALL_MIN, (WALL_B, WALL_S)
 assert WIRE_PITCH / 2 + WIRE_D / 2 <= CH_W_S / 2 - 3.0, "出线口离槽壁太近"
 assert WIRE_PITCH > WIRE_D + 3.0, "两个 U 口之间肉太薄"
 assert WIRE_ZC + WIRE_D / 2 < CH_H_S
@@ -510,6 +521,13 @@ assert abs(part.volume() - vol_theory) < 1e-2, f"压块中间体体积 {part.vol
 part0, shim0 = part, shim
 vol0_part, vol0_shim = part0.volume(), shim0.volume()
 RC = XT_RF + Y_OPEN                                  # 97.75 局部原点到轴心距离 (全局 (X,Y)=(RC−y, x))
+# V1.2-g: 孔心全局 = 已打印底盘孔 (100, ±12.5); 孔壁 / 法兰螺母 到 r110 外圆弧
+HOLE_GX = RC - HOLE_Y
+assert abs(HOLE_GX - 100.0) < 1e-6, HOLE_GX
+WALL_ARC = TRIM_R - (math.hypot(HOLE_GX, HX) + HOLE_D / 2)
+NUT_ARC = TRIM_R - (math.hypot(HOLE_GX, HX) + NUT_FL_D / 2)
+WALL_FRONT_RIM = (HOLE_Y - HOLE_D / 2) - (Y_OPEN + RIM_W + ASSY_CLR)     # 孔壁到开口端止口台阶
+assert WALL_ARC >= WALL_MIN and NUT_ARC >= 1.0 and WALL_FRONT_RIM >= WALL_MIN and RIM_HOLE_WALL >= WALL_MIN, (WALL_ARC, NUT_ARC, WALL_FRONT_RIM, RIM_HOLE_WALL)
 Z_GLOBAL = BASE_T                                    # 本文件坐标 z (压块底 = 0) → 全局 Z = z + 2
 
 # (a) 螺母座: V1.2-c 取消 (法兰螺母平坐顶面)
@@ -655,7 +673,7 @@ FRONT_RIM_V = inter_vol(_frame_box, shim)
 FRONT_RIM_PCT = 100 * FRONT_RIM_V / FRONT_RIM_V0
 
 # 5) M3 杆 (Φ3) 穿底垫 + 压块零干涉 (z 从底垫底到螺母顶以上)
-TIP_G = -DISC_T + DISC_CB_H + SCREW_L                 # 螺丝尖 全局 Z = −4 + 20 = 16
+TIP_G = -DISC_T + DISC_CB_H - WASHER_T + SCREW_L      # 螺丝尖 全局 Z = −3.8 + 20 = 16.2 (V1.2-g)
 NUT_Z0_G = Z_GLOBAL + HTOP                            # 螺母底 = 压块顶面 全局 Z13 (V1.2-c 无座)
 NUT_Z1_G = NUT_Z0_G + NUT_T                           # 螺母顶 16.7
 ENGAGE = min(TIP_G, NUT_Z1_G) - NUT_Z0_G
@@ -749,8 +767,9 @@ print(f"== xt60_clamp {VERSION} ==")
 print(f"  [中间体 (v4 外形 + M3 孔) 旧校核全过] 压块 {vol0_part:.2f} (理论 {vol_theory:.2f}) / 底垫 {vol0_shim:.2f} (理论 {shim_theory:.2f}); "
       f"6 面外观缝隙: " + ", ".join(f"{k} {v:.1e}" for k, v in face_void.items()))
 print(f"  阶梯槽: 本体段 {CH_W_B:g}×{CH_H_B:g} / 护套段 {CH_W_S:g}×{CH_H_S:g}, 紧配零间隙; 两件装配间隙 {ASSY_CLR:g}; U 口 2×Φ{WIRE_D:g} @ {WIRE_PITCH:g} 圆心高 {WIRE_ZC:g}")
+print(f"  V1.2-g 孔位: 全局 x{HOLE_GX:.2f} (r{math.hypot(HOLE_GX, HX):.2f}); 壁厚 本体段槽壁 {WALL_B:.2f} / 护套段槽 {WALL_S:.2f} / r110 外弧 {WALL_ARC:.2f} (螺母法兰到外弧 {NUT_ARC:.2f}) / 开口端止口 {WALL_FRONT_RIM:.2f} / 侧止口 {RIM_HOLE_WALL:.2f}")
 print(f"  M3: 孔 Φ{HOLE_D:g} @ ±{HX:g}, Y={HOLE_Y:g}; 杆到护套 {SHANK_GAP:.2f}; 孔壁到槽壁 护套段 {WEB_S:.2f} 本体段 {WEB_B:.2f}; 台阶内壁到孔 侧 {RIM_HOLE_WALL:.2f} 后 {RIM_BACK_HOLE_WALL:.2f}")
-print(f"      无螺母座, 法兰螺母平坐顶面 (法兰到 X 端面 {HALF_L - HX - NUT_FL_D / 2:.2f}); 全局: 头支承 Z{-DISC_T + DISC_CB_H:g}, 螺母 Z{NUT_Z0_G:g}..{NUT_Z1_G:g}, "
+print(f"      无螺母座, 法兰螺母平坐顶面 (法兰到 X 端面 {HALF_L - HX - NUT_FL_D / 2:.2f}); 全局: 头支承 Z{-DISC_T + DISC_CB_H - WASHER_T:g} (Φ13×3 沉孔 + 垫片 {WASHER_T:g}), 螺母 Z{NUT_Z0_G:g}..{NUT_Z1_G:g}, "
       f"M3×{SCREW_L:g} 尖 Z{TIP_G:g} ⇒ 啮合 {ENGAGE:.2f}/{NUT_T:g}, 尖距螺母顶 {TIP_G - NUT_Z1_G:+.2f}")
 print(f"      底垫被杆定位: 余量 {SCREW_PLAY:g}, 挪 0.3 被挡; 止口 (挪 {NEST_OUT:g} 吃 "
       + ", ".join(f"{k}:{v:.2f}" for k, v in NEST_V12.items()) + f"); ±X/−Y 卡, +Y {'也卡' if NEST_PY_OK else '不明显, 靠杆'}")

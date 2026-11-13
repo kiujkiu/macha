@@ -216,7 +216,8 @@ OUT_SKIPPED = []
 XT_ANG = 0.0                                       # XT60 正右边 (+X)
 _c, _s = math.cos(math.radians(XT_ANG)), math.sin(math.radians(XT_ANG)); XT_Y0, XT_Y1, XT_HW, XT_H = -11.95, 14.95, 19.0, 13.0
 XT_RF = 109.7                                      # 用户 11-13 (更正): 只有 XT60 接头口面内接 r110 (口面宽 15.6, √(110²−7.8²)=109.72 取 109.7, 角 r109.98, 中线凹 0.3); 压块/底垫外端仍 r110 圆弧 (原 112.5 伸出 2.5)
-_rc = XT_RF - 11.95 - 0.55                          # 孔心 x 97.2 (原 100.0)
+XT_HOLE_RC = 100.0                                 # 用户 11-13 晚: 底盘已按 b0a79b0 (11-12) 打印, XT60 孔留在 x100.0 (r100.78) 不动 ⇒ 压块/底垫孔在局部系外移 2.8 (V1.2-g)
+_rc = XT_HOLE_RC                                    # (8878ee8 曾改 XT_RF − 11.95 − 0.55 = 97.2, 已撤回)
 XT_GHOLES_DISC = [(_rc * _c - xx * _s, _rc * _s + xx * _c) for xx in (12.5, -12.5)]   # 与 4c XT_GHOLES 相同 (下面 assert)
 # 4b 底盘: 剩下的 M6 网格位 (节距 25, ±12.5..±87.5, 同原金属网格板) 全做通孔+沉孔
 SEAT_M6 = [(62.5, 62.5), (-62.5, 62.5), (-62.5, -62.5), (62.5, -62.5)]   # = V1.1 定位环原孔位 (板放正后 4 个都让得开)
@@ -283,10 +284,13 @@ for x, y in FLANGE_SCREWS:                                                      
     d = cut(d, cyl(x, y, 3.2, -DISC_T - 1, 1), cyl(x, y, INS_HOLE_D, -DISC_T - 1, -DISC_T + INS_HOLE_H))
 for x, y in SH_M6:                                                                         # 下罩 4×M3x10: 盘底沉孔往上, 螺母压三角块顶
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
-assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in XT_GHOLES_DISC for a, b in FIXED + EXTRA), 'XT60 孔与网格孔沉孔重叠'
-# (网格跳孔判据仍按原 M6 沉孔 CB_D + 1 留 XT60 位, 网格孔数不变)
-for x, y in XT_GHOLES_DISC:                                                                # XT60 压块 2×M3 (用户 11-12 晚, 原 M6): 盘底 Φ7×2 沉孔往上, 法兰螺母坐压块顶螺母座
-    d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
+assert all(math.hypot(x - a, y - b) >= CB_D + 1.0 for x, y in XT_GHOLES_DISC for a, b in FIXED + EXTRA), 'XT60 孔与网格孔沉孔重叠'
+# 用户 11-13 晚: 底盘已打印 (b0a79b0 版), XT60 两孔保持打印件原样 = M6 Φ6.4 通 + 底面 Φ13×3 沉孔 @ (100, ±12.5);
+#   装 M3×20 + M3 大垫片 Φ9×0.8 (DIN 9021) 顶在 Φ13 沉孔顶 Z−3 (头支承 Z−3.8), 法兰螺母坐压块顶 Z13..16.7, 尖 Z16.2 (啮合 3.2)
+XT_DISC_HOLE = (M6_D, CB_D, CB_H)
+XT_WASHER_D, XT_WASHER_T = 9.0, 0.8
+for x, y in XT_GHOLES_DISC:
+    d = cut(d, cyl(x, y, M6_D, -DISC_T - 1, 1), cyl(x, y, CB_D, -DISC_T - 1, -DISC_T + CB_H))
 for x, y in KEY_M3:                                                                        # 按键支架 2×M3×12 (11-13 L 形): 盘底 Φ7×2 沉孔往上 → 穿脚 (4 厚) → 脚顶法兰螺母
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
 assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in KEY_M3 for a, b in FIXED + EXTRA), '按键支架 M3 沉孔离网格孔太近'
@@ -358,8 +362,8 @@ for x, y in []:                                    # 用户 11-12: 托块 B 取�
 XT_DIR = V12 / 'models' / 'xt60_clamp_v1_2'
 # XT_Y0/XT_Y1/XT_HW/XT_H 见 4a
 # XT_RF 见 4a (11-13 改 109.7): 内端 r82.8 伸进安装法兰外裙 r85 (法兰盘 r82.5 留 0.3, 让位 +0.5 削 0.2) ⇒ 两件在压块处开让位 (只到 Z XT_H+0.5)
-XT_HOLES = [(-12.5, 0.55), (12.5, 0.55)]           # 压块 M3 Φ3.4 孔 (局部; 原 M6)
-XT_NUT_SEAT_H = 0.0                                # 用户 11-12: 压块顶面不做螺母座, M3 法兰螺母平坐压块顶 Z13..16.7, M3×20 尖 Z16 (啮合 3.0)
+XT_HOLES = [(-12.5, -2.25), (12.5, -2.25)]         # 压块 M3 Φ3.4 孔 (局部; V1.2-g: 0.55 → −2.25 = 径向外移 2.8, 对上已打印底盘 x100 孔)
+XT_NUT_SEAT_H = 0.0                                # 用户 11-12: 压块顶面不做螺母座, M3 法兰螺母平坐压块顶 Z13..16.7; V1.2-g: M3×20 + 垫片 0.8 (头支承 Z−3.8), 尖 Z16.2 (啮合 3.2)
 XT_NUT_WELL_D, XT_NUT_WELL_H = RING_NUT_CLR_D, 4.5 # 下罩里压块顶上的螺母井 Φ8.2 (法兰 Φ7.6 +0.3/边), Z13→17.5 (螺母顶 16.7 / 尖 16)
 def xt_tr():                                       # 局部 -> 全局: Y 反向沿径向, 原点在 r = XT_RF + XT_Y0
     t = gp_Trsf(); t.SetValues(0, -1, 0, XT_RF + XT_Y0,  1, 0, 0, 0,  0, 0, 1, 0)   # (X,Y,Z)->(RC - Y, X, Z), 先在 +X 轴上
