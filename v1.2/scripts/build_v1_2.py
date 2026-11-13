@@ -300,15 +300,27 @@ disc = clean(d); LOG['disc'] = dict(v=vol(disc))
 LOG['coil_drv'] = dict(xpc=CD.XPC, xb=CD.XB, has_mc=CD.HAS_MC, has_cc=CD.HAS_CC, merge_err=CD.MERGE_ERR, mc_holes=[(round(x, 2), round(y, 2)) for x, y in CD.MC_HOLES],
                        cc_holes=[(round(x, 2), round(y, 2)) for x, y in CD.CC_HOLES], pcb_z=(CD.PCB_Z0, CD.PCB_Z1), mos_y=(CD.MOS_Y_LEAD, CD.MOS_Y_TIP), bcap_pits=CD.BCAP_PITS,
                        cap=(CD.CAP_CX, CD.CAP_Y0, CD.CAP_Y1, CD.CAP_ZC, CD.CAP_GROOVE), sink=(CD.SINK_X0, CD.SINK_Y0, CD.SINK_X1, CD.SINK_Y1))
-# 4c 玻璃罩下罩+定位环 V1.2 (用户 11-11): 玻璃 OD200x5 高 245, 下端与转子承载盘顶齐平; 下罩从底盘包住定子到玻璃下端,
+# 4c 玻璃罩下罩+定位环 V1.2 (用户 11-11): 玻璃 OD200x5 高 245, 下端原与转子承载盘顶齐平 (11-13 晚改: 内卡顶 = LED 下沿, 见 Z_G); 下罩从底盘包住定子到玻璃下端,
 #    顶上承台托玻璃, 内卡 (伸进玻璃内) 深 20, 外卡深 10; 用 V1.1 定位环 4 个 M6 孔 (±62.5,±62.5) 从盘底锁
 def ann(r0, r1, z0, z1): return cut(cyl(0, 0, 2 * r1, z0, z1), cyl(0, 0, 2 * r0, z0 - 1, z1 + 1))
 GL_OD, GL_T, GL_H = 200.0, 5.0, 245.0
-Z_G = round(bbox(rim)[5], 2)                       # 玻璃下端 = 承载盘顶 32.0
+Z_RIM_TOP = round(bbox(rim)[5], 2)                 # 承载盘顶 32.0
 SH_OUT = DISC_D / 2                                # 用户草图 11-11: 外面与底盘外缘齐平 r110
 SPIG_T = 4.0                                       # 用户 11-11 嫌内卡薄: 2.8 → 4.0, 往里加 (内卡 r90.8–94.8, 离承载盘外缘 1.8)
 GL_CLR = 0.2                                       # 玻璃单边间隙
 IN_DEPTH, OUT_DEPTH = 20.0, 10.0                   # 内卡 20, 外卡贴玻璃处 10, 顶面 45° 往外降
+# 用户 11-13 晚: V2 灯板 (LED_V0.2.0 11-13, 板高 208, LED 在上部); SoC+WiFi 同一平面 = 转接板 (POV3D_V2_BaseBoard 140×80×1.6,
+#   器件全在顶面, 底面只有插件脚) + MLK CZ06 核心板 (60×35, DF40 合高 3.0 + 板 1.6 + 顶面器件 ≈2.0 = 6.6, 转接板 README), 转接板出 2 根 FPC 给桥板;
+#   玻璃下加高, 内卡顶 (不透光部分的最高点) = LED 下沿 ⇒ 灯全露出来
+BB_STANDOFF, BB_T, CZ06_H, CZ06_CLR = 3.0, 1.6, 6.6, 2.0   # 转接板垫柱 (让插件脚) / 板厚 / CZ06 堆高 / CZ06 顶 → 灯板下沿
+Z_BB0 = Z_RIM_TOP + BB_STANDOFF                    # 转接板底 35.0
+SCREEN_GAP = BB_STANDOFF + BB_T + CZ06_H + CZ06_CLR   # 承载盘顶 → 灯板下沿 13.2
+LED_BOARD_H = 208.0                                # 灯板高 (板框 163.76 × 208.01)
+LED_LOW_OFF = 37.88                                # 灯板下沿 → 最下一行 LED 像素下沿 (行心 38.66 − 节距 1.5626/2)
+Z_SCR0 = Z_RIM_TOP + SCREEN_GAP                    # 灯板下沿 45.2
+Z_LED0 = Z_SCR0 + LED_LOW_OFF                      # LED 下沿 83.08
+Z_SCR1 = Z_SCR0 + LED_BOARD_H                      # 灯板上沿 253.2
+Z_G = round(Z_LED0 - IN_DEPTH, 2)                  # 玻璃下端 63.08 (原 = 承载盘顶 32.0)
 TAB_T, TAB_W = 3.5, 18.0                           # 耳片厚 / 宽; M6x10 从盘底, 螺母压耳片顶 (z3.5–8.5, 法兰底 9.3)
 NUT_T = 2.4                                        # M3 螺母
 gi, go = GL_OD / 2 - GL_T - GL_CLR, GL_OD / 2 + GL_CLR    # 94.8 / 100.2
@@ -444,10 +456,12 @@ def revol(rz):                                     # (r,z) 闭合折线绕 Z 轴
     for r, z in rz: pg.Add(gp_Pnt(r, 0, z))
     pg.Close()
     return BRepPrimAPI_MakeRevol(_MF(pg.Wire()).Face(), gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), 2 * math.pi).Shape()
-Z_GT = Z_G + GL_H                                  # 玻璃上端 277.0
+Z_GT = Z_G + GL_H                                  # 玻璃上端 (11-13 晚 Z_G 63.08 ⇒ 308.08; 原 277.0)
 GT_DEPTH = 12.0                                    # 内/外卡深 (玻璃下 20/10; 这里同深, 底面同高好打印)
 GT_TOP_T = 4.0                                     # 玻璃端面以上板厚
 GT_Z0, GT_Z1 = Z_GT - GT_DEPTH, Z_GT + GT_TOP_T    # 265 / 281
+assert Z_SCR1 + 3.0 <= GT_Z0, f'灯板上沿 Z{Z_SCR1} 离玻璃上最低处 Z{GT_Z0} 不足 3'
+LOG['screen'] = dict(z_board=(Z_SCR0, Z_SCR1), z_led0=round(Z_LED0, 2), z_g=Z_G, z_gt=Z_GT, top_clear=round(GT_Z0 - Z_SCR1, 2), min_gl_h=round(Z_SCR1 + 3.0 + GT_DEPTH - Z_G, 2))
 GT_FOOT = 1.0                                      # 外卡底平带 (r100.2–101.2, 落床), 斜面 → r110 处
 GT_CH = 1.0                                        # 顶面外缘倒角
 GD_OD, GD_ID, GD_T = 180.0, 20.0, 10.0             # 圆环玻璃 (用户 11-13: t5 → t10)
