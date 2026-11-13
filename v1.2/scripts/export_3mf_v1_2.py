@@ -43,7 +43,9 @@ def write3mf(path, parts):
         z.writestr('_rels/.rels','<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>')
         z.writestr('3D/3dmodel.model',model)
 P_=[('底盘 Φ220×6 (平板)',disc,'#8A8F98',0.05),('线圈环 (托法兰盘, 单独件)',ring,'#E0A030',0.05),('电机 Φ55×21.5 (占位)',motor,'#333333',0.05),
-    ('电机控制板',C,'#2E7D32',0.08),('散热片 40×20×6',heatsink,'#C0392B',0.05)]
+    ('电机控制板',C,'#2E7D32',0.08),('散热片 40×20×6',heatsink,'#C0392B',0.05),
+    *([('MOS 压块 mos_clamp_v1_2',CD.clamp,'#E69138',0.05)] if CD.HAS_MC else []),*([('电容卡件 cap_clamp_v1_2',CD.cap_clamp,'#B45F06',0.05)] if CD.HAS_CC else []),('线圈驱动板 (元件级, 按照片估)',CD.pcb,'#38761D',0.05),('线圈驱动 MOS TO-220',CD.mos,'#222222',0.05),
+    ('线圈驱动 电解电容 Φ10×20',CD.cap,'#1155CC',0.05),('线圈驱动 散热片 40×20×6 (转 90°)',CD.sink2,'#C0392B',0.05)]
 EXT=[('法兰盘 flange_disc_v1_2 (底减3)',fl,'#D9A441',0.05),('安装法兰 mounting_flange_v1_2 (外裙短3)',mf,'#B5895A',0.05),
      ('转子毂盘 hub_disc_v1_2 (降10.2)',hub,'#4F86C6',0.05),('承载盘 rim_ring Φ178 (降10.2)',rim,'#6AA84F',0.05)]
 A = V12 / 'assembly_v1_2'

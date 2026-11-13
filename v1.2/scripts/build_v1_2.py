@@ -61,9 +61,9 @@ s45 = math.sqrt(0.5)
 DROP = 10.2
 MOTOR_Z0 = 0.0
 ROTOR_TOP = MOTOR_Z0 + MOTOR_H                 # 21.5 (原 31.7)
-FL_THIN = 3.0                                  # 用户 11-11: flange_disc 底板减 3 (4.5→1.5), 顶面不动, 底面上抬
-FL_UP = 1.2                                    # 用户 11-11 上移 1; 11-12 再 +0.2: 方座顶 9.5, 内管顶 = 安装法兰顶 = 总高 16
-FL_Z0 = 15.5 + FL_THIN - DROP + FL_UP          # 法兰盘底 9.5
+FL_THIN = 2.0                                  # 用户 11-11: flange_disc 底板减 3 (4.5→1.5), 顶面不动, 底面上抬; 11-12 夜: 加厚 1 (1.5→2.5) ⇒ 减 2, 总高 16 不变
+FL_UP = 1.2                                    # 用户 11-11 上移 1; 11-12 再 +0.2: 内管顶 = 安装法兰顶 = 总高 16 (方座顶 = FL_Z0 8.5, 11-12 夜)
+FL_Z0 = 15.5 + FL_THIN - DROP + FL_UP          # 法兰盘底 8.5 (11-12 夜, 原 9.5)
 MF_THIN = 0.5                                  # 用户 11-11: mounting_flange 板厚 3→2.5 (顶面去 0.5)
 MF_CB = 1.5                                    # 用户 11-11: 安装法兰 16 个 Φ7 沉孔深 2.0→1.5
 FL_TOP = 22.5 - DROP + FL_UP                   # 法兰盘顶 13.5 (= 安装法兰底)
@@ -82,8 +82,8 @@ COLLAR_FLAT = 35.5                                 # 用户 11-11: 套环四边�
 RING_CH = 5.0                                      # 用户 11-12: 套环改方座 ±35.5 (四角倒角 5), 四角 4×M3 先把线圈环锁在底盘上 (装定子盘之前)
 RING_M3_XY = 29.5
 RING_M3 = [(sx * RING_M3_XY, sy * RING_M3_XY) for sx in (1, -1) for sy in (1, -1)]
-RING_CORNER_T = 5.0                                # 用户 11-12: Φ77 圆 (托定子盘) 以外的四角只留 5 厚
-# 用户 11-12: 四角只开 Φ3.2 通孔 (不压铜螺母); M3x10 从盘底沉孔往上 (头底 z-2.5, 尾 z7.5, 离定子盘底 1.8), 四角顶面放 M3 螺母
+RING_CORNER_T = 4.5                                # 用户 11-12: Φ77 圆 (托定子盘) 以外的四角只留 5 厚; 11-12 夜: 定子盘底降到 8.5 ⇒ 4.5 (法兰螺母 4.5..8.2, 离定子盘底 0.3)
+# 用户 11-12: 四角只开 Φ3.2 通孔 (不压铜螺母); M3x12 从盘底沉孔往上 (支承面 z-4, 尾 z8.0, 离定子盘底 8.5 留 0.5; 11-12 夜), 四角顶面 (z4.5) 放 M3 法兰螺母
 def _octa(h, c, z0, z1):
     from OCP.BRepBuilderAPI import BRepBuilderAPI_MakePolygon, BRepBuilderAPI_MakeFace
     from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism
@@ -95,7 +95,7 @@ def _octa(h, c, z0, z1):
 r_ = fuse(cut(_octa(COLLAR_FLAT, RING_CH, 0, FL_Z0), cyl(0, 0, BORE_D, -1, FL_Z0 + 1)),        # 托法兰盘的方座 ±35.5 / 内孔 Φ59
           cut(cyl(0, 0, TUBE_OD, FL_Z0, TUBE_TOP), cyl(0, 0, BORE_D, FL_Z0 - 1, TUBE_TOP + 1)))   # 内管 Φ63 (穿法兰盘孔)
 WIRE_A0 = 255.0                                    # 用户 11-12: 电机出线口改到下边 (-Y, 255-285°), 原 75-105° 朝控制板
-r_ = cut(r_, cut(_octa(COLLAR_FLAT + 1, RING_CH, RING_CORNER_T, FL_Z0 + 1), cyl(0, 0, COLLAR_D, RING_CORNER_T - 1, FL_Z0 + 2)))  # 圆外四角削到 5 厚
+r_ = cut(r_, cut(_octa(COLLAR_FLAT + 1, RING_CH, RING_CORNER_T, FL_Z0 + 1), cyl(0, 0, COLLAR_D, RING_CORNER_T - 1, FL_Z0 + 2)))  # 圆外四角削到 RING_CORNER_T (4.5) 厚
 r_ = cut(r_, op(BRepAlgoAPI_Common, cyl(0, 0, 90, -1, FL_Z0 + 2.7, ang=30, a0=WIRE_A0), cyl(0, 0, 90, -1, FL_Z0 + 2.7)))
 for x, y in FLANGE_SCREWS:
     r_ = cut(r_, cyl(x, y, 3.2, -1, TUBE_TOP + 1))
@@ -130,7 +130,8 @@ def _cb_xy(sh, d=7.0):
     return out
 _mf0 = one(C10 / 'mounting_flange_v4.step')
 _mf_top = 25.5 - MF_THIN
-_mf = cut(_mf0, _low, cyl(0, 0, 400, _mf_top, 100))
+MF_THIN_LOW = 3.0                             # 11-12 夜: 只 flange_disc 加厚; 安装法兰外裙 (r82.5–85) 底仍按原 FL_THIN 3 切 ⇒ 底 Z9.5 (下罩法兰螺母顶 8.7 下方留 0.8)
+_mf = cut(_mf0, cyl(0, 0, 400, -100, 15.5 + MF_THIN_LOW), cyl(0, 0, 400, _mf_top, 100))
 _cbs = _cb_xy(_mf0); assert len(_cbs) == 16, _cbs
 _cbs_out = [c for c in _cbs if math.hypot(*c) > 50]; assert len(_cbs_out) == 8   # 外圈 8 个原样
 _CB0 = 23.5                                   # V0.4 原件 Φ7 沉孔底 (原坐标)
@@ -208,7 +209,9 @@ OUT_SCREWS = [(x, y) for x, y in OUT_ALL if not (_bb[0] - 6 < x < _bb[3] + 6 and
 OUT_HANG = []                                      # 用户 11-12: 外圈 8×M3 取消, 定子盘只用中央 8×M3 锁底盘; OUT_SCREWS 只剩托块位置 (无孔)
 OUT_SKIPPED = []
 XT_ANG = 0.0                                       # XT60 正右边 (+X)
-_c, _s = math.cos(math.radians(XT_ANG)), math.sin(math.radians(XT_ANG)); _rc = 112.5 - 11.95 - 0.55
+_c, _s = math.cos(math.radians(XT_ANG)), math.sin(math.radians(XT_ANG)); XT_Y0, XT_Y1, XT_HW, XT_H = -11.95, 14.95, 19.0, 13.0
+XT_RF = 108.3                                      # 用户 11-13: 接头口面 = 压块外端直线, 压块俯视矩形内接 r110 (√(110²−19²)=108.35 取 108.3, 角 r109.95), 不再伸出 (原 112.5 伸出 2.5)
+_rc = XT_RF - 11.95 - 0.55                          # 孔心半径 95.8 (原 100.0)
 XT_GHOLES_DISC = [(_rc * _c - xx * _s, _rc * _s + xx * _c) for xx in (12.5, -12.5)]   # 与 4c XT_GHOLES 相同 (下面 assert)
 # 4b 底盘: 剩下的 M6 网格位 (节距 25, ±12.5..±87.5, 同原金属网格板) 全做通孔+沉孔
 SEAT_M6 = [(62.5, 62.5), (-62.5, 62.5), (-62.5, -62.5), (62.5, -62.5)]   # = V1.1 定位环原孔位 (板放正后 4 个都让得开)
@@ -223,11 +226,15 @@ def _inkeep(x, y):
 FIXED = COLLAR_M6                                  # 用户 11-12: 下罩 4 孔改 M3 (SH_M6 位置不变, 单独开 M3 孔)
 MOTOR_HOLES = [(sx * STATOR_R * s45, sy * STATOR_R * s45) for sx in (1, -1) for sy in (1, -1)]
 M3_D, M3_CB_D, M3_CB_H = 3.2, 7.0, 2.0           # 内六角 M3 头 Φ5.5x3; 盘底往上装沉孔 用户 11-12: Φ6.5×3.5 → Φ7×2
+INS_HOLE_D, INS_HOLE_H = 4.2, 4.2               # 用户 11-12 夜: 全部 M3 铜螺母孔统一 Φ4.2×4.2 (统一装 M3×4 铜螺母, 底面齐平)
 def _loc(X, Y):      # 全局 -> 板本地
     p = gp_Pnt(X, Y, BOARD_Z).Transformed(BT.Inverted()); return p.X(), p.Y()
 def _rect_hit(x, y, rad, r):   # 圆 (x,y,rad) 与本地矩形 r=(x0,y0,x1,y1) 相交
     dx = max(r[0] - x, 0, x - r[2]); dy = max(r[1] - y, 0, y - r[3]); return math.hypot(dx, dy) < rad
 EXTRA, SKIP = [], []
+# 4a' 定子线圈驱动小板 (用户 11-12 晚): MOS 压块 mos_clamp_v1_2 + 电容卡件 cap_clamp_v1_2 + 第二块散热片 (转 90°) + 底盘切口, 几何在 coil_drv_geom.py (不 import 本文件)
+import coil_drv_geom
+CD = coil_drv_geom.make(sys.modules[__name__])
 for x, y in GRID:                                   # 原洞洞板 M6 网格: 盘内放得下的全开
     if math.hypot(x, y) + CB_D / 2 > DISC_D / 2: continue
     why = []
@@ -240,6 +247,7 @@ for x, y in GRID:                                   # 原洞洞板 M6 网格: �
     if any(math.hypot(x - a, y - b) < CB_D + 1.0 for a, b in XT_GHOLES_DISC): why.append('XT60 压块孔')
     if any(math.hypot(x - a, y - b) < CB_D + 1.0 for a, b in SH_M6): why.append('下罩耳片孔 (内移)')
     if any(math.hypot(x - a, y - b) < CB_D / 2 + 2.1 + 1.0 for a, b in OUT_SCREWS): why.append('法兰外圈铜螺母')
+    if any(math.hypot(x - a, y - b) < 1e-6 for a, b in CD.GRID_REMOVE): why.append('线圈驱动板')
     (SKIP if why else EXTRA).append(((x, y), why) if why else (x, y))
 assert all(p in EXTRA for p in POSTS), ('立柱孔被挡', [q for q in SKIP if q[0] in POSTS])
 LOG['disc_holes'] = dict(collar=len(COLLAR_M6), grid=len(EXTRA), skipped=SKIP)
@@ -253,7 +261,7 @@ for x0, x1, y0, y1 in RELIEFS:
     d = cut(d, bl(x0, y0, x1, y1, -3.0, 1))                                               # 背面让位 深 3
 for x, y in BHOLES:
     p = gp_Pnt(x, y, 0).Transformed(BT)
-    d = cut(d, cyl(p.X(), p.Y(), 3.2, -DISC_T - 1, 1), cyl(p.X(), p.Y(), 4.2, -DISC_T - 1, -DISC_T + 4.5))  # 铜螺母从底面压
+    d = cut(d, cyl(p.X(), p.Y(), 3.2, -DISC_T - 1, 1), cyl(p.X(), p.Y(), INS_HOLE_D, -DISC_T - 1, -DISC_T + INS_HOLE_H))  # 铜螺母从底面压
 for x, y in MOTOR_HOLES:                                                                   # 电机 4×M3 盘底上锁
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
 d = cut(d, cyl(0, 0, 12.0, -3.0, 1))                                                       # 电机中央 Φ12x3
@@ -261,13 +269,19 @@ for x, y in RING_M3:                                                            
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
 assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in RING_M3 for a, b in FIXED + EXTRA), '线圈环 M3 沉孔离 M6 沉孔太近'
 for x, y in FLANGE_SCREWS:                                                                 # 线圈环/法兰 8×M3: 铜螺母从盘底压
-    d = cut(d, cyl(x, y, 3.2, -DISC_T - 1, 1), cyl(x, y, 4.2, -DISC_T - 1, -DISC_T + 4.5))
+    d = cut(d, cyl(x, y, 3.2, -DISC_T - 1, 1), cyl(x, y, INS_HOLE_D, -DISC_T - 1, -DISC_T + INS_HOLE_H))
 for x, y in SH_M6:                                                                         # 下罩 4×M3x10: 盘底沉孔往上, 螺母压三角块顶
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
-assert all(math.hypot(x - a, y - b) >= CB_D + 1.0 for x, y in XT_GHOLES_DISC for a, b in FIXED + EXTRA), 'XT60 孔与网格孔沉孔重叠'
-for x, y in XT_GHOLES_DISC:                                                                # XT60 压块 2×M6: 盘底沉孔上锁, 螺母压块顶
-    d = cut(d, cyl(x, y, M6_D, -DISC_T - 1, 1), cyl(x, y, CB_D, -DISC_T - 1, -DISC_T + CB_H))
+assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in XT_GHOLES_DISC for a, b in FIXED + EXTRA), 'XT60 孔与网格孔沉孔重叠'
+# (网格跳孔判据仍按原 M6 沉孔 CB_D + 1 留 XT60 位, 网格孔数不变)
+for x, y in XT_GHOLES_DISC:                                                                # XT60 压块 2×M3 (用户 11-12 晚, 原 M6): 盘底 Φ7×2 沉孔往上, 法兰螺母坐压块顶螺母座
+    d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
+d = cut(d, xf(BRepPrimAPI_MakeBox(gp_Pnt(XT_RF, -(XT_HW + 0.2), -50), gp_Pnt(200, XT_HW + 0.2, 50)).Shape(), rotz(XT_ANG)))   # 用户 11-13: 底盘在 XT60 宽度内切平到口面 (一条直线, 摸不到凸起)
+d = cut(d, *CD.disc_cut_list)                                                              # 线圈驱动板: 散热片通槽 + 3×M3 沉孔 + 电容弧形槽 + 背面电容坑
 disc = clean(d); LOG['disc'] = dict(v=vol(disc))
+LOG['coil_drv'] = dict(xpc=CD.XPC, xb=CD.XB, has_mc=CD.HAS_MC, has_cc=CD.HAS_CC, merge_err=CD.MERGE_ERR, mc_holes=[(round(x, 2), round(y, 2)) for x, y in CD.MC_HOLES],
+                       cc_holes=[(round(x, 2), round(y, 2)) for x, y in CD.CC_HOLES], pcb_z=(CD.PCB_Z0, CD.PCB_Z1), mos_y=(CD.MOS_Y_LEAD, CD.MOS_Y_TIP), bcap_pits=CD.BCAP_PITS,
+                       cap=(CD.CAP_CX, CD.CAP_Y0, CD.CAP_Y1, CD.CAP_ZC, CD.CAP_GROOVE), sink=(CD.SINK_X0, CD.SINK_Y0, CD.SINK_X1, CD.SINK_Y1))
 # 4c 玻璃罩下罩+定位环 V1.2 (用户 11-11): 玻璃 OD200x5 高 245, 下端与转子承载盘顶齐平; 下罩从底盘包住定子到玻璃下端,
 #    顶上承台托玻璃, 内卡 (伸进玻璃内) 深 20, 外卡深 10; 用 V1.1 定位环 4 个 M6 孔 (±62.5,±62.5) 从盘底锁
 def ann(r0, r1, z0, z1): return cut(cyl(0, 0, 2 * r1, z0, z1), cyl(0, 0, 2 * r0, z0 - 1, z1 + 1))
@@ -299,17 +313,40 @@ assert abs(SH_R - (SPIG_IN - SH_NUT_D / 2)) < 1e-9, '下罩螺母要贴墙内面
 NUT_CLR_D = 0.0                                    # 用户 11-12: 螺母 r84–92 在定子盘 r82.5 外、顶 Z7.4 < 定子盘底 Z9.3 ⇒ 定子盘/安装法兰不再开让位 (原 Φ10)
 for x, y in SH_M6:
     s_ = cut(s_, cyl(x, y, 3.4, -1, TRI_T + 1))
+# 用户 11-12: 三角块两条直边 (x=±P_N / y=±P_N) 各立一片斜三角筋, 外侧面与直边齐平, 尖角 → 墙内面全长, 与块顶/墙熔一体
+#   侧视: 尖角 Z5 → 内侧面到 r GU_R85 处 Z GU_Z1 (r<85 段 ≤ 定子盘/安装法兰外裙底 FL_Z0 − 0.5) → 贴墙 Z GU_ZH (承载盘/毂盘底 Z21.5 下)
+GU_T, GU_ZH, GU_R85 = 2.5, 15.0, 85.5
+GU_Z1 = FL_Z0 - 0.5                                # 跟定子盘底走 (FL_Z0 9.5→8.5 时自动变 8.0)
+assert GU_Z1 > TRI_T + 1, '定子盘太低, 筋 r<85 段没高度了'
+def _gusset():
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakePolygon, BRepBuilderAPI_MakeFace
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism
+    y1 = math.sqrt(GU_R85 ** 2 - P_N ** 2)                     # 内侧面 (x=P_N) 到 r85.5 处
+    yw = math.sqrt(SPIG_IN ** 2 - (P_N + GU_T) ** 2)           # 外侧面 (x=P_N+T) 碰墙内面处
+    pts = [(P_N, TRI_T - 1), (P_N, TRI_T), (y1, GU_Z1), (yw, GU_ZH), (SPIG_IN + 3, GU_ZH), (SPIG_IN + 3, TRI_T - 1)]
+    pg = BRepBuilderAPI_MakePolygon()
+    for y, z in pts: pg.Add(gp_Pnt(P_N, y, z))
+    pg.Close()
+    a = BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(pg.Wire()).Face(), gp_Vec(GU_T, 0, 0)).Shape()   # x=51 边的筋 (+x+y 角)
+    m = gp_Trsf(); m.SetMirror(gp_Ax2(gp_Pnt(0, 0, 0), gp_Dir(s45, -s45, 0)))                         # 关于 x=y 镜像 → y=51 边
+    q = fuse(a, xf(a, m))
+    return fuse(q, *[xf(q, rotz(90 * k)) for k in (1, 2, 3)])
+GUSSETS = _gusset()
+s_ = fuse(s_, GUSSETS)                                                         # 墙内 r>90.8 部分本来就是实体, 熔进去
 SUP_W, SUP_IN = 12.0, 76.0                         # 用户 11-11: 托块加大, 宽 12, 从 r76 到墙, 端头 Φ12
 for x, y in []:                                    # 用户 11-12: 托块 B 取消 (定子盘靠中央 8×M3 + 线圈环托住)
     a_ = math.degrees(math.atan2(y, x))
     _sp = fuse(xf(gbox(SUP_IN + SUP_W / 2, -SUP_W / 2, 0, SPIG_IN + 1.0, SUP_W / 2, FL_Z0), rotz(a_)), cyl((SUP_IN + SUP_W / 2) * math.cos(math.radians(a_)), (SUP_IN + SUP_W / 2) * math.sin(math.radians(a_)), SUP_W, 0, FL_Z0))
     s_ = fuse(s_, _sp)                                 # 用户 11-12: 托块不开 M3 通孔
-# XT60 电源口 (用户 11-11: 开口按之前 XT60 锁底板的压块留) — 复用 models/xt60_clamp_16p6x9p2x23p9 (压块 38x26.9x11 + 底垫 2, 叠高 13)
+# XT60 电源口 (用户 11-11: 开口按之前 XT60 锁底板的压块留) — 用户 11-12 晚改用 V1.2 专用版 scripts/xt60_clamp_v1_2.py
+#   (由 models/xt60_clamp_16p6x9p2x23p9 复制: M3 + 防呆 R1.5 + 外端直线 (11-13, 原 r110 圆弧); 压块 38×26.9×11 外包 + 底垫 2, 叠高 13)
 #   局部系: X 横跨 (孔距 25), Y 槽向 (-Y = 接头口, 朝外), Z 底=0; 底垫 z0, 压块 z2
-XT_DIR = Path(__file__).resolve().parents[2] / 'models' / 'xt60_clamp_16p6x9p2x23p9'
-XT_Y0, XT_Y1, XT_HW, XT_H = -11.95, 14.95, 19.0, 13.0
-XT_RF = 112.5                                      # 接头口面半径: 内端 r85.6 让开安装法兰外裙 r85 (z9.3 起), 口面伸出底盘 2.5
-XT_HOLES = [(-12.5, 0.55), (12.5, 0.55)]           # 压块 M6 孔 (局部)
+XT_DIR = V12 / 'models' / 'xt60_clamp_v1_2'
+# XT_Y0/XT_Y1/XT_HW/XT_H 见 4a
+# XT_RF 见 4a (11-13 改 108.3): 内端 r81.4 伸进法兰盘 r82.5 / 安装法兰外裙 r85 ⇒ 两件在压块处开让位 (只到 Z XT_H+0.5)
+XT_HOLES = [(-12.5, 0.55), (12.5, 0.55)]           # 压块 M3 Φ3.4 孔 (局部; 原 M6)
+XT_NUT_SEAT_H = 0.0                                # 用户 11-12: 压块顶面不做螺母座, M3 法兰螺母平坐压块顶 Z13..16.7, M3×20 尖 Z16 (啮合 3.0)
+XT_NUT_WELL_D, XT_NUT_WELL_H = RING_NUT_CLR_D, 4.5 # 下罩里压块顶上的螺母井 Φ8.2 (法兰 Φ7.6 +0.3/边), Z13→17.5 (螺母顶 16.7 / 尖 16)
 def xt_tr():                                       # 局部 -> 全局: Y 反向沿径向, 原点在 r = XT_RF + XT_Y0
     t = gp_Trsf(); t.SetValues(0, -1, 0, XT_RF + XT_Y0,  1, 0, 0, 0,  0, 0, 1, 0)   # (X,Y,Z)->(RC - Y, X, Z), 先在 +X 轴上
     return rotz(XT_ANG).Multiplied(t)
@@ -320,34 +357,50 @@ def gbox(x0, y0, z0, x1, y1, z1): return BRepPrimAPI_MakeBox(gp_Pnt(x0, y0, z0),
 xt_env = xf(gbox(-XT_HW, XT_Y0, 0, XT_HW, XT_Y1, XT_H), XT_T)                         # 压块+底垫外包
 s_ = cut(s_, xf(gbox(-XT_HW - 0.2, XT_Y0 - 5, -1, XT_HW + 0.2, XT_Y1 + 0.2, XT_H + 0.2), XT_T))   # 下罩开口 = 压块外形 +0.2
 for gx, gy in XT_GHOLES:
-    s_ = cut(s_, cyl(gx, gy, 14.0, XT_H, XT_H + 6.5))                                 # M6 螺母 (压块顶上) 让位井
+    s_ = cut(s_, cyl(gx, gy, XT_NUT_WELL_D, XT_H, XT_H + XT_NUT_WELL_H))              # M3 法兰螺母 (压块顶上) 让位井 (原 M6 Φ14 到 Z19.5)
 def _stl(f):
     from OCP.StlAPI import StlAPI_Reader
     from OCP.TopoDS import TopoDS_Shape
     sh = TopoDS_Shape(); StlAPI_Reader().Read(sh, str(f)); return sh
 _tz = gp_Trsf(); _tz.SetTranslation(gp_Vec(0, 0, 2.0))
-xt_clamp = xf(xf(_stl(XT_DIR / 'xt60_clamp_16p6x9p2x23p9.stl'), _tz), XT_T)
-xt_shim = xf(_stl(XT_DIR / 'xt60_shim_38x26p9x2p5.stl'), XT_T)
+# 读 STEP (m2b 由同一 mesh 转的实体, 体积与 STL 差 <0.01%); STL 读进来只是壳, 紧固件干涉 (BRepAlgoAPI_Common) 算不出体积
+xt_clamp = xf(xf(one(XT_DIR / 'xt60_clamp_v1_2.step'), _tz), XT_T)
+xt_shim = xf(one(XT_DIR / 'xt60_shim_v1_2.step'), XT_T)
 assert all(math.hypot(a - c, b - d_) < 1e-6 for (a, b), (c, d_) in zip(sorted(XT_GHOLES), sorted(XT_GHOLES_DISC))), (XT_GHOLES, XT_GHOLES_DISC)
 LOG['outer'] = dict(n=len(OUT_SCREWS), skipped=OUT_SKIPPED)
 LOG['xt60'] = dict(ang=XT_ANG, holes=[(round(x, 2), round(y, 2)) for x, y in XT_GHOLES])
 _fd = flange_disc                                  # 用户 11-12: 定子盘外径改回原尺寸 (不再扩 Φ181)
-_fd = cut(_fd, xf(gbox(-XT_HW - 0.5, XT_Y0 - 5, -1, XT_HW + 0.5, XT_Y1 + 0.5, 30), XT_T))   # XT60 压块处让位
+_fd = cut(_fd, xf(gbox(-XT_HW - 0.5, XT_Y0 - 5, -1, XT_HW + 0.5, XT_Y1 + 0.5, XT_H + 0.5), XT_T))   # XT60 压块处让位 (11-13 压块内移后真切到: r80.9, 只切 Z≤13.5)
 # 用户 11-12: 外圈 r78 8 孔保留 (原 V0.4 定子盘/安装法兰上下盖互锁螺丝), 不再补实
 CAV_R0 = 31.7 + CB7                                # 线圈腔内壁 r40 → r38.7 (内墙 r31.7–38.7)
 CAV_R1 = 82.5 - CB7                                # 线圈腔外壁 r72.6 → r75.5 (外墙 r75.5–82.5)
-CAV_Z0 = FL_Z0 + 1.5                               # 腔底 Z10.8 (底板 1.5)
+CAV_Z0 = FL_Z0 + 2.5                               # 腔底 Z11.0 不变 (底板 1.5 → 2.5, 11-12 夜)
 LID_R = 82.5 - CB7 / 2                             # 用户 11-12: 上下盖孔居中到外墙 r79 (原 V0.4 r77.5, 曾误开 r78)
 LID_SCREWS = [(LID_R * math.cos(math.radians(22.5 + 45 * k)), LID_R * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]   # 外圈 r79 8 孔 (上下盖互锁)
-LID_INS_D, LID_INS_H = 4.2, 3.0                    # 原 Φ2.5 攻牙孔 → M3x5 + 铜螺母 Φ4.2x3 从定子盘底面压 (顶留 1)
+LID_INS_D, LID_INS_H = INS_HOLE_D, INS_HOLE_H      # 原 Φ2.5 攻牙孔 → 铜螺母从定子盘底面压; 11-12 夜: Φ4.2×4.2 (M3×4 铜螺母), 外墙 5 厚顶留 0.8, 螺丝 M3×6 (尾端齐底面 8.5)
 _V04_OUT = [(77.5 * math.cos(math.radians(22.5 + 45 * k)), 77.5 * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]   # V0.4 原外圈孔
 for x, y in _V04_OUT: _fd = fuse(_fd, cyl(x, y, 4.6, FL_Z0, FL_TOP))         # 原 r77.5 孔补实 (先补再挖腔, 免补进腔里)
 _fd = cut(_fd, ann(CAV_R0, CAV_R1, CAV_Z0, FL_TOP + 1))                       # 用户 11-12: 内外墙都收到 7 宽 (= Φ7 沉孔)
 for x, y in LID_SCREWS: _fd = cut(_fd, cyl(x, y, 3.2, 0, 30), cyl(x, y, LID_INS_D, FL_Z0 - 1, FL_Z0 + LID_INS_H))
+# 用户 11-12 夜: 定子盘底降到 8.5 ⇒ 控制板高器件 (2× 电解电容 Φ6.3×7.7 顶 9.31, 3P 排针顶 10.09) 上方底面局部挖让位, 四周/顶各留 BRD_POCKET_GAP
+BRD_POCKET_GAP = 0.5
+BRD_POCKETS = []
+for s__ in solids(board):
+    b__ = bbox(s__)
+    if b__[5] <= FL_Z0 - BRD_POCKET_GAP: continue
+    g_ = BRD_POCKET_GAP; z1_ = b__[5] + g_
+    if abs((b__[3] - b__[0]) - (b__[4] - b__[1])) < 0.5:     # 圆柱 (电容): 圆坑
+        sh__ = cyl((b__[0] + b__[3]) / 2, (b__[1] + b__[4]) / 2, b__[3] - b__[0] + 2 * g_, FL_Z0 - 1, z1_)
+    else:                                                      # 排针: 方坑
+        sh__ = BRepPrimAPI_MakeBox(gp_Pnt(b__[0] - g_, b__[1] - g_, FL_Z0 - 1), gp_Pnt(b__[3] + g_, b__[4] + g_, z1_)).Shape()
+    _fd = cut(_fd, sh__)
+    BRD_POCKETS.append(dict(bbox=[round(v, 2) for v in b__], top=round(z1_, 2), depth=round(z1_ - FL_Z0, 2), floor_in_cavity=round(CAV_Z0 - z1_, 2)))
+LOG['board_pockets'] = BRD_POCKETS
 flange_disc = clean(_fd)
 _mf2 = mounting_flange                             # 11-12 外径回原 Φ170: 保留 V0.4 原外裙 r82.5–85 (已同步短到 z9.3 = 定子盘底); 原先 cut ann(82.8,86) 是错的, 还留 0.3 薄片
 for x, y in _V04_OUT: _mf2 = fuse(_mf2, cyl(x, y, CB7 + 0.4, FL_TOP, MF_TOP))  # 原 r77.5 Φ7 沉孔 + 孔补实 (板内)
 for x, y in LID_SCREWS: _mf2 = cut(_mf2, cyl(x, y, 3.2, 0, 30), cyl(x, y, CB7, MF_TOP - MF_CB, 40))   # 上盖 r79: Φ3.2 + 顶面 Φ7×1.5
+_mf2 = cut(_mf2, xf(gbox(-XT_HW - 0.5, XT_Y0 - 5, -1, XT_HW + 0.5, XT_Y1 + 0.5, XT_H + 0.5), XT_T))   # 11-13: 安装法兰外裙 r82.5–85 在 XT60 压块处让位 (Z≤13.5)
 mounting_flange = clean(_mf2)
 seat = clean(s_); LOG['seat'] = dict(v=vol(seat), z_g=Z_G)          # 合并版 (下罩+外卡一体)
 # 分体版 (用户 11-11): 外卡三角区单独一个环, 玻璃先套内卡再从上套环; 环底 2x2 凸筋插下罩顶槽 (单边 0.1)
@@ -388,7 +441,7 @@ NEW = [  # name, shape, color, 打印?
     ('frame_A_v4', frameA, '#c27ba0', 'frameA'),
     ('frame_B_v4', frameB, '#a64d79', 'frameB'),
     ('vane_slider_v4_trimmed_rot-12.3', vane, '#e06666', None),
-] + [(f'post_D8x360_{i}', p, '#bbbbbb', None) for i, p in enumerate(posts)]
+] + ([('mos_clamp_v1_2', CD.clamp, '#e69138', None)] if CD.HAS_MC else []) + ([('cap_clamp_v1_2', CD.cap_clamp, '#b45f06', None)] if CD.HAS_CC else []) + [(f'post_D8x360_{i}', p, '#bbbbbb', None) for i, p in enumerate(posts)]
 DROP = {'baseplate_collar_v4', 'motor_placeholder', 'hub_disc_v1_0', 'rim_ring_v1_0'}
 KEEP_O10 = ['M6x20_screw_rotor', 'standoff_D8x45_rotor', '688_lower_frame_A', '688_upper_frame_B']
 PAL = ['#f6b26b', '#76a5af', '#93c47d', '#ffd966', '#8e7cc3', '#b4a7d6', '#a2c4c9', '#ea9999']
@@ -404,7 +457,7 @@ if __name__ == '__main__':
         write_doc([(n, s, col, None, False)], OUT / '零件' / f'{n}.step', n)
     write_doc(items, OUT / 'V1.2_整机.step', 'POV3D_V1.2')
     # 打印 STL (打印姿态, 落床 z=0)
-    POSE = {'disc': None, 'collar': None, 'hub': None, 'rim': 'flip', 'frameA': None, 'frameB': 'flip'}
+    POSE = { 'disc': None, 'collar': None, 'hub': None, 'rim': 'flip', 'frameA': None, 'frameB': 'flip'}
     for n, s, col, k in NEW:
         if not k: continue
         t = s
@@ -412,6 +465,7 @@ if __name__ == '__main__':
         z0 = bbox(t)[2]; tt = gp_Trsf(); tt.SetTranslation(gp_Vec(0, 0, -z0)); t = xf(t, tt)
         BRepMesh_IncrementalMesh(t, 0.02, False, 0.2, True)
         w = StlAPI_Writer(); w.ASCIIMode = False; w.Write(t, str(OUT / '打印STL' / f'{n}.stl'))
+    # 线圈驱动板 MOS 压块 / 电容卡件: 打印件 (STL/STEP) 由各自生成器 scripts/mos_clamp_v1_2.py / cap_clamp_v1_2.py 出到 models/<名>/, 这里只并进装配
     import pickle
     pickle.dump(dict(new=[(n, k) for n, _, _, k in NEW]), open(OUT / 'names.pkl', 'wb'))
     json.dump(LOG, open(OUT / 'log.json', 'w'), indent=1, ensure_ascii=False)
