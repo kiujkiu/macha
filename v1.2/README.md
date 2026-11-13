@@ -209,3 +209,12 @@ cd v1.2/scripts && ../../.venv/bin/python export_3mf_v1_2.py
 - 玻璃长度没改 (245) ⇒ 玻璃上端 Z308.08, 顶盖整体上移 31.08; 玻璃上最低处 Z296.08 离灯板上沿 **42.9**。按灯板上沿留 3 算玻璃最短 **205.1**。
 - 灯板 STEP: `boards/led_v0.2.0_2026-11-13.step` (kicad-cli 导出, 板心原点, 未入库 11 MB)。转接板 + CZ06 + 灯板还**没建进装配/干涉**; 待查: 灯板 LED 面下部 J3 (VH 2P, 高 10.5, 离板下沿 1.4–9.3) 与转接板角上高件 (≤10.5) 是否相碰。
 - check_v1_2 全部相交 0; 图纸重出: glass_shroud / glass_shroud_split / glass_clamp_ring / glass_top / glass_top_hub。
+
+## 2026-11-13 晚 不装玻璃整机 + 装配图
+用户「不装玻璃的组和图做一个」。`scripts/assembly_noglass_v1_2.py` (约 3.5 min):
+- `assembly_v1_2_不装玻璃_整机+V2板.3mf` = 分体外卡环版整机去掉 玻璃罩 / 玻璃上 / 圆环玻璃 / 中心堵头, 加 V2 转子电路占位 (`scripts/v2_boards_v1_2.py`):
+  转接板 140×80 (板框 + 每个器件 F.CrtYd 外框 × 限高方块, 读 `pov3d/pcb/projects/POV3D_V2_BaseBoard` 的 kicad_pcb; 长边 = 世界 X 平行屏面)、CZ06 60×35 (6.6 包络)、1 块 V2 灯板 (`boards/led_v0.2.0_2026-11-13.step`, 板背贴 Y=0, LED 面朝 +Y)。
+- `assembly_v1_2_不装玻璃_装配图.{pdf,png}` (A3): 主视图 (从 +Y 看 LED 面) / 剖视 A-A (X=0) 带标高 / 俯视 / 图例。
+- 实测 (脚本里 assert): 灯板 ↔ 转接板器件最近 5.30 (原担心的灯板 J3 vs 转接板 VH 座不碰)、灯板 ↔ CZ06 2.00、灯板最大转动半径 81.98 (玻璃下内面 r90.8, 余 8.82)。
+- 未建: 第 2 块灯板 (背靠背间距/偏心未定)、桥板、FPC、转接板垫柱/安装孔对承载盘。
+- `scripts/mf3_v1_2.py`: 从 export_3mf_v1_2.py 拆出的 mesh / write3mf (两个脚本共用; export_3mf 重跑过, 产物不变)。
