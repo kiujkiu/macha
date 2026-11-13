@@ -94,9 +94,9 @@ def _octa(h, c, z0, z1):
     return BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(pg.Wire()).Face(), gp_Vec(0, 0, z1 - z0)).Shape()
 r_ = fuse(cut(_octa(COLLAR_FLAT, RING_CH, 0, FL_Z0), cyl(0, 0, BORE_D, -1, FL_Z0 + 1)),        # 托法兰盘的方座 ±35.5 / 内孔 Φ59
           cut(cyl(0, 0, TUBE_OD, FL_Z0, TUBE_TOP), cyl(0, 0, BORE_D, FL_Z0 - 1, TUBE_TOP + 1)))   # 内管 Φ63 (穿法兰盘孔)
-WIRE_A0 = 255.0                                    # 用户 11-12: 电机出线口改到下边 (-Y, 255-285°), 原 75-105° 朝控制板
+WIRE_A0, WIRE_AW, WIRE_ZH = 270.0, 40.0, 6.0      # 用户 11-13: 电机出线口 270–310° (宽 40, 对准实物出线 ~285–290°), 高 6 (底面 Z0 起); 原 255–285° 高到 Z11.2
 r_ = cut(r_, cut(_octa(COLLAR_FLAT + 1, RING_CH, RING_CORNER_T, FL_Z0 + 1), cyl(0, 0, COLLAR_D, RING_CORNER_T - 1, FL_Z0 + 2)))  # 圆外四角削到 RING_CORNER_T (4.5) 厚
-r_ = cut(r_, op(BRepAlgoAPI_Common, cyl(0, 0, 90, -1, FL_Z0 + 2.7, ang=30, a0=WIRE_A0), cyl(0, 0, 90, -1, FL_Z0 + 2.7)))
+r_ = cut(r_, op(BRepAlgoAPI_Common, cyl(0, 0, 90, -1, WIRE_ZH, ang=WIRE_AW, a0=WIRE_A0), cyl(0, 0, 90, -1, WIRE_ZH)))
 for x, y in FLANGE_SCREWS:
     r_ = cut(r_, cyl(x, y, 3.2, -1, TUBE_TOP + 1))
 for x, y in RING_M3:
