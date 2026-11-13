@@ -210,8 +210,8 @@ OUT_HANG = []                                      # 用户 11-12: 外圈 8×M3 
 OUT_SKIPPED = []
 XT_ANG = 0.0                                       # XT60 正右边 (+X)
 _c, _s = math.cos(math.radians(XT_ANG)), math.sin(math.radians(XT_ANG)); XT_Y0, XT_Y1, XT_HW, XT_H = -11.95, 14.95, 19.0, 13.0
-XT_RF = 108.3                                      # 用户 11-13: 接头口面 = 压块外端直线, 压块俯视矩形内接 r110 (√(110²−19²)=108.35 取 108.3, 角 r109.95), 不再伸出 (原 112.5 伸出 2.5)
-_rc = XT_RF - 11.95 - 0.55                          # 孔心半径 95.8 (原 100.0)
+XT_RF = 109.7                                      # 用户 11-13 (更正): 只有 XT60 接头口面内接 r110 (口面宽 15.6, √(110²−7.8²)=109.72 取 109.7, 角 r109.98, 中线凹 0.3); 压块/底垫外端仍 r110 圆弧 (原 112.5 伸出 2.5)
+_rc = XT_RF - 11.95 - 0.55                          # 孔心 x 97.2 (原 100.0)
 XT_GHOLES_DISC = [(_rc * _c - xx * _s, _rc * _s + xx * _c) for xx in (12.5, -12.5)]   # 与 4c XT_GHOLES 相同 (下面 assert)
 # 4b 底盘: 剩下的 M6 网格位 (节距 25, ±12.5..±87.5, 同原金属网格板) 全做通孔+沉孔
 SEAT_M6 = [(62.5, 62.5), (-62.5, 62.5), (-62.5, -62.5), (62.5, -62.5)]   # = V1.1 定位环原孔位 (板放正后 4 个都让得开)
@@ -276,7 +276,6 @@ assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in 
 # (网格跳孔判据仍按原 M6 沉孔 CB_D + 1 留 XT60 位, 网格孔数不变)
 for x, y in XT_GHOLES_DISC:                                                                # XT60 压块 2×M3 (用户 11-12 晚, 原 M6): 盘底 Φ7×2 沉孔往上, 法兰螺母坐压块顶螺母座
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
-d = cut(d, xf(BRepPrimAPI_MakeBox(gp_Pnt(XT_RF, -(XT_HW + 0.2), -50), gp_Pnt(200, XT_HW + 0.2, 50)).Shape(), rotz(XT_ANG)))   # 用户 11-13: 底盘在 XT60 宽度内切平到口面 (一条直线, 摸不到凸起)
 d = cut(d, *CD.disc_cut_list)                                                              # 线圈驱动板: 散热片通槽 + 3×M3 沉孔 + 电容弧形槽 + 背面电容坑
 disc = clean(d); LOG['disc'] = dict(v=vol(disc))
 LOG['coil_drv'] = dict(xpc=CD.XPC, xb=CD.XB, has_mc=CD.HAS_MC, has_cc=CD.HAS_CC, merge_err=CD.MERGE_ERR, mc_holes=[(round(x, 2), round(y, 2)) for x, y in CD.MC_HOLES],
@@ -343,7 +342,7 @@ for x, y in []:                                    # 用户 11-12: 托块 B 取�
 #   局部系: X 横跨 (孔距 25), Y 槽向 (-Y = 接头口, 朝外), Z 底=0; 底垫 z0, 压块 z2
 XT_DIR = V12 / 'models' / 'xt60_clamp_v1_2'
 # XT_Y0/XT_Y1/XT_HW/XT_H 见 4a
-# XT_RF 见 4a (11-13 改 108.3): 内端 r81.4 伸进法兰盘 r82.5 / 安装法兰外裙 r85 ⇒ 两件在压块处开让位 (只到 Z XT_H+0.5)
+# XT_RF 见 4a (11-13 改 109.7): 内端 r82.8 伸进安装法兰外裙 r85 (法兰盘 r82.5 留 0.3, 让位 +0.5 削 0.2) ⇒ 两件在压块处开让位 (只到 Z XT_H+0.5)
 XT_HOLES = [(-12.5, 0.55), (12.5, 0.55)]           # 压块 M3 Φ3.4 孔 (局部; 原 M6)
 XT_NUT_SEAT_H = 0.0                                # 用户 11-12: 压块顶面不做螺母座, M3 法兰螺母平坐压块顶 Z13..16.7, M3×20 尖 Z16 (啮合 3.0)
 XT_NUT_WELL_D, XT_NUT_WELL_H = RING_NUT_CLR_D, 4.5 # 下罩里压块顶上的螺母井 Φ8.2 (法兰 Φ7.6 +0.3/边), Z13→17.5 (螺母顶 16.7 / 尖 16)
@@ -370,7 +369,7 @@ assert all(math.hypot(a - c, b - d_) < 1e-6 for (a, b), (c, d_) in zip(sorted(XT
 LOG['outer'] = dict(n=len(OUT_SCREWS), skipped=OUT_SKIPPED)
 LOG['xt60'] = dict(ang=XT_ANG, holes=[(round(x, 2), round(y, 2)) for x, y in XT_GHOLES])
 _fd = flange_disc                                  # 用户 11-12: 定子盘外径改回原尺寸 (不再扩 Φ181)
-_fd = cut(_fd, xf(gbox(-XT_HW - 0.5, XT_Y0 - 5, -1, XT_HW + 0.5, XT_Y1 + 0.5, XT_H + 0.5), XT_T))   # XT60 压块处让位 (11-13 压块内移后真切到: r80.9, 只切 Z≤13.5)
+_fd = cut(_fd, xf(gbox(-XT_HW - 0.5, XT_Y0 - 5, -1, XT_HW + 0.5, XT_Y1 + 0.5, XT_H + 0.5), XT_T))   # XT60 压块处让位 (11-13 压块内移: 切到 r82.3, 只切 Z≤13.5)
 # 用户 11-12: 外圈 r78 8 孔保留 (原 V0.4 定子盘/安装法兰上下盖互锁螺丝), 不再补实
 CAV_R0 = 31.7 + CB7                                # 线圈腔内壁 r40 → r38.7 (内墙 r31.7–38.7)
 CAV_R1 = 82.5 - CB7                                # 线圈腔外壁 r72.6 → r75.5 (外墙 r75.5–82.5)
