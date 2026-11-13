@@ -23,7 +23,23 @@ python3 -c "import zipfile,glob,os; z=zipfile.ZipFile('fab/${N}_gerber_JLC.zip',
 # BOM (按值+封装+LCSC 合并) / CPL
 kicad-cli sch export bom --fields 'Value,Reference,Footprint,LCSC,MPN,${QUANTITY}' \
   --labels 'Comment,Designator,Footprint,LCSC Part #,MPN,Qty' --group-by 'Value,Footprint,LCSC' --ref-range-delimiter '' \
-  -o fab/${N}_BOM_JLC.csv $N.kicad_sch >/dev/null
+  -o fab/${N}_BOM_all.csv $N.kicad_sch >/dev/null
+# 单面贴 (11-13): JLC 只贴顶面; J1 背面手焊 ⇒ JLC BOM 去掉 J1, 另出 全部 BOM (带 装配 列, J1 = 手焊)
+python3 - "$D/fab/${N}_BOM_all.csv" "$D/fab/${N}_BOM_JLC.csv" "$D/fab/${N}_BOM_全部_含手焊.csv" <<'E'
+import csv, sys
+rows = list(csv.reader(open(sys.argv[1], encoding='utf-8')))
+hd, body = rows[0], rows[1:]
+di = hd.index('Designator')
+hand = lambda r: r[di].strip() == 'J1'
+with open(sys.argv[2], 'w', newline='', encoding='utf-8') as f:
+    w = csv.writer(f); w.writerow(hd); [w.writerow(r) for r in body if not hand(r)]
+with open(sys.argv[3], 'w', newline='', encoding='utf-8-sig') as f:
+    w = csv.writer(f); w.writerow(hd + ['装配'])
+    for r in body:
+        w.writerow(r + (['手焊 (背面, JLC 不贴, 不在 CPL)'] if hand(r) else ['JLC SMT 顶面']))
+assert sum(hand(r) for r in body) == 1, 'J1 应单独一行'
+E
+rm -f fab/${N}_BOM_all.csv
 kicad-cli pcb export pos --format csv --units mm --side both --exclude-dnp -o fab/${N}_pos_raw.csv $N.kicad_pcb >/dev/null
 python3 - "$D/fab/${N}_pos_raw.csv" "$D/fab/${N}_CPL_JLC.csv" <<'E'
 import csv, sys
@@ -31,9 +47,10 @@ rows = list(csv.DictReader(open(sys.argv[1])))
 with open(sys.argv[2], 'w', newline='') as f:
     w = csv.writer(f); w.writerow(['Designator', 'Mid X', 'Mid Y', 'Layer', 'Rotation'])
     for r in rows:
-        if r['Ref'].startswith('H'):
+        if r['Ref'].startswith('H') or r['Ref'] == 'J1':    # J1 手焊 (封装已 exclude-from-pos, 这里再保险)
             continue
-        w.writerow([r['Ref'], r['PosX'] + 'mm', r['PosY'] + 'mm', 'Top' if r['Side'] == 'top' else 'Bottom', r['Rot']])
+        assert r['Side'] == 'top', ('单面贴: CPL 只能有顶面件', r['Ref'], r['Side'])
+        w.writerow([r['Ref'], r['PosX'] + 'mm', r['PosY'] + 'mm', 'Top', r['Rot']])
 E
 rm -f fab/${N}_pos_raw.csv
 # 原理图 PDF / 渲染

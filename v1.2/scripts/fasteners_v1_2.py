@@ -134,9 +134,8 @@ for i, (bx, by) in enumerate(B.BHOLES):
 #   11-13 晚 (V1.2-g): 底盘已打印, XT60 孔仍是 M6 Φ6.4 + 底面 Φ13×3 (沉孔顶 Z−3) ⇒ M3 大垫片 Φ9×0.8 顶在沉孔顶 (Z−3.8..−3), 头支承 Z−3.8, M3×20 尖 Z16.2 ⇒ 啮合 3.2
 L_XT = 20.0
 XT_NUT_Z0 = B.XT_H                                 # 13 (螺母座取消, 原 XT_H - XT_NUT_SEAT_H = 12)
-XT_BEAR = ZB + B.CB_H - B.XT_WASHER_T              # −3.8 (垫片在头和沉孔顶之间)
+XT_BEAR = ZB + B.M3_CB_H                          # −4 (新底盘 XT60 孔改标准 M3 Φ7×2 沉孔, 无垫片; 已打印 11-12 底盘另加 Φ9×0.8 大垫片, 见 BOM 6b)
 for i, (x, y) in enumerate(B.XT_GHOLES_DISC):
-    add(f"M3 大垫片 Φ9×0.8 XT60 #{i}", cut(cyl(x, y, B.XT_WASHER_D, XT_BEAR, ZB + B.CB_H), cyl(x, y, 3.2, ZB, 0)), "#909090")
     screw("M3x20 XT60", i, x, y, XT_BEAR, L_XT, True, engage=("法兰螺母", XT_NUT_Z0, XT_NUT_Z0 + NUT_T))
     add(f"M3 法兰螺母 XT60 #{i}", flange_nut(x, y, XT_NUT_Z0), "#707070")
 

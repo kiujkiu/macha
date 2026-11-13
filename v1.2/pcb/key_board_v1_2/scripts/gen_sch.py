@@ -49,13 +49,13 @@ PARTS = {
     'D2': ('Device', 'LED', 'A-SP192YR6AC-A01-4T', 'LED', 'F', {'1': 'D2_K', '2': '+3V3'}),
     'D3': ('Device', 'LED', 'A-SP192YR6AC-A01-4T', 'LED', 'F', {'1': 'D3_K', '2': '+3V3'}),
     'D4': ('Device', 'LED', 'A-SP192YR6AC-A01-4T', 'LED', 'F', {'1': 'D4_K', '2': '+3V3'}),
-    'R1': ('Device', 'R', '2.7k', 'R', 'B', {'1': 'D1_RK', '2': 'LED_IO1'}),
-    'R2': ('Device', 'R', '1k', 'R', 'B', {'1': 'D1_GK', '2': 'LED_IO2'}),
-    'R3': ('Device', 'R', '1k', 'R', 'B', {'1': 'D1_BK', '2': 'LED_MOSI'}),
-    'R4': ('Device', 'R', '2.7k', 'R', 'B', {'1': 'D2_K', '2': 'LED_IO4'}),
-    'R5': ('Device', 'R', '2.7k', 'R', 'B', {'1': 'D3_K', '2': 'LED_IO3'}),
-    'R6': ('Device', 'R', '2.7k', 'R', 'B', {'1': 'D4_K', '2': 'KEY4'}),
-    'C1': ('Device', 'C', '100n', 'C', 'B', {'1': '+3V3', '2': 'GND'}),
+    'R1': ('Device', 'R', '2.7k', 'R', 'F', {'1': 'D1_RK', '2': 'LED_IO1'}),
+    'R2': ('Device', 'R', '1k', 'R', 'F', {'1': 'D1_GK', '2': 'LED_IO2'}),
+    'R3': ('Device', 'R', '1k', 'R', 'F', {'1': 'D1_BK', '2': 'LED_MOSI'}),
+    'R4': ('Device', 'R', '2.7k', 'R', 'F', {'1': 'D2_K', '2': 'LED_IO4'}),
+    'R5': ('Device', 'R', '2.7k', 'R', 'F', {'1': 'D3_K', '2': 'LED_IO3'}),
+    'R6': ('Device', 'R', '2.7k', 'R', 'F', {'1': 'D4_K', '2': 'KEY4'}),
+    'C1': ('Device', 'C', '100n', 'C', 'F', {'1': '+3V3', '2': 'GND'}),
 }
 # LCSC / MPN (lib/parts.csv, 封装 agent 核; 阻容全 0603 JLC Basic)
 LCSC = {'J1': ('C265421', 'SM12B-GHS-TB(LF)(SN)'), 'SW1': ('C7470157', 'ZX-QC66-7.5TP'), 'SW2': ('C7470157', 'ZX-QC66-7.5TP'),
@@ -64,10 +64,10 @@ LCSC = {'J1': ('C265421', 'SM12B-GHS-TB(LF)(SN)'), 'SW1': ('C7470157', 'ZX-QC66-
         'R3': ('C21190', '0603WAF1001T5E'), 'R4': ('C13167', '0603WAF2701T5E'), 'R5': ('C13167', '0603WAF2701T5E'),
         'R6': ('C13167', '0603WAF2701T5E'), 'C1': ('C14663', 'CC0603KRX7R9BB104')}
 DESC = {
-    'J1': 'JST GH 1.25 12P SMD 卧式, 背面; 接电机板 U24',
+    'J1': 'JST GH 1.25 12P SMD 卧式, 背面 手焊 (JLC 不贴, 不进 CPL/JLC BOM); 接电机板 U24',
     'SW1': '上键 (板 11,18.5) → KEY2', 'SW2': '下键 (板 11,7.5) → KEY3',
-    'D1': '三色 1615 共阳 (板 17,10)', 'D2': '单色1 红 0603 (板 22,10) → LED_IO4',
-    'D3': '单色2 红 0603 (板 26.5,10) → LED_IO3', 'D4': '单色3 红 0603 (板 31,10) → KEY4 (改作输出)',
+    'D1': '三色 1615 共阳 (板 17,13)', 'D2': '单色1 红 0603 (板 21.5,13) → LED_IO4',
+    'D3': '单色2 红 0603 (板 26,13) → LED_IO3', 'D4': '单色3 红 0603 (板 30.5,13) → KEY4 (改作输出)',
     'R1': 'RGB-R 限流', 'R2': 'RGB-G 限流', 'R3': 'RGB-B 限流', 'R4': '单色1 限流', 'R5': '单色2 限流', 'R6': '单色3 限流',
     'C1': '3V3 就近去耦',
 }
@@ -165,7 +165,8 @@ def main():
             items.append(label(nets[p['num']], px, py, (a + 180) % 360))
     items.append(text(NOTE_IF, 25.4, 190.5, 1.4))
     items.append(text(NOTE_CALC, 228.6, 40.64, 1.4))
-    items.append(text('正面 (F) 只放 SW1 SW2 D1–D4 (支架平板压正面, 每件一个让位腔 / Φ3.2 隔光孔); 其余全部背面 (B)。\n'
+    items.append(text('单面贴 (用户 11-13): JLC 只贴顶面 (F) —— SW1 SW2 D1–D4 + R1–R6 C1 全在正面 (支架平板背面: 按键让位腔 / 每颗 LED Φ3.2 隔光孔 / R/C 共用让位腔)。\n'
+                      '!! J1 (SM12B-GHS-TB) 在背面, 手焊: 平板盖住正面, J1 放不了正面。J1 不在 CPL 里 (封装标 exclude from pos), JLC BOM 也去掉 J1 (fab/*_手焊.csv)。\n'
                       '板系: 原点 = 板左下角 (从机器外面看正面), 整机 x = 20 − X, Z = 3 + Y。', 228.6, 25.4, 1.6))
     sch = ['kicad_sch', ['version', 20260306], ['generator', Str('claude-gen')], ['generator_version', Str('10.0')],
            ['uuid', Str(U('root'))], ['paper', Str('A3')],

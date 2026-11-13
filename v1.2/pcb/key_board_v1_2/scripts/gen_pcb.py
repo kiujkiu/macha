@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """POV3D V1.2 按键板 PCB 生成器 (pcbnew API, KiCad 10.0.7 系统 python3).
     python3 gen_pcb.py  →  ../key_board_v1_2.kicad_pcb (摆件 + 栅格迷宫布线 + 双面 GND 铺铜 + 缝合孔)
-网表 / 封装名: gen_sch.PARTS / FP。元件位置: 正面 6 件 = key_board_outline_v1_2.py 常数; J1 = ../mech_constraints.json (结构 agent 给)。
+网表 / 封装名: gen_sch.PARTS / FP。元件位置: 正面 6 件 + 正面 R1–R6/C1 (11-13 单面贴) = key_board_outline_v1_2.py 常数 (BTN/RGB/LED/SMD_F); J1 = ../mech_constraints.json (结构 agent 给)。
+单面贴: JLC 只贴顶面; J1 背面手焊, 封装标 exclude-from-pos (不进 CPL)。
 板系 (X, Y): 原点板左下角, 从机器外面看正面 (= KiCad 顶视), Y 向上; KiCad: kx = OX + X, ky = OY − Y。
 """
 import heapq
@@ -237,9 +238,11 @@ def main():
     bd = P.BOARD()
     ds = bd.GetDesignSettings()
     ds.SetCopperLayerCount(2)
+    # JLC 2 层 基础工艺 (用户 11-13 (五)): 线宽 / 间距 ≥0.15, 过孔 钻 ≥0.3 / 盘 ≥0.6, 环 ≥0.15, 孔间 ≥0.5, 铜到板边 ≥0.3, 1.6 FR4 1 oz, 无盲埋孔 / 盘中孔
     ds.m_TrackMinWidth = mm(0.15); ds.m_MinClearance = mm(0.15); ds.m_ViasMinSize = mm(0.6); ds.m_MinThroughDrill = mm(0.3)
-    ds.m_CopperEdgeClearance = mm(EDGE_CLR); ds.m_HoleClearance = mm(0.25); ds.m_HoleToHoleMin = mm(0.25)
+    ds.m_CopperEdgeClearance = mm(EDGE_CLR); ds.m_HoleClearance = mm(0.25); ds.m_HoleToHoleMin = mm(0.5)
     ds.m_ViasMinAnnularWidth = mm(0.15)
+    ds.SetBoardThickness(mm(1.6))
     # 板框
     for (x0, y0), (x1, y1) in [((0, 0), (KB.W, 0)), ((KB.W, 0), (KB.W, KB.H)), ((KB.W, KB.H), (0, KB.H)), ((0, KB.H), (0, 0))]:
         s = P.PCB_SHAPE(bd); s.SetShape(P.SHAPE_T_SEGMENT); s.SetLayer(P.Edge_Cuts); s.SetWidth(mm(0.05))
@@ -264,14 +267,8 @@ def main():
         except (TypeError, ValueError):
             jpos['rot'] = 0.0                                  # 文字说明 "B.Cu 上 rotation 0"
         JP1 = c.get('pin1_board_XY')
-    # 背面电阻位 (板系, 竖放, 管脚 1 朝上 = 接 LED 侧)
-    # 电阻按 J1 管脚顺序排在插座焊盘正上方 (翻面后 pin1 在右), 两排错开; 管脚 2 (IO 侧) 朝下
-    pinX = lambda n: jpos['X'] + 6.875 - 1.25 * (n - 1)
-    YA, YB = jpos['Y'] + 4.85, jpos['Y'] + 7.95     # J1 庭院到 Y+3.2; 0603 竖放庭院 ±1.48
-    RPOS = {'R1': (pinX(1), YA), 'R2': (pinX(2), YB), 'R3': (pinX(6), YA), 'R4': (pinX(4), YB),
-            'R5': (pinX(3), YA), 'R6': (pinX(11), YA), 'C1': (pinX(8), YA)}
-    if m and 'back_parts' in m:
-        RPOS.update({r: tuple(v) for r, v in m['back_parts'].items()})
+    # 正面电阻 / 电容位 (板系, 竖放, 管脚 1 = LED 侧 / C1 +3V3 朝下): LED 行上方, 平板背面共用让位腔 (KB.smd_pocket)
+    RPOS = dict(KB.SMD_F)
     FRONT = {'SW1': KB.BTN[0], 'SW2': KB.BTN[1], 'D1': KB.RGB, 'D2': KB.LED[0], 'D3': KB.LED[1], 'D4': KB.LED[2]}
 
     fps = {}
@@ -289,13 +286,14 @@ def main():
             fl = f.GetField(fn)
             if fl is not None:
                 fl.SetVisible(False); fl.SetLayer(P.F_Fab if side == 'F' else P.B_Fab)
-        # 取向: 按键 / LED 让焊盘长向沿 X; 电阻竖放
+        # 取向: LED 让焊盘长向沿 X; 按键 (11-13 (五) 转 90°) 焊盘长向沿 Y; 电阻竖放
         if ref in FRONT:
             X, Y = FRONT[ref]
             f.SetPosition(V(*k(X, Y)))
             pads = list(f.Pads())
             xs = [p.GetPosition().x for p in pads]; ys = [p.GetPosition().y for p in pads]
-            if (max(ys) - min(ys)) > (max(xs) - min(xs)):
+            vert = (max(ys) - min(ys)) > (max(xs) - min(xs))
+            if vert != ref.startswith('SW'):
                 f.SetOrientationDegrees(90)
         elif ref == 'J1':
             f.SetPosition(V(*k(jpos['X'], jpos['Y'])))
@@ -303,9 +301,15 @@ def main():
         else:
             X, Y = RPOS[ref]
             f.SetPosition(V(*k(X, Y)))
-            f.SetOrientationDegrees(270 if ref.startswith('R') else 90)   # R: 脚 2 (IO) 朝下; C1: 脚 1 (3V3) 朝下
+            for rot in (90, 270):                                         # 竖放, 脚 1 朝下 (板系 Y 小 = KiCad y 大)
+                f.SetOrientationDegrees(rot)
+                py = {p.GetNumber(): p.GetPosition().y for p in f.Pads()}
+                if py['1'] > py['2']:
+                    break
         if side == 'B':
             f.Flip(f.GetPosition(), P.FLIP_DIRECTION_LEFT_RIGHT)
+        if ref == 'J1':                                                  # 单面贴: J1 手焊, 不进贴片坐标 (CPL)
+            f.SetExcludedFromPosFiles(True)
         for p in f.Pads():
             n = pn.get(p.GetNumber())
             if n is None and p.GetNumber() == '':
@@ -320,13 +324,14 @@ def main():
                 if it.GetLayer() == P.F_SilkS:
                     it.SetLayer(P.F_Fab)          # 不 Remove (SWIG 会释放导致堆坏)
             f.Reference().SetLayer(P.F_Fab); f.Value().SetLayer(P.F_Fab)
+            if ref in RPOS:                                  # 阻容位号在 F.Fab 上沿一行对齐 (横排)
+                f.Reference().SetTextAngleDegrees(0); f.Reference().SetPosition(V(*k(RPOS[ref][0], KB.SMD_Y + KB.SMD_ENV[1] / 2 + 0.7)))
+                f.Reference().SetTextSize(V(0.6, 0.6)); f.Reference().SetTextThickness(mm(0.1))
+                f.Value().SetVisible(False)
         else:
             f.Value().SetVisible(False)
             if ref == 'J1':
                 f.Reference().SetPosition(V(*k(jpos['X'] - 3.0, jpos['Y'] - 2.45 - 0.9)))
-            if ref == 'C1':                                  # 和 R5 位号挤一起 → 放到 C1 上方, 横排
-                cx, cy = b(P.ToMM(f.GetPosition().x), P.ToMM(f.GetPosition().y))
-                f.Reference().SetPosition(V(*k(cx, cy + 2.1))); f.Reference().SetTextAngleDegrees(0)
             f.Reference().SetTextSize(V(0.7, 0.7)); f.Reference().SetTextThickness(mm(0.12))
     # 安装孔 (NPTH Φ3.2)
     for i, (X, Y) in enumerate(KB.MH, 1):
@@ -382,6 +387,16 @@ def main():
             px, py = b(P.ToMM(p.GetPosition().x), P.ToMM(p.GetPosition().y))
             top = py + P.ToMM(p.GetBoundingBox().GetHeight()) / 2
             vx, vy = px, top + 0.15 + VIA_D / 2 - 0.05
+            # 不打进任何焊盘 (含正面: 11-13 (五) 按键转 90° 后 SW2 脚 4 正对 J1 pin12 上方) —— 往上挪到离焊盘 ≥0.2
+            def _hit(y_):
+                for f_ in fps.values():
+                    for q in f_.Pads():
+                        bb_ = q.GetBoundingBox(); qx0, qy1 = b(P.ToMM(bb_.GetLeft()), P.ToMM(bb_.GetTop())); qx1, qy0 = b(P.ToMM(bb_.GetRight()), P.ToMM(bb_.GetBottom()))
+                        if q is not p and math.hypot(max(qx0 - vx, 0, vx - qx1), max(qy0 - y_, 0, y_ - qy1)) < VIA_D / 2 + 0.2:
+                            return True
+                return False
+            while _hit(vy):
+                vy += G
             pre.append((px, py, vx, vy))
             i0, j0 = gi(px, py); i1, j1 = gi(vx, vy)
             gr.stamp_path([(1, i0, j) for j in range(j0, j1 + 1)], 0.3, GND)
@@ -439,7 +454,8 @@ def main():
               dilate(gr.pad, VIA_D / 2 + 0.2) | dilate((gr.occ[0] == -1) | (gr.occ[1] == -1), VIA_D / 2 + 0.2))
     stitch = []
     def ok(i, j):
-        return 0 <= i < NX and 0 <= j < NY and vfree[j, i] and all(math.hypot((i - a) * G, (j - c) * G) >= 1.6 for a, c in stitch)
+        return 0 <= i < NX and 0 <= j < NY and vfree[j, i] and all(math.hypot((i - a) * G, (j - c) * G) >= 1.6 for a, c in stitch) and \
+            all(math.hypot(i * G - vx, j * G - vy) >= 1.6 for _, _, vx, vy in pre)          # 离 J1 地脚预打过孔 (孔距)
     # 每个 GND 焊盘旁一颗 (最近可用点)
     for (_ref, _num), cells, (cx, cy) in padinfo['GND']:
         ci, cj = gi(cx, cy)
@@ -476,8 +492,9 @@ def main():
     def btext(s, X, Y, size=0.8, lay=P.B_SilkS):
         t = P.PCB_TEXT(bd); t.SetText(s); t.SetLayer(lay); t.SetPosition(V(*k(X, Y)))
         t.SetTextSize(V(size, size)); t.SetTextThickness(mm(0.12)); t.SetMirrored(lay == P.B_SilkS); bd.Add(t)
-    btext('POV3D KEY V1.2', 20.0, 21.0, 0.9)
-    btext('J1 GH1.25-12P  cable pin1<->pin1', 20.0, 19.3, 0.7)
+    btext('POV3D KEY V1.2', 20.0, KB.H - 2.0, 0.9)
+    btext('J1 GH1.25-12P  cable pin1<->pin1', 20.0, KB.H - 3.4, 0.7)
+    btext('J1 HAND SOLDER (not JLC SMT)', 20.0, KB.H - 4.6, 0.7)
     # 引脚 1 标记 + 与结构 agent 的 pin1 位置核对
     p1 = [p for p in fps['J1'].Pads() if p.GetNumber() == '1'][0]
     px, py = b(P.ToMM(p1.GetPosition().x), P.ToMM(p1.GetPosition().y))
@@ -488,7 +505,7 @@ def main():
     btext('1', px, jpos['Y'] - 2.45 - 0.9, 0.8)        # 插口下方 (板下沿侧)
 
     # 背面件外包 (板系, 庭院 bbox) + 高度 → back_parts.json (给结构核让位; 铺铜由 kicad-cli 原生 refill)
-    HGT = {'J1': 4.25, 'C1': 0.9}
+    HGT = {'J1': 4.25}
     bp = {}
     for ref, f in fps.items():
         if f.GetLayer() != P.B_Cu:
@@ -498,6 +515,21 @@ def main():
         bp[ref] = dict(courtyard_board_XY=[round(X0, 3), round(Y0, 3), round(X1, 3), round(Y1, 3)], height=HGT.get(ref, 0.6))
     json.dump(dict(_note='背面件 庭院外包 [X0,Y0,X1,Y1] 板系 (正视, 原点左下) + 离板背面高度 mm; J1 插口朝 Y=0, 插口面 Y=%.2f' % (jpos['Y'] - 2.45),
                    parts=bp), open(os.path.join(PRJ, 'back_parts.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    # 正面贴片阻容外包 (板系, 焊盘 ∪ 本体 / 庭院) + 高度 → front_parts.json (key_bracket 核平板背面让位腔)
+    fp_ = {}
+    for ref in RPOS:
+        f = fps[ref]; assert f.GetLayer() == P.F_Cu, ref
+        qs = [p.GetBoundingBox() for p in f.Pads()]
+        X0, Y1 = b(P.ToMM(min(q.GetLeft() for q in qs)), P.ToMM(min(q.GetTop() for q in qs)))
+        X1, Y0 = b(P.ToMM(max(q.GetRight() for q in qs)), P.ToMM(max(q.GetBottom() for q in qs)))
+        cx, cy = RPOS[ref]; bw, bl = (0.8, 1.6)                        # 0603 本体 (竖放 X 0.8 × Y 1.6)
+        env = [min(X0, cx - bw / 2), min(Y0, cy - bl / 2), max(X1, cx + bw / 2), max(Y1, cy + bl / 2)]
+        cy_ = f.GetCourtyard(P.F_CrtYd).BBox()
+        C0, D1 = b(P.ToMM(cy_.GetLeft()), P.ToMM(cy_.GetTop())); C1_, D0 = b(P.ToMM(cy_.GetRight()), P.ToMM(cy_.GetBottom()))
+        fp_[ref] = dict(XY=[cx, cy], env_board_XY=[round(v, 3) for v in env], courtyard_board_XY=[round(C0, 3), round(D0, 3), round(C1_, 3), round(D1, 3)],
+                        height=KB.SMD_H[ref[0]])
+    json.dump(dict(_note='正面贴片阻容 (11-13 单面贴) 外包 env = 焊盘∪本体 [X0,Y0,X1,Y1] 板系 (正视, 原点左下) + 离板正面高度 mm; 平板背面让位腔见 KB.smd_pocket()',
+                   pocket_board=[round(v, 3) for v in KB.smd_pocket()], parts=fp_), open(os.path.join(PRJ, 'front_parts.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     out = os.path.join(PRJ, S.NAME + '.kicad_pcb')
     bd.Save(out) if hasattr(bd, 'Save') else P.SaveBoard(out, bd)
     print('写出', out)

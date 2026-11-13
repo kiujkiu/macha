@@ -287,10 +287,10 @@ for x, y in SH_M6:                                                              
 assert all(math.hypot(x - a, y - b) >= CB_D + 1.0 for x, y in XT_GHOLES_DISC for a, b in FIXED + EXTRA), 'XT60 孔与网格孔沉孔重叠'
 # 用户 11-13 晚: 底盘已打印 (b0a79b0 版), XT60 两孔保持打印件原样 = M6 Φ6.4 通 + 底面 Φ13×3 沉孔 @ (100, ±12.5);
 #   装 M3×20 + M3 大垫片 Φ9×0.8 (DIN 9021) 顶在 Φ13 沉孔顶 Z−3 (头支承 Z−3.8), 法兰螺母坐压块顶 Z13..16.7, 尖 Z16.2 (啮合 3.2)
-XT_DISC_HOLE = (M6_D, CB_D, CB_H)
+XT_DISC_HOLE = (M3_D, M3_CB_D, M3_CB_H)            # 新底盘 (11-13 晚); 已打印 b0a79b0 件 = (M6_D, CB_D, CB_H) + 垫片 XT_WASHER
 XT_WASHER_D, XT_WASHER_T = 9.0, 0.8
 for x, y in XT_GHOLES_DISC:
-    d = cut(d, cyl(x, y, M6_D, -DISC_T - 1, 1), cyl(x, y, CB_D, -DISC_T - 1, -DISC_T + CB_H))
+    d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))   # 用户 11-13 晚: 新底盘兼容 V1.2-g 压块 → 孔位 x100 不变, 改标准 M3 Φ3.2 + 底面 Φ7×2 (不用垫片); 11-12 已打印件仍是 Φ6.4+Φ13×3, 装时加 Φ9 大垫片
 for x, y in KEY_M3:                                                                        # 按键支架 2×M3×12 (11-13 L 形): 盘底 Φ7×2 沉孔往上 → 穿脚 (4 厚) → 脚顶法兰螺母
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
 assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in KEY_M3 for a, b in FIXED + EXTRA), '按键支架 M3 沉孔离网格孔太近'

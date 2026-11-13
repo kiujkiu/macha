@@ -12,7 +12,7 @@ import gen_pcb as G  # noqa: E402
 
 bd = P.LoadBoard(os.path.join(G.PRJ, G.S.NAME + '.kicad_pcb'))
 mm = P.ToMM
-out = dict(pads=[], tracks=[], vias=[], fps=[])
+out = dict(pads=[], tracks=[], vias=[], fps=[], W=G.KB.W, H=G.KB.H, MH=G.KB.MH, KO_F=G.KB.FRONT_KO_D, KO_B=G.KB.BACK_KO_D)
 for f in bd.GetFootprints():
     X, Y = G.b(mm(f.GetPosition().x), mm(f.GetPosition().y))
     out['fps'].append(dict(ref=f.GetReference(), X=X, Y=Y, side='F' if f.GetLayer() == P.F_Cu else 'B'))

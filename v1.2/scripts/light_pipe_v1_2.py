@@ -97,7 +97,7 @@ def calc(body_l=BODY_L):
 
 
 def preview(rows):
-    """俯视剖面 Z13 (过 4 颗 LED): 下罩 / 支架平板 / 板 (光栅化真实几何) + 剪到推荐长度的导光柱 + 每颗数值"""
+    """俯视剖面 Z16 (11-13 (五) LED 行 = 板中线; 过 4 颗 LED): 下罩 / 支架平板 / 板 (光栅化真实几何) + 剪到推荐长度的导光柱 + 每颗数值"""
     import numpy as np
     from matplotlib.patches import Polygon
     plt = KBR._font()

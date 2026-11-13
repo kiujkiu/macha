@@ -21,6 +21,9 @@
   缝宽 1.0; 下罩正立打印 (Z0 贴床)。FLAP_MODE: 'support' (主件, 用户 11-13 (四)) = 横缝开到两凸点边各留 0.4 (Z12.4–19.6), 切片在上舌片下加支撑, 钳子拔出;
   'tie' (只做 A 试打块) = 横缝 1.0 + 上舌片底边两侧竖缝各留 0.6 高断开桥 (不切穿), 打完用刀划开。
   11-13 (四) 按键间距 7 → 11 (整机 Z21.5 / Z10.5, 两舌片悬臂各 8.5): 卡在舌片弹性力 ≤~4 N (F ∝ 1/a³, a ≥8.35 ⇒ 间距 ≤11.3); 板高 20 → 22.5 让上键本体 / 焊盘留四边禁布 1。
+11-13 (五) 用户: 按键转 90° (焊盘外包 5.6×9.5 竖), 按键 / 螺丝 / LED 对板水平中线对称 ⇒ 板 40×26 (中线 Y13 = 整机 Z16), 螺丝 (±16.5, Z16), LED 行 Z16 (x 3 / −1.5 / −6 / −10.5);
+  按键仍 Z21.5 / Z10.5 ⇒ 舌片 / 力不变。单面贴: R1–R6 / C1 在板正面 (Y19.5 一行), 平板背面开一个共用让位腔 (外包 +0.3, 深 1.3), 与 LED 隔光通道之间留实心壁。
+  平板顶 = 板顶 Z29 (原 板顶 +1): 下罩让位腔顶 + 屋顶削到 ≤ Z29.65 (= 原值; 分体版外卡环凸筋槽底 Z29.9, 玻璃承台 Z32 不动)。
 下罩让位腔 = 每件外包 (box) +0.3, 全部从 Z−1 开到件顶, 顶上再加 45° 双坡屋顶 (下罩正立打印免平顶桥) ⇒ 竖直柱体并集, 下罩竖直罩下无倒扣; 按键杆伸出平板的部分在舌片竖槽里 (不算外皮最薄)。
 
 不 import build_v1_2; build_v1_2 调 make_key_bracket(p) 拿 支架 / 板简模 / 下罩让位 (pocket) / 外皮孔 / 底盘孔 / 紧固件位置。
@@ -54,7 +57,8 @@ DEFAULTS = dict(
     SKIN_MIN=1.5,                      # 让位腔到 r110 外皮最薄 (舌片处有意挖薄, 不算)
     CLR=0.3,                           # 让位腔单边间隙
     BAR_Y0=98.0, BAR_Z1=3.0,           # 板下横条 (板下沿坐 Z3)
-    PL_X1=22.6, PL_Y1=105.7, PL_Z1=26.5,   # 前面平板 |x|≤22.6, 前面 y105.7, Z0..26.5 (= 板顶 Z25.5 + 1; 11-13 (四) 板高 22.5)
+    PL_X1=22.6, PL_Y1=105.7, PL_Z1=29.0,   # 前面平板 |x|≤22.6, 前面 y105.7, Z0..29 (11-13 (五) 板高 26 ⇒ 板顶 Z29; 平板顶齐板顶, 原 +1 放不下: 见 ROOF_ZMAX)
+    ROOF_ZMAX=29.65,                   # 下罩让位腔 (含 45° 屋顶) 最高 Z: 分体版外卡环凸筋槽底 Z29.9 (r103.9–106.1) 下留 ≥0.25 (= 11-13 (四) 原值); 屋顶超出就削平
     RIB_Z1=18.0,                       # 三角筋顶 (贴平板背面)
     CB_D=7.4, CB_H=2.4,                # 平板前面沉孔 (超薄头 Φ7×1.5 埋 0.9; M3×8 尖齐螺母端面)
     FOOT_X0=20.6, FOOT_X1=32.0, FOOT_Y0=90.0, FOOT_Y1=100.0, FOOT_T=4.0,   # 横边 (脚)
@@ -172,6 +176,9 @@ def make_key_bracket(p=None):
     bc = P['BTN_CLR']; h6 = KB.BTN_BODY / 2 + bc
     px, py = KB.BTN_PAD_OUT[0] / 2 + bc, KB.BTN_PAD_OUT[1] / 2 + bc
     xb = bt[0][0]; zs = [z for _, z in bt]
+    # 正面 R1–R6 / C1 共用让位腔 (11-13 (五) 单面贴): KB.smd_pocket() 板系 → 整机, 从平板背面 yF 挖深 d
+    sp = KB.smd_pocket(); spx0, spz0 = KB.to_global(sp[2], sp[1]); spx1, spz1 = KB.to_global(sp[0], sp[3])
+    cuts.append(box(spx0, yF - 1, spz0, spx1, yF + sp[4], spz1))
     for z in zs:                                                                                   # 每键单独 (间距 11, 中间平板仍压板)
         cuts += [box(xb - h6, yF - 1, z - h6, xb + h6, yF + KB.BTN_BODY_H + bc, z + h6),          # 开关本体让位
                  box(xb - px, yF - 1, z - py, xb + px, yF + P['LEG_DEPTH'], z + py)]               # 脚 / 焊盘让位
@@ -194,7 +201,13 @@ def make_key_bracket(p=None):
                  LED_沉孔=round(min(abs(abs(x) - abs(MH[0][0])) for x in lx) - P['PL_LED_D'] / 2 - P['CB_D'] / 2, 2),
                  本体腔_沉孔=round(abs(MH[0][0]) - P['CB_D'] / 2 - (xb + h6), 2),
                  脚腔_螺丝孔=round(abs(MH[0][0]) - P['M3_D'] / 2 - (xb + px), 2),
-                 脚腔_RGB通道=round((led[0][1] + P['PL_LED_D'] / 2) - (xb - px), 2))   # >0 = 在板面处连通 (重叠宽度)
+                 本体腔_RGB通道=round((xb - h6) - (led[0][1] + P['PL_LED_D'] / 2), 2),          # 11-13 (五) 按键转 90°: 壁厚 (>0 = 不连通)
+                 脚腔_RGB通道=round((xb - px) - (led[0][1] + P['PL_LED_D'] / 2), 2),
+                 SMD腔_LED通道=round(min(math.hypot(max(spx0 - x, 0, x - spx1), max(spz0 - z, 0, z - spz1)) - P['PL_LED_D'] / 2 for _, x, z, *_ in led), 2),
+                 SMD腔_沉孔=round(min(math.hypot(max(spx0 - x, 0, x - spx1), max(spz0 - z, 0, z - spz1)) - P['CB_D'] / 2 for x, z in MH), 2),
+                 SMD腔_按键腔=round(min(x_ - max(h6, px) for x_, _ in bt) - spx1, 2),          # 按键在 +x 侧 (x9), 腔在其 −x 侧
+                 SMD腔深=sp[4], 平板剩=round(yP - yF - sp[4], 2))
+    assert walls['SMD腔_LED通道'] >= 0.8 and walls['本体腔_RGB通道'] > 0 and walls['脚腔_RGB通道'] > 0, walls
     # ---- 板 + 元件简模 ----
     bd = box(-KB.W / 2, yB, KB.Z0, KB.W / 2, yF, KB.Z0 + KB.H)
     for x, z in MH: bd = cut(bd, ycyl(x, z, KB.MH_D, yB - 1, yF + 1))
@@ -208,6 +221,18 @@ def make_key_bracket(p=None):
         stem_env.append((x - KB.BTN_STEM_D / 2, x + KB.BTN_STEM_D / 2, yF, yF + KB.BTN_H, z + KB.BTN_STEM_D / 2))
     for (nm, x, z, w, l, hgt), hd in zip(led, [P['HOLE_RGB']] + [P['HOLE_LED']] * len(KB.LED)):
         parts.append(box(x - w / 2, yF, z - l / 2, x + w / 2, yF + hgt, z + l / 2)); holes.append((x, z, hd))
+    # 正面 R1–R6 / C1 (PCB 出的 pcb/key_board_v1_2/front_parts.json: 焊盘∪本体外包 + 离板正面高度) —— 必须在平板让位腔里, 每边 ≥0.3, 顶离腔底 ≥0.3
+    import json
+    fpj = V12 / 'pcb' / 'key_board_v1_2' / 'front_parts.json'
+    front_smd = {}
+    if fpj.exists():
+        for nm, d in json.loads(fpj.read_text(encoding='utf-8'))['parts'].items():
+            u0, v0, u1, v1 = d['env_board_XY']; hh = d['height']
+            gx0, gz0 = KB.to_global(u1, v0); gx1, gz1 = KB.to_global(u0, v1)
+            parts.append(box(gx0, yF, gz0, gx1, yF + hh, gz1))
+            m_ = min(u0 - sp[0], v0 - sp[1], sp[2] - u1, sp[3] - v1)
+            assert m_ >= KB.SMD_CLR - 1e-6 and sp[4] - hh >= 0.3 - 1e-9, f'{nm} 不在平板让位腔里 (余量 {m_:.3f})'
+            front_smd[nm] = (round(m_, 3), round(sp[4] - hh, 2))
     # ---- 背面 J1 (GH 12P 卧贴, 插口朝下) + 插头 + 线弯 / 走线 外包 (11-13 晚) ----
     g = KB.j1_geom()
     def gb(X0, Y0, X1, Y1, y0, y1):            # 板系矩形 → 整机 box (y 方向 y0..y1)
@@ -222,8 +247,7 @@ def make_key_bracket(p=None):
     bend = box(-cw, yJ - 1.25, 0.2, cw, y_bar, zP)                               # 插头下 线弯 (Z0.2..4.0, 高 3.8 ≥ BEND)
     run = box(-cw, cab_y0, 0.2, cw, y_bar, 0.2 + ct)                             # 贴底盘往 −Y 出下罩
     cable = fuse(bend, run)
-    # 背面贴片件 (PCB agent 出的 pcb/key_board_v1_2/back_parts.json: courtyard 外包 + 离板背高度; 0603 R ≈0.6 / C1 ≈0.9)
-    import json
+    # 背面贴片件 (PCB agent 出的 pcb/key_board_v1_2/back_parts.json; 11-13 (五) 单面贴后只剩 J1, 这里留着给以后背面加件)
     bpj = V12 / 'pcb' / 'key_board_v1_2' / 'back_parts.json'
     back_parts = {}
     if bpj.exists():
@@ -263,8 +287,15 @@ def make_key_bracket(p=None):
             (-KB.W / 2, KB.W / 2, KB.Y_BACK_MAX, yB, P['BACK_Z1'])]
     # ---- 下罩让位腔: 每个外包 +CLR, 底一律开到 Z−1 (下罩从上往下罩, 竖直柱体并集 ⇒ 无倒扣) ----
     boxes = [(x0 - c, x1 + c, y0 - c, y1 + c, -1.0, z1 + c) for x0, x1, y0, y1, z1 in env]
+    ZR = P['ROOF_ZMAX']
+    assert max(b_[5] for b_ in boxes) <= ZR + 1e-9, ('让位腔顶超 ROOF_ZMAX', max(b_[5] for b_ in boxes))
+    def roof(b_):                                                         # 45° 双坡, 超 ROOF_ZMAX 削平 (剩平顶桥 = 短边 − 2×(ZMAX − 腔顶))
+        g_ = gable(*b_)
+        if b_[5] + min(b_[1] - b_[0], b_[3] - b_[2]) / 2 > ZR + 1e-9:
+            g_ = op(BRepAlgoAPI_Common, g_, box(b_[0] - 1, b_[2] - 1, b_[5] - 1, b_[1] + 1, b_[3] + 1, ZR))
+        return g_
     feet = [foot_poly(P, yP, s, c) for s in (1, -1)]
-    roofs = [gable(*b) for b in boxes] if P['ROOF'] else []              # 每个外包顶加 45° 双坡 (只在外包投影内 ⇒ 外皮最薄不变, 腔仍包住竖直下落外包)
+    roofs = [roof(b) for b in boxes] if P['ROOF'] else []              # 每个外包顶加 45° 双坡 (只在外包投影内 ⇒ 外皮最薄不变, 腔仍包住竖直下落外包)
     pocket = clean(fuse(*[box(a, d, f, b_, e, g) for a, b_, d, e, f, g in boxes], *roofs, *[xy_prism(q[::s], -1.0, FT + c) for q, s in zip(feet, (1, -1))]))
     r_max = max([math.hypot(max(abs(a), abs(b_)), max(abs(d), abs(e))) for a, b_, d, e, _, _ in boxes] + [math.hypot(x, y) for q in feet for x, y in q])
     r_min = min([math.hypot(0 if a < 0 < b_ else min(abs(a), abs(b_)), min(abs(d), abs(e))) for a, b_, d, e, _, _ in boxes] +
@@ -315,8 +346,8 @@ def make_key_bracket(p=None):
                 F_top=force(y_thin, P['FLAP_TOP_Z1'] - zhi), F_bot=force(y_thin_b, zlo - P['FLAP_BOT_Z0']))
     fx = [x for q in feet for x, _ in q]; fy = [y for q in feet for _, y in q]
     bb = [min([b[0] for b in boxes] + fx), max([b[1] for b in boxes] + fx), min([b[2] for b in boxes] + fy), max([b[3] for b in boxes] + fy),
-          max(b[5] + (min(b[1] - b[0], b[3] - b[2]) / 2 if P['ROOF'] else 0) for b in boxes)]
-    span = max(min(b[1] - b[0], b[3] - b[2]) for b in boxes)                # 平顶最长桥跨 (无屋顶时)
+          max(min(b[5] + (min(b[1] - b[0], b[3] - b[2]) / 2 if P['ROOF'] else 0), ZR) for b in boxes)]
+    span = max(min(b[1] - b[0], b[3] - b[2]) - (2 * max(ZR - b[5], 0) if b[5] + min(b[1] - b[0], b[3] - b[2]) / 2 > ZR else min(b[1] - b[0], b[3] - b[2])) for b in boxes)   # 削平后剩的最长平顶桥
     res = dict(
         bracket=bracket, board=board, pocket=pocket, skin_holes=skin_holes,
         disc_m3=FH,                                             # 底盘 M3 孔 (Φ3.2 + 底面 Φ7×2) = 脚孔心
@@ -325,7 +356,7 @@ def make_key_bracket(p=None):
         board_screws=[dict(x=x, z=z, bear_y=yBear, L=P['BOARD_SCREW_L'], nut_y=yB) for x, z in MH],
         holes=holes, leds=led, flap=flap, walls=walls, nut_chamfer=round(nut_ch, 2), plate=dict(x1=X1, y0=yF, y1=yP, z1=P['PL_Z1'], t=round(yP - yF, 2)),
         roof_span_flat=round(span, 2), skin=round(skin, 3), pocket_bbox=[round(v, 2) for v in bb], pocket_rmin=round(r_min, 2), pocket_front=round(yP + c, 3),
-        j1=j1info, j1_shapes=dict(j1=comp(j1), plug=plug, cable=cable, notch=notch),
+        j1=j1info, front_smd=front_smd, smd_pocket=dict(x=(round(spx0, 3), round(spx1, 3)), z=(round(spz0, 3), round(spz1, 3)), depth=sp[4]), j1_shapes=dict(j1=comp(j1), plug=plug, cable=cable, notch=notch),
         rib=rib, bracket_ymin=P['FOOT_Y0'], bracket_rmin=round(math.hypot(P['FOOT_X0'], P['FOOT_Y0']), 2),
         bracket_vol=round(vol(bracket), 1), params=P)
     return res
@@ -385,7 +416,7 @@ C_BR, C_BD, C_SH = (0.95, 0.76, 0.2), (0.18, 0.49, 0.2), (0.69, 0.75, 0.77)
 
 
 def preview(r, sh, path):
-    """6 张剖面: 侧视过按键 x=9 / 过三色 x=3, 俯视 Z13 (过 LED) / Z19 (过上键), 正视平板前面 y105.6 / 背面 y101.2"""
+    """6 张剖面: 侧视过按键 x=9 / 过三色 x=3, 俯视 Z16 (过 LED) / Z19 (过上键), 正视平板前面 y105.6 / 背面 y101.2"""
     import numpy as np
     from matplotlib.patches import Patch
     plt = _font()
@@ -405,7 +436,7 @@ def preview(r, sh, path):
     a.text(87, 31, f"舌片 宽 {f['w']:g}, 缝 {f['slot']:g}, 横缝 Z{f['bar_z'][0]:g}–{f['bar_z'][1]:g}\n上根 Z{f['top'][1]:g} / 下根 Z{f['bot'][0]:g}; 最薄 {f['t_top'][0]:g}–{f['t_top'][1]:g}\n"
            f"弹性力 上 {f['F_top']:g} N / 下 {f['F_bot']:g} N (δ = 0.3 + 行程 {P['SW_TRAVEL']:g})", fontsize=7.5, va='top', bbox=dict(fc='w', alpha=.85))
     U2, V2 = (-34, 34), (86, 112)
-    for ax, z, nm in ((axs[0, 2], 13.0, 'LED 中心'), (axs[1, 0], f['stems_z'][1], '上键')):
+    for ax, z, nm in ((axs[0, 2], r['leds'][0][2], 'LED 中心'), (axs[1, 0], f['stems_z'][1], '上键')):
         show(ax, raster(L, ('z', z), U2, V2), U2, V2, f'俯视剖面 Z{z:g} (过{nm})', 'x', 'y')
     U3, V3 = (-34, 34), (-2, 34)
     show(axs[1, 1], raster(L[1:], ('y', yP - 0.1), U3, V3), U3, V3, f'正视 (从外面看) 平板前面 y{yP - 0.1:g} 截面: 灯孔 Φ{P["PL_LED_D"]:g} / 杆孔 Φ{P["PL_STEM_D"]:g} / 沉孔 Φ{P["CB_D"]:g}', 'x (左右已翻转 = 板正视)', 'Z', invert=True)
@@ -416,7 +447,7 @@ def preview(r, sh, path):
     w = r['walls']
     fig.suptitle(f"按键板支架 key_bracket_v1_2 (11-13 前面平板)  平板 |x|≤{P['PL_X1']:g}, y{yF:g}–{yP:g} (厚 {r['plate']['t']:g}), Z0–{P['PL_Z1']:g};  "
                  f"外皮最薄 {r['skin']:.2f} (舌片除外); 前面 y{yP:g} 朝下打印\n平板内壁: LED 通道间 {w['LED间']:g}, 单色3 通道–沉孔 {w['LED_沉孔']:g}, 开关本体腔–沉孔 {w['本体腔_沉孔']:g}; "
-                 f"脚让位与三色通道在板面处连通 {w['脚腔_RGB通道']:g} 宽 × {P['LEG_DEPTH']:g} 高", fontsize=11)
+                 f"按键本体腔–三色通道壁 {w['本体腔_RGB通道']:g}; R/C 让位腔 (深 {w['SMD腔深']:g}) –LED 通道壁 {w['SMD腔_LED通道']:g}", fontsize=11)
     fig.tight_layout(rect=(0, 0.03, 1, 0.95)); fig.savefig(path); plt.close(fig)
 
 
@@ -513,7 +544,8 @@ def main():
     print('底盘 M3 / 脚孔', r['disc_m3'], '脚螺母 Z', r['foot_nut_z'], '脚螺丝尖 Z', r['foot_screw_tip'], '脚螺母离倒角', r['nut_chamfer'],
           '板螺丝', [(s['x'], s['z'], s['bear_y'], s['L']) for s in r['board_screws']])
     print('让位腔 bbox', r['pocket_bbox'], '前面 y', r['pocket_front'], '外皮最薄', r['skin'], '腔最内 r', r['pocket_rmin'])
-    print('平板内壁', r['walls'], '平顶最长桥跨 (改屋顶前)', r['roof_span_flat'])
+    print('平板内壁', r['walls'], '让位腔削平后最长平顶桥', r['roof_span_flat'])
+    print('正面 R/C 让位腔', r['smd_pocket'], '每件 (离腔边, 离腔底)', r['front_smd'])
     print('舌片', {k: v for k, v in r['flap'].items() if k != 'slots'})
 
 

@@ -11,14 +11,14 @@ from matplotlib.patches import Circle, Rectangle  # noqa: E402
 
 g = json.load(open(sys.argv[1]))
 mc = json.load(open(sys.argv[3])) if len(sys.argv) > 3 else None
-W, H = 40.0, 22.5
+W, H = g.get('W', 40.0), g.get('H', 22.5)                 # 板框 / 孔 由 dump_geom 从 key_board_outline 带过来
 COL = {'GND': '#888888', '+3V3': '#d62728'}
-fig, axs = plt.subplots(1, 2, figsize=(18, 6.2), dpi=130)
+fig, axs = plt.subplots(1, 2, figsize=(18, 7.2), dpi=130)
 for ax, L in zip(axs, 'FB'):
     ax.add_patch(Rectangle((0, 0), W, H, fc='#e8f5e9', ec='k'))
-    for X, Y in ((3.5, 10), (36.5, 10)):
+    for X, Y in g.get('MH', ((3.5, 10), (36.5, 10))):
         ax.add_patch(Circle((X, Y), 1.6, fc='w', ec='k'))
-        ax.add_patch(Circle((X, Y), (4.8 if L == 'F' else 8.0) / 2, fc='none', ec='m', ls='--'))
+        ax.add_patch(Circle((X, Y), (g.get('KO_F', 4.8) if L == 'F' else g.get('KO_B', 8.0)) / 2, fc='none', ec='m', ls='--'))
     for p in g['pads']:
         if not p[L]:
             continue
