@@ -151,5 +151,16 @@
 		(roundrect_rratio 0.25)
 		(uuid "f8c6cadb-8918-47bd-b362-6fb8be6ef2a2")
 	)
+	(model "${KIPRJMOD}/lib/3d/LED_0603_A-SP192YR6AC.step"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
 	(embedded_fonts no)
 )

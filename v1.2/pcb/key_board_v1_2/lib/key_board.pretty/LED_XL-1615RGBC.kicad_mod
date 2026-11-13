@@ -191,5 +191,16 @@
 		(roundrect_rratio 0.25)
 		(uuid "050a6ee8-49d4-4022-9c90-e0b871de4e2d")
 	)
+	(model "${KIPRJMOD}/lib/3d/LED_XL-1615RGBC.step"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
 	(embedded_fonts no)
 )

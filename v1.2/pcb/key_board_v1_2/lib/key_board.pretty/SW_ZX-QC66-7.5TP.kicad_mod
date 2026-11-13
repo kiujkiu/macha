@@ -251,5 +251,16 @@
 		(layers "F.Cu" "F.Mask" "F.Paste")
 		(uuid "a06f4cde-25fd-4578-b835-a412d36f2339")
 	)
+	(model "${KIPRJMOD}/lib/3d/SW_ZX-QC66-7.5TP.step"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 0 0 0)
+		)
+	)
 	(embedded_fonts no)
 )
