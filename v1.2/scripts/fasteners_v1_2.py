@@ -123,12 +123,12 @@ L_LID = 6.0
 for i, (x, y) in enumerate(B.LID_SCREWS):
     screw("M3x6 上下盖", i, x, y, MF_BEAR, L_LID, False, engage=("铜螺母", B.FL_Z0, B.FL_Z0 + INS_L_FL))
     add(f"铜螺母 M3x4 法兰盘 B #{i}", insert(x, y, B.FL_Z0, INS_L_FL), "#B8860B")
-# 6 控制板 4×M3 板顶往下, 拧底盘铜螺母 (M3×4 齐底面)
-L_BD = 6.0
+# 6 控制板 4×M3 (用户 11-13): 盘底 Φ7×2 沉孔往上, 穿底盘 + 板, M3 法兰螺母坐板顶 (原板顶往下进底盘 H 铜螺母)
+L_BD = 10.0                                        # 支承 Z-4, 尖 Z6; 螺母 Z1.6..5.3 ⇒ 吃满 3.7, 露 0.7
 for i, (bx, by) in enumerate(B.BHOLES):
     p = gp_Pnt(bx, by, 0).Transformed(B.BT)
-    screw("M3x6 控制板", i, p.X(), p.Y(), BOARD_TOP, L_BD, False, engage=("铜螺母", ZB, ZB + INS_L_DISC))
-    add(f"铜螺母 M3x4 底盘 H #{i}", insert(p.X(), p.Y(), ZB, INS_L_DISC), "#B8860B")
+    screw("M3x10 控制板", i, p.X(), p.Y(), CB_BEAR, L_BD, True, engage=("法兰螺母", BOARD_TOP, BOARD_TOP + NUT_T))
+    add(f"M3 法兰螺母 控制板 #{i}", flange_nut(p.X(), p.Y(), BOARD_TOP), "#707070")
 # 7 XT60 2×M3 (用户 11-12 晚, 原 M6×20 + M6 螺母): 盘底 Φ7×2 沉孔往上, 穿底盘+底垫+压块 (叠高 13),
 #   11-12 晚 (二): 压块顶螺母座取消, M3 法兰螺母直接坐压块顶 Z13..16.7, 尖 Z16 ⇒ 啮合 3.0; 下罩 Φ8.2 井到 Z17.5
 L_XT = 20.0
@@ -154,11 +154,31 @@ for _k, _nm in (('MC', 'MOS压块'), ('CC', '电容卡件')):          # 生成�
             screw(f"M3x{_L:g} {_nm}", i, x, y, CB_BEAR, _L, True, engage=("法兰螺母", _z0, _z0 + NUT_T))
             add(f"M3 法兰螺母 {_nm} #{i}", flange_nut_inv(x, y, _z0), "#707070")   # 倒放: 六角朝下坐井底
 
+# 9 按键支架 (用户 11-13, scripts/key_bracket_v1_2.py): 支架脚 2×M3 盘底 Φ7×2 沉孔往上 → 支架脚底面压入的 M3×4 铜螺母 (Z0..4);
+#   M3×8 支承 Z-4 尖 Z4 ⇒ 进铜螺母 4.0 (吃满, 尖低于孔顶 0.2)
+_K = B.KEY
+_ki0, _ki1 = _K['insert_z']
+for i, (x, y) in enumerate(_K['disc_m3']):
+    screw(f"M3x{_K['foot_screw_L']:g} 按键支架", i, x, y, CB_BEAR, _K['foot_screw_L'], True, engage=("铜螺母", _ki0, _ki1))
+    add(f"铜螺母 M3x4 按键支架 #{i}", insert(x, y, _ki0, _ki1 - _ki0), "#B8860B")
+# 10 按键板 2×M3 (沿 −Y): 超薄头坐立柱前面 (y103.6), 穿立柱 3 + 板 1.6, 板背面 (y99) 上 M3 法兰螺母 (y99→95.3); 尖 y95.6 ⇒ 啮合 3.4
+#    局部沿 Z 造好再绕 X 轴转 +90°: 局部 (x, 13, t) → 整机 (x, −t, 13)
+from OCP.gp import gp_Trsf, gp_Ax1, gp_Dir
+_RX = gp_Trsf(); _RX.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), math.pi / 2)
+KEY_ROWS = []
+for i, s_ in enumerate(_K['board_screws']):
+    x, z, by, L, ny = s_['x'], s_['z'], s_['bear_y'], s_['L'], s_['nut_y']
+    add(f"M3x{L:g} 按键板 #{i}", B.xf(screw_up(x, z, -by, L), _RX), "#C0C0C0")
+    add(f"M3 法兰螺母 按键板 #{i}", B.xf(flange_nut(x, z, -ny), _RX), "#707070")
+    tip = by - L
+    KEY_ROWS.append(dict(组=f"M3x{L:g} 按键板", 号=i, x=round(x, 2), Z=round(z, 2), 方向="−Y", 支承面y=round(by, 2), 尾端y=round(tip, 2),
+                         啮合="法兰螺母", 啮合长=round(max(0.0, min(ny, by) - max(tip, ny - NUT_T)), 2)))
+
 # ---------------- 零件 ----------------
 PARTS = {"底盘": B.disc, "线圈环": B.ring, "电机": B.motor, "控制板": B.board, "散热片": B.heatsink,
          "法兰盘": B.flange_disc, "安装法兰": B.mounting_flange, "转子毂盘": B.hub, "承载盘": B.rim,
          "下罩": B.seat, "XT60压块": B.xt_clamp, "XT60底垫": B.xt_shim,
-         **({"MOS压块": B.CD.clamp} if B.CD.HAS_MC else {}), **({"电容卡件": B.CD.cap_clamp} if B.CD.HAS_CC else {}), "驱动板": B.CD.pcb, "驱动MOS": B.CD.mos, "驱动电解电容": B.CD.cap, "驱动散热片": B.CD.sink2}
+         **({"MOS压块": B.CD.clamp} if B.CD.HAS_MC else {}), **({"电容卡件": B.CD.cap_clamp} if B.CD.HAS_CC else {}), "驱动板": B.CD.pcb, "驱动MOS": B.CD.mos, "驱动电解电容": B.CD.cap, "驱动散热片": B.CD.sink2, "按键支架": B.key_bracket, "按键板": B.key_board}
 for i, p in enumerate(B.posts):
     PARTS[f"立柱{i}"] = p
 PB = {k: bbox(v) for k, v in PARTS.items()}
@@ -233,6 +253,8 @@ for s in S:
                头外侧=hpart, 头外侧距离=None if hdist is None else round(hdist, 2), 头外侧Z=round(head_out, 2))
     T.append(row)
     print("  " + "  ".join(f"{k}={v}" for k, v in row.items()))
+for row in KEY_ROWS:                                               # 按键板横向螺丝 (沿 −Y), 不走 Z 向 probe
+    T.append(row); print("  " + "  ".join(f"{k}={v}" for k, v in row.items()))
 
 # 线圈环角法兰螺母 vs Φ77 圆台 (解析)
 ring_r = math.hypot(*B.RING_M3[0])
@@ -295,7 +317,8 @@ P_ = [('底盘 Φ220×6', B.disc, '#8A8F98', 0.05), ('线圈环', B.ring, '#E0A0
       ('转子毂盘 hub_disc_v1_2', B.hub, '#4F86C6', 0.05), ('承载盘 rim_ring Φ178', B.rim, '#6AA84F', 0.05),
       ('下罩 (合并) glass_shroud_v1_2', B.seat, '#7FB3D5', 0.05), ('XT60 压块', B.xt_clamp, '#F1C232', 0.05), ('XT60 底垫', B.xt_shim, '#E69138', 0.05),
       *([('MOS 压块 mos_clamp_v1_2', B.CD.clamp, '#E69138', 0.05)] if B.CD.HAS_MC else []), *([('电容卡件 cap_clamp_v1_2', B.CD.cap_clamp, '#B45F06', 0.05)] if B.CD.HAS_CC else []), ('线圈驱动板 (元件级)', B.CD.pcb, '#38761D', 0.05), ('线圈驱动 MOS', B.CD.mos, '#222222', 0.05),
-      ('线圈驱动 电解电容', B.CD.cap, '#1155CC', 0.05), ('线圈驱动 散热片', B.CD.sink2, '#C0392B', 0.05)]
+      ('线圈驱动 电解电容', B.CD.cap, '#1155CC', 0.05), ('线圈驱动 散热片', B.CD.sink2, '#C0392B', 0.05),
+      ('按键支架 key_bracket_v1_2', B.key_bracket, '#F1C232', 0.03), ('按键板 (简模)', B.key_board, '#2E7D32', 0.03)]
 out = f"{B.V12 / 'assembly_v1_2'}_整机+螺丝.3mf"
 write3mf(out, P_ + FAST)
 print("wrote", out)

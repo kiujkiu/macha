@@ -113,7 +113,7 @@ def make(B):
     XPC = XB + PCB_DX                         # 板中心 x 57.05
     SINK_X0, SINK_X1 = XPC - SINK_LX / 2, XPC + SINK_LX / 2     # 用户: 散热片也按板中心线居中
     assert SINK_X0 <= XB - MOS_W / 2 and SINK_X1 >= XB + MOS_W / 2, 'MOS 背板没完整落在散热片上'
-    PCB_Z0 = round(MOS_LEAD_Z - PCB_T / 2, 6) # 2.3 (PCB 只靠 MOS 引脚挂着)
+    PCB_Z0 = round(max(MOS_LEAD_Z - PCB_T / 2, PM.BACK_MAX + COMP_CLR), 6)   # 用户 11-13: 底盘不挖背面电容坑 ⇒ 板抬到背面电容 (2.5) 底离底盘 0.5 = Z3.0 (原 2.3 平 MOS 引脚, 现引脚往上弯 0.7)
     PCB_Z1 = PCB_Z0 + PCB_T                   # 2.8
     FRONT_Z = PCB_Z1 + FRONT_H                # 4.8
     BACK_Z0 = round(PCB_Z0 - PM.BACK_MAX, 6)  # 背面最低 (电容底) −0.5

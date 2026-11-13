@@ -235,6 +235,11 @@ EXTRA, SKIP = [], []
 # 4a' 定子线圈驱动小板 (用户 11-12 晚): MOS 压块 mos_clamp_v1_2 + 电容卡件 cap_clamp_v1_2 + 第二块散热片 (转 90°) + 底盘切口, 几何在 coil_drv_geom.py (不 import 本文件)
 import coil_drv_geom
 CD = coil_drv_geom.make(sys.modules[__name__])
+# 4a'' 按键板 + U 形支架 (用户 11-13): +Y 侧下罩墙里竖放, 几何在 key_bracket_v1_2.py (不 import 本文件); 支架脚 2×M3 从盘底往上拧铜螺母
+import key_bracket_v1_2
+KEY = key_bracket_v1_2.make_key_bracket(dict(SH_OUT=DISC_D / 2, DISC_T=DISC_T, M3_CB_H=2.0, M3_D=3.2, INS_D=4.2, INS_H=4.2))
+key_bracket, key_board = KEY['bracket'], KEY['board']
+KEY_M3 = KEY['disc_m3']                                     # [(±16.5, 103.3)]
 for x, y in GRID:                                   # 原洞洞板 M6 网格: 盘内放得下的全开
     if math.hypot(x, y) + CB_D / 2 > DISC_D / 2: continue
     why = []
@@ -248,6 +253,7 @@ for x, y in GRID:                                   # 原洞洞板 M6 网格: �
     if any(math.hypot(x - a, y - b) < CB_D + 1.0 for a, b in SH_M6): why.append('下罩耳片孔 (内移)')
     if any(math.hypot(x - a, y - b) < CB_D / 2 + 2.1 + 1.0 for a, b in OUT_SCREWS): why.append('法兰外圈铜螺母')
     if any(math.hypot(x - a, y - b) < 1e-6 for a, b in CD.GRID_REMOVE): why.append('线圈驱动板')
+    if any(math.hypot(x - a, y - b) < CB_D / 2 + 7.0 / 2 + 1.0 for a, b in KEY_M3): why.append('按键支架 M3')
     (SKIP if why else EXTRA).append(((x, y), why) if why else (x, y))
 assert all(p in EXTRA for p in POSTS), ('立柱孔被挡', [q for q in SKIP if q[0] in POSTS])
 LOG['disc_holes'] = dict(collar=len(COLLAR_M6), grid=len(EXTRA), skipped=SKIP)
@@ -261,7 +267,7 @@ for x0, x1, y0, y1 in RELIEFS:
     d = cut(d, bl(x0, y0, x1, y1, -3.0, 1))                                               # 背面让位 深 3
 for x, y in BHOLES:
     p = gp_Pnt(x, y, 0).Transformed(BT)
-    d = cut(d, cyl(p.X(), p.Y(), 3.2, -DISC_T - 1, 1), cyl(p.X(), p.Y(), INS_HOLE_D, -DISC_T - 1, -DISC_T + INS_HOLE_H))  # 铜螺母从底面压
+    d = cut(d, cyl(p.X(), p.Y(), M3_D, -DISC_T - 1, 1), cyl(p.X(), p.Y(), M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))  # 用户 11-13: 控制板 4×M3 改盘底 Φ7×2 沉孔往上, 法兰螺母坐板顶 (原板顶往下进铜螺母)
 for x, y in MOTOR_HOLES:                                                                   # 电机 4×M3 盘底上锁
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
 d = cut(d, cyl(0, 0, 12.0, -3.0, 1))                                                       # 电机中央 Φ12x3
@@ -276,6 +282,10 @@ assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in 
 # (网格跳孔判据仍按原 M6 沉孔 CB_D + 1 留 XT60 位, 网格孔数不变)
 for x, y in XT_GHOLES_DISC:                                                                # XT60 压块 2×M3 (用户 11-12 晚, 原 M6): 盘底 Φ7×2 沉孔往上, 法兰螺母坐压块顶螺母座
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
+for x, y in KEY_M3:                                                                        # 按键支架 2×M3 (11-13): 盘底 Φ7×2 沉孔往上 → 支架脚 M3×4 铜螺母
+    d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
+assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in KEY_M3 for a, b in FIXED + EXTRA), '按键支架 M3 沉孔离网格孔太近'
+assert all(math.hypot(x, y) + M3_CB_D / 2 <= DISC_D / 2 - 1.0 for x, y in KEY_M3), '按键支架 M3 沉孔出盘边'
 d = cut(d, *CD.disc_cut_list)                                                              # 线圈驱动板: 散热片通槽 + 3×M3 沉孔 + 电容弧形槽 + 背面电容坑
 disc = clean(d); LOG['disc'] = dict(v=vol(disc))
 LOG['coil_drv'] = dict(xpc=CD.XPC, xb=CD.XB, has_mc=CD.HAS_MC, has_cc=CD.HAS_CC, merge_err=CD.MERGE_ERR, mc_holes=[(round(x, 2), round(y, 2)) for x, y in CD.MC_HOLES],
@@ -357,6 +367,11 @@ xt_env = xf(gbox(-XT_HW, XT_Y0, 0, XT_HW, XT_Y1, XT_H), XT_T)                   
 s_ = cut(s_, xf(gbox(-XT_HW - 0.2, XT_Y0 - 5, -1, XT_HW + 0.2, XT_Y1 + 0.2, XT_H + 0.2), XT_T))   # 下罩开口 = 压块外形 +0.2
 for gx, gy in XT_GHOLES:
     s_ = cut(s_, cyl(gx, gy, XT_NUT_WELL_D, XT_H, XT_H + XT_NUT_WELL_H))              # M3 法兰螺母 (压块顶上) 让位井 (原 M6 Φ14 到 Z19.5)
+# 按键板 (11-13): 让位腔 = 支架+板+螺丝头/法兰螺母+元件+背面元件区 外包 +0.3, 底开 (下罩从上罩下), 外皮 ≥1.5; 前皮开按键 Φ4 / LED Φ5.3 / Φ3.3 孔
+assert KEY['pocket_rmin'] >= SPIG_IN + 0.5 and KEY['skin'] >= 1.5, (KEY['pocket_rmin'], KEY['skin'])
+s_ = cut(s_, KEY['pocket'], *KEY['skin_holes'])
+LOG['key'] = dict(m3=[(round(x, 2), round(y, 2)) for x, y in KEY_M3], skin=KEY['skin'], pocket_bbox=KEY['pocket_bbox'], bracket_vol=KEY['bracket_vol'],
+                  holes=[(round(x, 2), round(z, 2), dd) for x, z, dd in KEY['holes']])
 def _stl(f):
     from OCP.StlAPI import StlAPI_Reader
     from OCP.TopoDS import TopoDS_Shape
@@ -440,7 +455,7 @@ NEW = [  # name, shape, color, 打印?
     ('frame_A_v4', frameA, '#c27ba0', 'frameA'),
     ('frame_B_v4', frameB, '#a64d79', 'frameB'),
     ('vane_slider_v4_trimmed_rot-12.3', vane, '#e06666', None),
-] + ([('mos_clamp_v1_2', CD.clamp, '#e69138', None)] if CD.HAS_MC else []) + ([('cap_clamp_v1_2', CD.cap_clamp, '#b45f06', None)] if CD.HAS_CC else []) + [(f'post_D8x360_{i}', p, '#bbbbbb', None) for i, p in enumerate(posts)]
+] + [('key_bracket_v1_2', key_bracket, '#f1c232', None), ('key_board_v1_2_simple', key_board, '#2e7d32', None)] + ([('mos_clamp_v1_2', CD.clamp, '#e69138', None)] if CD.HAS_MC else []) + ([('cap_clamp_v1_2', CD.cap_clamp, '#b45f06', None)] if CD.HAS_CC else []) + [(f'post_D8x360_{i}', p, '#bbbbbb', None) for i, p in enumerate(posts)]
 DROP = {'baseplate_collar_v4', 'motor_placeholder', 'hub_disc_v1_0', 'rim_ring_v1_0'}
 KEEP_O10 = ['M6x20_screw_rotor', 'standoff_D8x45_rotor', '688_lower_frame_A', '688_upper_frame_B']
 PAL = ['#f6b26b', '#76a5af', '#93c47d', '#ffd966', '#8e7cc3', '#b4a7d6', '#a2c4c9', '#ea9999']
