@@ -240,7 +240,7 @@ EXTRA, SKIP = [], []
 # 4a' 定子线圈驱动小板 (用户 11-12 晚): MOS 压块 mos_clamp_v1_2 + 电容卡件 cap_clamp_v1_2 + 第二块散热片 (转 90°) + 底盘切口, 几何在 coil_drv_geom.py (不 import 本文件)
 import coil_drv_geom
 CD = coil_drv_geom.make(sys.modules[__name__])
-# 4a'' 按键板 + L 形支架 (用户 11-13 (二)): +Y 侧下罩墙里竖放, 几何在 key_bracket_v1_2.py (不 import 本文件); 脚 2×M3×12 从盘底往上, 法兰螺母坐脚顶
+# 4a'' 按键板 + 支架 (用户 11-13 (二) L 形 / (三) 前面平板): +Y 侧下罩墙里竖放, 几何在 key_bracket_v1_2.py (不 import 本文件); 脚 2×M3×12 从盘底往上, 法兰螺母坐脚顶
 import key_bracket_v1_2
 KEY = key_bracket_v1_2.make_key_bracket(dict(SH_OUT=DISC_D / 2, DISC_T=DISC_T, M3_CB_H=2.0, M3_D=3.2))
 key_bracket, key_board = KEY['bracket'], KEY['board']
@@ -372,10 +372,10 @@ xt_env = xf(gbox(-XT_HW, XT_Y0, 0, XT_HW, XT_Y1, XT_H), XT_T)                   
 s_ = cut(s_, xf(gbox(-XT_HW - 0.2, XT_Y0 - 5, -1, XT_HW + 0.2, XT_Y1 + 0.2, XT_H + 0.2), XT_T))   # 下罩开口 = 压块外形 +0.2
 for gx, gy in XT_GHOLES:
     s_ = cut(s_, cyl(gx, gy, XT_NUT_WELL_D, XT_H, XT_H + XT_NUT_WELL_H))              # M3 法兰螺母 (压块顶上) 让位井 (原 M6 Φ14 到 Z19.5)
-# 按键板 (11-13): 让位腔 = 支架 (立柱/脚/筋)+板+法兰螺母/杆尖+元件+背面元件区 外包 +0.3, 底开 (下罩从上罩下), 外皮 ≥1.5; 前皮开按键 Φ4 / LED Φ5.3 / Φ3.3 孔
+# 按键板 (11-13 (三)): 让位腔 = 支架 (平板/脚/筋)+板+法兰螺母/杆尖+背面元件区 外包 +0.3, 底开 (下罩从上罩下), 外皮 ≥1.5 (舌片除外); 外皮开导光柱 Φ3.0 ×4 + 按键 H 形缝舌片 (内面挖薄竖槽 + 凸点)
 assert KEY['pocket_rmin'] >= SPIG_IN + 0.5 and KEY['skin'] >= 1.5, (KEY['pocket_rmin'], KEY['skin'])
 s_ = cut(s_, KEY['pocket'], *KEY['skin_holes'])
-LOG['key'] = dict(m3=[(round(x, 2), round(y, 2)) for x, y in KEY_M3], skin=KEY['skin'], pocket_bbox=KEY['pocket_bbox'], bracket_vol=KEY['bracket_vol'],
+LOG['key'] = dict(m3=[(round(x, 2), round(y, 2)) for x, y in KEY_M3], skin=KEY['skin'], flap={k: KEY['flap'][k] for k in ('F_top', 'F_bot', 't_top')}, pocket_bbox=KEY['pocket_bbox'], bracket_vol=KEY['bracket_vol'],
                   holes=[(round(x, 2), round(z, 2), dd) for x, z, dd in KEY['holes']])
 def _stl(f):
     from OCP.StlAPI import StlAPI_Reader

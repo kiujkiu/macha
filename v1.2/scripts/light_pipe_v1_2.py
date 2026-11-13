@@ -1,55 +1,60 @@
 # -*- coding: utf-8 -*-
-"""导光管 light_pipe_v1_2 —— 标准件占位 + 装配核算 (POV3D V1.2, 2026-11-13)
+"""导光柱 light_pipe_v1_2 —— 标准件占位 + 装配核算 (POV3D V1.2, 2026-11-13)
     cd v1.2/scripts && ../../.venv/bin/python light_pipe_v1_2.py
-输出 v1.2/models/light_pipe_v1_2/: light_pipe_v1_2.step/.stl (单件, 本地坐标) + light_pipe_装配位.step + light_pipe_preview.png
+输出 v1.2/models/light_pipe_v1_2/: light_pipe_v1_2.step/.stl (单件, 本地坐标, 推荐 8.9 型) + light_pipe_装配位.step (每颗剪到推荐长度)
+     + light_pipe_preview.png
 
-用户买的导光管 (20 个): 管身 Φ3.0 (根部/管尾 Φ2.8, 略锥), 头部 Φ3.3 圆顶高 0.8, 总长 4.5 (含头部)。
-装法: 下罩罩好后从外皮外面把管尾先插进外皮孔 (紧配), Φ3.3 头卡在 r110 外表面, 管身往里伸向 LED 顶。
-本地坐标: 轴 = +Y (朝外), 管尾端面 y=0, 头底 (支承面) y=BODY_L, 圆顶顶 y=L_TOTAL。
-核算: 头底支承在孔周 Φ3.3 范围内外皮最外点 (r110 圆柱 → 离 x=0 最近那一侧), 管尾 y = 支承 y − 管身长。
-不 import build_v1_2 (只 import 板常数 key_board_outline_v1_2; 预览图里调 key_bracket_v1_2 取下罩让位腔截面)。
+11-13 (三) 选型 (协调定): Bivar PLP2 系列 (或国产同款) 前装圆顶导光柱, 头部 Φ3.3×0.8 法兰, 管身 Φ2.8, 压筋参考 Φ3.1;
+  现货长度 8.9 (PLP2-350) / 9.5 (PLP2-375) / 10 (PLP2-10MM) —— **下单前按图纸核对 "长度" 是否含法兰**; RGB 那路建议雾化版 (-D)。
+  外皮压管孔 Φ3.0 (官方推荐 Φ2.9, 打印放到 3.0; 不用 3.1 会松); 支架前面平板隔光孔 Φ3.2 (只做遮光通道, 不夹管)。
+装法: 下罩罩好后从外皮外面把管插进外皮孔 (压筋紧配), Φ3.3 法兰卡在 r110 外表面, 管身穿过外皮 → 平板隔光孔 → 伸向 LED 顶。
+长度规则 (协调): 管长 (法兰下) = LED 顶面到外皮外表面 (孔轴线处) 的距离 − 0.3。
+本地坐标: 轴 = +Y (朝外), 管尾端面 y=0, 法兰底 (支承面) y=BODY_L, 圆顶顶 y=BODY_L+H_HEAD。
+核算: 法兰底支承在孔周 Φ3.3 范围内外皮最外点 (r110 圆柱 → 离 x=0 最近那一侧), 管尾 y = 支承 y − 管身长。
+不 import build_v1_2 (只 import 板常数 key_board_outline_v1_2 + 支架参数 key_bracket_v1_2)。
 """
 import math
 from pathlib import Path
 
 from OCP.gp import gp_Ax2, gp_Pnt, gp_Dir, gp_Vec, gp_Trsf
-from OCP.BRepPrimAPI import BRepPrimAPI_MakeCone, BRepPrimAPI_MakeCylinder, BRepPrimAPI_MakeSphere
+from OCP.BRepPrimAPI import BRepPrimAPI_MakeCylinder, BRepPrimAPI_MakeSphere
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Common, BRepAlgoAPI_Fuse
 from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
 from OCP.BRepCheck import BRepCheck_Analyzer
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 
 import key_board_outline_v1_2 as KB
+import key_bracket_v1_2 as KBR
 
 V12 = Path(__file__).resolve().parents[1]
 OUT = V12 / 'models' / 'light_pipe_v1_2'
 
-# ---- 导光管 (用户图纸) ----
-D_BODY = 3.0          # 管身 (头下)
-D_TAIL = 2.8          # 管尾 (略锥)
-D_HEAD = 3.3          # 头部
-H_HEAD = 0.8          # 圆顶高
-L_TOTAL = 4.5         # 总长 (含头部)
-BODY_L = L_TOTAL - H_HEAD   # 3.7 管身
+# ---- 导光柱 PLP2 (协调 11-13) ----
+D_BODY = 2.8          # 管身
+D_RIB = 3.1           # 压筋外径 (参考)
+D_HEAD = 3.3          # 法兰 / 圆顶
+H_HEAD = 0.8          # 法兰+圆顶高
+STOCK = [(8.9, 'PLP2-350'), (9.5, 'PLP2-375'), (10.0, 'PLP2-10MM')]   # 现货长度 (按法兰下管长算; 若含法兰则管身短 0.8)
+BODY_L = 8.9          # 默认单件 = 8.9 型 (法兰下)
 
-SH_OUT = 110.0        # 下罩外表面 r110 圆柱 (= DISC_D / 2)
-CLR_POCKET = 0.3      # key_bracket 让位腔单边间隙 (腔前面 = LED 顶 + 0.3)
-GAP_OK = (0.0, 0.5)   # 管尾到 LED 顶 理想
-GAP_TARGET = 0.3      # 修短目标间隙
-HOLE_D = 3.1          # 外皮孔建议 (管身 Φ3.0 紧配; FDM 横孔偏小 0.1~0.15, 必要时 Φ3.0 钻头过一下)
+SH_OUT = KBR.DEFAULTS['SH_OUT']           # 下罩外表面 r110
+HOLE_D = KBR.DEFAULTS['HOLE_LED']         # 外皮压管孔 Φ3.0
+PL_HOLE_D = KBR.DEFAULTS['PL_LED_D']      # 平板隔光孔 Φ3.2
+Y_PLATE = KBR.DEFAULTS['PL_Y1']           # 平板前面 y105.7
+CLR_POCKET = KBR.DEFAULTS['CLR']          # 让位腔间隙 (外皮内面 = 平板前面 + 0.3)
+GAP_TARGET = 0.3                          # 管尾离 LED 顶
 
-DEFAULTS = dict(D_BODY=D_BODY, D_TAIL=D_TAIL, D_HEAD=D_HEAD, H_HEAD=H_HEAD, L_TOTAL=L_TOTAL)
+DEFAULTS = dict(D_BODY=D_BODY, D_HEAD=D_HEAD, H_HEAD=H_HEAD, BODY_L=BODY_L)
 
 
 def make_light_pipe(p=None):
-    """标准件占位 (本地坐标, 轴 +Y, 管尾 y=0)。p 可改 L_TOTAL (修短后的长度) 等。"""
+    """标准件占位 (本地坐标, 轴 +Y, 管尾 y=0)。p 可改 BODY_L (剪短后的法兰下管长)。压筋不建模 (按 Φ2.8 管身)。"""
     P = dict(DEFAULTS, **(p or {}))
-    body_l = P['L_TOTAL'] - P['H_HEAD']
-    ax = gp_Ax2(gp_Pnt(0, 0, 0), gp_Dir(0, 1, 0))
-    body = BRepPrimAPI_MakeCone(ax, P['D_TAIL'] / 2, P['D_BODY'] / 2, body_l).Shape()
+    body_l = P['BODY_L']
+    body = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, 0, 0), gp_Dir(0, 1, 0)), P['D_BODY'] / 2, body_l).Shape()
     a, h = P['D_HEAD'] / 2, P['H_HEAD']
     R = (a * a + h * h) / (2 * h)                     # 球冠半径 (底 Φ3.3, 高 0.8)
-    sph = BRepPrimAPI_MakeSphere(gp_Pnt(0, P['L_TOTAL'] - R, 0), R).Shape()
+    sph = BRepPrimAPI_MakeSphere(gp_Pnt(0, body_l + h - R, 0), R).Shape()
     cy = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, body_l, 0), gp_Dir(0, 1, 0)), a, h).Shape()
     o = BRepAlgoAPI_Common(sph, cy); o.Build(); head = o.Shape()
     o = BRepAlgoAPI_Fuse(body, head); o.Build()
@@ -68,96 +73,58 @@ def y_out(x):
 
 
 def leds():
-    """[(名, x, z, LED Φ, LED 顶 y)] 整机坐标"""
-    r = [('RGB Φ5', *KB.to_global(*KB.RGB), KB.RGB_D, KB.Y_BOARD_FRONT + KB.RGB_H)]
-    for i, q in enumerate(KB.LED, 1):
-        r.append((f'单色{i} Φ3', *KB.to_global(*q), KB.LED_D, KB.Y_BOARD_FRONT + KB.LED_H))
-    return r
+    """[(名, x, z, 宽, 长, LED 顶 y)] 整机坐标"""
+    return [(nm, *KB.to_global(X, Y), w, l, KB.Y_BOARD_FRONT + h) for nm, X, Y, w, l, h in KB.leds()]
 
 
-def calc(L=L_TOTAL):
-    """每颗 LED: 外皮内/外表面、支承、管尾、间隙、为达 GAP_TARGET 的管长"""
+def calc(body_l=BODY_L):
+    """每颗 LED: LED 顶 / 外皮内外表面 / 法兰支承 / 管尾 (按 body_l) / 间隙 / 推荐长度"""
     rows = []
-    for name, x, z, d, top in leds():
-        inner = top + CLR_POCKET                       # 让位腔前面 (外皮内表面)
-        seat = y_out(max(abs(x) - D_HEAD / 2, 0.0))     # Φ3.3 头底支承 = 孔周最外点
-        tail = seat - (L - H_HEAD)
-        gap = tail - top
-        L_fit = seat - top - GAP_TARGET + H_HEAD        # 修到目标间隙的总长
-        rows.append(dict(name=name, x=x, z=z, d=d, top=top, inner=inner, outer=y_out(x), seat=seat,
-                         skin=y_out(x) - inner, tail=tail, gap=gap, L_fit=L_fit,
-                         wedge=seat - y_out(abs(x) + D_HEAD / 2)))   # 头底与曲面的楔形缝 (外侧边)
+    for name, x, z, w, l, top in leds():
+        inner = Y_PLATE + CLR_POCKET                    # 外皮内面 (让位腔前面) 106.0
+        seat = y_out(max(abs(x) - D_HEAD / 2, 0.0))     # Φ3.3 法兰底支承 = 孔周最外点
+        tail = seat - body_l
+        dist = y_out(x) - top                           # LED 顶 → 外皮外表面 (孔轴线)
+        L_rule = dist - GAP_TARGET                      # 协调规则
+        L_exact = seat - top - GAP_TARGET               # 按法兰实际支承点, 管尾正好离 LED 0.3
+        stock = next(((L, n) for L, n in STOCK if L >= L_exact), STOCK[-1])
+        rows.append(dict(name=name, x=x, z=z, top=top, inner=inner, outer=y_out(x), seat=seat, skin=y_out(x) - inner,
+                         tail=tail, gap=tail - top, dist=dist, L_rule=L_rule, L_exact=L_exact, stock=stock,
+                         gap_stock=seat - stock[0] - top, gap_stock_incl=seat - (stock[0] - H_HEAD) - top,   # 现货原长 (法兰下 / 含法兰)
+                         in_plate=Y_PLATE - (seat - L_exact),        # 管伸进平板隔光孔深度
+                         wedge=seat - y_out(abs(x) + D_HEAD / 2)))   # 法兰底与曲面的楔形缝 (外侧边)
     return rows
 
 
 def preview(rows):
-    import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
-    from matplotlib.patches import Rectangle, Polygon
-    from matplotlib import font_manager as fm
-    from OCP.BRepAlgoAPI import BRepAlgoAPI_Section
-    from OCP.gp import gp_Pln
-    from OCP.TopExp import TopExp_Explorer
-    from OCP.TopAbs import TopAbs_EDGE
-    from OCP.BRepAdaptor import BRepAdaptor_Curve
-    from OCP.TopoDS import TopoDS
-    import key_bracket_v1_2 as KBR
-    fm.fontManager.addfont('/mnt/c/Windows/Fonts/msyh.ttc')
-    plt.rcParams['font.family'] = fm.FontProperties(fname='/mnt/c/Windows/Fonts/msyh.ttc').get_name()
-    Zc = KB.Z0 + KB.RGB[1]                              # 板孔中心高 Z13
-    fig, ax = plt.subplots(figsize=(14, 8.2), dpi=120)
-    # 外皮 (r110 外 → 让位腔): 先画外皮实体区 (r 90.8..110) 再用腔截面盖白
-    xs = [i / 10 for i in range(-160, 101)]
-    ax.fill_between(xs, [y_out(x) for x in xs], [98.0] * len(xs), color='#B0BEC5', alpha=.55, lw=0, label='下罩 (外皮)')
-    ax.plot(xs, [y_out(x) for x in xs], 'k', lw=1.2)
+    """俯视剖面 Z13 (过 4 颗 LED): 下罩 / 支架平板 / 板 (光栅化真实几何) + 剪到推荐长度的导光柱 + 每颗数值"""
+    import numpy as np
+    from matplotlib.patches import Polygon
+    plt = KBR._font()
     kr = KBR.make_key_bracket()
-    sec = BRepAlgoAPI_Section(kr['pocket'], gp_Pln(gp_Pnt(0, 0, Zc), gp_Dir(0, 0, 1))); sec.Build()
-    segs = []
-    e = TopExp_Explorer(sec.Shape(), TopAbs_EDGE)
-    while e.More():
-        c = BRepAdaptor_Curve(TopoDS.Edge(e.Current()))
-        p0, p1 = c.Value(c.FirstParameter()), c.Value(c.LastParameter())
-        segs.append(((p0.X(), p0.Y()), (p1.X(), p1.Y()))); e.Next()
-    # 腔截面是直线围成的多边形, 按端点串起来填白
-    pts = [segs[0][0], segs[0][1]]; left = segs[1:]
-    while left:
-        for i, (a, b) in enumerate(left):
-            if math.dist(a, pts[-1]) < 1e-6: pts.append(b); left.pop(i); break
-            if math.dist(b, pts[-1]) < 1e-6: pts.append(a); left.pop(i); break
-        else: break
-    ax.add_patch(Polygon(pts, closed=True, fc='white', ec='#607D8B', lw=1, zorder=2, label='下罩让位腔 (Z13 截面)'))
-    # 板 + 支架立柱
-    ax.add_patch(Rectangle((-KB.W / 2, KB.Y_BOARD_BACK), KB.W, KB.T, fc='#2E7D32', alpha=.7, zorder=3, label='按键板'))
-    for s in (1, -1):
-        ax.add_patch(Rectangle((min(13 * s, 21 * s), KB.Y_BOARD_FRONT), 8, 3, fc='#F1C232', alpha=.8, zorder=3))
-    ax.text(-17, 102.1, '支架立柱', ha='center', fontsize=8, zorder=4)
+    sh = KBR.shroud_local(kr)
+    Zc = rows[0]['z']
+    U, V = (-16, 9), (97.5, 111.2)
+    img = KBR.raster([(sh, KBR.C_SH), (kr['bracket'], KBR.C_BR), (kr['board'], KBR.C_BD)], ('z', Zc), U, V, res=0.06)
+    fig, ax = plt.subplots(figsize=(14, 9), dpi=120)
+    ax.imshow(img, origin='lower', extent=(U[0], U[1], V[0], V[1]), interpolation='nearest')
     for i, r in enumerate(rows):
-        x, d, top = r['x'], r['d'], r['top']
-        dome = d / 2
-        yb = KB.Y_BOARD_FRONT
-        ax.add_patch(Polygon([(x - d / 2, yb), (x + d / 2, yb), (x + d / 2, top - dome)] +
-                             [(x + d / 2 * math.cos(t / 20 * math.pi), top - dome + dome * math.sin(t / 20 * math.pi)) for t in range(21)] +
-                             [(x - d / 2, top - dome)], closed=True, fc='#E040FB' if i == 0 else '#FFD966', ec='k', lw=.8, zorder=4))
-        # 导光管 (4.5 原长), 头支承在 seat
-        tl, sb = r['tail'], r['seat']
+        x, top, sb = r['x'], r['top'], r['seat']
+        L = r['L_exact']; tl = sb - L
         a = D_HEAD / 2; R = (a * a + H_HEAD ** 2) / (2 * H_HEAD); yc = sb + H_HEAD - R
         ang = math.asin(a / R)
         cap = [(x + R * math.sin(-ang + 2 * ang * k / 30), yc + R * math.cos(-ang + 2 * ang * k / 30)) for k in range(31)]
-        pipe = [(x - D_TAIL / 2, tl), (x + D_TAIL / 2, tl), (x + D_BODY / 2, sb), (x + a, sb)] + cap[::-1] + [(x - a, sb), (x - D_BODY / 2, sb)]
-        bad = r['gap'] < 0
-        ax.add_patch(Polygon(pipe, closed=True, fc='#80DEEA', ec='r' if bad else '#00838F', lw=1.2, alpha=.85, zorder=5))
-        col = 'r' if bad else ('#E65100' if r['gap'] < 0.1 else 'g')
-        txt = (f"{r['name']} x{x:g}\nLED 顶 y{top:.2f}\n外皮 内{r['inner']:.2f}/外{r['outer']:.2f} (厚{r['skin']:.2f})\n"
-               f"管尾 y{tl:.2f} → 间隙 {r['gap']:+.2f}\n" + (f"需修到 L{r['L_fit']:.1f}" if r['gap'] < 0.1 else 'L4.5 可用'))
-        ax.text(x, 96.0 - (i % 2) * 2.4, txt, ha='center', va='top', fontsize=7.5, color=col,
-                bbox=dict(fc='white', ec=col, lw=.8, alpha=.9), zorder=6)
-        ax.plot([x, x], [top, tl], color=col, lw=2.2, zorder=7)
-    ax.set_xlim(-16, 9); ax.set_ylim(88.5, 111.2); ax.set_aspect('equal')
-    ax.invert_xaxis()                                  # 从上往下看, 外面 (+Y) 在上 ⇒ 板正视方向一致 (左 = 板系 X 小)
-    ax.set_xlabel('整机 x (mm, 已左右翻转与板正视一致)'); ax.set_ylabel('整机 y (mm)')
-    ax.set_title(f'导光管 Φ3 L{L_TOTAL:g} 装配核算 — 俯视剖面 Z{Zc:g} (板孔中心); 头 Φ{D_HEAD:g} 支承在 r110 外表面 (孔周最外点)', fontsize=11)
-    ax.legend(loc='lower left', fontsize=8)
-    ax.grid(alpha=.25)
-    plt.tight_layout(); plt.savefig(OUT / 'light_pipe_preview.png')
+        pipe = [(x - D_BODY / 2, tl), (x + D_BODY / 2, tl), (x + D_BODY / 2, sb), (x + a, sb)] + cap[::-1] + [(x - a, sb), (x - D_BODY / 2, sb)]
+        ax.add_patch(Polygon(pipe, closed=True, fc='#80DEEA', ec='#00838F', lw=1, alpha=.8, zorder=5))
+        txt = (f"{r['name']} x{x:g}\nLED 顶 y{top:.2f}, 外皮外 y{r['outer']:.2f}\n距离 {r['dist']:.2f} − 0.3 = L{r['L_rule']:.2f}\n"
+               f"(按法兰支承 L{r['L_exact']:.2f})\n{r['stock'][1]} {r['stock'][0]:g} 剪到 {math.floor(r['L_exact'] * 10) / 10:.1f}")
+        ax.text(x, 99.6 - (i % 2) * 0.1, txt, ha='center', va='top', fontsize=7, bbox=dict(fc='white', ec='#00838F', lw=.6, alpha=.92), zorder=6)
+    ax.invert_xaxis()                                  # 左右与板正视一致
+    ax.set_xlim(U[1], U[0]); ax.set_ylim(91.5, V[1])
+    ax.set_xlabel('整机 x (mm, 已左右翻转与板正视一致)'); ax.set_ylabel('整机 y (mm)'); ax.set_aspect('equal'); ax.grid(alpha=.25)
+    ax.set_title(f'导光柱 PLP2 Φ{D_BODY:g} (头 Φ{D_HEAD:g}×{H_HEAD:g}) 装配核算 — 俯视剖面 Z{Zc:g}; 外皮孔 Φ{HOLE_D:g} 压管 + 平板 Φ{PL_HOLE_D:g} 隔光通道 (同轴); '
+                 f'管剪到 管尾离 LED 顶 {GAP_TARGET:g}\n灰 = 下罩, 黄 = 支架平板, 绿 = 板 + LED, 青 = 导光柱 (法兰下长度)', fontsize=10)
+    plt.tight_layout(); plt.savefig(OUT / 'light_pipe_preview.png'); plt.close(fig)
 
 
 def main():
@@ -168,19 +135,17 @@ def main():
     lp = make_light_pipe()
     BRepMesh_IncrementalMesh(lp, 0.005, False, 0.1, True)
     w = StlAPI_Writer(); w.ASCIIMode = False; assert w.Write(lp, str(OUT / 'light_pipe_v1_2.stl'))
-    write_doc([('light_pipe_v1_2', lp, '#80DEEA', None, False)], OUT / 'light_pipe_v1_2.step', 'light_pipe_v1_2')
+    write_doc([('light_pipe_v1_2_L8.9', lp, '#80DEEA', None, False)], OUT / 'light_pipe_v1_2.step', 'light_pipe_v1_2')
     rows = calc()
-    # 装配位: 按推荐 (单色 1/2 原长, 修短的按 L_fit 取 0.1 向下)
-    items = []
+    items = []                                         # 装配位: 每颗剪到推荐长度 (0.1 向下取整, 管尾离 LED ≥0.3)
     for r in rows:
-        L = L_TOTAL if r['gap'] >= 0.1 else math.floor(r['L_fit'] * 10) / 10
-        items.append((f"light_pipe_{r['name'].split()[0]}_L{L:g}", place(make_light_pipe(dict(L_TOTAL=L)), r['x'], r['z'], r['seat'] - (L - H_HEAD)),
-                      '#80DEEA', None, False))
+        L = math.floor(r['L_exact'] * 10) / 10
+        items.append((f"light_pipe_{r['name'].split()[0]}_L{L:g}", place(make_light_pipe(dict(BODY_L=L)), r['x'], r['z'], r['seat'] - L), '#80DEEA', None, False))
     write_doc(items, OUT / 'light_pipe_装配位.step', 'light_pipes')
-    print(f'{"LED":10s} {"x":>6s} {"LED顶":>7s} {"皮内":>7s} {"皮外":>7s} {"皮厚":>5s} {"支承":>7s} {"管尾":>7s} {"间隙":>6s} {"修到L":>6s} {"楔缝":>5s}')
+    print(f'{"LED":10s} {"x":>6s} {"LED顶":>7s} {"皮内":>7s} {"皮外":>7s} {"皮厚":>5s} {"支承":>7s} {"8.9尾":>7s} {"8.9隙":>6s} {"距离":>6s} {"规则L":>6s} {"精确L":>6s} {"进平板":>6s} 现货')
     for r in rows:
-        print(f"{r['name']:10s} {r['x']:6.1f} {r['top']:7.2f} {r['inner']:7.2f} {r['outer']:7.2f} {r['skin']:5.2f} "
-              f"{r['seat']:7.3f} {r['tail']:7.3f} {r['gap']:+6.2f} {r['L_fit']:6.2f} {r['wedge']:5.2f}")
+        print(f"{r['name']:10s} {r['x']:6.1f} {r['top']:7.2f} {r['inner']:7.2f} {r['outer']:7.2f} {r['skin']:5.2f} {r['seat']:7.3f} {r['tail']:7.3f} {r['gap']:+6.2f} "
+              f"{r['dist']:6.2f} {r['L_rule']:6.2f} {r['L_exact']:6.2f} {r['in_plate']:6.2f} {r['stock'][1]} {r['stock'][0]:g} (原长隙 {r['gap_stock']:+.2f}, 若含法兰 {r['gap_stock_incl']:+.2f})")
     preview(rows)
     print('输出', OUT)
 

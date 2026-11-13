@@ -161,7 +161,7 @@ _kn0, _kn1 = _K['foot_nut_z']
 for i, (x, y) in enumerate(_K['disc_m3']):
     screw(f"M3x{_K['foot_screw_L']:g} 按键支架", i, x, y, CB_BEAR, _K['foot_screw_L'], True, engage=("法兰螺母", _kn0, _kn1))
     add(f"M3 法兰螺母 按键支架 #{i}", flange_nut(x, y, _kn0), "#707070")
-# 10 按键板 2×M3 (沿 −Y): 超薄头埋进立柱外侧 Φ7.4×1.7 沉孔 (支承 y102.4), 穿立柱剩壁 1.8 + 板 1.6, 板背面 (y99) M3 法兰螺母 (y99→95.3); M3×8 尖 y94.4 ⇒ 吃满 3.7
+# 10 按键板 2×M3 (沿 −Y, 11-13 (三) 前面平板): 超薄头埋进平板前面 Φ7.4×2.4 沉孔 (支承 y103.3), 穿平板剩壁 2.7 + 板 1.6, 板背面 (y99) M3 法兰螺母 (y99→95.3); M3×8 尖 y95.3 ⇒ 吃满 3.7 (尖齐螺母端面)
 #    局部沿 Z 造好再绕 X 轴转 +90°: 局部 (x, 13, t) → 整机 (x, −t, 13)
 from OCP.gp import gp_Trsf, gp_Ax1, gp_Dir
 _RX = gp_Trsf(); _RX.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), math.pi / 2)
