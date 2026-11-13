@@ -148,7 +148,7 @@ SPECS.append(dict(
 
 # ---------------- 玻璃罩下罩三件 ----------------
 sup = B.OUT_SCREWS
-gl_notes = [f"玻璃 OD{F(B.GL_OD)}×{F(B.GL_T)} H{F(B.GL_H)} 坐 Z{F(B.Z_G)} (内卡顶 = LED 下沿 Z{F(B.Z_LED0)}), 单边间隙 {F(B.GL_CLR)}",
+gl_notes = [f"玻璃 OD{F(B.GL_OD)}×{F(B.GL_T)} H{F(B.GL_H)} 坐 Z{F(B.Z_G)} (内卡顶 Z{F(B.Z_VIEW0)} = LED 下沿 Z{F(B.Z_LED0)} − {F(B.VIEW_MARGIN)}), 单边间隙 {F(B.GL_CLR)}",
             f"墙 r{F(B.SPIG_IN)}–{F(B.SH_OUT)} Z0→{F(B.Z_G)}; 内卡 r{F(B.gi - B.SPIG_T)}–{F(B.gi)} 深 {F(B.IN_DEPTH)}; A 孔心到墙内面 {F(B.SPIG_IN - B.SH_R)}",
             f"三角块厚 {F(B.TRI_T)} (十字 ±{F(B.P_N)} 外); 墙内面 = 内卡内面 r{F(B.SPIG_IN)} 直下; 无托块",
             f"三角块两直边各一片斜筋 ×8: 厚 {F(B.GU_T)}, 外侧面齐直边 ±{F(B.P_N)}; 尖角 Z{F(B.TRI_T)} → r{F(B.GU_R85)} Z{F(B.GU_Z1)} (定子盘/外裙下) → 贴墙 Z{F(B.GU_ZH)}",

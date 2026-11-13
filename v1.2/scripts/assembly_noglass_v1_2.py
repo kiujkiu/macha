@@ -99,7 +99,7 @@ axT.plot([0, 0], [-112, 112], 'r-.', lw=0.8); axT.text(2, 105, 'A', color='r'); 
 # 标高
 LV = [(0, '底盘顶 Z0'), (B.Z_RIM_TOP, f'承载盘顶 Z{B.Z_RIM_TOP:g}'), (B.Z_BB0, f'转接板底 Z{B.Z_BB0:g} (垫 {B.BB_STANDOFF:g})'),
       (B.Z_BB0 + B.BB_T + B.CZ06_H, f'CZ06 顶 Z{B.Z_BB0 + B.BB_T + B.CZ06_H:g}'), (B.Z_SCR0, f'灯板下沿 Z{B.Z_SCR0:g}'),
-      (B.Z_G, f'玻璃下端 Z{B.Z_G:g} (不装)'), (B.Z_LED0, f'LED 下沿 = 内卡顶 Z{B.Z_LED0:g}'), (B.Z_SCR1, f'灯板上沿 Z{B.Z_SCR1:g}')]
+      (B.Z_G, f'玻璃下端 Z{B.Z_G:g} (不装)'), (B.Z_VIEW0, f'内卡顶 (可视下边界) Z{B.Z_VIEW0:g}'), (B.Z_LED0, f'LED 下沿 Z{B.Z_LED0:g}'), (B.Z_SCR1, f'灯板上沿 Z{B.Z_SCR1:g}')]
 LV.sort(); zt_ = []                                              # 标签往上推开, 最小间隔 7 (数据单位), 引线连回标高
 for z, t in LV:
     zt_.append(max(z, zt_[-1] + 7.0) if zt_ else z)
