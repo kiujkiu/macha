@@ -240,11 +240,11 @@ EXTRA, SKIP = [], []
 # 4a' 定子线圈驱动小板 (用户 11-12 晚): MOS 压块 mos_clamp_v1_2 + 电容卡件 cap_clamp_v1_2 + 第二块散热片 (转 90°) + 底盘切口, 几何在 coil_drv_geom.py (不 import 本文件)
 import coil_drv_geom
 CD = coil_drv_geom.make(sys.modules[__name__])
-# 4a'' 按键板 + U 形支架 (用户 11-13): +Y 侧下罩墙里竖放, 几何在 key_bracket_v1_2.py (不 import 本文件); 支架脚 2×M3 从盘底往上拧铜螺母
+# 4a'' 按键板 + L 形支架 (用户 11-13 (二)): +Y 侧下罩墙里竖放, 几何在 key_bracket_v1_2.py (不 import 本文件); 脚 2×M3×12 从盘底往上, 法兰螺母坐脚顶
 import key_bracket_v1_2
-KEY = key_bracket_v1_2.make_key_bracket(dict(SH_OUT=DISC_D / 2, DISC_T=DISC_T, M3_CB_H=2.0, M3_D=3.2, INS_D=4.2, INS_H=4.2))
+KEY = key_bracket_v1_2.make_key_bracket(dict(SH_OUT=DISC_D / 2, DISC_T=DISC_T, M3_CB_H=2.0, M3_D=3.2))
 key_bracket, key_board = KEY['bracket'], KEY['board']
-KEY_M3 = KEY['disc_m3']                                     # [(±16.5, 103.3)]
+KEY_M3 = KEY['disc_m3']                                     # [(±27, 95)] 支架脚孔
 for x, y in GRID:                                   # 原洞洞板 M6 网格: 盘内放得下的全开
     if math.hypot(x, y) + CB_D / 2 > DISC_D / 2: continue
     why = []
@@ -287,7 +287,7 @@ assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in 
 # (网格跳孔判据仍按原 M6 沉孔 CB_D + 1 留 XT60 位, 网格孔数不变)
 for x, y in XT_GHOLES_DISC:                                                                # XT60 压块 2×M3 (用户 11-12 晚, 原 M6): 盘底 Φ7×2 沉孔往上, 法兰螺母坐压块顶螺母座
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
-for x, y in KEY_M3:                                                                        # 按键支架 2×M3 (11-13): 盘底 Φ7×2 沉孔往上 → 支架脚 M3×4 铜螺母
+for x, y in KEY_M3:                                                                        # 按键支架 2×M3×12 (11-13 L 形): 盘底 Φ7×2 沉孔往上 → 穿脚 (4 厚) → 脚顶法兰螺母
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
 assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in KEY_M3 for a, b in FIXED + EXTRA), '按键支架 M3 沉孔离网格孔太近'
 assert all(math.hypot(x, y) + M3_CB_D / 2 <= DISC_D / 2 - 1.0 for x, y in KEY_M3), '按键支架 M3 沉孔出盘边'
@@ -372,7 +372,7 @@ xt_env = xf(gbox(-XT_HW, XT_Y0, 0, XT_HW, XT_Y1, XT_H), XT_T)                   
 s_ = cut(s_, xf(gbox(-XT_HW - 0.2, XT_Y0 - 5, -1, XT_HW + 0.2, XT_Y1 + 0.2, XT_H + 0.2), XT_T))   # 下罩开口 = 压块外形 +0.2
 for gx, gy in XT_GHOLES:
     s_ = cut(s_, cyl(gx, gy, XT_NUT_WELL_D, XT_H, XT_H + XT_NUT_WELL_H))              # M3 法兰螺母 (压块顶上) 让位井 (原 M6 Φ14 到 Z19.5)
-# 按键板 (11-13): 让位腔 = 支架+板+螺丝头/法兰螺母+元件+背面元件区 外包 +0.3, 底开 (下罩从上罩下), 外皮 ≥1.5; 前皮开按键 Φ4 / LED Φ5.3 / Φ3.3 孔
+# 按键板 (11-13): 让位腔 = 支架 (立柱/脚/筋)+板+法兰螺母/杆尖+元件+背面元件区 外包 +0.3, 底开 (下罩从上罩下), 外皮 ≥1.5; 前皮开按键 Φ4 / LED Φ5.3 / Φ3.3 孔
 assert KEY['pocket_rmin'] >= SPIG_IN + 0.5 and KEY['skin'] >= 1.5, (KEY['pocket_rmin'], KEY['skin'])
 s_ = cut(s_, KEY['pocket'], *KEY['skin_holes'])
 LOG['key'] = dict(m3=[(round(x, 2), round(y, 2)) for x, y in KEY_M3], skin=KEY['skin'], pocket_bbox=KEY['pocket_bbox'], bracket_vol=KEY['bracket_vol'],

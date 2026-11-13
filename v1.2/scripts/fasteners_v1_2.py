@@ -154,14 +154,14 @@ for _k, _nm in (('MC', 'MOS压块'), ('CC', '电容卡件')):          # 生成�
             screw(f"M3x{_L:g} {_nm}", i, x, y, CB_BEAR, _L, True, engage=("法兰螺母", _z0, _z0 + NUT_T))
             add(f"M3 法兰螺母 {_nm} #{i}", flange_nut_inv(x, y, _z0), "#707070")   # 倒放: 六角朝下坐井底
 
-# 9 按键支架 (用户 11-13, scripts/key_bracket_v1_2.py): 支架脚 2×M3 盘底 Φ7×2 沉孔往上 → 支架脚底面压入的 M3×4 铜螺母 (Z0..4);
-#   M3×8 支承 Z-4 尖 Z4 ⇒ 进铜螺母 4.0 (吃满, 尖低于孔顶 0.2)
+# 9 按键支架 (用户 11-13 (二) L 形, scripts/key_bracket_v1_2.py): 脚 2×M3 盘底 Φ7×2 沉孔往上, 穿底盘 4 + 脚 4, M3 法兰螺母坐脚顶 (Z4..7.7);
+#   M3×12 支承 Z-4 尖 Z8 ⇒ 吃满 3.7, 露 0.3 (M3×10 尖 Z6 只进 2)
 _K = B.KEY
-_ki0, _ki1 = _K['insert_z']
+_kn0, _kn1 = _K['foot_nut_z']
 for i, (x, y) in enumerate(_K['disc_m3']):
-    screw(f"M3x{_K['foot_screw_L']:g} 按键支架", i, x, y, CB_BEAR, _K['foot_screw_L'], True, engage=("铜螺母", _ki0, _ki1))
-    add(f"铜螺母 M3x4 按键支架 #{i}", insert(x, y, _ki0, _ki1 - _ki0), "#B8860B")
-# 10 按键板 2×M3 (沿 −Y): 超薄头坐立柱前面 (y103.6), 穿立柱 3 + 板 1.6, 板背面 (y99) 上 M3 法兰螺母 (y99→95.3); 尖 y95.6 ⇒ 啮合 3.4
+    screw(f"M3x{_K['foot_screw_L']:g} 按键支架", i, x, y, CB_BEAR, _K['foot_screw_L'], True, engage=("法兰螺母", _kn0, _kn1))
+    add(f"M3 法兰螺母 按键支架 #{i}", flange_nut(x, y, _kn0), "#707070")
+# 10 按键板 2×M3 (沿 −Y): 超薄头埋进立柱外侧 Φ7.4×1.7 沉孔 (支承 y102.4), 穿立柱剩壁 1.8 + 板 1.6, 板背面 (y99) M3 法兰螺母 (y99→95.3); M3×8 尖 y94.4 ⇒ 吃满 3.7
 #    局部沿 Z 造好再绕 X 轴转 +90°: 局部 (x, 13, t) → 整机 (x, −t, 13)
 from OCP.gp import gp_Trsf, gp_Ax1, gp_Dir
 _RX = gp_Trsf(); _RX.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), math.pi / 2)
