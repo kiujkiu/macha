@@ -97,6 +97,11 @@ r_ = fuse(cut(_octa(COLLAR_FLAT, RING_CH, 0, FL_Z0), cyl(0, 0, BORE_D, -1, FL_Z0
 WIRE_A0, WIRE_AW, WIRE_ZH = 270.0, 40.0, 6.0      # 用户 11-13: 电机出线口 270–310° (宽 40, 对准实物出线 ~285–290°), 高 6 (底面 Z0 起); 原 255–285° 高到 Z11.2
 r_ = cut(r_, cut(_octa(COLLAR_FLAT + 1, RING_CH, RING_CORNER_T, FL_Z0 + 1), cyl(0, 0, COLLAR_D, RING_CORNER_T - 1, FL_Z0 + 2)))  # 圆外四角削到 RING_CORNER_T (4.5) 厚
 r_ = cut(r_, op(BRepAlgoAPI_Common, cyl(0, 0, 90, -1, WIRE_ZH, ang=WIRE_AW, a0=WIRE_A0), cyl(0, 0, 90, -1, WIRE_ZH)))
+# 用户 11-13: 出线口边 (310° 射线) 切过 315° 角耳, 在底边留一个尖三角 ⇒ 角耳出线口一侧 (310–315°) 修成绕螺丝孔的圆 R4.3 (法兰螺母 Φ7.6 + 0.5)
+_ca = math.radians(round((WIRE_A0 + WIRE_AW - 45) / 90) * 90 + 45)            # 出线口末端相邻的角 (315°)
+_cx, _cy = RING_M3_XY * math.sqrt(2) * math.cos(_ca), RING_M3_XY * math.sqrt(2) * math.sin(_ca)
+r_ = cut(r_, cut(cut(cyl(0, 0, 120, -1, RING_CORNER_T + 0.01, ang=math.degrees(_ca) - WIRE_A0, a0=WIRE_A0), cyl(0, 0, COLLAR_D, -2, RING_CORNER_T + 1)),
+                 cyl(_cx, _cy, 8.6, -2, RING_CORNER_T + 1)))
 for x, y in FLANGE_SCREWS:
     r_ = cut(r_, cyl(x, y, 3.2, -1, TUBE_TOP + 1))
 for x, y in RING_M3:
