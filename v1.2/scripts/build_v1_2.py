@@ -433,6 +433,63 @@ clamp_ring = clean(fuse(op(BRepAlgoAPI_Common, seat, _lip), ann(TG_R0, TG_R0 + T
 shroud_split = clean(cut(seat, _lip, ann(TG_R0 - TG_CLR, TG_R0 + TG_W + TG_CLR, Z_G - TG_H - TG_CLR, Z_G + 1)))
 LOG['split'] = dict(ring=vol(clamp_ring), shroud=vol(shroud_split))
 tube = ann(GL_OD / 2 - GL_T, GL_OD / 2, Z_G, Z_G + GL_H)                     # 玻璃罩 OD200x5 高 245
+# 4d 玻璃上 (顶盖, 用户 11-13): 玻璃上环 glass_top_v1_2 + 圆环玻璃 OD180/ID20/t10 (外购) + 中心卡扣堵头 glass_top_hub_v1_2
+#    环 = 玻璃下镜像: 内卡 r90.8–94.8 + 外卡 r100.2–110 夹玻璃上端, 外面 r110 齐平; 内外卡同深 GT_DEPTH, 底面同高 ⇒ 正立打印两卡底落床, 无支撑
+#    圆环玻璃坐环内 r90.3 窝 (径向定位) 的托台上 (靠自重; 托台下面 45° 斜, 可打印), 顶面低于环顶 GD_RECESS
+#    堵头: 顶法兰压玻璃上面, 6 爪穿 Φ20 孔, 爪端 30° 倒钩钩玻璃下面 (一件, 无螺纹); 可选 688 轴承窝 (GT_BEARING)
+from OCP.BRepPrimAPI import BRepPrimAPI_MakeRevol
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakePolygon as _MP, BRepBuilderAPI_MakeFace as _MF
+def revol(rz):                                     # (r,z) 闭合折线绕 Z 轴转一圈
+    pg = _MP()
+    for r, z in rz: pg.Add(gp_Pnt(r, 0, z))
+    pg.Close()
+    return BRepPrimAPI_MakeRevol(_MF(pg.Wire()).Face(), gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), 2 * math.pi).Shape()
+Z_GT = Z_G + GL_H                                  # 玻璃上端 277.0
+GT_DEPTH = 12.0                                    # 内/外卡深 (玻璃下 20/10; 这里同深, 底面同高好打印)
+GT_TOP_T = 4.0                                     # 玻璃端面以上板厚
+GT_Z0, GT_Z1 = Z_GT - GT_DEPTH, Z_GT + GT_TOP_T    # 265 / 281
+GT_FOOT = 1.0                                      # 外卡底平带 (r100.2–101.2, 落床), 斜面 → r110 处
+GT_CH = 1.0                                        # 顶面外缘倒角
+GD_OD, GD_ID, GD_T = 180.0, 20.0, 10.0             # 圆环玻璃 (用户 11-13: t5 → t10)
+GD_CLR, GD_RECESS = 0.3, 0.2                       # 玻璃窝径向单边 / 玻璃顶低于环顶
+GD_Z1 = GT_Z1 - GD_RECESS                          # 280.8
+GD_Z0 = GD_Z1 - GD_T                               # 270.8 (窝深 10.2)
+GD_POCKET_R = GD_OD / 2 + GD_CLR                   # 90.3
+GT_LEDGE_R, GT_LEDGE_V = 85.5, 0.5                 # 托台内缘 r85.5 (搭玻璃 4.5), 内缘直边 0.5, 下面 45° 斜回内卡内面
+_gin = gi - SPIG_T                                 # 90.8
+assert (GD_Z0 - GT_LEDGE_V - GT_Z0) >= (_gin - GT_LEDGE_R) - 1e-6, '托台底面要 ≥45° (正立打印免支撑)'
+GT_RZ = [(_gin, GT_Z0), (gi, GT_Z0), (gi, Z_GT), (go, Z_GT), (go, GT_Z0), (go + GT_FOOT, GT_Z0),
+         (SH_OUT, Z_GT - LIP_EDGE), (SH_OUT, GT_Z1 - GT_CH), (SH_OUT - GT_CH, GT_Z1),
+         (GD_POCKET_R + 0.5, GT_Z1), (GD_POCKET_R, GT_Z1 - 0.5),                       # 窝口 0.5 倒角 (放玻璃)
+         (GD_POCKET_R, GD_Z0), (GT_LEDGE_R, GD_Z0), (GT_LEDGE_R, GD_Z0 - GT_LEDGE_V)]
+GT_CONE_DEG = math.degrees(math.atan2(Z_GT - LIP_EDGE - GT_Z0, SH_OUT - go - GT_FOOT))   # 外卡斜面与水平 (≥45 免支撑)
+glass_top = clean(revol(GT_RZ))
+glass_disc = ann(GD_ID / 2, GD_OD / 2, GD_Z0, GD_Z1)                           # 外购圆环玻璃 (装配用实体)
+# 中心堵头 (一件): 顶法兰 Φ32 压玻璃顶; 管 r8.2–9.8 穿 Φ20 孔 (单边 0.2); 孔下 30° 倒钩到 r11 (钩 1.0), 45° 导入到 r9; 6 条 2 宽槽 → 6 爪
+GT_BEARING = bool(int(os.environ.get('GT_BEARING', '0')))   # 默认堵头; 1 = 法兰内开 688 轴承窝 (Φ8 轴从下穿爪内孔进来)
+GH_FL_D, GH_FL_T = 32.0, 3.0
+GH_R0, GH_R1 = 8.2, GD_ID / 2 - 0.2               # 爪内 r8.2 (Φ16.4 > 688 外径 16, 轴承可从下穿进窝) / 外 r9.8
+GH_BARB, GH_CATCH_DZ, GH_TIP_R = 1.0, 0.7, 9.0     # 倒钩外 r = 10 + 1.0; 钩面 30° (Δz 0.7); 导入 45° 到 r9
+GH_SLOTS, GH_SLOT_W = 6, 2.0
+BRG_D, BRG_H, BRG_ROOF = 16.1, 5.0, 1.5            # 688 = 8×16×5; 窝 Φ16.1 (打印孔偏小, 试配), 顶留 1.5
+_fl_t = (BRG_H + BRG_ROOF) if GT_BEARING else GH_FL_T
+_rb = GD_ID / 2 + GH_BARB                          # 11.0
+_zc = GD_Z0 - GH_CATCH_DZ                          # 钩面外端
+_zt = _zc - 0.5 - (_rb - GH_TIP_R)                 # 爪尖底
+GH_RZ = [(GH_R0, _zt), (GH_TIP_R, _zt), (_rb, _zc - 0.5), (_rb, _zc), (GH_R1, GD_Z0), (GH_R1, GD_Z1),
+         (GH_FL_D / 2, GD_Z1), (GH_FL_D / 2, GD_Z1 + _fl_t - 1.0), (GH_FL_D / 2 - 1.0, GD_Z1 + _fl_t), (0, GD_Z1 + _fl_t), (0, GD_Z1), (GH_R0, GD_Z1)]
+_gh = revol(GH_RZ)
+GH_SLOT_TOP = GD_Z1 - 1.0                          # 槽顶 (法兰下 1), 爪自由长
+for k in range(GH_SLOTS):
+    _gh = cut(_gh, xf(gbox(-GH_SLOT_W / 2, 0, _zt - 1, GH_SLOT_W / 2, 20, GH_SLOT_TOP), rotz(30 + 360 / GH_SLOTS * k)))
+if GT_BEARING:
+    _gh = cut(_gh, cyl(0, 0, BRG_D, GD_Z1 - 0.01, GD_Z1 + BRG_H))
+glass_top_hub = clean(_gh)
+GH_L = GH_SLOT_TOP - _zt
+GH_STRAIN = 1.5 * (GH_R1 - GH_R0) * GH_BARB / GH_L ** 2   # 悬臂根部应变 ≈ 1.5·t·δ/L²
+LOG['glass_top'] = dict(v=vol(glass_top), z=(GT_Z0, GT_Z1), z_tube_top=Z_GT, cone_deg=round(GT_CONE_DEG, 1), disc_z=(GD_Z0, GD_Z1), disc_mass_g=round(vol(glass_disc) * 2.5e-3),
+                        hub_v=vol(glass_top_hub), hub_z=(round(_zt, 2), GD_Z1 + _fl_t), finger_L=round(GH_L, 2), finger_strain=round(GH_STRAIN, 4), bearing=GT_BEARING,
+                        valid=(BRepCheck_Analyzer(glass_top).IsValid(), BRepCheck_Analyzer(glass_top_hub).IsValid()))
 nuts = []
 seat_nuts = [cyl(x, y, SH_NUT_D, NUT_Z0, NUT_Z0 + NUT_T) for x, y in SH_M6]
 hang_nuts = [cyl(x, y, 6.35, FL_Z0 - 2.4, FL_Z0) for x, y in OUT_HANG]          # M3 螺母 (对角 6.35 x 2.4) 吊在定子盘底

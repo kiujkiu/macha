@@ -180,6 +180,33 @@ SPECS.append(dict(
     notes=[f"内面 r{F(B.go)} 贴玻璃外壁 (单边间隙 {F(B.GL_CLR)})",
            f"底凸筋 r{F(B.TG_R0)}–{F(B.TG_R0 + B.TG_W)} 高 {F(B.TG_H)} 插下罩顶槽", "装配: 玻璃先套内卡, 再从上套环"]))
 
+# ---------------- 玻璃上 (顶盖) 两件 (11-13) ----------------
+SPECS.append(dict(
+    code="glass_top_v1_2", shape=B.glass_top, short="玻璃上 (顶盖环)", qty="1",
+    title=f"玻璃上: 内卡 r{F(B._gin)}–{F(B.gi)} + 外卡 r{F(B.go)}–{F(B.SH_OUT)} 夹玻璃上端, 圆环玻璃窝 Φ{F(2 * B.GD_POCKET_R)}",
+    subtitle=f"玻璃罩上端 Z{F(B.Z_GT)}; 圆环玻璃 OD{F(B.GD_OD)}×ID{F(B.GD_ID)}×{F(B.GD_T)} 坐托台 Z{F(B.GD_Z0)}, 顶面低于环顶 {F(B.GD_RECESS)}",
+    orient=f"正立 (两卡底面 Z{F(B.GT_Z0)} 贴床), 免支撑: 外卡斜面 {B.GT_CONE_DEG:.0f}°, 托台底面 45°, 玻璃槽顶 {F(B.go - B.gi)} 宽桥接",
+    phi=[2 * B.GT_LEDGE_R, 2 * B.GD_POCKET_R, 2 * B.gi, 2 * B.go, 2 * B.SH_OUT],
+    sec=dict(ang=0, r0=80.0, zd=[(B.GT_Z0, B.Z_GT), (B.Z_GT, B.GT_Z1), (B.GD_Z0, B.GT_Z1), (B.GT_Z0, B.GT_Z1), (B.Z_GT - B.LIP_EDGE, B.Z_GT)],
+             rd=[(B._gin, B.gi), (B.go, B.SH_OUT), (B.GT_LEDGE_R, B.GD_POCKET_R)]),
+    holes=[],
+    notes=[f"玻璃罩 OD{F(B.GL_OD)}×{F(B.GL_T)} 上端插进 r{F(B.gi)}–{F(B.go)} 槽 (单边 {F(B.GL_CLR)}), 卡深 {F(B.GT_DEPTH)} (内外同深)",
+           f"外卡斜面 (r{F(B.go + B.GT_FOOT)}, Z{F(B.GT_Z0)}) → (r{F(B.SH_OUT)}, Z{F(B.Z_GT - B.LIP_EDGE)}) (外缘直边 {F(B.LIP_EDGE)} 同玻璃下), 底平带 {F(B.GT_FOOT)}; 顶外缘倒角 {F(B.GT_CH)}",
+           f"圆环玻璃窝 r{F(B.GD_POCKET_R)} (单边 {F(B.GD_CLR)}) 深 {F(B.GT_Z1 - B.GD_Z0)}, 口倒角 0.5; 托台 r{F(B.GT_LEDGE_R)}–{F(B.GD_POCKET_R)} (搭玻璃 {F(B.GD_OD / 2 - B.GT_LEDGE_R)})",
+           f"玻璃靠自重 ({B.LOG['glass_top']['disc_mass_g']} g) 坐托台, 径向靠窝; 环靠自重 + 内外卡坐在玻璃罩上端"]))
+SPECS.append(dict(
+    code="glass_top_hub_v1_2", shape=B.glass_top_hub, short="中心堵头 (卡扣)", qty="1", material="PETG (建议; PLA 先试)",
+    title=f"中心堵头: 法兰 Φ{F(B.GH_FL_D)} + {B.GH_SLOTS} 爪卡扣穿圆环玻璃 Φ{F(B.GD_ID)} 孔" + (" + 688 轴承窝" if B.GT_BEARING else ""),
+    subtitle=f"爪 r{F(B.GH_R0)}–{F(B.GH_R1)}, 倒钩 r{F(B._rb)} 钩面 30°, 导入 45°; 槽宽 {F(B.GH_SLOT_W)} ×{B.GH_SLOTS}, 爪长 {B.GH_L:.1f}",
+    orient="法兰顶面朝下贴床 (爪朝上); 倒钩 30° 钩面悬 1.2, 不加支撑",
+    phi=[2 * B.GH_R0, 2 * B.GH_R1, 2 * B._rb, B.GH_FL_D],
+    sec=dict(ang=30, r0=0.0, zd=[(B._zt, B.GD_Z0), (B.GD_Z0, B.GD_Z1), (B.GD_Z1, B.GD_Z1 + B._fl_t)],
+             rd=[(B.GH_R0, B.GH_R1), (0, B._rb, f"R{F(B._rb)}")]),
+    holes=[],
+    notes=[f"玻璃厚 {F(B.GD_T)}: 法兰底 Z{F(B.GD_Z1)} 压玻璃顶, 钩面内端 Z{F(B.GD_Z0)} = 玻璃底 (玻璃厚 +0.6 内仍能扣上, 爪带预压)",
+           f"爪根应变 ≈ {B.GH_STRAIN * 100:.1f}% → 建议 PETG; PLA 先试",
+           "可选 GT_BEARING=1: 法兰加厚到 6.5, 内开 688 窝 Φ16.1×5 (轴承从下穿爪内孔 Φ16.4 压入)"]))
+
 for sp in SPECS:
     sp.update({k: v for k, v in COMMON.items() if k not in sp})
     sp["stl"] = M / sp["code"] / f"{sp['code']}.stl"
