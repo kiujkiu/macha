@@ -18,7 +18,7 @@
   打印: **前面 (y105.7) 朝下贴床**, 免支撑 (背面让位腔朝上开口; 沉孔 Φ7.4 在床面上; 脚孔变横孔)。
 按键 = 下罩外皮舌片 (用户 11-13「沿红色切一下这个边, 这部分按压形变, 推到微动开关」): 外皮切 H 形缝 (两侧竖缝 + 中间横缝),
   上键舌片根在上 (Z30), 下键舌片根在下 (Z2); 舌片内面挖薄 (竖槽底开到 Z−1, 罩下时杆从槽里滑过), 内面凸点 Φ3 正对杆, 离杆顶 0.3。
-  缝宽 1.0; 下罩正立打印 (Z0 贴床)。FLAP_MODE: 'support' (主件, 用户 11-13 (四)) = 横缝开到两凸点边各留 0.4 (Z12.4–19.6), 切片在上舌片下加支撑, 钳子拔出;
+  缝宽 1.0; 下罩正立打印 (Z0 贴床)。FLAP_MODE: 'support' (主件, 用户 11-13 (四)) = 横缝高 2 (两键中线 Z15–17, 11-14 原 Z12.4–19.6), 切片在上舌片下加支撑, 钳子拔出;
   'tie' (只做 A 试打块) = 横缝 1.0 + 上舌片底边两侧竖缝各留 0.6 高断开桥 (不切穿), 打完用刀划开。
   11-13 (四) 按键间距 7 → 11 (整机 Z21.5 / Z10.5, 两舌片悬臂各 8.5): 卡在舌片弹性力 ≤~4 N (F ∝ 1/a³, a ≥8.35 ⇒ 间距 ≤11.3); 板高 20 → 22.5 让上键本体 / 焊盘留四边禁布 1。
 11-13 (五) 用户: 按键转 90° (焊盘外包 5.6×9.5 竖), 按键 / 螺丝 / LED 对板水平中线对称 ⇒ 板 40×26 (中线 Y13 = 整机 Z16), 螺丝 (±16.5, Z16), LED 行 Z16 (x 3 / −1.5 / −6 / −10.5);
@@ -78,6 +78,8 @@ DEFAULTS = dict(
     FLAP_W=5.5, FLAP_SLOT=1.0,         # 舌片宽 / 缝宽 (切穿外皮; 协调 11-13: 0.8 用 0.4 嘴易糊死 → 1.0)
     FLAP_BAR_Z=(15.5, 16.5),           # 'tie' 模式横缝 (宽 1.0, 两凸点中间); 'support' 模式横缝自动开到凸点边各留 0.4
     FLAP_MODE='support',                   # 'tie' = 横缝 1.0 + 两侧断开桥 (主件现用); 'support' = 无断开桥, 横缝开到两凸点各留 0.4 (≈Z13.9–17.1), 切片在上舌片下加支撑, 钳子拔出
+    POCKET_THRU_Z=32.01,               # 用户 11-14: 让位腔顶的屋顶/悬空全去掉 ⇒ 让位腔外包整块竖直打通到下段顶 Z32 (上段盖住); None = 原 45° 屋顶
+    FLAP_SUP_GAP=2.0,                  # 'support' 模式横缝高 (用户 11-14: 够放支撑就行, 原 7.2)
     FLAP_TIE=0.6,                      # 'tie' 模式: 下罩正立打印: 上舌片底边 (横缝顶) 两侧竖缝各留 0.6 高断开桥 (不切穿), 舌片底层成 ~7 跨的两端搭桥; 打完用刀划开
     ROOF=True,                         # 让位腔顶做 45° 双坡屋顶 (下罩正立打印免平顶长桥)
     FLAP_TOP_Z1=30.0, FLAP_BOT_Z0=2.0, # 上舌片根 Z30 (墙实心到 Z32) / 下舌片根 Z2 (下罩底 Z0)
@@ -287,7 +289,9 @@ def make_key_bracket(p=None):
             (-KB.W / 2, KB.W / 2, KB.Y_BACK_MAX, yB, P['BACK_Z1'])]
     # ---- 下罩让位腔: 每个外包 +CLR, 底一律开到 Z−1 (下罩从上往下罩, 竖直柱体并集 ⇒ 无倒扣) ----
     boxes = [(x0 - c, x1 + c, y0 - c, y1 + c, -1.0, z1 + c) for x0, x1, y0, y1, z1 in env]
-    ZR = P['ROOF_ZMAX']
+    ZT = P.get('POCKET_THRU_Z')
+    if ZT: boxes = [(a, b_, d, e, f, ZT) for a, b_, d, e, f, _ in boxes]; P = dict(P, ROOF=False)
+    ZR = ZT or P['ROOF_ZMAX']
     assert max(b_[5] for b_ in boxes) <= ZR + 1e-9, ('让位腔顶超 ROOF_ZMAX', max(b_[5] for b_ in boxes))
     def roof(b_):                                                         # 45° 双坡, 超 ROOF_ZMAX 削平 (剩平顶桥 = 短边 − 2×(ZMAX − 腔顶))
         g_ = gable(*b_)
@@ -296,7 +300,7 @@ def make_key_bracket(p=None):
         return g_
     feet = [foot_poly(P, yP, s, c) for s in (1, -1)]
     roofs = [roof(b) for b in boxes] if P['ROOF'] else []              # 每个外包顶加 45° 双坡 (只在外包投影内 ⇒ 外皮最薄不变, 腔仍包住竖直下落外包)
-    pocket = clean(fuse(*[box(a, d, f, b_, e, g) for a, b_, d, e, f, g in boxes], *roofs, *[xy_prism(q[::s], -1.0, FT + c) for q, s in zip(feet, (1, -1))]))
+    pocket = clean(fuse(*[box(a, d, f, b_, e, g) for a, b_, d, e, f, g in boxes], *roofs, *[xy_prism(q[::s], -1.0, ZT or FT + c) for q, s in zip(feet, (1, -1))]))
     r_max = max([math.hypot(max(abs(a), abs(b_)), max(abs(d), abs(e))) for a, b_, d, e, _, _ in boxes] + [math.hypot(x, y) for q in feet for x, y in q])
     r_min = min([math.hypot(0 if a < 0 < b_ else min(abs(a), abs(b_)), min(abs(d), abs(e))) for a, b_, d, e, _, _ in boxes] +
                 [math.hypot(P['FOOT_X0'] - c, P['FOOT_Y0'] - c)])
@@ -310,7 +314,7 @@ def make_key_bracket(p=None):
     w2, sl = P['FLAP_W'] / 2, P['FLAP_SLOT']
     zb0, zb1 = P['FLAP_BAR_Z']
     if P['FLAP_MODE'] == 'support':                                         # 横缝开到凸点边各留 0.4
-        zb0, zb1 = zlo + P['NUB_D'] / 2 + 0.4, zhi - P['NUB_D'] / 2 - 0.4
+        zm = (zlo + zhi) / 2; zb0, zb1 = zm - P['FLAP_SUP_GAP'] / 2, zm + P['FLAP_SUP_GAP'] / 2   # 用户 11-14: 横缝只要放得下支撑 ⇒ 两键中线 ±1 (原开到凸点边各留 0.4, 7.2 高)
     else:
         assert P['FLAP_MODE'] == 'tie', P['FLAP_MODE']
     ys = yF + KB.BTN_H                                                      # 杆顶 108.1
