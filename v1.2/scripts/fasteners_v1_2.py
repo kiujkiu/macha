@@ -321,7 +321,7 @@ FAST = [(k, comp(v), c, 0.05) for (k, c), v in grp.items()]
 P_ = [('底盘 Φ220×6', B.disc, '#8A8F98', 0.05), ('线圈环', B.ring, '#E0A030', 0.05), ('电机 Φ55×21.5 (占位)', B.motor, '#333333', 0.05),
       ('电机控制板', BOARD_LITE, '#2E7D32', 0.08), ('散热片 40×20×6', B.heatsink, '#C0392B', 0.05),
       ('法兰盘 flange_disc_v1_2', B.flange_disc, '#D9A441', 0.05), ('安装法兰 mounting_flange_v1_2', B.mounting_flange, '#B5895A', 0.05),
-      ('转子毂盘 hub_disc_v1_2', B.hub, '#4F86C6', 0.05), ('承载盘 rim_ring Φ178', B.rim, '#6AA84F', 0.05),
+      ('转子毂盘 hub_disc_v1_2', B.hub, '#4F86C6', 0.05), ('承载盘 rim_ring Φ170', B.rim, '#6AA84F', 0.05),
       ('玻璃下-下段 glass_shroud_lower_v1_2', B.shroud_lo, '#7FB3D5', 0.05), ('玻璃下-上段 glass_shroud_upper_v1_2', B.shroud_hi, '#5DADE2', 0.05), ('外卡环 glass_clamp_ring_v1_2', B.clamp_ring, '#2E86C1', 0.05), ('XT60 压块', B.xt_clamp, '#F1C232', 0.05), ('XT60 底垫', B.xt_shim, '#E69138', 0.05),
       *([('MOS 压块 mos_clamp_v1_2', B.CD.clamp, '#E69138', 0.05)] if B.CD.HAS_MC else []), *([('电容卡件 cap_clamp_v1_2', B.CD.cap_clamp, '#B45F06', 0.05)] if B.CD.HAS_CC else []), ('线圈驱动板 (元件级)', B.CD.pcb, '#38761D', 0.05), ('线圈驱动 MOS', B.CD.mos, '#222222', 0.05),
       ('线圈驱动 电解电容', B.CD.cap, '#1155CC', 0.05), ('线圈驱动 散热片', B.CD.sink2, '#C0392B', 0.05),

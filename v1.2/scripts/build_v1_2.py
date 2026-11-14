@@ -1,4 +1,4 @@
-"""POV3D V1.2 结构: V1.0 基础上换电机 Φ55x21.5 + 打印底盘 Φ220 + 柱回 V0.4 柱位 + 承载盘外唇 Φ178."""
+"""POV3D V1.2 结构: V1.0 基础上换电机 Φ55x21.5 + 打印底盘 Φ220 + 柱回 V0.4 柱位 + 承载盘外唇 Φ170 (11-14, 原 Φ178)."""
 import sys, os, math, json
 from pathlib import Path
 from helpers import read_step, write_doc, bbox, solids
@@ -48,7 +48,7 @@ MOTOR_Z0 = ROTOR_TOP - MOTOR_H        # 10.2 (原 5.0)
 BORE_D = 59.0                          # 电机座内孔 (原 55), 径向余 2
 STATOR_R = 46 / 2; ROTOR_R = 16 / 2   # 对角/2
 POCKET_D, POCKET_H = 6.2, 3.5          # 毂盘中心窝 (原 Φ6.2x2.2)
-RIM_D = 178.0                          # 承载盘外唇 (原 180)
+RIM_D = 170.0                          # 承载盘外唇: 用户 11-14 改回 V0.4 rim_ring Φ170 (V1.0 原 180, V1.2 曾 178)
 DISC_D, DISC_T = 220.0, 6.0
 M6_D, CB_D, CB_H = 6.4, 13.0, 3.0
 COLLAR_M6 = [(sx * 37.5, sy * 37.5) for sx in (1, -1) for sy in (1, -1)]
@@ -562,7 +562,7 @@ for k, s in dict(collar=collar, hub=hub, rim=rim, disc=disc, frameA=frameA, fram
 NEW = [  # name, shape, color, 打印?
     ('base_disc_D220x6_v1_2', disc, '#8a8f98', 'disc'),
         ('hub_disc_v1_2', hub, '#4f86c6', 'hub'),
-    ('rim_ring_v1_2_D178', rim, '#6aa84f', 'rim'),
+    ('rim_ring_v1_2_D170', rim, '#6aa84f', 'rim'),
     ('motor_placeholder_D55x21.5', motor, '#444444', None),
     ('frame_A_v4', frameA, '#c27ba0', 'frameA'),
     ('frame_B_v4', frameB, '#a64d79', 'frameB'),

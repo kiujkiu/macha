@@ -16,7 +16,7 @@ P_=[('底盘 Φ220×6 (平板)',disc,'#8A8F98',0.05),('线圈环 (托法兰盘, 
     ('线圈驱动 电解电容 Φ10×20',CD.cap,'#1155CC',0.05),('线圈驱动 散热片 40×20×6 (转 90°)',CD.sink2,'#C0392B',0.05),
     ('按键支架 key_bracket_v1_2',key_bracket,'#F1C232',0.03),('按键板 (简模)',key_board,'#2E7D32',0.03)]
 EXT=[('法兰盘 flange_disc_v1_2 (底减3)',fl,'#D9A441',0.05),('安装法兰 mounting_flange_v1_2 (外裙短3)',mf,'#B5895A',0.05),
-     ('转子毂盘 hub_disc_v1_2 (降10.2)',hub,'#4F86C6',0.05),('承载盘 rim_ring Φ178 (降10.2)',rim,'#6AA84F',0.05)]
+     ('转子毂盘 hub_disc_v1_2 (降10.2)',hub,'#4F86C6',0.05),('承载盘 rim_ring Φ170 (降10.2)',rim,'#6AA84F',0.05)]
 A = V12 / 'assembly_v1_2'
 GTOP=[('玻璃上 glass_top_v1_2',glass_top,'#7FB3D5',0.05),('圆环玻璃 OD180×ID20×10 (外购)',glass_disc,'#AED6F1',0.1),('中心堵头 glass_top_hub_v1_2',glass_top_hub,'#2E86C1',0.02)]
 write3mf(f'{A}_底盘+线圈环+电机+控制板.3mf',P_)
