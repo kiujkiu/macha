@@ -446,6 +446,31 @@ _lip = ann(go, SH_OUT + 1, Z_G, Z_G + OUT_DEPTH + 1)
 clamp_ring = clean(fuse(op(BRepAlgoAPI_Common, seat, _lip), ann(TG_R0, TG_R0 + TG_W, Z_G - TG_H, Z_G + 0.5)))
 shroud_split = clean(cut(seat, _lip, ann(TG_R0 - TG_CLR, TG_R0 + TG_W + TG_CLR, Z_G - TG_H - TG_CLR, Z_G + 1)))
 LOG['split'] = dict(ring=vol(clamp_ring), shroud=vol(shroud_split))
+# 用户 11-14: 分体下罩太高, 做错要全部重来 ⇒ 在承载盘顶 Z32 横切成上下两段, 8×M3 锁 (上段沉孔往下; (二) 改穿通到下段底面法兰螺母)。
+#   Z32 以下 = 原 32 高下罩 (三角块/筋/按键舌片 Z≤30/XT60 井/按键腔顶 Z23.3 都在下面), 以后改可视高度只重打上段。
+#   对中: 下段顶面凸筋 r104–106 高 2 插上段底槽 (单边 0.1, 同外卡环); 螺丝 r98.5 @22.5°+45k (避开 +X XT60 / +Y 按键),
+#   沉孔 Φ7 开在上段顶面 (玻璃座) 被玻璃端面 + 外卡环盖住; 拆: 外卡环 → 玻璃 → 8 螺丝 → 上段, 不用翻整机。
+SPLIT_Z = Z_RIM_TOP                                # 32.0
+JN_N, JN_R, JN_ANG0 = 8, 98.5, 22.5               # 沉孔 Φ7 r95.0–102.0: 内卡外面 r94.8 外, 外卡环槽 r103.9 内
+# 用户 11-14 (二): 要真夹持 ⇒ 螺丝穿通上下两段, 下段底面 Φ8.2 沉孔里放 M3 法兰螺母 (Φ7.6×3.7, 法兰朝上顶孔顶), 底面仍平坐底盘。
+JN_BEAR = Z_G - 4.78                               # 头支承面 Z48.3 (上段顶面 Φ7 沉孔), 超薄头顶 Z49.8 (玻璃底下 3.3)
+JN_L = 45.0                                        # M3×45 Φ7 超薄头
+JN_TIP = JN_BEAR - JN_L                            # 尾端 Z3.3
+JN_NUT_H, JN_NUT_D = 3.7, RING_NUT_CLR_D           # 法兰螺母总厚 3.7, 让位孔 Φ8.2
+JN_NUT_Z1 = JN_TIP + JN_NUT_H                      # 螺母孔顶 Z7.0 (螺母 Z3.3..7.0, 尖齐螺母下端面 = 吃满 3.7)
+JN_PTS = [(JN_R * math.cos(math.radians(JN_ANG0 + 45 * k)), JN_R * math.sin(math.radians(JN_ANG0 + 45 * k))) for k in range(JN_N)]
+RG_R0, RG_W, RG_H, RG_CLR = 104.0, 2.0, 2.0, 0.1   # 两段止口凸筋 (在下段顶)
+assert JN_R - CB7 / 2 >= gi and JN_R + CB7 / 2 <= TG_R0 - TG_CLR - 1.5, '沉孔碰内卡或外卡环槽'
+assert JN_R - JN_NUT_D / 2 >= SPIG_IN + 2 and JN_R + JN_NUT_D / 2 <= SH_OUT - 2, '螺母孔离墙面太近'
+assert JN_R + 1.7 <= RG_R0 - RG_CLR - 1.5, '通孔碰止口凸筋'
+assert JN_BEAR - SPLIT_Z >= 10, '上段沉孔下面肉太薄'
+_lo_box = cyl(0, 0, 2 * SH_OUT + 10, -5, SPLIT_Z)
+_s = cut(op(BRepAlgoAPI_Common, shroud_split, _lo_box), *[fuse(cyl(x, y, 3.4, -1, SPLIT_Z + 1), cyl(x, y, JN_NUT_D, -1, JN_NUT_Z1)) for x, y in JN_PTS])
+shroud_lo = clean(fuse(_s, ann(RG_R0, RG_R0 + RG_W, SPLIT_Z - 0.5, SPLIT_Z + RG_H)))
+_s = cut(shroud_split, _lo_box, ann(RG_R0 - RG_CLR, RG_R0 + RG_W + RG_CLR, SPLIT_Z - 1, SPLIT_Z + RG_H + RG_CLR))
+for x, y in JN_PTS: _s = cut(_s, cyl(x, y, 3.4, SPLIT_Z - 1, JN_BEAR + 0.01), cyl(x, y, CB7, JN_BEAR, Z_G + 0.01))
+shroud_hi = clean(_s)
+LOG['split2'] = dict(split_z=SPLIT_Z, lo=vol(shroud_lo), hi=vol(shroud_hi), pts=[(round(x, 2), round(y, 2)) for x, y in JN_PTS], bear=JN_BEAR, tip=JN_TIP, nut_z1=JN_NUT_Z1)
 tube = ann(GL_OD / 2 - GL_T, GL_OD / 2, Z_G, Z_G + GL_H)                     # 玻璃罩 OD200x5 高 245
 # 4d 玻璃上 (顶盖, 用户 11-13): 玻璃上环 glass_top_v1_2 + 圆环玻璃 OD180/ID20/t10 (外购) + 中心卡扣堵头 glass_top_hub_v1_2
 #    环 = 玻璃下镜像: 内卡 r90.8–94.8 + 外卡 r100.2–110 夹玻璃上端, 外面 r110 齐平; 内外卡同深 GT_DEPTH, 底面同高 ⇒ 正立打印两卡底落床, 无支撑

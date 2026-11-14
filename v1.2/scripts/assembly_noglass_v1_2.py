@@ -31,7 +31,7 @@ PARTS = [  # (名, 形状, 颜色, 3MF 弦差)
     ('按键支架 key_bracket_v1_2', B.key_bracket, '#F1C232', 0.03), ('按键板 (简模)', B.key_board, '#2E7D32', 0.03),
     ('法兰盘 flange_disc_v1_2', B.flange_disc, '#D9A441', 0.05), ('安装法兰 mounting_flange_v1_2', B.mounting_flange, '#B5895A', 0.05),
     ('转子毂盘 hub_disc_v1_2', B.hub, '#4F86C6', 0.05), ('承载盘 rim_ring', B.rim, '#6AA84F', 0.05),
-    ('玻璃下 (分体下罩) glass_shroud_split_v1_2', B.shroud_split, '#7FB3D5', 0.05), ('外卡环 glass_clamp_ring_v1_2', B.clamp_ring, '#2E86C1', 0.05),
+    ('玻璃下-下段 glass_shroud_lower_v1_2', B.shroud_lo, '#7FB3D5', 0.05), ('玻璃下-上段 glass_shroud_upper_v1_2', B.shroud_hi, '#5DADE2', 0.05), ('外卡环 glass_clamp_ring_v1_2', B.clamp_ring, '#2E86C1', 0.05),
     ('XT60 压块', B.xt_clamp, '#F1C232', 0.05), ('XT60 底垫', B.xt_shim, '#E69138', 0.05),
     ('V2 转接板 140×80 (占位)', VB['baseboard'], '#1E8449', 0.05), ('V2 转接板器件 (限高包络)', VB['bb_parts'], '#7D8C8E', 0.05),
     ('CZ06 核心板 (6.6 包络)', VB['cz06'], '#5B2C6F', 0.05), ('V2 灯板 LED_V0.2.0 (1 块, 位置参考)', VB['led'], '#145A32', 0.05),

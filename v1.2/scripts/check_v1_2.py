@@ -24,7 +24,7 @@ def pts(shape,dens=8.0,defl=0.05):
         e.Next()
     return np.vstack(out)
 fl=flange_disc; mf=mounting_flange
-S={**({'cd_clamp':CD.clamp} if CD.HAS_MC else {}),**({'cd_capclamp':CD.cap_clamp} if CD.HAS_CC else {}),'cd_pcb':CD.pcb,'cd_mos':CD.mos,'cd_cap':CD.cap,'cd_sink2':CD.sink2,'board':board,'heatsink':heatsink,'disc':disc,'ring':ring,'flange_disc':fl,'mounting_flange':mf,'motor':motor,'hub':hub,'rim':rim,'seat':seat,'tube':tube,'xt60':xt_env,'shroud_split':shroud_split,'clamp_ring':clamp_ring,'key_bracket':key_bracket,'key_board':key_board,'glass_top':glass_top,'glass_disc':glass_disc,'glass_top_hub':glass_top_hub}
+S={**({'cd_clamp':CD.clamp} if CD.HAS_MC else {}),**({'cd_capclamp':CD.cap_clamp} if CD.HAS_CC else {}),'cd_pcb':CD.pcb,'cd_mos':CD.mos,'cd_cap':CD.cap,'cd_sink2':CD.sink2,'board':board,'heatsink':heatsink,'disc':disc,'ring':ring,'flange_disc':fl,'mounting_flange':mf,'motor':motor,'hub':hub,'rim':rim,'seat':seat,'tube':tube,'xt60':xt_env,'shroud_split':shroud_split,'shroud_lo':shroud_lo,'shroud_hi':shroud_hi,'clamp_ring':clamp_ring,'key_bracket':key_bracket,'key_board':key_board,'glass_top':glass_top,'glass_disc':glass_disc,'glass_top_hub':glass_top_hub}
 for i,p in enumerate(posts): S[f'post{i}']=p
 for i,(x,y) in enumerate(SH_M6): S[f'seat_nut{i}']=cyl(x,y,SH_NUT_D,NUT_Z0,NUT_Z0+3.7)   # 11-12 夜: M3 法兰螺母实高 3.7 (build 里 seat_nuts 仍按 2.4)
 P={k:pts(v) for k,v in S.items()}; print('sampled',f'{time.time()-T0:.0f}s',flush=True)
@@ -35,7 +35,7 @@ _MC=('cd_clamp',) if CD.HAS_MC else ()
 PAIRS=[('board',x) for x in ('ring','flange_disc','mounting_flange','motor','seat','tube','post0','post1','post2','post3')]+\
  [('ring',x) for x in ('disc','flange_disc','mounting_flange','motor','seat')]+[('motor',x) for x in ('disc','hub','flange_disc','mounting_flange')]+\
  [('hub','mounting_flange'),('hub','flange_disc'),('rim','mounting_flange'),('seat','mounting_flange'),('seat','flange_disc'),('seat','rim'),('seat','hub')]+\
- [(f'seat_nut{i}',x) for i in range(4) for x in ('mounting_flange','flange_disc')]+[('heatsink','disc')]+[('clamp_ring','shroud_split'),('clamp_ring','tube'),('shroud_split','tube')]+[('xt60',x) for x in ('board','seat','mounting_flange','flange_disc','disc','ring')]+\
+ [(f'seat_nut{i}',x) for i in range(4) for x in ('mounting_flange','flange_disc')]+[('heatsink','disc')]+[('clamp_ring','shroud_split'),('shroud_lo','shroud_hi'),('clamp_ring','shroud_hi'),('shroud_hi','tube'),('shroud_hi','rim'),('shroud_hi','hub'),('clamp_ring','tube'),('shroud_split','tube')]+[('xt60',x) for x in ('board','seat','mounting_flange','flange_disc','disc','ring')]+\
  [(c,x) for c in _MC+_CC+('cd_cap','cd_sink2','cd_pcb','cd_mos') for x in ('flange_disc','mounting_flange','ring','board','seat','xt60','shroud_split')]+[('cd_sink2','disc'),('cd_cap','disc'),('cd_pcb','disc')]+[(c,'disc') for c in _MC+_CC]+\
  [(c,x) for c in _MC for x in ('cd_pcb','cd_mos','cd_sink2','cd_cap')]+[(c,x) for c in _CC for x in ('cd_cap','cd_pcb','cd_sink2')+_MC]+[('cd_cap','cd_pcb'),('cd_mos','cd_sink2')]+\
  [('key_bracket',x) for x in ('disc','seat','shroud_split','key_board','ring','flange_disc','mounting_flange','rim')]+[('key_board',x) for x in ('disc','seat','shroud_split','ring','flange_disc','mounting_flange','rim')]+\
