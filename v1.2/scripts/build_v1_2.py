@@ -393,7 +393,11 @@ for gx, gy in XT_GHOLES:
 # 按键板 (11-13 (三)): 让位腔 = 支架 (平板/脚/筋)+板+法兰螺母/杆尖+背面元件区 外包 +0.3, 底开 (下罩从上罩下), 外皮 ≥1.5 (舌片除外); 外皮开导光柱 Φ3.0 ×4 + 按键 H 形缝舌片 (内面挖薄竖槽 + 凸点)
 assert KEY['pocket_rmin'] >= SPIG_IN + 0.5 and KEY['skin'] >= 1.5, (KEY['pocket_rmin'], KEY['skin'])
 s_ = cut(s_, KEY['pocket'], *KEY['skin_holes'])
-LOG['key'] = dict(m3=[(round(x, 2), round(y, 2)) for x, y in KEY_M3], skin=KEY['skin'], flap={k: KEY['flap'][k] for k in ('F_top', 'F_bot', 't_top')}, pocket_bbox=KEY['pocket_bbox'], bracket_vol=KEY['bracket_vol'],
+# 用户 11-14: 板后面 (内侧) 不要留塑料 ⇒ 板背面到墙内面这段墙整块打通 (x ±筋外 +0.3, 竖直到 Z32 顶面, 下段顶开口由上段盖住; 支架照旧)
+KEY_OPEN_X = KEY['params']['RIB_X1'] + KEY['params']['CLR']                       # ±22.9
+KEY_OPEN_Y1 = KEY['board_screws'][0]['nut_y']                                    # 板背面 y
+s_ = cut(s_, gbox(-KEY_OPEN_X, SPIG_IN - 5, -1, KEY_OPEN_X, KEY_OPEN_Y1, Z_RIM_TOP + 0.01))
+LOG['key'] = dict(m3=[(round(x, 2), round(y, 2)) for x, y in KEY_M3], skin=KEY['skin'], flap={k: KEY['flap'][k] for k in ('F_top', 'F_bot', 't_top')}, pocket_bbox=KEY['pocket_bbox'], open=(KEY_OPEN_X, KEY_OPEN_Y1), bracket_vol=KEY['bracket_vol'],
                   holes=[(round(x, 2), round(z, 2), dd) for x, z, dd in KEY['holes']])
 def _stl(f):
     from OCP.StlAPI import StlAPI_Reader
