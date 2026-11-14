@@ -176,10 +176,10 @@ for i, s_ in enumerate(_K['board_screws']):
     KEY_ROWS.append(dict(组=f"M3x{L:g} 按键板", 号=i, x=round(x, 2), Z=round(z, 2), 方向="−Y", 支承面y=round(by, 2), 尾端y=round(tip, 2),
                          啮合="法兰螺母", 啮合长=round(max(0.0, min(ny, by) - max(tip, ny - NUT_T)), 2)))
 
-# 7 玻璃下 上段↔下段 8×M3×45 (11-14 二): 上段顶面 Φ7 沉孔往下, 穿通两段, 下段底面 Φ8.2 孔里法兰螺母 (Z3.3..7.0, 法兰朝上)
+# 7 玻璃下 上段↔下段 8×M3×50 (11-14 四): 上段顶面 Φ7 沉孔往下, 穿通两段, 下段底面 Φ8.2 孔里法兰螺母 (Z3.3..7.0, 法兰朝上)
 for i, (x, y) in enumerate(B.JN_PTS):
-    screw("M3x45 玻璃下上下段", i, x, y, B.JN_BEAR, B.JN_L, False, engage=("法兰螺母", B.JN_TIP, B.JN_NUT_Z1))
-    add(f"M3 法兰螺母 玻璃下下段底 #{i}", flange_nut_inv(x, y, B.JN_TIP), "#707070")   # 法兰朝上顶下段底面 Φ8.2 孔顶
+    screw("M3x50 玻璃下上下段", i, x, y, B.JN_BEAR, B.JN_L, False, engage=("法兰螺母", B.JN_NUT_Z1 - B.JN_NUT_H, B.JN_NUT_Z1))
+    add(f"M3 法兰螺母 玻璃下下段底 #{i}", flange_nut_inv(x, y, B.JN_NUT_Z1 - B.JN_NUT_H), "#707070")   # 法兰朝上顶下段底面 Φ8.2 孔顶
 
 # ---------------- 零件 ----------------
 PARTS = {"底盘": B.disc, "线圈环": B.ring, "电机": B.motor, "控制板": B.board, "散热片": B.heatsink,

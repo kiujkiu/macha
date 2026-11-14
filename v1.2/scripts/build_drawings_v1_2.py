@@ -172,7 +172,7 @@ SPECS.append(dict(
                            where=ring_txt(B.JN_PTS) + f"  配上段 M3×{F(B.JN_L)}",
                            det=dict(kind="cb", d=3.4, D=B.JN_NUT_D, h=B.JN_NUT_Z1, side="bot", z=(0, B.SPLIT_Z), pt=B.JN_PTS[0], title="螺母沉孔 J"))],
     notes=[f"墙 r{F(B.SPIG_IN)}–{F(B.SH_OUT)} Z0→{F(B.SPLIT_Z)}; A 孔心到墙内面 {F(B.SPIG_IN - B.SH_R)}"] + gl_notes[2:] + [f"上下段分界 Z{F(B.SPLIT_Z)} (承载盘顶); 顶面止口凸筋 r{F(B.RG_R0)}–{F(B.RG_R0 + B.RG_W)} 高 {F(B.RG_H)} 插上段底槽 (单边 {F(B.RG_CLR)})",
-                          "以后改可视高度只重打上段, 本件不动", f"M3×{F(B.JN_L)} 穿通两段: 尾 Z{F(B.JN_TIP)}, 法兰螺母 Z{F(B.JN_TIP)}..{F(B.JN_NUT_Z1)} 全埋, 底面平坐底盘"]))
+                          "以后改可视高度只重打上段, 本件不动", f"M3×{F(B.JN_L)} 穿通两段: 尾 Z{F(B.JN_TIP)}, 法兰螺母 Z{F(B.JN_NUT_Z1 - B.JN_NUT_H)}..{F(B.JN_NUT_Z1)} (啮合 {F(B.JN_NUT_Z1 - B.JN_TIP)}), 底面平坐底盘"]))
 SPECS.append(dict(
     code="glass_shroud_upper_v1_2", shape=B.shroud_hi, short="玻璃下 上段 (分体)", qty="1",
     title=f"玻璃下 上段: Z{F(B.SPLIT_Z)}→{F(B.Z_G)} 墙 + 内卡到 Z{F(B.Z_VIEW0)}, {B.JN_N}× M3 沉孔", orient="底面 (止口槽面) 贴床",

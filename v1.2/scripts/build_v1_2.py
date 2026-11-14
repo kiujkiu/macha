@@ -454,10 +454,10 @@ SPLIT_Z = Z_RIM_TOP                                # 32.0
 JN_N, JN_R, JN_ANG0 = 8, 98.5, 22.5               # 沉孔 Φ7 r95.0–102.0: 内卡外面 r94.8 外, 外卡环槽 r103.9 内
 # 用户 11-14 (二): 要真夹持 ⇒ 螺丝穿通上下两段, 下段底面 Φ8.2 沉孔里放 M3 法兰螺母 (Φ7.6×3.7, 法兰朝上顶孔顶), 底面仍平坐底盘。
 JN_BEAR = Z_G - 2.0                                # 用户 11-14: 上段顶面 Φ7 沉孔深 2 ⇒ 支承 Z51.08, 超薄头顶 Z52.58 (玻璃底下 0.5)
-JN_L = 45.0                                        # M3×45 Φ7 超薄头
-JN_TIP = JN_BEAR - JN_L                            # 尾端 Z6.08
+JN_L = 50.0                                        # M3×50 Φ7 超薄头 (用户 11-14 四)
+JN_TIP = JN_BEAR - JN_L                            # 尾端 Z1.08
 JN_NUT_H, JN_NUT_D = 3.7, RING_NUT_CLR_D           # 法兰螺母总厚 3.7, 让位孔 Φ8.2
-JN_NUT_Z1 = JN_TIP + JN_NUT_H                      # 螺母孔顶 Z9.78 (螺母 Z6.08..9.78, 尖齐螺母下端面 = 吃满 3.7)
+JN_NUT_Z1 = 4.0                                    # 用户 11-14 四: 底面螺母孔深 4 ⇒ 螺母 Z0.3..4.0 (底面缩进 0.3), 尾 Z1.08 ⇒ 啮合 2.92
 JN_PTS = [(JN_R * math.cos(math.radians(JN_ANG0 + 45 * k)), JN_R * math.sin(math.radians(JN_ANG0 + 45 * k))) for k in range(JN_N)]
 RG_R0, RG_W, RG_H, RG_CLR = 104.0, 2.0, 2.0, 0.1   # 两段止口凸筋 (在下段顶)
 assert JN_R - CB7 / 2 >= gi and JN_R + CB7 / 2 <= TG_R0 - TG_CLR - 1.5, '沉孔碰内卡或外卡环槽'
