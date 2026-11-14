@@ -182,7 +182,7 @@ def make_key_bracket(p=None):
     sp = KB.smd_pocket(); spx0, spz0 = KB.to_global(sp[2], sp[1]); spx1, spz1 = KB.to_global(sp[0], sp[3])
     cuts.append(box(spx0, yF - 1, spz0, spx1, yF + sp[4], spz1))
     for z in zs:                                                                                   # 每键单独 (间距 11, 中间平板仍压板)
-        cuts += [box(xb - h6, yF - 1, z - h6, xb + h6, yF + KB.BTN_BODY_H + bc, z + h6),          # 开关本体让位
+        cuts += [box(xb - h6, yF - 1, z - h6, xb + h6, yF + KB.BTN_BODY_H + KB.BTN_NUB_H + bc, z + h6),   # 开关本体 (含四角凸点) 让位
                  box(xb - px, yF - 1, z - py, xb + px, yF + P['LEG_DEPTH'], z + py)]               # 脚 / 焊盘让位
     cuts += [ycyl(xb, z, P['PL_STEM_D'], yF, yP + 1) for z in zs]                                 # 杆孔
     bracket = clean(cut(br, *cuts))
@@ -216,7 +216,7 @@ def make_key_bracket(p=None):
     parts = [bd]; holes = []; env = []; stem_env = []          # env: (x0, x1, y0, y1, z1) 外包 (未加间隙)
     for X, Y in KB.BTN:
         x, z = KB.to_global(X, Y); h = KB.BTN_BODY / 2
-        parts += [box(x - h, yF, z - h, x + h, yF + KB.BTN_BODY_H, z + h), ycyl(x, z, KB.BTN_STEM_D, yF + KB.BTN_BODY_H, yF + KB.BTN_H)]
+        parts += [box(x - h, yF, z - h, x + h, yF + KB.BTN_BODY_H + KB.BTN_NUB_H, z + h), ycyl(x, z, KB.BTN_STEM_D, yF + KB.BTN_BODY_H, yF + KB.BTN_H)]
         for x0, y0, w, hh in KB.btn_pads(X, Y):                                      # 焊盘 + 脚 (高 BTN_LEG_H)
             gx0, gz0 = KB.to_global(x0 + w, y0)
             parts.append(box(gx0, yF, gz0, gx0 + w, yF + KB.BTN_LEG_H, gz0 + hh))
