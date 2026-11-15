@@ -1,6 +1,7 @@
 """V1.2 不装玻璃整机 (用户 11-13 晚「不装玻璃的组和图做一个」): 3MF + A3 装配图 (PDF/PNG)。
     cd v1.2/scripts && ../../.venv/bin/python assembly_noglass_v1_2.py
-零件 = 玻璃罩版整机 (分体外卡环) 去掉 玻璃罩 / 玻璃上 / 圆环玻璃 / 中心堵头, 加 V2 转子电路占位 (v2_boards_v1_2: 转接板 + CZ06 + 1 块灯板)。
+零件 = 玻璃罩版整机 (分体外卡环) 去掉 玻璃罩 / 玻璃上 / 圆环玻璃 / 中心堵头, 加 V2 转子电路占位 (v2_boards_v1_2: 转接板 r1 + CZ06)
+       + 两块灯板背靠背 + 灯板支撑三件 + 桥板/Φ8 轴/天线 (led_support_v1_2, 11-15)。
 输出: ../assembly_v1_2_不装玻璃_整机+V2板.3mf, ../assembly_v1_2_不装玻璃_装配图.{pdf,png}
 """
 import io, contextlib, math
@@ -21,7 +22,8 @@ _b = BRep_Builder(); board = TopoDS_Compound(); _b.MakeCompound(board)
 for s in B.solids(B.board):
     bb = B.bbox(s)
     if max(bb[3] - bb[0], bb[4] - bb[1]) >= 1.2 or bb[5] - bb[2] >= 1.0: _b.Add(board, s)
-VB = V.make(B)
+import led_support_v1_2 as L
+VB = L.VB
 CD = B.CD
 PARTS = [  # (名, 形状, 颜色, 3MF 弦差)
     ('底盘 base_disc_v1_2', B.disc, '#8A8F98', 0.05), ('线圈环 coil_ring_v1_2', B.ring, '#E0A030', 0.05), ('电机 Φ55×21.5 (占位)', B.motor, '#333333', 0.05),
@@ -33,8 +35,11 @@ PARTS = [  # (名, 形状, 颜色, 3MF 弦差)
     ('转子毂盘 hub_disc_v1_2', B.hub, '#4F86C6', 0.05), ('承载盘 rim_ring', B.rim, '#6AA84F', 0.05),
     ('玻璃下-下段 glass_shroud_lower_v1_2', B.shroud_lo, '#7FB3D5', 0.05), ('玻璃下-上段 glass_shroud_upper_v1_2', B.shroud_hi, '#5DADE2', 0.05), ('外卡环 glass_clamp_ring_v1_2', B.clamp_ring, '#2E86C1', 0.05),
     ('XT60 压块', B.xt_clamp, '#F1C232', 0.05), ('XT60 底垫', B.xt_shim, '#E69138', 0.05),
-    ('V2 转接板 140×80 (占位)', VB['baseboard'], '#1E8449', 0.05), ('V2 转接板器件 (限高包络)', VB['bb_parts'], '#7D8C8E', 0.05),
-    ('CZ06 核心板 (6.6 包络)', VB['cz06'], '#5B2C6F', 0.05), ('V2 灯板 LED_V0.2.0 (1 块, 位置参考)', VB['led'], '#145A32', 0.05),
+    ('V2 转接板 r1 方案1 137×84 (占位)', VB['baseboard'], '#1E8449', 0.05), ('V2 转接板器件 (限高包络)', VB['bb_parts'], '#7D8C8E', 0.05),
+    ('CZ06 核心板 (6.6 包络)', VB['cz06'], '#5B2C6F', 0.05),
+    ('灯板 A (+y)', L.led_a, '#145A32', 0.05), ('灯板 B (-y)', L.led_b, '#0E3B22', 0.05),
+    ('灯板支撑 +x led_post_a', L.post_a, '#F1C232', 0.03), ('灯板支撑 -x + 底梁 led_post_b', L.post_b, '#E69138', 0.03), ('灯板顶部件 led_top', L.top, '#6FA8DC', 0.03),
+    ('Φ8×40 钢轴', L.rod, '#999999', 0.03), ('桥板 A/B (占位)', L.comp([L.br_a, L.br_b]), '#1E8449', 0.05), ('天线 Molex 219611 ×2', L.comp([L.ant_a, L.ant_b]), '#C0392B', 0.03),
 ]
 OUT3 = B.V12 / 'assembly_v1_2_不装玻璃_整机+V2板.3mf'
 write3mf(str(OUT3), PARTS)
@@ -111,20 +116,21 @@ for (z, t), zl in zip(LV, zt_):
 from OCP.BRepExtrema import BRepExtrema_DistShapeShape
 def _dist(a, b):
     d = BRepExtrema_DistShapeShape(a, b); d.Perform(); return d.Value()
-D_BB, D_CZ = _dist(VB['led'], VB['bb_parts']), _dist(VB['led'], VB['cz06'])
-_PL = dict((n, P) for n, P, _ in MESH)['V2 灯板 LED_V0.2.0 (1 块, 位置参考)']
-R_LED = float(np.hypot(_PL[:, :, 0], _PL[:, :, 1]).max())
+_LED2 = L.comp([L.led_a, L.led_b])
+D_BB, D_CZ = _dist(_LED2, VB['bb_parts']), _dist(_LED2, VB['cz06'])
+_M = dict((n, P) for n, P, _ in MESH)
+R_LED = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in ('灯板 A (+y)', '灯板 B (-y)', '灯板支撑 +x led_post_a', '灯板支撑 -x + 底梁 led_post_b', '天线 Molex 219611 ×2'))
 assert R_LED < B.SPIG_IN - 1.0 and D_BB > 0.5 and D_CZ > 0.5, (R_LED, D_BB, D_CZ)
 print('clearance', D_BB, D_CZ, R_LED)
 from matplotlib.patches import Patch
 fig.legend(handles=[Patch(fc=c, label=n) for n, _, c in MESH], loc='upper left', bbox_to_anchor=(0.745, 0.46), fontsize=7, ncol=2, frameon=False, columnspacing=0.8, handlelength=1.2)
 note = [f'玻璃罩 OD{B.GL_OD:g}×{B.GL_T:g}×{B.GL_H:g} / 玻璃上 / 圆环玻璃 / 中心堵头 不装; 装上后玻璃上端 Z{B.Z_GT:g}',
-        f'V2 转子: 转接板 140×80×{B.BB_T:g} 垫 {B.BB_STANDOFF:g} + CZ06 {B.CZ06_H:g} + 留 {B.CZ06_CLR:g} = 灯板下沿 Z{B.Z_SCR0:g}',
+        f'V2 转子: 转接板 r1 137×84×{B.BB_T:g} 垫 {B.BB_STANDOFF:g} + CZ06 {B.CZ06_H:g} + 留 {B.CZ06_CLR:g} = 灯板下沿 Z{B.Z_SCR0:g}',
         '转接板器件按 F.CrtYd 外框 × 限高 (VH 10 / 电解 10.8 / 牛角 9 等) 做方块, 不是实物 3D',
-        '灯板只放 1 块 (板背贴 Y=0, LED 面朝 +Y); 两块背靠背的间距/偏心未定, 桥板/FPC 未建',
-        f'实测: 灯板-转接板器件最近 {D_BB:.2f}, 灯板-CZ06 {D_CZ:.2f}, 灯板最大转动半径 {R_LED:.2f} (玻璃下内面 r{B.SPIG_IN:g}, 余 {B.SPIG_IN - R_LED:.2f})']
+        f'两块灯板背靠背 (F 面 y=±{L.GAP_HALF:g}, 间隙 {2 * L.GAP_HALF:g}); 两端立板 + -x 底梁/中间舌 + 顶部件 Φ8 轴进玻璃上盖 688 (不装玻璃时轴悬空)',
+        f'实测: 灯板-转接板器件最近 {D_BB:.2f}, 灯板-CZ06 {D_CZ:.2f}, 转动件 (灯板/立板/天线) 最大半径 {R_LED:.2f} (玻璃下内面 r{B.SPIG_IN:g}, 余 {B.SPIG_IN - R_LED:.2f})']
 fig.text(0.03, 0.025, '\n'.join('· ' + s for s in note), fontsize=8, va='bottom')
-fig.text(0.98, 0.012, f'v1.2/scripts/assembly_noglass_v1_2.py  2026-11-13', fontsize=7, ha='right', color='#666')
+fig.text(0.98, 0.012, f'v1.2/scripts/assembly_noglass_v1_2.py  2026-11-15', fontsize=7, ha='right', color='#666')
 OUT2 = B.V12 / 'assembly_v1_2_不装玻璃_装配图'
 fig.savefig(f'{OUT2}.pdf'); fig.savefig(f'{OUT2}.png', dpi=110)
 print('wrote', OUT3, f'{OUT2}.pdf')

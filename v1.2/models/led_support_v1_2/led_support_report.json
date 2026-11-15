@@ -1,0 +1,105 @@
+{
+ "interf": {
+  "post_a × rod": 0.0,
+  "post_b × rod": 0.0,
+  "top × rod": 34.1713,
+  "post_a × post_b": 0,
+  "post_a × top": 0,
+  "post_b × top": 0
+ },
+ "fasteners": {
+  "rod × glass_top_hub": 0.0,
+  "688 × glass_top_hub": 0.0,
+  "standoffs × rim": 0.0
+ },
+ "misc": {
+  "sweep_min_gap": [
+   32.0,
+   87.29,
+   90.8,
+   3.51
+  ],
+  "sweep_rows_tight": [
+   [
+    32.0,
+    87.29,
+    90.8,
+    3.51
+   ]
+  ],
+  "hub_tip": 288.68,
+  "boss_z1": 285.68,
+  "rod_z": [
+   267.38,
+   307.38
+  ],
+  "brg_z": [
+   301.88,
+   306.88
+  ]
+ },
+ "balance": {
+  "post_a": {
+   "g": 6.52,
+   "cog": [
+    79.16,
+    0.0,
+    43.8
+   ],
+   "U": [
+    516.5,
+    0.0
+   ]
+  },
+  "post_b": {
+   "g": 10.13,
+   "cog": [
+    -58.19,
+    -0.0,
+    42.0
+   ],
+   "U": [
+    -589.6,
+    -0.0
+   ]
+  },
+  "top": {
+   "g": 5.95,
+   "cog": [
+    -0.0,
+    -0.0,
+    265.5
+   ],
+   "U": [
+    -0.0,
+    -0.0
+   ]
+  },
+  "supports_U_gmm": [
+   -73.2,
+   -0.0
+  ],
+  "baseboard_U_gmm": [
+   168.5,
+   -235.9
+  ],
+  "total_U_gmm": [
+   95.3,
+   -235.9
+  ],
+  "total_U_abs": 254.4,
+  "cw_r": 76.0,
+  "cw_g": 3.35,
+  "cw_ang_deg": 112.0
+ },
+ "valid": {
+  "post_a": true,
+  "post_b": true,
+  "top": true
+ },
+ "volume_mm3": {
+  "post_a": 5261.9,
+  "post_b": 8171.1,
+  "top": 4794.9
+ }
+}

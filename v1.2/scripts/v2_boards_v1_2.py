@@ -16,7 +16,7 @@ from OCP.BRep import BRep_Builder
 from OCP.TopoDS import TopoDS_Compound
 from helpers import read_step
 
-BB_PCB = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/kicad/POV3D_V2_BaseBoard.kicad_pcb')
+BB_PCB = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/layout/r1_module/POV3D_V2_BaseBoard_r1.kicad_pcb')   # 11-15: pov3d-96 r1 方案 1 (外接框最大; 原 kicad/ 已挪走)
 BB_C = (150.0, 100.0)                                # 转接板中心 (KiCad)
 # 限高 (板顶以上, mm); 没列的 = 1.2 (0402~0805 / SOT / QFN 一类)
 H_BY_FP = {
@@ -30,6 +30,7 @@ H_BY_FP = {
 }
 SKIP_FP = ('MountingHole', 'DF40HC')                 # 孔不建; DF40 归 CZ06
 CZ06_W, CZ06_D, DF40_H, CZ06_PCB_T = 60.0, 35.0, 3.0, 1.6
+CZ06_CX = 38.5                                       # 11-14: CZ06 中心 x (竖放, 占 x 21–56)
 LED_STEP = Path(__file__).resolve().parent.parent / 'boards' / 'led_v0.2.0_2026-11-13.step'
 LED_HALF_H = 104.004                                 # STEP 里板 y −104.004..104.004
 
@@ -80,8 +81,10 @@ def make(B):
     parts, (x0, y0, x1, y1) = baseboard_parts()
     pcb = _box(x0, y0, z0, x1, y1, zt)
     comps = [_box(a, b_, zt, c, d, zt + h) for _, _, (a, b_, c, d), h in parts]
-    cz = _comp([_box(-CZ06_W / 2, -CZ06_D / 2, zt + DF40_H, CZ06_W / 2, CZ06_D / 2, zt + B.CZ06_H)] +
-               [_box(-CZ06_W / 2 + 2, -CZ06_D / 2 + 2, zt, CZ06_W / 2 - 2, CZ06_D / 2 - 2, zt + DF40_H)])   # DF40 合高区 (简化成一块)
+    # 11-14 pov3d-96: CZ06 竖放 (长边沿 y) 偏 +x, x≈21–56 (FPC 平段 |x|≤19 让开, 底梁在 −x 侧)
+    cx, w_, d_ = CZ06_CX, CZ06_D, CZ06_W
+    cz = _comp([_box(cx - w_ / 2, -d_ / 2, zt + DF40_H, cx + w_ / 2, d_ / 2, zt + B.CZ06_H)] +
+               [_box(cx - w_ / 2 + 2, -d_ / 2 + 2, zt, cx + w_ / 2 - 2, d_ / 2 - 2, zt + DF40_H)])   # DF40 合高区 (简化成一块)
     led = read_step(LED_STEP)
     t = gp_Trsf(); t.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), math.pi / 2)    # (x,y,z) → (x, −z, y): LED 面 (STEP z<0) 朝 +Y
     t2 = gp_Trsf(); t2.SetTranslation(gp_Vec(0, 0, B.Z_SCR0 + LED_HALF_H))

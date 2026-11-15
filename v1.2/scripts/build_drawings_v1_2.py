@@ -219,8 +219,43 @@ SPECS.append(dict(
     holes=[],
     notes=[f"玻璃厚 {F(B.GD_T)}: 法兰底 Z{F(B.GD_Z1)} 压玻璃顶, 钩面内端 Z{F(B.GD_Z0)} = 玻璃底 (玻璃厚 +0.6 内仍能扣上, 爪带预压)",
            f"爪根应变 ≈ {B.GH_STRAIN * 100:.1f}% → 建议 PETG; PLA 先试",
-           "可选 GT_BEARING=1: 法兰加厚到 6.5, 内开 688 窝 Φ16.1×5 (轴承从下穿爪内孔 Φ16.4 压入)"]))
+           (f"688 窝 Φ{F(B.BRG_D)}×{F(B.BRG_H)} (轴承从下穿爪内孔 Φ{F(2 * B.GH_R0)} 压入) + 上方 Φ{F(B.BRG_RELIEF_D)}×{F(B.BRG_RELIEF_H)} 让轴过冲; 法兰厚 {F(B._fl_t)} (11-15 默认开, 灯板顶轴 Φ8 进 688)"
+            if B.GT_BEARING else "可选 GT_BEARING=1: 内开 688 窝 (灯板顶轴)")]))
 
+# ---------------- V2 灯板支撑三件 (11-15, led_support_v1_2.py) ----------------
+import led_support_v1_2 as L  # noqa: E402
+_fa = [p for p in L.FOOT_PTS if p[0] > 0]; _fb = [p for p in L.FOOT_PTS if p[0] < 0]
+def _foot_hole(pts):
+    return dict(tag="F", pts=pts, spec=f"Φ3.4 通 + 顶面 Φ{F(L.FOOT_CB_D)} 沉孔深 {F(L.Z0 - L.FOOT_CB_Z)} (M3×8 内六角, 头支承 Z{F(L.FOOT_CB_Z)})",
+                where=xy(pts) + "  进承载盘 M3×4 铜螺母",
+                det=dict(kind="cb", d=3.4, D=L.FOOT_CB_D, h=L.Z0 - L.FOOT_CB_Z, side="top", z=(L.RIM_TOP, L.Z0), pt=pts[0], title="底脚沉孔 F"))
+_h1 = lambda sx: dict(tag="H", pts=[(sx * L.H1_X, 0.0)], spec=f"Φ3.4 沿 Y 横穿立刀, 中心 Z{F(L.H1_Z)}", where=f"x {F(sx * L.H1_X)}  灯板 H1/H2 M3×12 + 法兰螺母")
+_post_notes = [f"立刀 x{F(L.BLADE_X0)}–{F(L.BLADE_X1)} 厚 {F(L.BLADE_T)} 夹在两灯板 F 面之间 (间隙 {F(2 * L.GAP_HALF)}, 单边 {F(L.CLR)}), 顶 Z{F(L.BLADE_Z1)}",
+               f"底块 |x| {F(L.FOOT_X0)}–{F(L.FOOT_X1)} |y|≤{F(L.FOOT_Y)} Z{F(L.RIM_TOP)}–{F(L.Z0)}: 顶面托两板下沿", 
+               f"天线板 |x| {F(L.ANT_X0)}–{F(L.ANT_X1)}, 外面浅槽 {F(L.ANT_L)}×{F(L.ANT_W)}×{F(L.ANT_REC)} 贴 Molex 219611 (背胶)"]
+SPECS.append(dict(
+    code="led_post_a_v1_2", shape=L.post_a, short="灯板支撑 +x 立板", qty="1", material="PETG (建议) / PLA",
+    title="灯板支撑 +x 端: 底块 + 立刀 (M3 穿 H1) + 竖贴天线板", orient="正立 (底块底面 Z32 贴床)",
+    sec=dict(ang=0, r0=66.0, zd=[(L.RIM_TOP, L.Z0), (L.Z0, L.BLADE_Z1), (L.RIM_TOP, L.ANT_A['z1'])], rd=[(L.FOOT_X0, L.FOOT_X1), (L.BLADE_X0, L.BLADE_X1), (L.ANT_X0, L.ANT_X1)]),
+    holes=[_foot_hole(_fa), _h1(1)],
+    notes=_post_notes + [f"天线竖贴: 长边沿 Z, 槽心 Z{F(L.ANT_A['zc'])}; 板 |y|≤{F(L.ANT_A['y'])} Z到{F(L.ANT_A['z1'])}", "H1: +y 侧内六角头, −y 侧法兰螺母 (+y LED 面有 5.9 高电解)"]))
+SPECS.append(dict(
+    code="led_post_b_v1_2", shape=L.post_b, short="灯板支撑 −x 立板 + 底梁", qty="1", material="PETG (建议) / PLA",
+    title=f"灯板支撑 −x 端: 底块 + 立刀 + 底梁 x{F(L.BEAM_X0)}…{F(L.BEAM_X1)} + 中间舌 + 横贴天线板", orient="正立 (底块底面贴床), 底梁下 Z32–41.2 加支撑",
+    sec=dict(ang=180, r0=0.0, zd=[(L.RIM_TOP, L.Z0), (L.BEAM_Z0, L.Z0), (L.Z0, L.TONGUE_Z1), (L.RIM_TOP, L.ANT_B['z1'])], rd=[(L.FOOT_X0, L.FOOT_X1), (L.ANT_X0, L.ANT_X1)]),
+    holes=[_foot_hole(_fb), _h1(-1)],
+    notes=_post_notes + [f"底梁 |y|≤{F(L.BEAM_Y)} Z{F(L.BEAM_Z0)}–{F(L.Z0)} 只在 CZ06 对侧 (止于 x{F(L.BEAM_X1)}); 中间舌 x±{F(L.TONGUE_X)} 到 Z{F(L.TONGUE_Z1)} (下中 F.Mask 窗)",
+                         f"天线横贴: 长边沿 Y, 槽心 Z{F(L.ANT_B['zc'])}; 板 |y|≤{F(L.ANT_B['y'])}", "H1: −y 侧内六角头, +y 侧法兰螺母"]))
+SPECS.append(dict(
+    code="led_top_v1_2", shape=L.top, short="灯板顶部件 (Φ8 轴座)", qty="1", material="PETG (建议) / PLA",
+    title=f"灯板顶部件: 舌 (上中窗) + 帽 {F(2 * L.CAP_X)}×{F(2 * L.CAP_Y)} + 轴座 Φ{F(L.BOSS_D)}, 压 Φ8×{F(L.ROD_L)} 钢轴进 688",
+    orient="倒放 (轴座顶 Φ14 贴床), 帽两端小悬空",
+    sec=dict(ang=0, r0=0.0, zd=[(L.TOP_TONGUE_Z0, L.Z1), (L.Z1, L.Z1 + L.CAP_T), (L.Z1 + L.CAP_T, L.BOSS_Z1)], rd=[(0, L.TONGUE_X, f"{F(L.TONGUE_X)}"), (0, L.CAP_X, f"{F(L.CAP_X)}"), (0, L.BOSS_D / 2, f"R{F(L.BOSS_D / 2)}")]),
+    holes=[dict(tag="R", pts=[(0.0, 0.0)], spec=f"Φ{F(L.ROD_HOLE_D)} 盲孔深 {F(L.BOSS_Z1 - L.ROD_Z0)} (压 Φ8 h6 钢轴, 试配)", where="轴心",
+                det=dict(kind="blind", D=L.ROD_HOLE_D, h=L.BOSS_Z1 - L.ROD_Z0, side="top", z=(L.Z1 + L.CAP_T, L.BOSS_Z1), pt=(0.0, 0.0), title="轴孔 R"))],
+    notes=[f"舌 x±{F(L.TONGUE_X)} 厚 {F(L.BLADE_T)} Z{F(L.TOP_TONGUE_Z0)}–{F(L.Z1)} 插两板之间; 帽底贴板上沿 Z{F(L.Z1)}",
+           f"轴座顶 Z{F(L.BOSS_Z1)} 离堵头爪尖 {F(L.BOSS_GAP)}; 轴 Z{F(L.ROD_Z0)}–{F(L.ROD_Z1)}, 688 Z{F(L.BRG_Z0)}–{F(L.BRG_Z1)}",
+           "玻璃罩长度公差: 短 ≤2.0 轴顶进堵头 Φ9 让位; 长 ≤4.5 仍有 0.5 啮合", "轴在 688 内圈滑配 (g6/h6), 可轴向窜动"]))
 for sp in SPECS:
     sp.update({k: v for k, v in COMMON.items() if k not in sp})
     sp["stl"] = M / sp["code"] / f"{sp['code']}.stl"

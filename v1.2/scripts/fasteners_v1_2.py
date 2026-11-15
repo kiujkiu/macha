@@ -181,8 +181,19 @@ for i, (x, y) in enumerate(B.JN_PTS):
     screw("M3x50 玻璃下上下段", i, x, y, B.JN_BEAR, B.JN_L, False, engage=("法兰螺母", B.JN_NUT_Z1 - B.JN_NUT_H, B.JN_NUT_Z1))
     add(f"M3 法兰螺母 玻璃下下段底 #{i}", flange_nut_inv(x, y, B.JN_NUT_Z1 - B.JN_NUT_H), "#707070")   # 法兰朝上顶下段底面 Φ8.2 孔顶
 
+# 11 V2 灯板支撑 (11-15, led_support_v1_2): 两端立板底块 4×M3×8 内六角 (Φ5.5×3 头, 沉孔底 Z36) 往下拧承载盘顶面 M3×4 铜螺母 (Z27.8..32);
+#    底板 r1 4×M3: 承载盘顶面 Φ4.2×4.0 浅孔压 M3×3 铜螺母 (Z29..32), 上面 M3×3 铜柱 (公母, 公头 3 进铜螺母) + 板 + M3×5 (螺丝只列 BOM);
+#    配平: r76 @112° M3×4 铜螺母, 上面叠 DIN9021 大垫片 + M3 螺丝 (按动平衡增减; 只列 BOM)
+import led_support_v1_2 as L
+for i, (x, y) in enumerate(L.FOOT_PTS):
+    screw("M3x8 内六角 灯板立板底脚", i, x, y, L.FOOT_CB_Z, 8.0, False, hd=5.5, hh=3.0, engage=("铜螺母", L.RIM_TOP - INS_L_DISC, L.RIM_TOP))
+    add(f"M3x4 铜螺母 承载盘 立板脚 #{i}", insert(x, y, L.RIM_TOP - INS_L_DISC, INS_L_DISC), "#B8860B")
+for i, (x, y) in enumerate(B.BB_HOLES):
+    add(f"M3x3 铜螺母 承载盘 底板 #{i}", insert(x, y, L.RIM_TOP - 3.0, 3.0), "#B8860B")
+add("M3x4 铜螺母 承载盘 配平", insert(*B.CW_PT, L.RIM_TOP - INS_L_DISC, INS_L_DISC), "#B8860B")
+
 # ---------------- 零件 ----------------
-PARTS = {"底盘": B.disc, "线圈环": B.ring, "电机": B.motor, "控制板": B.board, "散热片": B.heatsink,
+PARTS = {"灯板立板+x": L.post_a, "灯板立板-x": L.post_b, "底盘": B.disc, "线圈环": B.ring, "电机": B.motor, "控制板": B.board, "散热片": B.heatsink,
          "法兰盘": B.flange_disc, "安装法兰": B.mounting_flange, "转子毂盘": B.hub, "承载盘": B.rim,
          "下罩下段": B.shroud_lo, "下罩上段": B.shroud_hi, "外卡环": B.clamp_ring, "XT60压块": B.xt_clamp, "XT60底垫": B.xt_shim,
          **({"MOS压块": B.CD.clamp} if B.CD.HAS_MC else {}), **({"电容卡件": B.CD.cap_clamp} if B.CD.HAS_CC else {}), "驱动板": B.CD.pcb, "驱动MOS": B.CD.mos, "驱动电解电容": B.CD.cap, "驱动散热片": B.CD.sink2, "按键支架": B.key_bracket, "按键板": B.key_board}

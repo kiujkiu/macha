@@ -167,6 +167,27 @@ LOG['hub'] = dict(v0=v0, v=vol(hub), fill=v_fill, old_holes_expected=v_old_holes
 # ---------------- 3 承载盘 ----------------
 r0 = one(C10 / 'rim_ring_v1_0.step'); v0 = vol(r0)
 rim = zdown(clean(op(BRepAlgoAPI_Common, r0, cyl(0, 0, RIM_D, 25, 50)))); LOG['rim'] = dict(v0=v0, v=vol(rim))
+# 用户 11-14: V2 灯板两端支撑 (led_support_v1_2.py) 底脚 2×M3 ×2 端 ⇒ 承载盘顶面压 M3×4 铜螺母 (Φ4.2×4.2, 顶面齐平); 盘顶 Z32
+_rim_pre = rim
+LS_FOOT_X, LS_FOOT_Y = 78.0, 7.6                  # 11-15: y 5.8 → 7.6 (内六角头 Φ5.5 让开灯板 |y|≤3.77, 起子可从上面下)
+LS_FOOT_PTS = [(sx * LS_FOOT_X, sy * LS_FOOT_Y) for sx in (1, -1) for sy in (1, -1)]
+rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.2, 33.0) for x, y in LS_FOOT_PTS]))
+# 11-15 pov3d-96 底板 r1: 4×M3 安装孔 → 承载盘顶面 Φ4.2×4.0 浅孔 (M3×3 铜螺母; r42–66 在线圈腔上, 盘只剩 4.5 厚)
+BB_HOLES = [(-42.0, 7.4), (-66.0, 7.6), (61.5, 21.0), (61.5, -24.0)]
+BB_INS_H = 4.0
+rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - BB_INS_H, 33.0) for x, y in BB_HOLES]))
+# 方案 1 无线接收模块: 线圈 (腔 r34–76) 两根 AC 引线从承载盘小孔上来, 焊模块 AC 脚 1 (−67.0, 39.7) r77.9 / 脚 2 (−67.8, 14.45) r69.3
+AC_PINS = [(-67.0, 39.7), (-67.8, 14.45)]
+AC_HOLE_R, AC_HOLE_D = 73.0, 3.0                  # 脚 1 超出腔外缘 ⇒ 孔沿同方位拉回 r73; 脚 2 在腔上方, 孔就在脚下
+AC_HOLES = [(AC_HOLE_R * math.cos(math.atan2(AC_PINS[0][1], AC_PINS[0][0])), AC_HOLE_R * math.sin(math.atan2(AC_PINS[0][1], AC_PINS[0][0]))), AC_PINS[1]]
+rim = clean(cut(rim, *[cyl(x, y, AC_HOLE_D, 20.0, 33.0) for x, y in AC_HOLES]))
+# 配平 (led_support_v1_2 报告: 底板 r1 方案 2 估算 + 两端立板不对称 ⇒ 254 g·mm ⇒ 3.3 g @ r78 / 112°): M3 铜螺母孔, 螺丝 + DIN9021 大垫片叠加, 动平衡时增减
+CW_R, CW_ANG = 76.0, 112.0                       # r78 碰 V0.4 原 r82.5@112.5° 孔边 ⇒ 内收到 r76 (3.35 g)
+CW_PT = (CW_R * math.cos(math.radians(CW_ANG)), CW_R * math.sin(math.radians(CW_ANG)))
+rim = clean(cut(rim, cyl(*CW_PT, 4.2, 32.0 - 4.2, 33.0)))
+# 校核: 每个新孔外 Φ8 环 (孔壁 1.9) 在盘顶下 4.5 内是实心
+LOG['rim_new_holes_solid'] = {f'{n_}{i}': round(vol(op(BRepAlgoAPI_Common, _rim_pre, cut(cyl(x, y, 8.0, 27.6, 32.0), cyl(x, y, 4.3, 27, 33)))) / vol(cut(cyl(x, y, 8.0, 27.6, 32.0), cyl(x, y, 4.3, 27, 33))), 3)
+                              for n_, pts in (('foot', LS_FOOT_PTS), ('bb', BB_HOLES), ('cw', [CW_PT])) for i, (x, y) in enumerate(pts)}
 
 # ---------------- 4 底盘 ----------------
 # 4a 电机控制板 (沿用 V1.0 motor_tray 11-04 做法, 托板并进底盘): 板平放底盘顶面 z0, 器件朝上;
@@ -512,12 +533,13 @@ GT_CONE_DEG = math.degrees(math.atan2(Z_GT - LIP_EDGE - GT_Z0, SH_OUT - go - GT_
 glass_top = clean(revol(GT_RZ))
 glass_disc = ann(GD_ID / 2, GD_OD / 2, GD_Z0, GD_Z1)                           # 外购圆环玻璃 (装配用实体)
 # 中心堵头 (一件): 顶法兰 Φ32 压玻璃顶; 管 r8.2–9.8 穿 Φ20 孔 (单边 0.2); 孔下 30° 倒钩到 r11 (钩 1.0), 45° 导入到 r9; 6 条 2 宽槽 → 6 爪
-GT_BEARING = bool(int(os.environ.get('GT_BEARING', '0')))   # 默认堵头; 1 = 法兰内开 688 轴承窝 (Φ8 轴从下穿爪内孔进来)
+GT_BEARING = bool(int(os.environ.get('GT_BEARING', '1')))   # 11-14: 灯板顶轴进 688 ⇒ 默认开轴承窝   # 默认堵头; 1 = 法兰内开 688 轴承窝 (Φ8 轴从下穿爪内孔进来)
 GH_FL_D, GH_FL_T = 32.0, 3.0
 GH_R0, GH_R1 = 8.2, GD_ID / 2 - 0.2               # 爪内 r8.2 (Φ16.4 > 688 外径 16, 轴承可从下穿进窝) / 外 r9.8
 GH_BARB, GH_CATCH_DZ, GH_TIP_R = 1.0, 0.7, 9.0     # 倒钩外 r = 10 + 1.0; 钩面 30° (Δz 0.7); 导入 45° 到 r9
 GH_SLOTS, GH_SLOT_W = 6, 2.0
-BRG_D, BRG_H, BRG_ROOF = 16.1, 5.0, 1.5            # 688 = 8×16×5; 窝 Φ16.1 (打印孔偏小, 试配), 顶留 1.5
+BRG_D, BRG_H, BRG_ROOF = 16.1, 5.0, 4.0            # 688 = 8×16×5; 窝 Φ16.1 (打印孔偏小, 试配); 11-15: 顶 1.5 → 4.0, 内开 Φ9×2.5 让轴过冲 (玻璃长度公差)
+BRG_RELIEF_D, BRG_RELIEF_H = 9.0, 2.5
 _fl_t = (BRG_H + BRG_ROOF) if GT_BEARING else GH_FL_T
 _rb = GD_ID / 2 + GH_BARB                          # 11.0
 _zc = GD_Z0 - GH_CATCH_DZ                          # 钩面外端
@@ -529,7 +551,7 @@ GH_SLOT_TOP = GD_Z1 - 1.0                          # 槽顶 (法兰下 1), 爪�
 for k in range(GH_SLOTS):
     _gh = cut(_gh, xf(gbox(-GH_SLOT_W / 2, 0, _zt - 1, GH_SLOT_W / 2, 20, GH_SLOT_TOP), rotz(30 + 360 / GH_SLOTS * k)))
 if GT_BEARING:
-    _gh = cut(_gh, cyl(0, 0, BRG_D, GD_Z1 - 0.01, GD_Z1 + BRG_H))
+    _gh = cut(_gh, cyl(0, 0, BRG_D, GD_Z1 - 0.01, GD_Z1 + BRG_H), cyl(0, 0, BRG_RELIEF_D, GD_Z1 + BRG_H - 0.01, GD_Z1 + BRG_H + BRG_RELIEF_H))
 glass_top_hub = clean(_gh)
 GH_L = GH_SLOT_TOP - _zt
 GH_STRAIN = 1.5 * (GH_R1 - GH_R0) * GH_BARB / GH_L ** 2   # 悬臂根部应变 ≈ 1.5·t·δ/L²
