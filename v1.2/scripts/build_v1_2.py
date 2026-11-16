@@ -478,14 +478,15 @@ LOG['split'] = dict(ring=vol(clamp_ring), shroud=vol(shroud_split))
 SPLIT_Z = Z_RIM_TOP                                # 32.0
 JN_N, JN_R, JN_ANG0 = 8, 98.5, 22.5               # 沉孔 Φ8.8 r94.1–102.9: 下切内卡根 0.7 (只在 Z_G 下 2), 离外卡环槽 (r103.8) 0.9
 # 用户 11-14 (二): 要真夹持 ⇒ 螺丝穿通上下两段。11-16 用户买到实物 (图): M4×50 超薄头 (头 Φ8.5×1.8, 2.5 六角) + M4 法兰螺母 (法兰 Φ9.7, 对边 6.9, 厚 4.3)
-#   上段顶面 Φ8.8 沉孔深 2.1 (头顶在玻璃底下 0.3); 下段底面: 法兰圆窝 Φ10.1 到 Z1.8 + 六角窝 7.1AF 到 Z4.6 (防转), 法兰朝下, 螺母落底盘上也能吃上
+#   玻璃座顶面 Φ8.8 沉孔深 2.1 (头顶在玻璃底下 0.3); 底座底面圆窝 Φ9.8 深 4.6, 法兰螺母法兰朝上压入 (11-16 用户)
 JN_D, JN_CB = 4.5, 8.8                             # M4 通孔 / 沉孔 (头 Φ8.5)
 JN_L, JN_HH = 50.0, 1.8                            # M4×50 超薄头, 头厚 1.8
 JN_BEAR = Z_G - 2.1                                # 沉孔深 2.1 ⇒ 支承 Z50.98, 头顶 Z52.78 (玻璃底下 0.3)
 JN_TIP = JN_BEAR - JN_L                            # 尾端 Z1.08
-JN_NUT_AF, JN_NUT_H, JN_NUT_FD = 7.1, 4.3, 10.1    # 六角窝对边 (螺母 6.9) / 螺母厚 / 法兰圆窝 (法兰 Φ9.7)
-JN_NUT_FZ = 1.8                                    # 法兰圆窝顶 (法兰厚约 1.2 + 0.3 缩进 + 余)
-JN_NUT_Z1 = 0.3 + JN_NUT_H                         # 窝顶 Z4.6 ⇒ 拧紧后螺母 Z0.3..4.6, 啮合 3.52
+JN_NUT_H, JN_NUT_FD = 4.3, 9.8                     # 11-16 用户: 螺母反过来 (法兰朝上), 法兰朝下会滑 ⇒ 底面圆窝 Φ9.8 (法兰 Φ9.7 压入, 打印偏小即紧配不掉)
+JN_NUT_Z1 = 0.3 + JN_NUT_H                         # 窝深 4.6 ⇒ 螺母 Z0.3..4.6, 法兰顶窝顶 (锯齿压窝顶止转), 啮合 3.62
+JN_NUT_FZ = JN_NUT_Z1                              # 圆窝一通到顶 (法兰从下面塞进去要过整段, 做不了六角)
+JN_NUT_AF = None
 JN_NUT_D = JN_NUT_FD                               # 只用于校核
 JN_PTS = [(JN_R * math.cos(math.radians(JN_ANG0 + 45 * k)), JN_R * math.sin(math.radians(JN_ANG0 + 45 * k))) for k in range(JN_N)]
 RG_R0, RG_W, RG_H, RG_CLR = 104.0, 2.0, 2.0, 0.1   # 两段止口凸筋 (在下段顶)
@@ -495,7 +496,7 @@ assert JN_R + JN_D / 2 <= RG_R0 - RG_CLR - 1.5, '通孔碰止口凸筋'
 assert JN_BEAR + JN_HH <= Z_G - 0.3, '头顶碰玻璃'
 assert JN_BEAR - SPLIT_Z >= 10, '上段沉孔下面肉太薄'
 _lo_box = cyl(0, 0, 2 * SH_OUT + 10, -5, SPLIT_Z)
-_s = cut(op(BRepAlgoAPI_Common, shroud_split, _lo_box), *[fuse(cyl(x, y, JN_D, -1, SPLIT_Z + 1), cyl(x, y, JN_NUT_FD, -1, JN_NUT_FZ), coil_drv_geom.hexprism(x, y, JN_NUT_AF, JN_NUT_FZ - 0.01, JN_NUT_Z1)) for x, y in JN_PTS])
+_s = cut(op(BRepAlgoAPI_Common, shroud_split, _lo_box), *[fuse(cyl(x, y, JN_D, -1, SPLIT_Z + 1), cyl(x, y, JN_NUT_FD, -1, JN_NUT_Z1)) for x, y in JN_PTS])
 _kb = KEY['pocket_bbox']                           # 11-14: 按键让位腔竖直打通到 Z32 ⇒ 止口凸筋在按键段断开 (不然凸筋悬空跨腔)
 shroud_lo = clean(fuse(_s, cut(ann(RG_R0, RG_R0 + RG_W, SPLIT_Z - 0.5, SPLIT_Z + RG_H), gbox(_kb[0] - 0.5, _kb[2], SPLIT_Z - 1, _kb[1] + 0.5, SH_OUT + 1, SPLIT_Z + RG_H + 1))))
 _s = cut(shroud_split, _lo_box, ann(RG_R0 - RG_CLR, RG_R0 + RG_W + RG_CLR, SPLIT_Z - 1, SPLIT_Z + RG_H + RG_CLR))

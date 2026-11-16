@@ -30,7 +30,7 @@ Z_G = 53.08; Z_VIEW0 = 73.08; SPLIT_Z = 32.0
 JN_R, ANG = 98.5, 22.5
 JN_D, JN_CB = 4.5, 8.8; JN_L, JN_HH = 50.0, 1.8
 JN_BEAR = Z_G - float(num('JN_BEAR').split('-')[1]); JN_TIP = JN_BEAR - JN_L
-JN_NUT_FD, JN_NUT_FZ, JN_NUT_AF, JN_NUT_H = 10.1, 1.8, 7.1, 4.3; JN_NUT_Z1 = 0.3 + JN_NUT_H
+JN_NUT_FD, JN_NUT_H = 9.8, 4.3; JN_NUT_Z1 = 0.3 + JN_NUT_H
 
 def load(p):
     r = STEPControl_Reader(); r.ReadFile(str(p)); r.TransferRoots(); return r.OneShape()
@@ -64,8 +64,8 @@ def draw_hw(ax, sgn):
     ax.add_patch(Rectangle((r - JN_D / 2 + 0.25, JN_TIP), JN_D - 0.5, JN_L, color='#455A64', zorder=5))
     ax.add_patch(Rectangle((r - 8.5 / 2, JN_BEAR), 8.5, JN_HH, color='#263238', zorder=6))
     z0 = JN_NUT_Z1 - JN_NUT_H
-    ax.add_patch(Rectangle((r - 9.7 / 2, z0), 9.7, 1.2, color='#616161', zorder=6))
-    ax.add_patch(Rectangle((r - 6.9 / 2 * 1.155 / 1.155, z0 + 1.2), 6.9, JN_NUT_H - 1.2, color='#757575', zorder=6))
+    ax.add_patch(Rectangle((r - 6.9 / 2, z0), 6.9, JN_NUT_H - 1.2, color='#757575', zorder=6))          # 六角在下
+    ax.add_patch(Rectangle((r - 9.7 / 2, JN_NUT_Z1 - 1.2), 9.7, 1.2, color='#616161', zorder=6))       # 法兰朝上顶窝顶
     ax.add_patch(Rectangle((r * 1 - 0 + (95 - JN_R if sgn > 0 else -100 + JN_R) * 0 + (95 if sgn > 0 else -100) - r, Z_G), 5, 30, color='#D6EAF8', ec='#5DADE2', zorder=4))
 
 fig = plt.figure(figsize=(16.54, 11.69))   # A3
@@ -95,8 +95,8 @@ def dim(ax_, x0, x1, y, t, vert=False):
     else:
         ax_.annotate('', xy=(x0, y), xytext=(x1, y), arrowprops=dict(arrowstyle='<->', lw=0.8)); ax_.text((x0 + x1) / 2, y + 0.5, t, fontsize=8.5, ha='center')
 dim(bx, JN_R - JN_CB / 2, JN_R + JN_CB / 2, Z_G + 1.2, f'沉孔 Φ{JN_CB:g} 深 {Z_G - JN_BEAR:.1f}')
-dim(bx, JN_R - JN_NUT_FD / 2, JN_R + JN_NUT_FD / 2, -5.5, f'法兰窝 Φ{JN_NUT_FD:g} 深 {JN_NUT_FZ:g}')
-dim(bx, 0, JN_NUT_Z1, 105.5, f'螺母窝深 {JN_NUT_Z1:g}\n(六角对边 {JN_NUT_AF:g})', vert=True)
+dim(bx, JN_R - JN_NUT_FD / 2, JN_R + JN_NUT_FD / 2, -5.5, f'螺母窝 Φ{JN_NUT_FD:g} 深 {JN_NUT_Z1:g}')
+dim(bx, 0, JN_NUT_Z1, 105.5, f'法兰朝上\n压入', vert=True)
 dim(bx, JN_TIP, JN_BEAR, 88.5, f'M4×{JN_L:g}\n支承 Z{JN_BEAR:.2f}\n尾 Z{JN_TIP:.2f}', vert=True)
 bx.text(JN_R + 5, 20, f'通孔 Φ{JN_D:g}\n(底座+玻璃座)', fontsize=9)
 bx.text(96, 56.5, '玻璃 (r95–100)', fontsize=9, color='#2874A6')
@@ -122,13 +122,13 @@ txt = f'''紧固件 (按用户实物):
 尺寸:
  · 玻璃座: Φ{JN_D:g} 通, 顶面沉孔 Φ{JN_CB:g} 深 {Z_G - JN_BEAR:.1f}
    头顶 Z{JN_BEAR + JN_HH:.2f}, 玻璃端面下 {Z_G - JN_BEAR - JN_HH:.1f}
- · 底座: Φ{JN_D:g} 通, 底面法兰圆窝
-   Φ{JN_NUT_FD:g} 深 {JN_NUT_FZ:g} + 六角窝 {JN_NUT_AF:g} 到深 {JN_NUT_Z1:g}
-   螺母 Z0.3..{JN_NUT_Z1:g} (法兰朝下, 防转)
+ · 底座: Φ{JN_D:g} 通, 底面圆窝 Φ{JN_NUT_FD:g} 深 {JN_NUT_Z1:g}
+   螺母法兰朝上压入 (紧配不掉, 锯齿压窝顶止转)
+   螺母 Z0.3..{JN_NUT_Z1:g}
  · 尾 Z{JN_TIP:.2f}, 啮合 {JN_NUT_Z1 - JN_TIP:.2f}
 
 装配顺序:
- 1. 8 个法兰螺母法兰朝下放进底座底面窝
+ 1. 8 个法兰螺母法兰朝上压进底座底面窝
  2. 底座放上底盘 (底盘托住螺母)
  3. 玻璃座扣上 (止口凸筋 r104–106 对位)
  4. 从玻璃座顶面拧 8 颗 M4×{JN_L:g}

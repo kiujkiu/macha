@@ -168,9 +168,9 @@ SPECS.append(dict(
     title=f"玻璃下 底座: Z0→{F(B.SPLIT_Z)} + 顶面止口凸筋, {B.JN_N}× M4 通孔 + 底面法兰螺母窝", orient="底面 (Z0) 贴床",
     phi=[2 * B.SH_R, 2 * B.SPIG_IN, 2 * B.JN_R, 2 * B.RG_R0, 2 * (B.RG_R0 + B.RG_W), 2 * B.SH_OUT],
     sec=dict(ang=B.JN_ANG0, r0=70.0, zd=[(0, B.TRI_T), (0, B.SPLIT_Z), (B.SPLIT_Z, B.SPLIT_Z + B.RG_H)], rd=[(B.SPIG_IN, B.SH_OUT), (B.RG_R0, B.RG_R0 + B.RG_W)]),
-    holes=sh_holes + [dict(tag="J", pts=B.JN_PTS, spec=f"Φ{F(B.JN_D)} 通 + 底面 Φ{F(B.JN_NUT_FD)} 圆窝深 {F(B.JN_NUT_FZ)} + 六角窝对边 {F(B.JN_NUT_AF)} 到深 {F(B.JN_NUT_Z1)} (M4 法兰螺母 法兰朝下)",
+    holes=sh_holes + [dict(tag="J", pts=B.JN_PTS, spec=f"Φ{F(B.JN_D)} 通 + 底面圆窝 Φ{F(B.JN_NUT_FD)} 深 {F(B.JN_NUT_Z1)} (M4 法兰螺母 法兰朝上压入)",
                            where=ring_txt(B.JN_PTS) + f"  配玻璃座 M4×{F(B.JN_L)}",
-                           det=dict(kind="cb", d=B.JN_D, D=B.JN_NUT_D, h=B.JN_NUT_Z1, side="bot", z=(0, B.SPLIT_Z), pt=B.JN_PTS[0], title="螺母窝 J (圆 Φ10.1 + 六角 7.1)"))],
+                           det=dict(kind="cb", d=B.JN_D, D=B.JN_NUT_D, h=B.JN_NUT_Z1, side="bot", z=(0, B.SPLIT_Z), pt=B.JN_PTS[0], title="螺母窝 J (圆 Φ9.8, 法兰朝上压入)"))],
     notes=[f"墙 r{F(B.SPIG_IN)}–{F(B.SH_OUT)} Z0→{F(B.SPLIT_Z)}; A 孔心到墙内面 {F(B.SPIG_IN - B.SH_R)}"] + gl_notes[2:] + [f"底座+玻璃座分界 Z{F(B.SPLIT_Z)} (承载盘顶); 顶面止口凸筋 r{F(B.RG_R0)}–{F(B.RG_R0 + B.RG_W)} 高 {F(B.RG_H)} 插玻璃座底槽 (单边 {F(B.RG_CLR)})",
                           "以后改可视高度只重打玻璃座, 本件不动", f"M4×{F(B.JN_L)} 穿通两段: 尾 Z{F(B.JN_TIP)}, 法兰螺母 Z{F(B.JN_NUT_Z1 - B.JN_NUT_H)}..{F(B.JN_NUT_Z1)} (啮合 {F(B.JN_NUT_Z1 - B.JN_TIP)}), 底面平坐底盘"]))
 SPECS.append(dict(
