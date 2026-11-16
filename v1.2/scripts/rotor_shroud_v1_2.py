@@ -3,19 +3,14 @@
     cd v1.2/scripts && ../../.venv/bin/python rotor_shroud_v1_2.py
 世界坐标同 build_v1_2: 承载盘顶 Z32, 不转玻璃座内卡内壁 r90.8 (顶 Z73.08)。
 结构:
-  - 11-16 晚 用户: "罩壁缩进坐盘上" (照 V0.4: 罩外径 = 转子盘外径 Φ170, 罩壁平底坐承载盘顶, 螺丝从罩内往下锁, 无裙边)。
-  - 罩壁 r82–85, Z32–73.08 (= 玻璃托顶, 上面盖顶盖; 平底整圈直接坐承载盘顶 Z32, 无内沿), 两半 A (+x) / B (−x); B = A 绕 Z 转 180° (同一个件, 打 2 个)。
-    ±x 两端罩壁开竖缝 |y|≤8.6, Z 全高 (两端立板天线板 x82.6–84.3 |y|≤8 Z32–75.6 坐在缝里)。静止间隙: 罩外 r85 对玻璃座内壁 r90.8 = 5.8。
-  - 罩底 4 个凸台 (B.SHR_HOLES r79 @ 50/140/230/320°; A 半管 50°/320°) 宽 8 × r74–罩壁 × Z32–36 压承载盘顶: M3×8 内六角从上往下 (头支承 Z36, 尾 Z28),
-    进承载盘顶面 M3×4 铜螺母 (Z28–32, 啮合 4); 凸台上面 45° 斜撑接罩壁, 斜撑里 Φ6.5 竖孔让螺丝头/起子 (起子从罩顶开口竖直进, 穿配重唇 Φ6.5 让位孔)。
-    凸台 x 方向离底板 r3 板框 (|x|≤40 / −51.2) 和无线托盘 (|x|≤26.5) 都远, 不用削。
-  - 底板 r3 板框 4 个角 (r83 圆弧, 最远 r83.1) 伸进罩壁 r82: 壁内面开 4 段让位槽 r→83.6 × Z34.7–36.9 (+ 转 180° 对称处)。
-  - 分缝 (x=0, ±y) 内侧凸耳 x±7 × r74–罩壁 × Z51–66.58 (上接配重唇), 2 颗切向 M3×14 (|y|78.5, Z55 / Z62.5), 一侧螺丝头, 另一侧六角螺母槽 (槽口朝罩内, 螺母从内侧推进)。
-    +y 缝: 头在 B 侧 (x<0), 螺母在 A 侧; −y 缝相反 (180° 对称)。凸耳底 Z51 > 无线托盘顶 Z50 / 底板 J5 顶 Z38.6。
-  - 顶盖 rotor_lid_v1_2 ×2 (±y D 形, 同件转 180°): 厚 2, 外圆 r81.9, Z71.08–73.08 顶面 = 罩顶 = 玻璃托顶, 坐配重唇上, 内边 |y|4.8; 桥板处通槽 (内边退到 y8.77);
-    每片 2×M3×8 内六角 (借 37.5°/127.5° 配重孔, −y 片 217.5°/307.5°; 盖底凸块 r75.6–81.9 × 9.6 × 3 插进唇缺槽, 平底沉孔 Φ5.7×3 头埋平) + 唇下螺母。
-  - 配重唇 r76–82, Z66.08–71.08 (顶 = 盖底), 33°–147° / 213°–327° (让开 ±x 灯板两端/支撑/天线); M3 孔 @ r79 (每侧 8 个配重 + 2 个盖螺丝, 避开罩底起子孔 / 分缝凸耳),
-    顶面 Φ5.8 沉孔深 3.2 (M3×16 内六角头顶 Z70.88 < 盖底 71.08); 唇下挂 M3 螺母 (最多 6 颗, 平边贴罩壁防转; 唇宽只有 6, Φ7 垫片放不下; 尾端 Z51.88 > 托盘顶 Z50)。
+  - 11-16 晚 屏幕偏心 SCR_ECC=−4.36 (转子曾改 Φ175, 同晚改回 Φ170, 偏心等其余改动保留): 罩壁 r82–85, Z32–73.08 平底坐承载盘顶 (盘 Φ170), 罩外 r85 对静止内壁 r90.8 = 5.8。
+  - 两半 A (+x) / B (−x): 除两端竖缝外 B = A 绕 Z 转 180°; 竖缝跟天线板走 (世界 y −14.46…+5.74, Z 全高, x≥80 切) ⇒ A/B 是两个不同件 (SLOT_SAME_PART=True 可退回同件 + 并集缝 |y|≤14.46)。
+  - 罩底 4 个凸台 (r79 @ 40/140/220/320°, = B.SHR_HOLES) 宽 8 × r72.5–罩壁 × Z32–36: 避开底板 r4c (x −51.2…47.3 y8.6–66.6) / 立板耳朵 (22.5° 两侧, r≤81.7, Z32–36) /
+    外圈锁盘螺丝头 / 无线托盘; M3×8 内六角从上往下 (头支承 Z36, 尾 Z28) 进承载盘顶面 M3×4 铜螺母; 凸台上 45° 斜撑接罩壁, 斜撑里 Φ6.5 竖孔让螺丝头/起子 (穿配重唇)。
+  - 分缝 (x=0, ±y) 内侧凸耳 x±7 × |y|74–罩壁 × Z51–66.58, 2 颗切向 M3×14 (|y|78.5, Z55 / Z62.5), 一侧螺丝头, 另一侧六角螺母槽; +y 缝头在 B 侧, −y 缝相反。
+  - 顶盖 ×2 (厚 2, 外圆 r81.9, Z71.08–73.08 坐配重唇上): 偏心后两片不同件 —— +y 片内边 y+0.44 (板 A MIP 顶 y0), −y 片内边 y−9.16 (板 B MIP 顶 −8.72);
+    桥板处通槽, 两端天线板缺口; 每片 2×M3×8 内六角 (+y 47.5°/132.5°, −y 227.5°/312.5°; 盖底凸块 r75.6–81.9 插进唇缺槽, 平底沉孔 Φ5.7×3 头埋平) + 唇下螺母。
+  - 配重唇 r76–82, Z66.08–71.08, 33°–147° / 213°–327°; M3 孔 @ r79 (每侧 10 个配重 + 2 个盖螺丝), 顶面 Φ5.8 沉孔深 3.2, 唇下挂 M3 螺母 (最多 6 颗)。
 打印: 倒放 (罩顶 Z73.08 落床; 配重唇顶比罩顶低 2 (给顶盖), 倒放时唇悬空 2 mm ⇒ 唇下加热床支撑) (凸台/凸耳全部 45° 或从唇上长出; 只有 Φ6.5 / Φ5.8 孔顶小搭桥)。
 """
 import io, contextlib, json, math
@@ -77,49 +72,68 @@ def hexprism_x(y, z, af, x0, x1):
 # ---------------- 尺寸 ----------------
 Z0 = B.Z_RIM_TOP                    # 32.0 罩底 = 承载盘顶
 Z1 = B.Z_VIEW0                      # 罩顶 = 玻璃托 (内卡) 顶 73.08 (用户 11-16: 罩子上沿和玻璃托齐平; 顶盖也在这高度, LED 下沿 ~75.0)
-R0, R1 = 82.0, 85.0                 # 罩壁 (11-16 晚 缩进坐盘上: 外圆 = 承载盘 Φ170; 离静止内壁 r90.8 留 5.8)
+R0, R1 = 82.0, 85.0                 # 罩壁 (11-16 晚 改回 Φ170: 外圆 = 承载盘 Φ170; 离静止内壁 r90.8 留 5.8; Φ175 时曾 84.5/87.5)
 ST_IN = B.SPIG_IN                   # 90.8
 assert Z1 == B.Z_VIEW0 and Z1 < B.Z_LED0
 BB_RELIEF_A = []   # 11-16 晚: 底板 r3 rev c 板角已收进 r81.7, 罩壁内面不再开让位槽 (原 59.5–63.5/74–80.5/99.5–106/126–131°)
 BB_RELIEF_R, BB_RELIEF_Z = 83.6, (34.7, 36.9)
-SLOT_Y = 10.1                       # ±x 两端罩壁竖缝 |y|≤10.1 全高 (天线板 x82.6–84.3 |y|≤9.75; 11-16 晚 天线换 18.5×37.7 软板)
+ECC = B.SCR_ECC                     # −4.36 灯板组 (含两端立板/天线板/桥板) 整体沿 y 平移; 转轴仍 (0,0)
+ANT_HW = 9.75                       # 天线板半宽 (= led_support ANT_HW; 那边正在改, 这里不 import 免得整机重建两次)
+SLOT_CLR = 0.35
+SLOT_Y0, SLOT_Y1 = ECC - ANT_HW - SLOT_CLR, ECC + ANT_HW + SLOT_CLR   # 两端竖缝 y −14.46…+5.74 (天线板 y −14.11…+5.39 各让 0.35), 全高
+SLOT_Y = max(-SLOT_Y0, SLOT_Y1)     # 兼容旧名 (= 14.46)
+SLOT_X0 = 79.0                      # 缝从 x79 往外切 (壁内面在缝边 y−14.46 处 x=80.72, 从 R0−1 切会剩一层皮蹭天线)
+# 11-16 晚 偏心后缝不对称: A 半 (+x) / B 半 (−x) 的缝都在世界 y −14.46…+5.74 ⇒ B 半 ≠ A 半转 180° —— 做成两个不同件 (只差缝的位置, 其余仍 180° 对称);
+#   想要同件就把 SLOT_SAME_PART 置 True: 缝取并集 |y|≤14.46 (每端多空 8.7 宽一条)
+SLOT_SAME_PART = False
 # 底部固定 (4 孔, 进承载盘顶面铜螺母 = B.SHR_HOLES)
-HOLE_R = 79.0                       # 罩底螺丝 r79 (11-16 晚 用户: 转子外圈螺丝同定子 r79; 原 78.5), = B.SHR_HOLES
-MNT_A = [50.0, 140.0, 230.0, 320.0]            # A 半 (+x) 管 50°/320°, B 半 = 转 180°
-assert all(math.dist(pol(HOLE_R, a), p) < 1e-6 for a, p in zip(MNT_A, B.SHR_HOLES)), '罩底孔要和 B.SHR_HOLES 一致'
-BOSS_W, BOSS_RI, BOSS_Z1 = 8.0, 74.0, 36.0     # 凸台 宽 8 (切向) × r74–罩壁 × Z32–36
+HOLE_R = 79.0                       # 罩底螺丝 r79 (11-16 晚 方案 A: 同 RH_R), = B.SHR_HOLES
+# 11-16 晚 (Φ175 时 C 定 40/140/220/320; 改回 Φ170 后 F 复核仍可用, 不改):
+#   40° 凸台最靠底板的内角 (r72.5, 切向 +4) = (52.97, 49.66), 离 r4c 板框 x47.3 边 5.7; 140° 对应内角 (−52.97, 49.66) 离 r4c 左边 x−51.2 剩 1.8 (24V 线到 P1 (−48.86, 40.55/46.55) 要在 y≤44 前拐进板); 离 22.5° 耳朵 (端头 Φ7 切 r81.7, 极角 ≤25.1°) 约 11° ; 离 67.5° 螺丝头 25°;
+#   220/320 在 −y, 离无线托盘 (|x|≤24.5) 很远; A 半 (+x) 管 40°/320°, B 半管 140°/220° (= 转 180°)
+MNT_A = [40.0, 140.0, 220.0, 320.0]
+# build_v1_2 的 B.SHR_ANG 已同步成 MNT_A; 不一致时不 assert, 干涉校核用本地补孔的承载盘 (rim_chk)
+SHR_SYNCED = all(math.dist(pol(HOLE_R, a), p) < 1e-6 for a, p in zip(MNT_A, B.SHR_HOLES))
+if not SHR_SYNCED: print(f'[警告] B.SHR_ANG={B.SHR_ANG} ≠ 罩凸台 {MNT_A}, 待主线程同步 build_v1_2.SHR_ANG')
+BOSS_W, BOSS_RI, BOSS_Z1 = 8.0, 72.5, 36.0     # 凸台 宽 8 (切向) × r72.5–罩壁 × Z32–36 (改回 Φ170 随壁 −2.5; 头 Φ5.5 支承 r76.25–81.75 全落凸台上)
 GUS_Z1 = BOSS_Z1 + (R0 - BOSS_RI)              # 45° 斜撑顶 (贴壁处) Z44
 ACC_D = 6.5                                    # 螺丝头 / 起子让位孔
 MNT_L = 8.0                                    # M3×8: 头支承 Z36 ⇒ 尾 Z28 (= 铜螺母底)
 INS_Z = (28.0, 32.0)                           # 承载盘顶面 Φ4.2×4.0 孔里的 M3×4 铜螺母 Z28–32
 # 分缝凸耳
-LUG_HX, LUG_Y0, LUG_Y1 = 7.0, 74.0, 83.0       # x 0..±7, |y| 74..83 (外端埋进罩壁 r82)
+LUG_HX, LUG_Y0, LUG_Y1 = 7.0, 74.0, 83.0       # x 0..±7, |y| 74..83 (外端埋进罩壁 r82; 改回 Φ170, Φ175 时曾 76.5..85.5)
 LUG_Z0 = 51.0                                  # > 无线托盘顶 Z50 (底板 J5 x±20.7 y72–80 顶 Z38.6 也在下面)
-LUG_SY, LUG_SZ = 78.5, (55.0, 62.5)            # 切向螺丝轴线 |y|=78.5, Z55 / Z62.5 (头顶 65.25 < 唇底 66.08)
+LUG_SY, LUG_SZ = 78.5, (55.0, 62.5)            # 切向螺丝轴线 |y|=78.5, Z55 / Z62.5 (头顶 65.25 < 唇底 66.08; 头外角 hypot(10, 81.25)=81.86 < 82)
 NUT_AF, NUT_T, NUT_DEPTH = 5.5, 2.4, 2.5       # M3 螺母; 槽 x 4.5..7 (口朝罩内)
 SEAM_L = 14.0                                  # M3×14: 头支承 x=∓7 ⇒ 尾 ±7 (与螺母外面齐)
 # 配重唇
 # 顶盖 (11-16 用户截图: 罩子要把 LED 以下从上面也盖住) — 两片 D 形 (±y, 同件转 180°), 顶面 = 罩顶 = LED 下沿, 坐在配重唇上
 LID_T = 2.0
 LID_Z0 = Z1 - LID_T                  # 71.08 盖底 = 唇顶
-LID_Y0 = 4.8                         # 盖内边 |y| (LED 面 3.768 + MIP 0.59 = 4.36, 留 0.44)
+# 11-16 晚 偏心: 板 A MIP 顶 y=0, 板 B MIP 顶 y=−8.72 ⇒ 两片盖不再同件: +y 盖 (lid_a) 内边 y≥0.44, −y 盖 (lid_b) 内边 y≤−9.16 (各留 0.44)
+Y_LED0 = 2.3 + 1.468                 # 未偏心时 LED 面 |y| 3.768
+MIP_H = 0.59
+LID_Y0 = 0.44                        # 兼容旧名 = +y 盖内边
+LID_YIN = {'a': ECC + Y_LED0 + MIP_H + 0.44, 'b': ECC - Y_LED0 - MIP_H - 0.44}   # +0.438 / −9.158
 LID_R = R0 - 0.1                     # 盖外圆 r81.9 (罩壁内面 r82, 打印件嵌套单边 0.1)
-BR_POCKET = (-32.5, 0.0, 32.5, 8.77, -1.0)   # 桥板 x±32 y6.77–8.37 顶 Z73.0 ≈ 盖顶: 通槽 (盖内边在这段退到 y8.77)
-ANT_NOTCH = (82.2, 8.4)              # 两端立板天线板 x82.6–84.3 |y|≤8 顶 Z75.6: 缺口 |x|≥82.2 —— 罩缩到 r82 后已在盖外圆 r81.9 以外, 留着不起作用
-# 盖螺丝 (+y 片): 原 45°/135° 离罩底起子孔 50°/140° 太近 ⇒ 37.5° / 127.5° (都离起子孔 12.5°; 用户提的 142.5° 离 140° 只有 2.5°, 不行)
-LID_SCR_A = [37.5, 127.5]            # −y 盖 = 转 180° ⇒ 217.5/307.5 (A 半里落在 37.5 / 307.5, 两半同件)
+# 桥板 x±32 厚 1.6 (LED 面外 3.0–4.6), 顶 Z73.0 ≈ 盖顶: 通槽, 盖内边在 |x|≤32.5 这段退到桥板外面 +0.4
+BR_POCKET = {'a': (-32.5, ECC + Y_LED0 + 4.6 + 0.4), 'b': (-32.5, ECC - Y_LED0 - 4.6 - 0.4)}   # (x0, 槽外边 y): +4.408 / −13.128
+ANT_X0, ANT_X1 = 82.0, 83.7          # 天线板 x (= led_support ANT_X0/X1; 改回 Φ170 内移 0.6: 偏心后外角 hypot(83.7, 14.11) = 84.88 ≤ 84.9)
+ANT_NOTCH = (ANT_X0 - 0.4, SLOT_Y0 - 0.05, SLOT_Y1 + 0.05)   # 两端天线板 x82.0–83.7 y −14.11…5.39 顶 Z73.08, 盖外圆 r81.9 在 y0 处到 x81.9 ⇒ |x|≥81.6 缺口 (y 同缝)
+# 盖螺丝 (+y 片): 罩底起子孔挪到 40/140 后, 唇端 33° 到 40° 放不下 ⇒ 47.5° / 132.5° (离起子孔 7.5°: r79 弦 10.3, 起子孔 Φ6.5 与盖凸块缺槽 10.4 之间剩 1.4)
+LID_SCR_A = [47.5, 132.5]            # −y 盖 227.5/312.5 (= +180; A 半里落在 47.5 / 312.5)
 LID_SCR_ALL = LID_SCR_A + [a + 180 for a in LID_SCR_A]
 # 11-16 用户: 不能用 V 形沉头 ⇒ 普通 M3 内六角 (头 Φ5.5×3) 平底沉孔; 盖底下长凸块插进配重唇缺槽, 局部加厚到 5 让螺丝头埋平
 LID_BOSS_RAD = (75.6, 81.9)          # 凸块径向 (唇 r76–82; 外端与盖外圆齐, 内端多伸 0.4 进空处, 缺槽从 r75 开)
 LID_BOSS_W, LID_BOSS_H = 9.6, 3.0    # 凸块切向宽 / 往下伸 (盖底 71.08 → 68.08); 唇缺槽 切向 10 × 深 3.1 (槽底 67.98)
 LID_CB_D, LID_CB_H = 5.7, 3.0        # 平底沉孔 Φ5.7 深 3 (r79 ± 2.85 ⇒ 外缘 81.85 < 盖外圆 81.9; 头顶齐盖顶, 头支承 Z70.08, 下面剩 2 厚)
 LID_SCR_L = 8.0                      # M3×8 内六角 DIN912: 支承 70.08 → 尾 62.08, 穿凸块底 2 + 唇剩余 1.9, 唇下 M3 螺母 (63.68–66.08)
-LIP_R0, LIP_Z0 = 76.0, LID_Z0 - 5.0      # 唇 r76–82 厚 5, 顶 = 盖底
+LIP_R0, LIP_Z0 = 76.0, LID_Z0 - 5.0      # 唇 r76–82 厚 5, 顶 = 盖底 (改回 Φ170; Φ175 时曾 r78.5)
 LIP_ARCS = [(33.0, 147.0), (213.0, 327.0)]
-W_R = 79.0
-# 配重孔: A 半 (+x) 里的角度, B 半 = +180°。避开: 罩底起子孔 50°/320° (Φ6.5 @ r78.5, 中心距 ≥ 6°), 盖螺丝缺槽 37.5°/307.5° (槽宽 10),
-#   x=0 分缝凸耳/螺丝头 (|x| ≥ 10.5), 唇端 33°/327°。6.5° 间距 (r79 弦长 8.96, Φ5.8 沉孔之间剩 3.2)
-W_A_A = [56.0, 62.5, 69.0, 75.5, 280.0, 286.5, 293.0, 299.5]
+W_R = 79.0                                     # 配重孔圈 (改回 Φ170; Φ175 时曾 r81.5; 同罩底螺丝/起子孔 r79)
+# 配重孔: A 半 (+x) 里的角度, B 半 = +180°。避开: 罩底起子孔 40°/320° (Φ6.5 @ r79, 中心距 ≥ 6°), 盖螺丝缺槽 47.5°/312.5° (槽宽 10.4),
+#   x=0 分缝凸耳/螺丝头 (|x| ≥ 10.5 ⇒ ≤ 82.4°), 唇端 33°/327°。6.5° 间距 (r79 弦长 8.96, Φ5.8 沉孔之间剩 3.2); 每象限 5 个 (原 4)
+W_A_A = [54.0, 60.5, 67.0, 73.5, 80.0, 280.0, 286.5, 293.0, 299.5, 306.0]
 W_A = sorted(set([a % 360 for q in W_A_A + LID_SCR_ALL for a in (q, q + 180)]))
 W_CB_D, W_CB_H = 5.8, 3.2                      # 沉孔 Φ5.8 (r76.1–81.9 在唇 r76–82 内; 头 Φ5.5×3 ⇒ 头顶 Z70.88)
 W_L, W_NUT_MAX = 16.0, 6                       # M3×16 内六角 (罩顶降到 73.08 后 18 会碰无线托盘), 唇下最多 6 颗 M3 螺母
@@ -141,8 +155,7 @@ def ring_body():
                  prism_xz([(BOSS_RI, BOSS_Z1 - 0.01), (R0 + 0.5, BOSS_Z1 - 0.01), (R0 + 0.5, GUS_Z1 + 0.5)], -BOSS_W / 2, BOSS_W / 2))
         s = fuse(s, xf(b, rotz(a)))
     s = clean(s)
-    # ±x 两端竖缝 (天线板)
-    s = cut(s, gbox(R0 - 1, -SLOT_Y, Z0 - 1, R1 + 1, SLOT_Y, Z1 + 1), gbox(-R1 - 1, -SLOT_Y, Z0 - 1, -R0 + 1, SLOT_Y, Z1 + 1))
+    # ±x 两端竖缝 (天线板) 不在这里切: 偏心后缝不对称, 两半各切各的 (见 slot_cut)
     # 底板 r3 板框 4 个角伸出 r82 (r83 圆弧板框: (±21, 80.4) r83.1 / (40, 72.3) r82.6 / (−51.2, 65) r82.7, 板 Z35–36.51):
     #   罩壁内面局部让位槽 r→83.6 × Z34.7–36.9 (壁局部剩 1.4); 两半同件 ⇒ 转 180° 处也开 (空着无害)
     if BB_RELIEF_A: s = cut(s, *[sector(R0 - 1, BB_RELIEF_R, *BB_RELIEF_Z, a0 + k, a1 + k) for a0, a1 in BB_RELIEF_A for k in (0, 180)])
@@ -172,9 +185,17 @@ def half_a(ring):
     return clean(s)
 
 
+def slot_cut(s, sx):
+    """sx 端 (+1 = +x / −1 = −x) 竖缝, 世界 y SLOT_Y0…SLOT_Y1 (同件模式取并集 |y|≤SLOT_Y)"""
+    y0, y1 = (-SLOT_Y, SLOT_Y) if SLOT_SAME_PART else (SLOT_Y0, SLOT_Y1)
+    x0, x1 = (SLOT_X0, R1 + 1) if sx > 0 else (-R1 - 1, -SLOT_X0)
+    return clean(cut(s, gbox(x0, y0, Z0 - 1, x1, y1, Z1 + 1)))
+
+
 ring = ring_body()
-shr_a = half_a(ring)
-shr_b = clean(xf(shr_a, rotz(180)))
+_shr_a0 = half_a(ring)                                  # 未开缝 (180° 对称)
+shr_a = slot_cut(_shr_a0, 1)
+shr_b = slot_cut(clean(xf(_shr_a0, rotz(180))), -1)     # B 半 = A 半 (未开缝) 转 180° 再按世界 y 开 −x 缝 ⇒ 与 A 半不同件
 HALVES = dict(a=shr_a, b=shr_b)
 
 # ---------------- 外购件 ----------------
@@ -220,13 +241,23 @@ M_WASH = RHO_ST * math.pi * (3.5**2 - 1.6**2) * 0.5
 
 # ---------------- 其它件 ----------------
 VB = V.make(B)
-Y_LED = 2.3 + 1.468
-led_a = xf(VB['led'], tr(0, Y_LED, 0)); led_b = xf(led_a, rotz(180))
-j3_a = gbox(54.85, Y_LED, 38.0, 63.55, 26.0, 48.0); j3_b = xf(j3_a, rotz(180))   # J3 VH 座 + 插头包络
+Y_LED = Y_LED0
+_E = tr(0, ECC, 0)                                      # 灯板组偏心平移 (先按对称摆好, 最后整体 +ECC)
+def ecc2(s): return xf(s, _E), xf(xf(s, rotz(180)), _E)  # → (A 侧, B 侧) 世界位置
+led_a, led_b = ecc2(xf(VB['led'], tr(0, Y_LED, 0)))      # 板 A LED 面 y −0.592 / 板 B LED 面 y −8.128
+j3_a, j3_b = ecc2(gbox(54.85, Y_LED, 38.0, 63.55, 26.0, 48.0))   # J3 VH 座 + 插头包络
+br_a, br_b = ecc2(gbox(-32, Y_LED + 3.0, B.Z_SCR0, 32, Y_LED + 4.6, B.Z_SCR0 + 36))   # 桥板 (同 led_support br_a)
+# 两端天线板 + 腹板 (同 led_support: 天线板 x82.0–83.7 |y|≤9.75 Z32–73.08, 腹板 x77–82.0 Z32–37, 外角切 r84.9), 偏心后 y −14.11…5.39
+ant = common(comp([xf(gbox(x0, -ANT_HW, Z0, x1, ANT_HW, z1), _E) for x0, x1, z1 in ((ANT_X0, ANT_X1, Z1), (77.0, ANT_X0, 37.0), (-ANT_X1, -ANT_X0, Z1), (-ANT_X0, -77.0, 37.0))]),
+             cyl(0, 0, 2 * 84.9, Z0 - 1, Z1 + 1))
+# 立板耳朵包络: 盖住 22.5/337.5 (+x 立板) 与 157.5/202.5 (−x) 两颗锁盘螺丝, r66–81.7 × ±26.5° × Z32–36 (耳厚 4) + 耳上螺丝头 Z36–39 (实际耳朵极角 ≤25.1°)
+ears = comp([sector(66.0, 81.7, Z0, Z0 + 4.0, c - 26.5, c + 26.5) for c in (0.0, 180.0)])
+rh_heads = comp([cyl(*B.RH_PTS[k], 5.5, B.RH_HEAD_Z0, B.RH_HEAD_Z0 + 3.0) for k in B.RH_STD_IDX] +
+                [cyl(*B.RH_PTS[k], 5.5, Z0 + 4.0, Z0 + 7.0) for k in B.RH_EAR_IDX])   # 外圈 8 颗锁盘螺丝头 (Φ5.5×3)
 
 
 # ---------------- 顶盖 (+y 片; −y 片 = 转 180°) ----------------
-def lid_boss(a):   # 切到盖外圆 r81.9 以内 (方块角不伸进罩壁)
+def lid_boss(a):   # 切到盖外圆 LID_R 以内 (方块角不伸进罩壁)
     return common(xf(gbox(LID_BOSS_RAD[0], -LID_BOSS_W / 2, LID_Z0 - LID_BOSS_H, LID_BOSS_RAD[1] + 1, LID_BOSS_W / 2, LID_Z0 + 0.01), rotz(a)),
                   cyl(0, 0, 2 * LID_R, LID_Z0 - LID_BOSS_H - 1, LID_Z0 + 0.02))
 
@@ -236,41 +267,55 @@ def lid_hole(x, y):
     return fuse(cyl(x, y, 3.4, LID_Z0 - LID_BOSS_H - 1, Z1 + 1), cyl(x, y, LID_CB_D, Z1 - LID_CB_H, Z1 + 1))
 
 
-def lid_a_make():
-    s = common(cyl(0, 0, 2 * LID_R, LID_Z0, Z1), gbox(-100, LID_Y0, LID_Z0 - 1, 100, 100, Z1 + 1))
-    x0, y0, x1, y1, t = BR_POCKET
-    s = cut(s, gbox(x0, y0, LID_Z0 - 1, x1, y1, Z1 - t))                                # 桥板顶让位
-    nx, ny = ANT_NOTCH
-    s = cut(s, gbox(nx, -1, LID_Z0 - 1, 100, ny, Z1 + 1), gbox(-100, -1, LID_Z0 - 1, -nx, ny, Z1 + 1))   # 天线板缺口
+def lid_make(k):
+    """k='a': +y 片 (内边 y≥+0.44, 对板 A); k='b': −y 片 (内边 y≤−9.16, 对板 B)。偏心后两片不同件, 直接在世界位置建"""
+    sy, yin = (1, LID_YIN[k]) if k == 'a' else (-1, LID_YIN[k])
+    hs = gbox(-100, yin, LID_Z0 - 1, 100, 100, Z1 + 1) if sy > 0 else gbox(-100, -100, LID_Z0 - 1, 100, yin, Z1 + 1)
+    s = common(cyl(0, 0, 2 * LID_R, LID_Z0, Z1), hs)
+    x0, yb = BR_POCKET[k]
+    s = cut(s, gbox(x0, min(yin - sy, yb), LID_Z0 - 1, -x0, max(yin - sy, yb), Z1 + 1))   # 桥板顶让位通槽 (盖内边在 |x|≤32.5 退到桥板外 +0.4)
+    nx, ny0, ny1 = ANT_NOTCH
+    s = cut(s, gbox(nx, ny0, LID_Z0 - 1, 100, ny1, Z1 + 1), gbox(-100, ny0, LID_Z0 - 1, -nx, ny1, Z1 + 1))   # 天线板缺口
     # 灯板 LED 面上伸进盖高度 (Z71.08–73.08, 带 0.4 余量) 的器件: 按包围盒 +0.4 让开
     from OCP.TopExp import TopExp_Explorer
     from OCP.TopAbs import TopAbs_SOLID
-    e = TopExp_Explorer(led_a, TopAbs_SOLID); cuts = []
-    while e.More():
-        b = bbox(e.Current())
-        if b[5] > LID_Z0 - 0.4 and b[2] < Z1 + 0.4 and b[4] > LID_Y0 - 0.4:
-            cuts.append(gbox(b[0] - 0.4, b[1] - 0.4, LID_Z0 - 1, b[3] + 0.4, b[4] + 0.4, Z1 + 1))
-        e.Next()
+    cuts = []
+    for led in (led_a, led_b):
+        e = TopExp_Explorer(led, TopAbs_SOLID)
+        while e.More():
+            b = bbox(e.Current())
+            if b[5] > LID_Z0 - 0.4 and b[2] < Z1 + 0.4 and ((b[4] + 0.4 > yin) if sy > 0 else (b[1] - 0.4 < yin)):
+                cuts.append(gbox(b[0] - 0.4, b[1] - 0.4, LID_Z0 - 1, b[3] + 0.4, b[4] + 0.4, Z1 + 1))
+            e.Next()
     if cuts: s = cut(s, *cuts)
-    s = fuse(s, *[lid_boss(a) for a in LID_SCR_A])
-    s = cut(s, *[lid_hole(*pol(W_R, a)) for a in LID_SCR_A])
+    scr = LID_SCR_A if sy > 0 else [a + 180 for a in LID_SCR_A]
+    s = fuse(s, *[lid_boss(a) for a in scr])
+    s = cut(s, *[lid_hole(*pol(W_R, a)) for a in scr])
     return clean(s), len(cuts)
 
 
-lid_a, LID_LED_CUTS = lid_a_make()
-lid_b = clean(xf(lid_a, rotz(180)))
+lid_a, _n_a = lid_make('a')
+lid_b, _n_b = lid_make('b')
+LID_LED_CUTS = dict(a=_n_a, b=_n_b)
 LIDS = dict(a=lid_a, b=lid_b)
 # 盖螺丝: M3×8 内六角, 头顶 = 盖顶 Z1 (支承 Z1−3), 唇下 M3 螺母
 FAST['M3×8 内六角 (顶盖)'] = [sock_z(*pol(W_R, a), Z1 - LID_CB_H, LID_SCR_L) for a in LID_SCR_ALL]
 FAST['M3 螺母 (顶盖, 唇下)'] = [hexnut_z(a, W_R, LIP_Z0 - NUT_T, LIP_Z0 - 0.01) for a in LID_SCR_ALL]
 assert Z1 - LID_CB_H - LID_SCR_L < LIP_Z0 - NUT_T, '盖螺丝够不到唇下螺母'
-BB_DIR = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/review/结构交付')
-bb_r2 = xf(read_step(BB_DIR / 'POV3D_V2_BaseBoard_r3.step'), tr(0, 0, B.Z_BB0))   # 11-16 晚 r3 rev b (变量名沿用)
+# 11-16 晚 改回 Φ170: 底板 r4c 五边形 x −51.2…47.3 y8.6–66.6 Z35–36.6 (v2_boards BB_POLY, 顶点最远 r81.69); 另按板框往上拉到 Z50 当器件包络
+bb_r2 = VB['baseboard']                                  # 变量名沿用
+_pg = BRepBuilderAPI_MakePolygon()
+for x_, y_ in V.BB_POLY: _pg.Add(gp_Pnt(x_, y_, B.Z_BB0))
+_pg.Close()
+bb_env = BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(_pg.Wire()).Face(), gp_Vec(0, 0, 50.0 - B.Z_BB0)).Shape()   # 板框棱柱 Z35–50 (不用外包盒: 盒角 (−51.2, 66.6) 在 r84.4)
+# 承载盘: build 里罩底铜螺母孔还在 B.SHR_ANG; 未同步时本地按 MNT_A 补切 (Φ4.2 Z28–33, 同 build), 只供干涉校核
+rim_chk = B.rim if SHR_SYNCED else clean(cut(B.rim, *[cyl(*pol(HOLE_R, a), 4.2, 32.0 - 4.0, 33.0) for a in MNT_A]))
 WH = B.V12 / 'models' / 'wireless_holder_v1_2' / 'wireless_holder_v1_2.step'
 wh = read_step(WH) if WH.exists() else gbox(-24.5, -75.5, 32, 24.5, -45, 50)
 
-OTHERS = dict(rim=B.rim, hub=B.hub, shroud_lo=B.shroud_lo, shroud_hi=B.shroud_hi, glass=B.tube,
-              baseboard_r2=bb_r2, wireless_holder=wh, led_a=led_a, led_b=led_b, j3_a=j3_a, j3_b=j3_b)
+OTHERS = dict(rim=rim_chk, hub=B.hub, shroud_lo=B.shroud_lo, shroud_hi=B.shroud_hi, glass=B.tube,
+              baseboard=bb_r2, bb_env=bb_env, wireless_holder=wh, led_a=led_a, led_b=led_b, j3_a=j3_a, j3_b=j3_b,
+              bridge_a=br_a, bridge_b=br_b, antenna=ant, ears_env=ears, rh_heads=rh_heads)
 
 
 def report():
@@ -287,9 +332,10 @@ def report():
     for n, c in allf.items():
         for k, s in list(HALVES.items()) + [('盖' + k, s) for k, s in LIDS.items()]:
             rep['fasteners'][f'{n} × 罩{k}'] = round(common_v(c, s), 4)
-        for o in ('rim', 'hub', 'shroud_lo', 'shroud_hi', 'baseboard_r2', 'wireless_holder', 'led_a', 'led_b', 'j3_a', 'j3_b'):
+        for o in OTHERS:
+            if o == 'glass': continue
             v = common_v(c, OTHERS[o])
-            if abs(v) > 1e-4 or o in ('rim', 'hub', 'wireless_holder', 'baseboard_r2'): rep['fasteners'][f'{n} × {o}'] = round(v, 4)
+            if abs(v) > 1e-4 or o in ('rim', 'hub', 'wireless_holder', 'baseboard', 'rh_heads', 'ears_env'): rep['fasteners'][f'{n} × {o}'] = round(v, 4)
     names = list(allf)
     for i in range(len(names)):
         for j in range(i + 1, len(names)):
@@ -342,7 +388,7 @@ def report():
         per_side_eq_g_at_r83=dict(from_empty=round(m_max * W_R * proj / 83, 1), from_min_loaded=round(dU / 83, 1)),
         step_gmm=dict(one_nut=round(M_NUT * W_R, 1), one_washer=round(M_WASH * W_R, 1)),
         shroud_U_gmm=[round(sum(cog(s)[0] * cog(s)[1][i] for s in HALVES.values()) * RHO_PLA, 2) for i in (0, 1)],
-        note=f'两半是同一件转 180°, 罩自身不偏心; 配重 −y / +y 两侧各 {len(neg)} 孔 (+ 2 个盖螺丝孔), 任意方向可调; 唇宽 6 放不下 Φ7 垫片, 只挂螺母')
+        note=f'两半只差两端缝的位置 (偏心), 罩自身近似不偏心 (见 shroud_U_gmm); 灯板组偏心 −4.36 的静不平衡要靠 +y 侧配重 + 底板 (+y) 抵; 配重 −y / +y 两侧各 {len(neg)} 孔 (+ 2 个盖螺丝孔), 任意方向可调; 唇宽 6 放不下 Φ7 垫片, 只挂螺母')
     rep['screws'] = {
         '罩底 M3×8': dict(bear_z=BOSS_Z1, tip_z=BOSS_Z1 - MNT_L, through='凸台 4', insert_z=INS_Z, at=MNT_A, r=HOLE_R,
                           engage=round(INS_Z[1] - max(INS_Z[0], BOSS_Z1 - MNT_L), 2),
@@ -351,10 +397,24 @@ def report():
         '顶盖 M3×8 内六角': dict(bear_z=Z1 - LID_CB_H, head_top=Z1, tip_z=Z1 - LID_CB_H - LID_SCR_L, nut_z=(LIP_Z0 - NUT_T, LIP_Z0), at=LID_SCR_ALL, r=W_R, through='凸块底 2 + 唇缺槽下剩 1.9'),
         '配重 M3×16': dict(bear_z=W_BEAR, head_top=W_BEAR + 3, tip_z=W_TIP, below_lip=round(LIP_Z0 - W_TIP, 1), max_nuts=W_NUT_MAX),
     }
+    # 最小间隙 (BRepExtrema)
+    from OCP.BRepExtrema import BRepExtrema_DistShapeShape
+    def dmin(a, b):
+        d = BRepExtrema_DistShapeShape(a, b); d.Perform(); return round(d.Value(), 3) if d.IsDone() else -1
+    rep['clear'] = {}
+    for k, sh in HALVES.items():
+        for o in ('baseboard', 'bb_env', 'ears_env', 'rh_heads', 'antenna', 'wireless_holder', 'j3_a', 'j3_b', 'bridge_a', 'bridge_b'):
+            rep['clear'][f'罩{k} ↔ {o}'] = dmin(sh, OTHERS[o])
+    for k, sh in LIDS.items():
+        for o in ('antenna', 'bridge_a', 'bridge_b', 'led_a', 'led_b', 'j3_a', 'j3_b', 'wireless_holder'):
+            rep['clear'][f'盖{k} ↔ {o}'] = dmin(sh, OTHERS[o])
+    rep['clear']['盖a 内边 ↔ 板A MIP 顶 y0'] = round(LID_YIN['a'] - (ECC + Y_LED0 + MIP_H), 3)
+    rep['clear']['盖b 内边 ↔ 板B MIP 顶'] = round((ECC - Y_LED0 - MIP_H) - LID_YIN['b'], 3)
+    rep['clear']['配重/盖螺丝/分缝外购件 ↔ 罩外购件之外的件'] = {o: dmin(comp(w_scr + w_stack + seam_scr + seam_nut), OTHERS[o]) for o in ('ears_env', 'rh_heads', 'wireless_holder', 'bb_env')}
     rep['valid'] = {k: BRepCheck_Analyzer(v).IsValid() for k, v in list(HALVES.items()) + [('盖' + k, v) for k, v in LIDS.items()]}
     rep['misc'] = dict(Z0=Z0, Z1=Z1, R=(R0, R1), static_in=ST_IN, Z_VIEW0=B.Z_VIEW0, Z_LED0=B.Z_LED0,
                        lip=dict(r=(LIP_R0, R0), z=(LIP_Z0, LID_Z0), arcs=LIP_ARCS), lid=dict(t=LID_T, z=(LID_Z0, Z1), y0=LID_Y0, r=LID_R, br_pocket=BR_POCKET, ant_notch=ANT_NOTCH, led_cuts=LID_LED_CUTS, screws=LID_SCR_ALL, boss_rad=LID_BOSS_RAD, bbox_a=[round(v, 2) for v in bbox(lid_a)]),
-                       slot_y=SLOT_Y, boss=dict(a=MNT_A, r=HOLE_R, ri=BOSS_RI, w=BOSS_W, z1=BOSS_Z1, gusset_z1=GUS_Z1),
+                       slot=dict(y=(round(SLOT_Y0, 3), round(SLOT_Y1, 3)), x0=SLOT_X0, same_part=SLOT_SAME_PART), shr_synced=SHR_SYNCED, boss=dict(a=MNT_A, r=HOLE_R, ri=BOSS_RI, w=BOSS_W, z1=BOSS_Z1, gusset_z1=GUS_Z1),
                        lug=dict(x=LUG_HX, y=(LUG_Y0, LUG_Y1), z=(LUG_Z0, LIP_Z0), screw_z=LUG_SZ),
                        wireless_holder=str(WH) if WH.exists() else '占位盒', bbox_a=[round(v, 2) for v in bbox(shr_a)])
     return rep
@@ -375,7 +435,7 @@ if __name__ == '__main__':
     # 顶盖: 打印 顶面朝下 (沉头锥口在床面), 免支撑 (桥板让位槽在上面)
     for k, s in LIDS.items():
         n = f'rotor_lid_{k}_v1_2' if k == 'b' else 'rotor_lid_v1_2'
-        if k == 'b': continue                                    # 同件, 只出一个
+        # 11-16 晚 偏心: 两片盖不同件 (+y rotor_lid_v1_2 / −y rotor_lid_b_v1_2), 都出
         d = B.V12 / 'models' / n; d.mkdir(exist_ok=True)
         write_doc([(n, s, '#CFE2F3', None, False)], d / f'{n}.step', n)
         BRepMesh_IncrementalMesh(s, 0.02, False, 0.2, True)

@@ -194,7 +194,7 @@ def draw(spec):
 
     # ---- 剖视 A-A (半剖) ----
     shape = spec["shape"]
-    polys = section_polylines(shape, sec["ang"])
+    polys = section_polylines(shape, sec["ang"], sec.get("origin", (0.0, 0.0)))   # 11-16 晚: 偏心件剖切面可偏离转轴
     zs = np.concatenate([p[:, 1] for p in polys])
     us = np.concatenate([p[:, 0] for p in polys])
     r1 = sec.get("r1", float(us.max()))

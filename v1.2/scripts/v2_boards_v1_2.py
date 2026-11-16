@@ -16,16 +16,17 @@ from OCP.BRep import BRep_Builder
 from OCP.TopoDS import TopoDS_Compound
 from helpers import read_step
 
-BB_PCB = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/layout/r3_pads/POV3D_V2_BaseBoard_r3.kicad_pcb')   # 11-16 晚: r3 rev b (两 FPC 座一内一外, CZ06 夹中间; r2 作废)
-BB_STEP = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/review/结构交付/POV3D_V2_BaseBoard_r3.step')   # 原点 = 转轴, z0 = 板底
-# r3 板框多边形 (r3_说明 §1, 世界坐标)
-def _arc(p0, p1, r=81.7, n=12):
+BB_PCB = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/layout/r4d_pads/POV3D_V2_BaseBoard_r4d.kicad_pcb')   # 11-16 晚 r4d (96 11234291): 板框同 r4c (角 r81.69), 四角矩形孔, J8/J10/J9 改焊盘, J11/J12 测试点, C13 换聚合物
+BB_STEP = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/review/结构交付/POV3D_V2_BaseBoard_r4d.step')   # 原点 = 转轴, z0 = 板底
+# 板框 (世界坐标); _arc = 以转轴为心的圆弧 (r4c 五边形不用, 留着)
+def _arc(p0, p1, r=81.7, n=12):                       # 11-16 晚 改回 Φ170: r81.7 (罩内壁 r82, 罩内件 ≤ r81.7; Φ175 时曾 r84.2)
     a0, a1 = math.atan2(p0[1], p0[0]), math.atan2(p1[1], p1[0])
     return [(r * math.cos(a0 + (a1 - a0) * k / n), r * math.sin(a0 + (a1 - a0) * k / n)) for k in range(1, n)]
-# r3 rev c (11-16 晚, 96 提交 072a91f7): 板角收进 r81.7 (转子罩壁缩到 r82–85); ⌒ = 以转轴为心 r81.7 圆弧
-BB_POLY = ([(-51.2, 14), (40, 14), (40, 71.24)] + _arc((40, 71.24), (38.05, 72.3)) + [(38.05, 72.3), (27, 72.3), (27, 74.6), (21, 74.6), (21, 78.95)]
-           + _arc((21, 78.95), (-21, 78.95), n=24) + [(-21, 78.95), (-21, 74.6), (-27, 74.6), (-27, 72.3), (-31, 72.3), (-31, 64.5), (-49.9, 64.5), (-51.2, 63.5)])
-BB_R = 83.0                                          # 上两角 r83 圆弧
+# 11-16 晚 用户 (Φ175, 再改): 底板改窄长条 x ±64, y 0.5–42 (128×41.5, 上两角 r76.55), pov3d-96 出板中 ⇒ 结构侧先用占位;
+#   原 r3 rev c 多边形 (板角 r81.7) 及 104×65.5 长方形 作废; 长条 / r4b 也已作废 (见下)
+#   11-16 晚 改回 Φ170: r4c 五边形 x −51.2…47.3, y 8.6–66.6, 左上角切 (−51.2, 63.6)–(−47.3, 66.6); 顶点最远 r81.69 (罩内壁 r82)
+BB_POLY = [(-51.2, 8.6), (47.3, 8.6), (47.3, 66.6), (-47.3, 66.6), (-51.2, 63.6)]   # r4c (r4b 原 (-51.5, 8.6)…(47.5, 66.6) 99×58)
+BB_R = 81.7                                          # 11-16 晚 改回 Φ170: 底板外接限 r81.7 (Φ175 时曾 r84.2; 原 r83)
 BB_C = (150.0, 100.0)                                # 转轴 (KiCad); r2: 世界 (x, y) = (kx − 150, 100 − ky), 已与 bbox_r2.json 核对
 # 限高 (板顶以上, mm); 没列的 = 1.2 (0402~0805 / SOT / QFN 一类)
 H_BY_FP = {
@@ -107,7 +108,8 @@ def make(B):
     pg = BRepBuilderAPI_MakePolygon()
     for x, y in BB_POLY: pg.Add(gp_Pnt(x, y, z0))
     pg.Close()
-    pcb = BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(pg.Wire()).Face(), gp_Vec(0, 0, B.BB_T)).Shape()   # r3 多边形板框
+    pcb = BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(pg.Wire()).Face(), gp_Vec(0, 0, B.BB_T)).Shape()   # r4d 板框
+    pcb = B.cut(pcb, *[B.cyl(x, y, 3.2, z0 - 1, z0 + B.BB_T + 1) for x, y in B.BB_HOLES])   # 11-16 晚: 4 个 M3 安装孔 Φ3.2 (原板框实心, 尼龙螺丝误报 11.3 mm3)
     comps = [_box(a, b_, zt, c, d, zt + h) if h > 0 else _box(a, b_, z0 + h, c, d, z0) for _, _, (a, b_, c, d), h in parts]
     # r2: CZ06 中心 (0, 53.5), 长边 60 沿 x (r2_说明 §4)
     (cx, cy), w_, d_ = CZ06_C, CZ06_W, CZ06_D

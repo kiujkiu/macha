@@ -3,6 +3,8 @@
 世界坐标 (同 build_v1_2): Z0 = 底盘顶, 承载盘顶 Z32, 灯板下沿 Z37, 灯板面平行 XZ。
 11-16 晚改 (转子罩壁缩到 r82–85, 照 V0.4): 托盘 + 模块 + 引脚/螺丝/铜螺母整体随 B.MOD_HOLES 往 +y 挪 3,
     外墙外面 r84.5 → r81.7 (罩内壁 r82 留 0.3); 整件最大半径 81.7。
+11-16 晚 Φ175 方案 A 时外墙曾放宽到 r84.2; 同晚转子改回 Φ170 (罩内壁 r82) ⇒ 外墙外面收回 r81.7 (托盘/螺丝位置不动 = B.MOD_HOLES 不动);
+    灯板组平移 SCR_ECC (−4.36) 后禁区随之平移 (板 B MIP 顶 y−8.72), 中间 T 件取消, 两端立板改耳朵脚 (x≥69), 罩底凸台 @B.SHR_ANG。
 模块: 30.5×49×15, 19.2 g, 长边沿 x, 中心 (0, MOD_YC) = (0, −56.75), y −72…−41.5; 引脚 (KiCad POV3D_V2_BaseBoard_r1 P1 "AC-DC24V_Module" 封装, 框 48.6×30):
     1/2 = AC (接线圈) 在 +x 短边, 3 = 24V / 4 = GND 在 −x 短边; 假设脚从模块底面朝下伸出 ≤3 (托盘底窗口内焊线)。
 固定件 (打印 PETG/PLA, 一件):
@@ -69,9 +71,11 @@ MZ0 = RIM_TOP + FLOOR_T; MZ1 = MZ0 + MOD_H  # 模块 Z35–50
 HX = MOD_L / 2                              # 24.5
 SIDE_T, SIDE_Z1 = 2.0, MZ0 + 10.0           # 侧墙 2 厚, 顶 Z45
 IN_T, IN_Z1 = 2.0, MZ0 + 5.0                # 内侧矮墙 2 厚, 顶 Z40
-OUT_R, OUT_Z1 = 81.7, MZ1                   # 外墙外面 r81.7 (转子罩壁 r82–85, 留 0.3), 顶 = 模块顶 Z50
+OUT_R, OUT_Z1 = 81.7, MZ1                   # 外墙外面 r81.7 (11-16 晚 改回 Φ170: 转子罩壁 r82–85, 留 0.3; Φ175 时曾 r84.2), 顶 = 模块顶 Z50
 OX = HX + SIDE_T                            # 26.5 外包 x
 R_MAX = 81.7                                # 罩内一切 ≤ r81.7
+SHR_R0, SHR_R1 = 82.0, 85.0                 # 转子罩壁 (Φ175 时曾 84.5/87.5)
+ECC = B.SCR_ECC                             # −4.36 灯板组 y 平移
 CB_D, CB_Z = 6.0, RIM_TOP + 4.0             # M3×8 头 Φ5.5×3 → 沉孔 Φ6, 头支承 Z36 ⇒ 尾 Z28, 铜螺母 Z27.8–32 啮合 4
 TONGUE_X, TONGUE_Y1, TONGUE_Z1 = 6.0, SCR_IN[0][1] + 4.0, RIM_TOP + 4.0   # 内舌到 y −24
 # 引脚 (封装本地 fx 向右, fy 向下, 框 48.6×30; 绕 Z 转 180° 使 AC 在 +x): X = −(fx − 24.3), Y = MOD_YC + (fy − 15)
@@ -127,18 +131,20 @@ tie_s = fuse(*ties) if len(ties) > 1 else ties[0]
 # ---------------- 周边禁区 (按 11-16 晚接口规格 spec_wall82; 转子罩/T 脚按规格尺寸做包络) ----------------
 def ann(r0, r1, z0, z1): return cut(cyl(0, 0, 2 * r1, z0, z1), cyl(0, 0, 2 * r0, z0 - 1, z1 + 1))
 KEEP = {
-    'led_a(+y)': gbox(-81.88, 0, 37, 81.88, 4.36, 245), 'led_b(−y, 含 MIP 凸到 −4.36)': gbox(-81.88, -4.36, 37, 81.88, 0, 245),
-    '夹条 |y|≤2.3': gbox(-81.88, -2.3, 37, 81.88, 2.3, 54),
-    'bridge_b': gbox(-32, -8.4, 37, 32, -3.77, 73), 'fpc_seat_b': gbox(-20.75, -10.4, 39, 20.75, -8.4, 43.4),
-    'J3 VH+插头+线 (x±6 假设)': gbox(-58.75 - 6, -26, 38, -58.75 + 6, -3.77, 48),
-    '两端 T 脚 +x': gbox(70, -14, 32, 78, 14, 37), '两端 T 脚 −x': gbox(-78, -14, 32, -70, 14, 37),
-    '中间 T 件 +x': gbox(34, -14, 32, 42, 14, 37), '中间 T 件 −x': gbox(-42, -14, 32, -34, 14, 37),
+    # 灯板组 (局部中面 y=0) 整体平移 ECC: 板 A F 面 −2.06 / MIP 顶 0; 板 B F 面 −6.66 / LED 面 −8.128 / MIP 顶 −8.72
+    'led_a(+y)': gbox(-81.88, ECC + 2.3, 37, 81.88, ECC + 4.36, 245), 'led_b(−y, 含 MIP 凸到 −8.72)': gbox(-81.88, ECC - 4.36, 37, 81.88, ECC - 2.3, 245),
+    '夹条 |y−ECC|≤2.3': gbox(-81.88, ECC - 2.3, 37, 81.88, ECC + 2.3, 54),
+    'bridge_b': gbox(-32, ECC - 8.4, 37, 32, ECC - 3.77, 73), 'fpc_seat_b': gbox(-20.75, ECC - 10.4, 39, 20.75, ECC - 8.4, 43.4),
+    'J3 VH+插头+线 (x±6 假设)': gbox(-58.75 - 6, ECC - 26, 38, -58.75 + 6, ECC - 3.77, 48),
+    # 两端立板 (11-16 晚 耳朵脚): 横杆 x69–77 局部 |y|≤14 Z32–37 + 耳朵 x69–77 |y|≤33.73 Z32–36 + 腹板/天线板到 x83.7 (包络)
+    '两端立板+耳朵 +x': gbox(69, -33.73, 32, 83.7, 33.73, 37), '两端立板+耳朵 −x': gbox(-83.7, -33.73, 32, -69, 33.73, 37),
     '24V 线走廊 x≈−55 (±3, y≥−50)': gbox(-58, -50, 32, -52, 14, 37),
-    'FPC 下缝 |x|≤18': gbox(-18, -10.4, 32, 18, 10.4, 37),
-    '转子罩壁 r82–85': ann(82, 85, 32, B.Z_VIEW0), '罩内余量 r81.7–82': ann(R_MAX, 82, 24, B.Z_VIEW0),
-    **{f'罩底铜螺母孔 @{a}° (Φ8 包络)': cyl(x, y, 8, 28, 40) for a, (x, y) in zip((50, 140, 230, 320), B.SHR_HOLES)},
+    'FPC 下缝 |x|≤18': gbox(-18, ECC - 10.4, 32, 18, ECC + 10.4, 37),
+    '转子罩壁 r82–85': ann(SHR_R0, SHR_R1, 32, B.Z_VIEW0), '罩内余量 r81.7–82': ann(R_MAX, SHR_R0, 24, B.Z_VIEW0),
+    **{f'罩底凸台 @{a:g}° (r72.5–82 × 宽 8 × Z32–36 包络)': xf(gbox(72.5, -4.0, 32.0, 82.0, 4.0, 36.0), B.rotz(a)) for a in B.SHR_ANG},
+    **{f'罩底铜螺母孔 @{a:g}° (Φ8 包络)': cyl(x, y, 8, 28, 40) for a, (x, y) in zip(B.SHR_ANG, B.SHR_HOLES)},
     **{f'AC 线孔 ({x:g},{y:g}) Φ3 上方 Z32–35 (托盘不许盖)': cyl(x, y, 3.0, RIM_TOP, MZ0) for x, y in AC_HOLES},
-    '底板 r2 (外框)': gbox(-51.3, 14, B.Z_BB0, 47, 72, B.Z_BB0 + B.BB_T),
+    '底板 r4c 外包 x−51.2…47.3 y8.6–66.6': gbox(-51.2, 8.6, B.Z_BB0, 47.3, 66.6, B.Z_BB0 + B.BB_T),
     'rim': B.rim, 'hub': B.hub, 'shroud_lo': B.shroud_lo, 'shroud_hi': B.shroud_hi, 'glass': B.tube,
 }
 PARTS = dict(holder=H, module=module, screws=fuse(*screws), inserts=fuse(*inserts), ties=tie_s, **{f'pin {k}': v for k, v in pins.items()})
@@ -163,9 +169,9 @@ def report():
     rep['misc']['max_r_ok'] = max(rep['misc']['max_r_all'].values()) <= R_MAX + 1e-6
     rep['gap'] = {}
     asm = fuse(H, module, PARTS['screws'], tie_s)
-    for b in ('led_b(−y, 含 MIP 凸到 −4.36)', '夹条 |y|≤2.3', '中间 T 件 +x', '中间 T 件 −x', '两端 T 脚 +x', '两端 T 脚 −x',
+    for b in ('led_b(−y, 含 MIP 凸到 −8.72)', '夹条 |y−ECC|≤2.3', '两端立板+耳朵 +x', '两端立板+耳朵 −x', 'fpc_seat_b', 'FPC 下缝 |x|≤18',
               '24V 线走廊 x≈−55 (±3, y≥−50)', '转子罩壁 r82–85', 'J3 VH+插头+线 (x±6 假设)', 'bridge_b',
-              *[k for k in KEEP if k.startswith('罩底铜螺母孔') or k.startswith('AC 线孔')]):
+              *[k for k in KEEP if k.startswith('罩底') or k.startswith('AC 线孔')]):
         d = BRepExtrema_DistShapeShape(H if b.startswith('AC 线孔') else asm, KEEP[b]); d.Perform()
         rep['gap'][('holder × ' if b.startswith('AC 线孔') else '整件 × ') + b] = round(d.Value(), 2)
     rep['misc']['ac_holes'] = {f'{x},{y}': round(math.hypot(x, y), 2) for x, y in AC_HOLES}

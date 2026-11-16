@@ -1,4 +1,4 @@
-"""POV3D V1.2 结构: V1.0 基础上换电机 Φ55x21.5 + 打印底盘 Φ220 + 柱回 V0.4 柱位 + 承载盘外唇 Φ170 (11-14, 原 Φ178)."""
+"""POV3D V1.2 结构: V1.0 基础上换电机 Φ55x21.5 + 打印底盘 Φ220 + 柱回 V0.4 柱位 + 承载盘外唇 Φ170 (11-14, 原 Φ178); 11-16 晚 方案 A: 屏幕偏心 SCR_ECC + 取消中间 T 件 (转子曾改 Φ175, 同晚用户改回 Φ170, 其余改动保留)."""
 import sys, os, math, json
 from pathlib import Path
 from helpers import read_step, write_doc, bbox, solids
@@ -48,7 +48,8 @@ MOTOR_Z0 = ROTOR_TOP - MOTOR_H        # 10.2 (原 5.0)
 BORE_D = 59.0                          # 电机座内孔 (原 55), 径向余 2
 STATOR_R = 46 / 2; ROTOR_R = 16 / 2   # 对角/2
 POCKET_D, POCKET_H = 6.2, 3.5          # 毂盘中心窝 (原 Φ6.2x2.2)
-RIM_D = 170.0                          # 承载盘外唇: 用户 11-14 改回 V0.4 rim_ring Φ170 (V1.0 原 180, V1.2 曾 178)
+RIM_D = 170.0                          # 承载盘外唇: 11-16 晚 用户改回 Φ170 (同晚曾改 Φ175; 11-14 改回 V0.4 Φ170; V1.0 原 180, V1.2 曾 178)
+SCR_ECC = -4.36                        # 11-16 晚 用户: 整组灯板沿 y 平移 (同 V0.4/V1.0 偏心), 板 A MIP LED 顶面落在转轴 y=0; 各脚本都读 B.SCR_ECC
 DISC_D, DISC_T = 220.0, 6.0
 M6_D, CB_D, CB_H = 6.4, 13.0, 3.0
 COLLAR_M6 = [(sx * 37.5, sy * 37.5) for sx in (1, -1) for sy in (1, -1)]
@@ -161,7 +162,7 @@ for sx in (1, -1):
         h = cut(h, cyl(x, y, 3.2, 31.7 - 1, 36.7), cyl(x, y, 7.0, 36.7, 41.0))
 hub = zdown(clean(h))
 # 11-16 晚 用户: 转子盘和定子盘同半径 ⇒ 毂盘外圆 r87.5 → r85 (= 承载盘 r85 = 安装法兰 r85 = 转子罩外圆), 转子外面一整个 Φ170 圆柱
-hub = clean(op(BRepAlgoAPI_Common, hub, cyl(0, 0, 2 * 82.4, -100, 200)))   # 11-16 晚 再改: 毂盘 r82.4 嵌进承载盘裙边 (同定子: 定子盘 r82.5 嵌安装法兰外裙)
+hub = clean(op(BRepAlgoAPI_Common, hub, cyl(0, 0, 2 * 82.4, -100, 200)))   # 11-16 晚 再改: 毂盘 r82.4 嵌进承载盘裙边 r82.5 (同定子: 定子盘 r82.5 嵌安装法兰外裙); Φ175 时曾 r84.9, 已改回
 import math as m
 v_old_holes = 4 * (m.pi * 1.6**2 * 5 + m.pi * 3.5**2 * 4)
 LOG['hub'] = dict(v0=v0, v=vol(hub), fill=v_fill, old_holes_expected=v_old_holes)
@@ -175,28 +176,54 @@ _rim_pre = rim
 LS_FOOT_PTS = []
 #   中间 T 件 ×2 (led_support_v1_2, 11-16 晚 用户: 灯板下端沿用 V0.4 ⇒ 夹条 + T 件竖直螺丝; 原门形 (±30,0) 作废):
 #   每件 2×M3 进承载盘铜螺母 (Φ4.2×4.2), 脚孔在灯板/桥板外 (|y|10) 从上面够得着
-GATE_PTS = [(38.0, 10.0), (38.0, -10.0), (-38.0, 10.0), (-38.0, -10.0)]
-rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.2, 33.0) for x, y in GATE_PTS]))
+#   11-16 晚 用户: 中间 T 件取消 ⇒ 原 (±38, ±10) 4 孔不再切; 名字留着置空 (led_support / fasteners / build_drawings 还在 import)
+GATE_PTS = []
 # 11-16 晚 pov3d-96 底板 r3 rev b (layout/r3_pads, 两 FPC 座一内一外, CZ06 夹中间): 4×M3 → 承载盘顶面 Φ4.2×4.0 浅孔 (H5/H7/H6/H8; 线圈腔 r34–76 上盘只剩 4.5 厚)
-BB_HOLES = [(-46.0, 17.8), (18.1, 27.55), (-24.25, 69.9), (24.25, 69.9)]   # rev d (96 acf181c5): H7 (18.1, 27.55) 让开 r30 锁盘螺丝; rev c: H6/H8 (±24.25, 69.9)
+#   11-16 晚 改回 Φ170: 底板换 r4c (96 出, 板角 r81.69 进罩内壁 r82), 孔 H5/H6/H7/H8
+#   (原 r3 rev d: (-46,17.8) (18.1,27.55) (±24.25,69.9); r4b: (-47.6,12.6) (-25,61.5) (43.5,53) (25,61.5))
+#   11-16 晚 用户: 孔相对底板自身对称, 放板四角附近, 矩形 90.1×49.6 以板中心 (−1.95, 37.6) 为心 (96 出 r4d 给最终坐标); 板框/STEP 仍 r4c
+#   (r4c 原: (-47.4, 60.0) (-24.6, 61.5) (43.5, 53.0) (24.6, 61.5)); (−47, 62.4) 在 r78.1, 尼龙柱六角对角外缘约 r81.3 < 罩内壁 r82
+BB_HOLES = [(-47.0, 12.8), (43.1, 12.8), (-47.0, 62.4), (43.1, 62.4)]   # r4d (96 11234291): H5 / H7 / H6 / H8 四角矩形, 四边内缩 4.2
 BB_INS_H = 4.0
+#   11-16 晚 用户: 底板用 M3 尼龙柱装 —— 承载盘孔照旧压 M3×3 铜螺母 (顶面齐平, Z29–32), 上面放尼龙光孔垫柱 Φ6×3 (内孔 3.2, Z32–35 = 板底 Z35 不变),
+#   M3×8 尼龙盘头从板顶穿 板 1.6 + 垫柱 3 拧进铜螺母 (头支承 Z36.6, 尾 Z28.6, 啮合 3, 孔底 Z28 余 0.6)。
+#   原方案 单通柱 M3×3+5 外螺纹尾到 Z27, 让位孔会打穿线圈腔 (F 核) ⇒ 改光孔垫柱 + 长螺丝, 承载盘不加让位孔
+BB_STANDOFF_SPEC = '尼龙光孔垫柱 M3 Φ6×3 (内孔 3.2)'
+BB_SCREW_SPEC = 'M3×8 尼龙盘头'
+BB_SCREW_L, BB_SCREW_HEAD_Z = 8.0, 32.0 + 3.0 + 1.6   # 螺丝长 / 头支承面 Z36.6
 rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - BB_INS_H, 33.0) for x, y in BB_HOLES]))
 #   11-16 晚 用户: 转子罩照 V0.4 缩进坐盘上 (罩壁 r82–85, 外圆 = 盘 Φ170) ⇒ 罩底固定 + 两端 T 脚改承载盘顶面铜螺母 (Φ4.2×4.0, 原 R82.5 毂盘底铜螺母孔不再用)
-SHR_HOLES = [(79.0 * math.cos(math.radians(a)), 79.0 * math.sin(math.radians(a))) for a in (50.0, 140.0, 230.0, 320.0)]   # 罩底 4 孔 r79 (11-16 晚 用户: 转子外圈螺丝同定子 r79; 原 r78.5)
-END_T_HOLES = [(74.0, 8.5), (74.0, -8.5), (-74.0, 8.5), (-74.0, -8.5)]   # 11-16 晚: y ±10 → ±8.5 (离承载盘原 (70.91,12.5) Φ4 通孔留 0.95)                                            # 两端 T 脚 4 孔 (线圈腔上方, 盘厚 4.5)
-rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.0, 33.0) for x, y in SHR_HOLES + END_T_HOLES]))
+SHR_ANG = (40.0, 140.0, 220.0, 320.0)               # 11-16 晚 (C 定, 改回 Φ170 + r4c 后 F 复核仍可用): 罩底凸台避开底板 r4c 和立板耳朵 (+y 40/140, −y 220/320 = A 半转 180°); 原 @50/140/230/320
+SHR_HOLES = [(79.0 * math.cos(math.radians(a)), 79.0 * math.sin(math.radians(a))) for a in SHR_ANG]   # 罩底 4 孔 r79 (同锁盘螺丝 RH_R; 离 22.5° 耳朵螺丝孔心 10.3)
+#   11-16 晚 用户: 两端立板脚改锁外圈锁盘螺丝 (RH_EAR_IDX) ⇒ 原 (±74, ±8.5) 4 孔不再切 (= 填实); 名字留着置空 (led_support 还在 import)
+END_T_HOLES = []
+rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.0, 33.0) for x, y in SHR_HOLES]))
 #   11-16 晚 用户: 转子外圈螺丝和定子同半径 ⇒ 承载盘+毂盘外圈 8 孔从 V1.0 的 R82.5 挪到 r79 @22.5°+45°k (= 定子盘/安装法兰外圈 LID_SCREWS, 上下对齐);
 #   8×M3×8 内六角从承载盘顶沉孔往下, 进毂盘底 M3×4 铜螺母 (Z21.5–25.5) —— 两盘锁成一体
-RH_R = 79.0
+RH_R = 79.0                                       # 11-16 晚: r79, 与定子 LID_R 上下对齐
 RH_PTS = [(RH_R * math.cos(math.radians(22.5 + 45 * k)), RH_R * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]
 RH_OLD = [(82.5 * math.cos(math.radians(22.5 + 45 * k)), 82.5 * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]
-RH_CB_D, RH_BEAR, RH_L = 6.0, 29.0, 8.0          # 11-16 晚 改: 承载盘顶 Φ6×3 沉孔 (头支承 Z29, 头顶齐盘顶 Z32), M3×8 往下, 尾 Z21.0 (毂盘底下露 0.5)
+#   11-16 晚 用户再改: 8 孔都不做沉孔, 一律 Φ3.4 通孔, 承载盘顶 Z32 平 (原 Φ6×3 沉孔 头支承 Z29, M3×8)
+RH_HEAD_Z0 = 32.0                                 # 不在耳朵下的 4 颗: 头底直接压承载盘顶 Z32, 头 Z32–35 (外缘 r79+2.75 = r81.75, 罩内壁 r82 留 0.25)
+RH_L = 10.0                                       # M3×10: 尾 Z22.0 (铜螺母 Z21.5–25.5 啮合 3.5, 不出毂盘底 Z21.5); M3×12 尾 Z20 会露 1.5 ⇒ 不用
+RH_CB_D, RH_BEAR = 0.0, RH_HEAD_Z0                # 沉孔取消 (RH_CB_D 留名置 0); 头支承 = RH_HEAD_Z0
 RH_INS = (21.5, 25.5)                             # 毂盘底 M3×4 铜螺母 (底面齐平压入)
+#   11-16 晚 用户: 两端立板脚 (led_support 耳朵) 锁在外圈 k=0,3,4,7 (22.5/157.5/202.5/337.5°) 这 4 颗上 (8 孔都是 Φ3.4 通孔, 盘顶 Z32 平);
+#   叠层 (从上往下): 螺丝头支承 = 耳朵顶 (Z_RIM_TOP + 耳朵厚, 由 led_support 定) → 耳朵底贴承载盘顶 RH_EAR_Z0 → 穿承载盘 → 毂盘底铜螺母 RH_INS (Z21.5–25.5)
+#   螺丝尾 Z 允许 RH_EAR_TIP_Z (下限 = 毂盘底 Z21.5, 不许露出; 上限 Z23.0 = 啮合 ≥2.5); 推荐尾 Z22.0 (同其余 4 颗 M3×10)
+#   ⇒ 标准长度对应耳朵厚: M3×12 ↔ 1.5–3.0, M3×14 ↔ 3.5–5.0, M3×16 ↔ 5.5–7.0 (耳朵厚 = L − 32 + 尾 Z)
+RH_EAR_IDX = [0, 3, 4, 7]
+RH_EAR_PTS = [RH_PTS[k] for k in RH_EAR_IDX]
+RH_STD_IDX = [k for k in range(8) if k not in RH_EAR_IDX]   # [1, 2, 5, 6] = 67.5/112.5/247.5/292.5°: M3×RH_L 头压盘顶
+RH_EAR_Z0 = 32.0                                  # 耳朵底 = 承载盘顶
+RH_EAR_TIP_Z = (21.5, 23.0)                       # 螺丝尾 Z 可用范围
+RH_EAR_TIP_REC = 22.0                             # 推荐尾 Z
+def rh_ear_screw_len(ear_t, tip=RH_EAR_TIP_REC): return RH_EAR_Z0 + ear_t - tip   # 耳朵厚 ear_t → 螺丝长 (头支承到尾), 例: 3 厚 → 13 (取 M3×12 尾 Z23 或改耳厚)
 #   用户: 转子两盘要像定子一样嵌套 (V0.4/V1.0 原样) ⇒ 承载盘补裙边 r82.5–85 下到毂盘底 Z21.5, 毂盘 r82.4 嵌在里面; 转子外面 = 承载盘一个 Φ170 圆柱
-RIM_SKIRT = (82.5, 85.0, 21.5)
+RIM_SKIRT = (82.5, 85.0, 21.5)                    # 11-16 晚 改回 Φ170 (Φ175 时曾 r85–87.5)
 rim = clean(fuse(rim, *[cyl(x, y, 4.0, 27.0, 32.0) for x, y in RH_OLD]))                                     # 旧 R82.5 Φ3.6 通孔补实
 rim = clean(fuse(rim, cut(cyl(0, 0, 2 * RIM_SKIRT[1], RIM_SKIRT[2], 27.6), cyl(0, 0, 2 * RIM_SKIRT[0], RIM_SKIRT[2] - 1, 28.0))))   # 裙边
-rim = clean(cut(rim, *[fuse(cyl(x, y, 3.4, 20.0, 33.0), cyl(x, y, RH_CB_D, RH_BEAR, 33.0)) for x, y in RH_PTS]))
+rim = clean(cut(rim, *[cyl(x, y, 3.4, 20.0, 33.0) for x, y in RH_PTS]))   # 8 孔全 Φ3.4 通孔, 无沉孔
 hub = clean(fuse(hub, op(BRepAlgoAPI_Common, fuse(*[cyl(x, y, 4.6, 21.5, 27.0) for x, y in RH_OLD]), cyl(0, 0, 2 * 82.4, 0, 40))))   # 旧 R82.5 孔残口补实 (不出 r82.4)
 hub = clean(cut(hub, *[fuse(cyl(x, y, 3.4, 20.0, 28.0), cyl(x, y, 4.2, 20.0, RH_INS[1])) for x, y in RH_PTS]))
 #   无线供电模块固定件 (wireless_holder_v1_2.py, −y 侧): M3 铜螺母孔 (11-16 晚: 罩壁缩到 r82, 托盘整体往 +y 挪 3)
@@ -209,8 +236,10 @@ rim = clean(cut(rim, *[cyl(x, y, AC_HOLE_D, 20.0, 33.0) for x, y in AC_HOLES]))
 #   配平: 11-16 起改在转子罩内配重唇 (rotor_shroud_v1_2.py), 承载盘原 r76@112° 配平孔取消
 CW_PT = None
 # 校核: 每个新孔外 Φ8 环 (孔壁 1.9) 在盘顶下 4.5 内是实心
+LOG['rh_std'] = dict(idx=RH_STD_IDX, head_z0=RH_HEAD_Z0, L=RH_L, tip=RH_HEAD_Z0 - RH_L, ins=RH_INS)
+LOG['rh_ear'] = dict(idx=RH_EAR_IDX, pts=[(round(x, 2), round(y, 2)) for x, y in RH_EAR_PTS], z0=RH_EAR_Z0, tip_z=RH_EAR_TIP_Z, tip_rec=RH_EAR_TIP_REC, ins=RH_INS)
 LOG['rim_new_holes_solid'] = {f'{n_}{i}': round(vol(op(BRepAlgoAPI_Common, _rim_pre, cut(cyl(x, y, 8.0, 27.6, 32.0), cyl(x, y, 4.3, 27, 33)))) / vol(cut(cyl(x, y, 8.0, 27.6, 32.0), cyl(x, y, 4.3, 27, 33))), 3)
-                              for n_, pts in (('gate', GATE_PTS), ('bb', BB_HOLES), ('mod', MOD_HOLES), ('shr', SHR_HOLES), ('endt', END_T_HOLES)) for i, (x, y) in enumerate(pts)}
+                              for n_, pts in (('bb', BB_HOLES), ('mod', MOD_HOLES), ('shr', SHR_HOLES)) for i, (x, y) in enumerate(pts)}
 
 # ---------------- 4 底盘 ----------------
 # 4a 电机控制板 (沿用 V1.0 motor_tray 11-04 做法, 托板并进底盘): 板平放底盘顶面 z0, 器件朝上;
@@ -351,6 +380,14 @@ for x, y in KEY_M3:                                                             
 assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in KEY_M3 for a, b in FIXED + EXTRA), '按键支架 M3 沉孔离网格孔太近'
 assert all(math.hypot(x, y) + M3_CB_D / 2 <= DISC_D / 2 - 1.0 for x, y in KEY_M3), '按键支架 M3 沉孔出盘边'
 d = cut(d, *CD.disc_cut_list)                                                              # 线圈驱动板: 散热片通槽 + 3×M3 沉孔 + 电容弧形槽 + 背面电容坑
+# 用户 11-16: 电机线 MR30 座 (−x 侧, M6 孔 (−62.5,±12.5) 之间) + 束线夹 (M6 孔 (−37.5/−12.5, −62.5) 之间), 件在 motor_wire_v1_2.py (该脚本 assert 与这里一致)
+#   4×M3 Φ3.4 通 + 底面 Φ7×2 沉孔 (M3×12 / M3×10 往上进件顶铜螺母); MR30 护套坑 12.3×6.9 深 0.25 (本体底面落底盘顶 Z0)
+MW_M3 = [(-71.0, -0.05), (-51.0, -0.05), (-23.5, -53.5), (-23.5, -70.5)]
+MW_HOLE_D = 3.4
+MW_POCKET = (-67.15, -6.5, -54.85, 0.4, 0.25)     # x0, y0, x1, y1, 深
+for x, y in MW_M3:
+    d = cut(d, cyl(x, y, MW_HOLE_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
+d = cut(d, BRepPrimAPI_MakeBox(gp_Pnt(MW_POCKET[0], MW_POCKET[1], -MW_POCKET[4]), gp_Pnt(MW_POCKET[2], MW_POCKET[3], 1)).Shape())
 disc = clean(d); LOG['disc'] = dict(v=vol(disc))
 LOG['coil_drv'] = dict(xpc=CD.XPC, xb=CD.XB, has_mc=CD.HAS_MC, has_cc=CD.HAS_CC, merge_err=CD.MERGE_ERR, mc_holes=[(round(x, 2), round(y, 2)) for x, y in CD.MC_HOLES],
                        cc_holes=[(round(x, 2), round(y, 2)) for x, y in CD.CC_HOLES], pcb_z=(CD.PCB_Z0, CD.PCB_Z1), mos_y=(CD.MOS_Y_LEAD, CD.MOS_Y_TIP), bcap_pits=CD.BCAP_PITS,

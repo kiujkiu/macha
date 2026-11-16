@@ -32,9 +32,7 @@ CD = B.CD
 _ENV_KEEP = [k for k in L.env if not k.startswith(('底面件', 'J3 插头', '24V 线'))]   # 底板 r3 交付 STEP 里没 3D 的器件 (框 × 限高)
 # 11-16 用户: 灯板贴上真实 LED (MIP-CIMD07TN 4 合 1, 灯板 PCB 坐标 10368 颗/面), 发光面单独换色, 看底座/转子罩挡不挡
 _mb, _mt = V.led_mip(B)
-_ta = gp_Trsf(); _ta.SetTranslation(gp_Vec(0, L.Y_LED, 0))
-_mb_a, _mt_a = B.xf(_mb, _ta), B.xf(_mt, _ta)
-LED_BASE = L.comp([_mb_a, B.xf(_mb_a, B.rotz(180))]); LED_TOP = L.comp([_mt_a, B.xf(_mt_a, B.rotz(180))])
+LED_BASE = L.comp(list(L.pair(_mb))); LED_TOP = L.comp(list(L.pair(_mt)))   # 11-16 晚 偏心: 随灯板一起 pair() (含 Y_LED 和 ECC)
 PARTS = [  # (名, 形状, 颜色, 3MF 弦差)
     ('底盘 base_disc_v1_2', B.disc, '#8A8F98', 0.05), ('线圈环 coil_ring_v1_2', B.ring, '#E0A030', 0.05), ('电机 Φ55×21.5 (占位)', B.motor, '#333333', 0.05),
     ('电机控制板', board, '#2E7D32', 0.08), ('散热片 40×20×6', B.heatsink, '#C0392B', 0.05),
@@ -48,10 +46,10 @@ PARTS = [  # (名, 形状, 颜色, 3MF 弦差)
     ('V2 底板 r3 (交付 STEP)', L.bb_step, '#1E8449', 0.05), ('底板 r3 器件包络 + CZ06', L.comp([L.env[k] for k in _ENV_KEEP]), '#7D8C8E', 0.05),
     ('灯板 A (+y)', L.led_a, '#145A32', 0.05), ('灯板 B (-y)', L.led_b, '#0E3B22', 0.05),
     ('MIP LED 4合1 基板部分 (黑) ×2×10368', LED_BASE, '#151515', 0.05), ('MIP LED 4合1 发光面 (红) ×2×10368', LED_TOP, '#FF2020', 0.05),
-    ('灯板支撑 +x T 脚 led_post_a', L.post_a, '#F1C232', 0.03), ('灯板支撑 -x T 脚 led_post_b', L.post_b, '#E69138', 0.03), ('灯板中间 T 件 led_mid_t ×2', L.gate_s, '#F6B26B', 0.03), ('灯板夹条 led_bar', L.bar_s, '#8E7CC3', 0.03),
+    ('灯板支撑 +x T 脚 led_post_a', L.post_a, '#F1C232', 0.03), ('灯板支撑 -x T 脚 led_post_b', L.post_b, '#E69138', 0.03), ('灯板夹条 led_bar', L.bar_s, '#8E7CC3', 0.03),
     ('灯板顶部件 led_top', L.top, '#6FA8DC', 0.03), ('灯板梳齿 led_comb', L.comb_s, '#9FC5E8', 0.03),
     (f'Φ8×{L.ROD_L:g} 钢轴', L.rod, '#999999', 0.03), ('桥板 A/B (占位)', L.comp([L.br_a, L.br_b]), '#1E8449', 0.05), ('天线 18.5×37.7 软板 ×2', L.comp([L.ant_a, L.ant_b]), '#C0392B', 0.03),
-    ('转子罩 a rotor_shroud_a_v1_2', RS.shr_a, '#A4C2F4', 0.05), ('转子罩 b rotor_shroud_b_v1_2', RS.shr_b, '#B6D7A8', 0.05), ('转子罩顶盖 rotor_lid_v1_2 ×2', L.comp([RS.lid_a, RS.lid_b]), '#CFE2F3', 0.05),
+    ('转子罩 a rotor_shroud_a_v1_2', RS.shr_a, '#A4C2F4', 0.05), ('转子罩 b rotor_shroud_b_v1_2', RS.shr_b, '#B6D7A8', 0.05), ('转子罩顶盖 +y rotor_lid_v1_2', RS.lid_a, '#CFE2F3', 0.05), ('转子罩顶盖 −y rotor_lid_b_v1_2', RS.lid_b, '#D9EAD3', 0.05),
     ('无线托盘 wireless_holder_v1_2', WH.H, '#FFD966', 0.03), ('无线供电模块 30.5×49×15 (占位)', WH.module, '#3D85C6', 0.05),
 ]
 OUT3 = B.V12 / 'assembly_v1_2_不装玻璃_整机+V2板.3mf'
@@ -97,7 +95,7 @@ def render(ax, items, ax_u, ax_v, depth, view, flip_u=False):
 
 print('meshing ...', flush=True)
 _MIP_ENV = {'MIP LED 4合1 基板部分 (黑) ×2×10368': None,
-            'MIP LED 4合1 发光面 (红) ×2×10368': L.comp([B.gbox(-74.88, L.Y_LED, 75.0, 74.88, L.Y_LED + V.MIP_H, 243.5), B.gbox(-74.88, -L.Y_LED - V.MIP_H, 75.0, 74.88, -L.Y_LED, 243.5)])}
+            'MIP LED 4合1 发光面 (红) ×2×10368': L.comp(list(L.pair(B.gbox(-74.88, 0.0, 75.0, 74.88, V.MIP_H, 243.5))))}
 # 绘图里 MIP 两万颗小盒子换成每板一块包络 (3MF 里仍是一颗颗; 否则 PDF 57 MB)
 MESH = [(n, tris(_MIP_ENV[n] if n in _MIP_ENV else s, max(d, 0.15) if 'LED' not in n else 0.3), mcolors.to_rgb(c)) for n, s, c, d in PARTS if not (n in _MIP_ENV and _MIP_ENV[n] is None)]
 
@@ -153,7 +151,7 @@ from matplotlib.patches import Patch
 fig.legend(handles=[Patch(fc=c, label=n) for n, _, c in MESH], loc='upper left', bbox_to_anchor=(0.745, 0.46), fontsize=7, ncol=2, frameon=False, columnspacing=0.8, handlelength=1.2)
 note = [f'玻璃罩 OD{B.GL_OD:g}×{B.GL_T:g}×{B.GL_H:g} / 玻璃上 / 圆环玻璃 / 中心堵头 不装; 装上后玻璃上端 Z{B.Z_GT:g} (Φ8 轴进玻璃上盖 688, 不装玻璃时轴悬空)',
         f'V2 转子 (11-16): 底板 r3 在 +y, 垫 {B.BB_STANDOFF:g} + 板 {B.BB_T:g} (底 Z{B.Z_BB0:g}); CZ06 在底板上 (顶 Z{B.Z_BB0 + B.BB_T + B.CZ06_H:g}, 不在灯板下); 灯板下沿 = 承载盘顶 + {B.SCREEN_GAP:g} = Z{B.Z_SCR0:g}',
-        f'灯板背靠背 (F 面 y=±{L.GAP_HALF:g}); 两端 T 脚立板 (4×M3×{L.FOOT_SCREW_L:g} 进毂盘底铜螺母) + 夹条 (两板之间, H1/H2 M3 横穿) + 中间 T 件 ×2 (4×M3×{L.GATE_SCREW_L:g} 进承载盘铜螺母; T 件底面 4×M3×{L.BAR_SCR_L:g} 往上锁夹条, V0.4 做法) + 顶部件 + 梳齿配平 (2×M3×8)',
+        f'灯板背靠背 (F 面 y=±{L.GAP_HALF:g}); 偏心 SCR_ECC {B.SCR_ECC:g} (板 A MIP 顶在轴线); 两端立板耳朵脚压外圈锁盘螺丝 (4×M3×{L.FOOT_SCREW_L:g} 进毂盘底铜螺母) + 夹条 (两板之间, H1/H2 M3 横穿, 两端 2×M3 自攻) + 顶部件 + 梳齿配平 (2×M3×8)',
         f'转子罩 a/b (r{RS.R0:g}–{RS.R1:g}, Z{RS.Z0:g}–{RS.Z1:g}, 同一件转 180°): 罩底 4×M3×{RS.MNT_L:g} 进毂盘底铜螺母, 分缝 4×M3×{RS.SEAM_L:g} + 螺母, 配重唇 {len(RS.W_A)} 孔 M3×{RS.W_L:g} 按需',
         f'无线托盘 (-y 侧) 3×M3×8 进承载盘铜螺母, 模块 30.5×49×15 Z{WH.MZ0:g}–{WH.MZ1:g}; 底板器件按 F.CrtYd × 限高做方块 (交付 STEP 无 3D 的件), 不是实物',
         f'实测: 灯板-底板 r3 最近 {D_BB:.2f}, 灯板-CZ06 {D_CZ:.2f}, 灯板-无线托盘/模块 {D_WH:.2f}; 灯板/立板/天线最大半径 {R_LED:.2f} (天线板外角, 在罩壁 ±x 缝 |y|≤{RS.SLOT_Y:g} 里; 罩外圆 r{RS.R1:g}, 余 {RS.R1 - R_LED:.2f}); 转子罩外 r{R_SHR:.2f} (玻璃下内面 r{B.SPIG_IN:g}, 余 {B.SPIG_IN - R_SHR:.2f})']
