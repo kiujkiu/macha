@@ -222,41 +222,157 @@ SPECS.append(dict(
            (f"688 窝 Φ{F(B.BRG_D)}×{F(B.BRG_H)} (轴承从下穿爪内孔 Φ{F(2 * B.GH_R0)} 压入) + 上方 Φ{F(B.BRG_RELIEF_D)}×{F(B.BRG_RELIEF_H)} 让轴过冲; 法兰厚 {F(B._fl_t)} (11-15 默认开, 灯板顶轴 Φ8 进 688)"
             if B.GT_BEARING else "可选 GT_BEARING=1: 内开 688 窝 (灯板顶轴)")]))
 
-# ---------------- V2 灯板支撑三件 (11-15, led_support_v1_2.py) ----------------
+# ---------------- V2 灯板支撑五件 (11-16 新转子布局, led_support_v1_2.py) ----------------
 import led_support_v1_2 as L  # noqa: E402
 _fa = [p for p in L.FOOT_PTS if p[0] > 0]; _fb = [p for p in L.FOOT_PTS if p[0] < 0]
+_eng = lambda bear, L_, ins: min(bear, ins[1]) - max(bear - L_, ins[0])
+
+
 def _foot_hole(pts):
-    return dict(tag="F", pts=pts, spec=f"Φ3.4 通 + 顶面 Φ{F(L.FOOT_CB_D)} 沉孔深 {F(L.Z0 - L.FOOT_CB_Z)} (M3×8 内六角, 头支承 Z{F(L.FOOT_CB_Z)})",
-                where=xy(pts) + "  进承载盘 M3×4 铜螺母",
-                det=dict(kind="cb", d=3.4, D=L.FOOT_CB_D, h=L.Z0 - L.FOOT_CB_Z, side="top", z=(L.RIM_TOP, L.Z0), pt=pts[0], title="底脚沉孔 F"))
-_h1 = lambda sx: dict(tag="H", pts=[(sx * L.H1_X, 0.0)], spec=f"Φ3.4 沿 Y 横穿立刀, 中心 Z{F(L.H1_Z)}", where=f"x {F(sx * L.H1_X)}  灯板 H1/H2 M3×12 + 法兰螺母")
-_post_notes = [f"立刀 x{F(L.BLADE_X0)}–{F(L.BLADE_X1)} 厚 {F(L.BLADE_T)} 夹在两灯板 F 面之间 (间隙 {F(2 * L.GAP_HALF)}, 单边 {F(L.CLR)}), 顶 Z{F(L.BLADE_Z1)}",
-               f"底块 |x| {F(L.FOOT_X0)}–{F(L.FOOT_X1)} |y|≤{F(L.FOOT_Y)} Z{F(L.RIM_TOP)}–{F(L.Z0)}: 顶面托两板下沿", 
-               f"天线板 |x| {F(L.ANT_X0)}–{F(L.ANT_X1)}, 外面浅槽 {F(L.ANT_L)}×{F(L.ANT_W)}×{F(L.ANT_REC)} 贴 Molex 219611 (背胶)"]
+    return dict(tag="F", pts=pts, spec=f"Φ3.4 通 (凸台 Φ{F(L.PAD_D)} Z{F(L.RIM_TOP)}–{F(L.FOOT_CB_Z)}, 不沉孔); M3×{F(L.FOOT_SCREW_L)} 内六角, 头坐凸台顶 Z{F(L.FOOT_CB_Z)}",
+                where=xy(pts) + f"  承载盘 r{F(L.R_HOLE)} 原孔\n从上穿承载盘+毂盘, 进毂盘底 M3×4 铜螺母 Z{F(L.HUB_INS[0])}–{F(L.HUB_INS[1])}, 尾 Z{F(L.FOOT_CB_Z - L.FOOT_SCREW_L)}, 啮合 {F(_eng(L.FOOT_CB_Z, L.FOOT_SCREW_L, L.HUB_INS))}",
+                det=dict(kind="free", z=(L.RIM_TOP, L.FOOT_CB_Z), pt=pts[0], ang=90, W=L.PAD_D / 2 + 1.8, title="T 脚凸台孔 F (沿 y 剖)",
+                         zd=[(L.RIM_TOP, L.FOOT_CB_Z, F(L.FOOT_CB_Z - L.RIM_TOP))], ud=[(-1.7, 1.7, "Φ3.4"), (-L.PAD_D / 2, L.PAD_D / 2, f"Φ{F(L.PAD_D)} 凸台", 5)]))
+
+
+_h1 = lambda sx: dict(tag="H", pts=[(sx * L.H1_X, 0.0)], spec=f"Φ3.4 沿 Y 横穿立刀, 中心 Z{F(L.H1_Z)} (灯板下沿 +{F(L.H1_Z - L.Z0)})",
+                      where=f"x {F(sx * L.H1_X)}  灯板 H1/H2 M3×{F(L.SCREW_H1_L)} 内六角 + M3 法兰螺母")
+_post_notes = [
+    f"T 脚: 横杆 x{F(L.T_X - L.T_W / 2)}–{F(L.T_X + L.T_W / 2)} 沿 y 到 |y|{F(L.FOOT_Y)}, Z{F(L.RIM_TOP)}–{F(L.Z0)} 坐承载盘顶; 顶面 Z{F(L.Z0)} 托两灯板下沿",
+    f"T 脚中段 |y|≤{F(L.ANT_HW)} 连到天线板; 整件外缘裁到 r≤{F(L.R_CLIP)} (转子罩内壁 r86); 底梁已删",
+    f"立刀 x{F(L.BLADE_X0)}–{F(L.BLADE_X1)} 厚 {F(L.BLADE_T)} Z{F(L.Z0)}–{F(L.BLADE_Z1)}, 夹两灯板 F 面之间 (间隙 {F(2 * L.GAP_HALF)}, 单边 {F(L.CLR)}), 盖下角 F.Mask 窗",
+    f"天线板 x{F(L.ANT_X0)}–{F(L.ANT_X1)} 厚 {F(L.ANT_X1 - L.ANT_X0)} |y|≤{F(L.ANT_HW)} Z{F(L.RIM_TOP)}–{F(L.ANT_Z1)}, 外角 r≤{F(L.ANT_R_MAX)}",
+    f"天线竖贴: 外面浅槽 {F(L.ANT_L)}×{F(L.ANT_W)}×{F(L.ANT_REC)} 贴 Molex 219611 (背胶), 长边沿 Z, 槽心 Z{F(L.ANT_ZC)}",
+    f"T 脚螺丝头 Φ5.5 外缘 r{F(L.R_HOLE + 2.75)} (罩内壁 r86)"]
+_post = lambda sx: dict(
+    shape=L.post_a if sx > 0 else L.post_b, qty="1", material="PETG (建议) / PLA",
+    orient=f"正立 (T 脚底面 Z{F(L.RIM_TOP)} 贴床), 免支撑",
+    sec=dict(ang=0 if sx > 0 else 180, r0=66.0,
+             zd=[(L.RIM_TOP, L.Z0, f"{F(L.Z0 - L.RIM_TOP)} T脚"), (L.Z0, L.BLADE_Z1, f"{F(L.BLADE_Z1 - L.Z0)} 立刀"), (L.RIM_TOP, L.ANT_Z1)],
+             rd=[(L.T_X - L.T_W / 2, L.ANT_X1), (L.BLADE_X0, L.ANT_X0), (L.ANT_X0, L.ANT_X1)]),
+    holes=[_foot_hole(_fa if sx > 0 else _fb), _h1(sx)])
 SPECS.append(dict(
-    code="led_post_a_v1_2", shape=L.post_a, short="灯板支撑 +x 立板", qty="1", material="PETG (建议) / PLA",
-    title="灯板支撑 +x 端: 底块 + 立刀 (M3 穿 H1) + 竖贴天线板", orient="正立 (底块底面 Z32 贴床)",
-    sec=dict(ang=0, r0=66.0, zd=[(L.RIM_TOP, L.Z0), (L.Z0, L.BLADE_Z1), (L.RIM_TOP, L.ANT_A['z1'])], rd=[(L.FOOT_X0, L.FOOT_X1), (L.BLADE_X0, L.BLADE_X1), (L.ANT_X0, L.ANT_X1)]),
-    holes=[_foot_hole(_fa), _h1(1)],
-    notes=_post_notes + [f"天线竖贴: 长边沿 Z, 槽心 Z{F(L.ANT_A['zc'])}; 板 |y|≤{F(L.ANT_A['y'])} Z到{F(L.ANT_A['z1'])}", "H1: +y 侧内六角头, −y 侧法兰螺母 (+y LED 面有 5.9 高电解)"]))
+    _post(+1), code="led_post_a_v1_2", short="灯板支撑 +x 端 (T 脚)",
+    title="灯板支撑 +x 端: T 形脚 (2×M3×16 进毂盘底铜螺母) + 立刀 (M3 穿 H1) + 竖贴天线板",
+    notes=_post_notes + [f"T 脚孔 @22.5°/337.5°; H1: +y 侧内六角头, −y 侧法兰螺母 (+y LED 面有 5.9 高电解)"]))
 SPECS.append(dict(
-    code="led_post_b_v1_2", shape=L.post_b, short="灯板支撑 −x 立板 + 底梁", qty="1", material="PETG (建议) / PLA",
-    title=f"灯板支撑 −x 端: 底块 + 立刀 + 底梁 x{F(L.BEAM_X0)}…{F(L.BEAM_X1)} + 中间舌 + 横贴天线板", orient="正立 (底块底面贴床), 底梁下 Z32–41.2 加支撑",
-    sec=dict(ang=180, r0=0.0, zd=[(L.RIM_TOP, L.Z0), (L.BEAM_Z0, L.Z0), (L.Z0, L.TONGUE_Z1), (L.RIM_TOP, L.ANT_B['z1'])], rd=[(L.FOOT_X0, L.FOOT_X1), (L.ANT_X0, L.ANT_X1)]),
-    holes=[_foot_hole(_fb), _h1(-1)],
-    notes=_post_notes + [f"底梁 |y|≤{F(L.BEAM_Y)} Z{F(L.BEAM_Z0)}–{F(L.Z0)} 只在 CZ06 对侧 (止于 x{F(L.BEAM_X1)}); 中间舌 x±{F(L.TONGUE_X)} 到 Z{F(L.TONGUE_Z1)} (下中 F.Mask 窗)",
-                         f"天线横贴: 长边沿 Y, 槽心 Z{F(L.ANT_B['zc'])}; 板 |y|≤{F(L.ANT_B['y'])}", "H1: −y 侧内六角头, +y 侧法兰螺母"]))
+    _post(-1), code="led_post_b_v1_2", short="灯板支撑 −x 端 (T 脚)",
+    title="灯板支撑 −x 端: T 形脚 (2×M3×16 进毂盘底铜螺母) + 立刀 (M3 穿 H1) + 竖贴天线板",
+    notes=_post_notes + [f"与 +x 端镜像, T 脚孔 @157.5°/202.5°; H1: −y 侧内六角头, +y 侧法兰螺母"]))
+
+_lx0, _lx1 = L.GATE_PTS[0][0] - L.LEG_HX, L.GATE_PTS[0][0] + L.LEG_HX
 SPECS.append(dict(
-    code="led_top_v1_2", shape=L.top, short="灯板顶部件 (Φ8 轴座)", qty="1", material="PETG (建议) / PLA",
-    title=f"灯板顶部件: 舌 (上中窗) + 帽 {F(2 * L.CAP_X)}×{F(2 * L.CAP_Y)} + 轴座 Φ{F(L.BOSS_D)}, 压 Φ8×{F(L.ROD_L)} 钢轴进 688",
-    orient="倒放 (轴座顶 Φ14 贴床), 帽两端小悬空",
-    sec=dict(ang=0, r0=0.0, zd=[(L.TOP_TONGUE_Z0, L.Z1), (L.Z1, L.Z1 + L.CAP_T), (L.Z1 + L.CAP_T, L.BOSS_Z1)], rd=[(0, L.TONGUE_X, f"{F(L.TONGUE_X)}"), (0, L.CAP_X, f"{F(L.CAP_X)}"), (0, L.BOSS_D / 2, f"R{F(L.BOSS_D / 2)}")]),
+    code="led_gate_v1_2", shape=L.gate_s, short="灯板门形中间支撑", qty="1", material="PETG (建议) / PLA",
+    title=f"灯板门形中间支撑: 两腿 M3×{F(L.GATE_SCREW_L)} 锁承载盘 + 横梁 {F(L.BEAM_X1 - L.BEAM_X0)} 托板下沿 + 中间立舌",
+    orient=f"正立 (两腿底 Z{F(L.RIM_TOP)} 贴床), 梁底 Z{F(L.BEAM_Z0)} 下 {F(L.BEAM_Z0 - L.RIM_TOP)} 高缝加支撑",
+    sec=dict(ang=0, r0=0.0, zd=[(L.RIM_TOP, L.Z0, f"{F(L.Z0 - L.RIM_TOP)} 腿"), (L.Z0, L.TONGUE_Z1, f"{F(L.TONGUE_Z1 - L.Z0)} 立舌"), (L.BEAM_Z0, L.Z0, f"{F(L.Z0 - L.BEAM_Z0)} 梁")],
+             rd=[(0, L.TONGUE_X), (_lx0, _lx1, f"{F(_lx1 - _lx0)} 腿"), (0, _lx1)]),
+    holes=[dict(tag="G", pts=L.GATE_PTS,
+                spec=f"Φ3.4 通 + 顶面 Φ{F(L.GATE_CB_D)} 沉孔深 {F(L.Z0 - L.GATE_CB_Z)} (M3×{F(L.GATE_SCREW_L)} 内六角, 头支承 Z{F(L.GATE_CB_Z)}, 头顶齐梁顶)",
+                where=xy(L.GATE_PTS) + f"  进承载盘 M3×4 铜螺母 Z{F(L.GATE_INS[0])}–{F(L.GATE_INS[1])}, 啮合 {F(_eng(L.GATE_CB_Z, L.GATE_SCREW_L, L.GATE_INS))}",
+                det=dict(kind="cb", d=3.4, D=L.GATE_CB_D, h=L.Z0 - L.GATE_CB_Z, side="top", z=(L.RIM_TOP, L.Z0), pt=L.GATE_PTS[0], ang=90, title="门腿沉孔 G (沿 y 剖)"))],
+    notes=[f"横梁 x{F(L.BEAM_X0)}…{F(L.BEAM_X1)} |y|≤{F(L.BEAM_Y)} Z{F(L.BEAM_Z0)}–{F(L.Z0)}: 梁顶托两灯板下沿 Z{F(L.Z0)} (盖住两板 |y|≤3.77)",
+           f"梁下给 FPC 留缝: FPC 平铺毂盘顶 Z{F(L.HUB_TOP)} (厚 {F(L.FPC_T)}), 到梁底净空 {F(L.BEAM_Z0 - L.HUB_TOP - L.FPC_T)}",
+           f"两腿 {F(2 * L.LEG_HX)}×{F(2 * L.LEG_HY)} @ x±{F(L.GATE_PTS[0][0])}, Z{F(L.RIM_TOP)}–{F(L.Z0)} 坐承载盘顶",
+           f"立舌 x±{F(L.TONGUE_X)} 厚 {F(L.BLADE_T)} Z{F(L.Z0)}–{F(L.TONGUE_Z1)} 插两板之间, 进下中 F.Mask 窗 (下沿 +7…17)"]))
+
+SPECS.append(dict(
+    code="led_top_v1_2", shape=L.top, short="灯板顶部件 (加长 Φ14 轴座)", qty="1", material="PETG (建议) / PLA",
+    title=f"灯板顶部件: 舌 + 帽 {F(2 * L.CAP_X)}×{F(2 * L.CAP_Y)}×{F(L.CAP_T)} + 加长轴座 Φ{F(L.BOSS_D)}, 压 Φ{F(L.ROD_D)}×{F(L.ROD_L)} 钢轴进 688",
+    orient=f"倒放 (轴座顶 Φ{F(L.BOSS_D)} 贴床), 帽两端小悬空",
+    sec=dict(ang=0, r0=0.0, zd=[(L.TOP_TONGUE_Z0, L.Z1, f"{F(L.Z1 - L.TOP_TONGUE_Z0)} 舌"), (L.Z1, L.Z1 + L.CAP_T, f"{F(L.CAP_T)} 帽"), (L.Z1 + L.CAP_T, L.BOSS_Z1, f"{F(L.BOSS_Z1 - L.Z1 - L.CAP_T)} 轴座")],
+             rd=[(0, L.TONGUE_X, f"{F(L.TONGUE_X)}"), (0, L.BOSS_D / 2, f"R{F(L.BOSS_D / 2)}"), (0, L.CAP_X, f"{F(L.CAP_X)}")]),
     holes=[dict(tag="R", pts=[(0.0, 0.0)], spec=f"Φ{F(L.ROD_HOLE_D)} 盲孔深 {F(L.BOSS_Z1 - L.ROD_Z0)} (压 Φ8 h6 钢轴, 试配)", where="轴心",
-                det=dict(kind="blind", D=L.ROD_HOLE_D, h=L.BOSS_Z1 - L.ROD_Z0, side="top", z=(L.Z1 + L.CAP_T, L.BOSS_Z1), pt=(0.0, 0.0), title="轴孔 R"))],
-    notes=[f"舌 x±{F(L.TONGUE_X)} 厚 {F(L.BLADE_T)} Z{F(L.TOP_TONGUE_Z0)}–{F(L.Z1)} 插两板之间; 帽底贴板上沿 Z{F(L.Z1)}",
-           f"轴座顶 Z{F(L.BOSS_Z1)} 离堵头爪尖 {F(L.BOSS_GAP)}; 轴 Z{F(L.ROD_Z0)}–{F(L.ROD_Z1)}, 688 Z{F(L.BRG_Z0)}–{F(L.BRG_Z1)}",
+                det=dict(kind="blind", D=L.ROD_HOLE_D, h=L.BOSS_Z1 - L.ROD_Z0, side="top", z=(L.Z1 + L.CAP_T, L.BOSS_Z1), pt=(0.0, 0.0), title="轴孔 R")),
+           dict(tag="N", pts=[(L.COMB_FIX_X, 0.0), (-L.COMB_FIX_X, 0.0)], spec=f"Φ4.2 通帽 (厚 {F(L.CAP_T)}) 压 M3×4 铜螺母",
+                where=f"x ±{F(L.COMB_FIX_X)}  梳齿 led_comb 用 M3×8 锁帽 (孔下是两板间隙)", lab_off=(2.4, -3.0))],
+    notes=[f"舌 x±{F(L.TONGUE_X)} 厚 {F(L.BLADE_T)} Z{F(L.TOP_TONGUE_Z0)}–{F(L.Z1)} 插两板之间 (上中窗); 帽底贴板上沿 Z{F(L.Z1)}",
+           f"轴座 Z{F(L.Z1 + L.CAP_T)}–{F(L.BOSS_Z1)} (长 {F(L.BOSS_Z1 - L.Z1 - L.CAP_T)}, 11-16 加长), 顶离堵头爪尖 {F(L.BOSS_GAP)}",
+           f"钢轴 Φ{F(L.ROD_D)}×{F(L.ROD_L)} h6 Z{F(L.ROD_Z0)}–{F(L.ROD_Z1)}, 压入轴座 {F(L.BOSS_Z1 - L.ROD_Z0)}; 688 Z{F(L.BRG_Z0)}–{F(L.BRG_Z1)}",
            "玻璃罩长度公差: 短 ≤2.0 轴顶进堵头 Φ9 让位; 长 ≤4.5 仍有 0.5 啮合", "轴在 688 内圈滑配 (g6/h6), 可轴向窜动"]))
+
+_cxm = L.COMB_TEETH_X[-1] + L.COMB_TOOTH_W / 2
+SPECS.append(dict(
+    code="led_comb_v1_2", shape=L.comb_s, short="顶部配平梳齿", qty="1", material="PETG (建议) / PLA",
+    title=f"顶部配平梳齿: 套轴座坐帽顶, 2×M3×8 锁帽, 每侧 {len(L.COMB_TEETH_X)} 齿 × 4 孔挂配重",
+    orient=f"平放 (底面 Z{F(L.COMB_Z0)} 贴床), 免支撑",
+    phi=[L.COMB_HOLE_D, L.COMB_RING_D],
+    sec=dict(ang=0, r0=0.0, zd=[(L.COMB_Z0, L.COMB_Z1)],
+             rd=[(0, L.COMB_HOLE_D / 2), (0, L.COMB_RING_D / 2), (0, _cxm)], hmax=40),
+    holes=[dict(tag="K", pts=[(L.COMB_FIX_X, 0.0), (-L.COMB_FIX_X, 0.0)], spec="Φ3.4 通; M3×8 内六角 → 帽内 M3×4 铜螺母 (啮合 4)",
+                where=f"x ±{F(L.COMB_FIX_X)}", lab_off=(2.4, -3.0),
+                det=dict(kind="free", z=(L.COMB_Z0, L.COMB_Z1), pt=(L.COMB_FIX_X, 0.0), ang=0, W=3.6, title="锁帽孔 K (沿 x 剖)",
+                         zd=[(L.COMB_Z0, L.COMB_Z1, F(L.COMB_T))], ud=[(-1.7, 1.7, "Φ3.4")])),
+           dict(tag="W", pts=L.COMB_SLOTS, spec="Φ3.4 竖通 — 配重 M3 螺丝竖装 + 螺母 (按需)", lab_off=(0.0, 0.0),
+                where=f"齿 x ±{'/'.join(F(v) for v in L.COMB_TEETH_X)} (宽 {F(L.COMB_TOOTH_W)}), 每齿 y ±{F(L.COMB_SLOTS_Y[0])} / ±{F(L.COMB_SLOTS_Y[1])}; r≤{F(max(math.hypot(*p) for p in L.COMB_SLOTS))}",
+                det=dict(kind="free", z=(L.COMB_Z0, L.COMB_Z1), pt=L.COMB_SLOTS[0], ang=0, W=4.6, title="配重孔 W (沿 x 剖)",
+                         zd=[(L.COMB_Z0, L.COMB_Z1, F(L.COMB_T))], ud=[(-1.7, 1.7, "Φ3.4"), (-L.COMB_TOOTH_W / 2, L.COMB_TOOTH_W / 2, f"{F(L.COMB_TOOTH_W)} 齿宽", 5)]))],
+    notes=[f"横梁 x±{F(_cxm)} |y|≤{F(L.COMB_BEAM_Y)} + 中心环 Φ{F(L.COMB_RING_D)}, 厚 {F(L.COMB_T)} Z{F(L.COMB_Z0)}–{F(L.COMB_Z1)}",
+           f"中心孔 Φ{F(L.COMB_HOLE_D)} 套轴座 Φ{F(L.BOSS_D)} (单边 0.1), 坐顶部件帽顶 Z{F(L.COMB_Z0)}",
+           f"齿 {F(L.COMB_TOOTH_W)} 宽沿 y ±{F(L.COMB_TOOTH_Y)}; 共 {len(L.COMB_SLOTS)} 个配重孔",
+           f"配重 M3 螺丝竖装, 螺母在齿下 Z246.6–{F(L.COMB_Z0)} (> 板上沿 Z{F(L.Z1)}); 头下长 ≤{F(L.COMB_SCREW_MAX_L)} (每多叠 1 螺母 +2.4)",
+           "两面配平的上面: 修残余不平衡 (led_support_report.json → balance.two_plane), 以实测动平衡为准"]))
+
+# ---------------- 转子罩 (11-16, rotor_shroud_v1_2.py; import 只建几何, 不写文件) ----------------
+import rotor_shroud_v1_2 as RS  # noqa: E402
+_rm = [RS.pol(RS.HOLE_R, a) for a in RS.MNT_A if math.cos(math.radians(a)) > 0]
+_rw = [RS.pol(RS.W_R, a) for a in RS.W_A if math.cos(math.radians(a)) > 0]
+SPECS.append(dict(
+    code="rotor_shroud_a_v1_2", shape=RS.shr_a, short="转子罩半壳 (A/B 同件)", qty="2 (A/B 同一件, B = A 绕 Z 转 180°)", material="PETG (建议) / PLA",
+    title=f"转子罩半壳 ×2 (两半同件): 罩壁 r{F(RS.R0)}–{F(RS.R1)} + 罩底凸台 + 配重唇 + 分缝凸耳",
+    subtitle=f"图示 A 半 (+x); B 半 = 同一打印件绕 Z 转 180° 装在 −x。罩 Z{F(RS.Z0)}–{F(RS.Z1)} 坐承载盘顶, 顶开口",
+    orient=f"倒放 (罩顶 Z{F(RS.Z1)} + 配重唇顶面贴床), 免支撑",
+    sec=dict(ang=45, r0=74.0, zd=[(RS.Z0, RS.Z1), (RS.LIP_Z0, RS.Z1, f"{F(RS.Z1 - RS.LIP_Z0)} 唇"), (RS.Z0, RS.LEDGE_Z1, f"{F(RS.LEDGE_Z1 - RS.Z0)} 内沿")],
+             rd=[(RS.R0, RS.R1, f"{F(RS.R1 - RS.R0)} 壁"), (RS.LIP_R0, RS.R0, f"{F(RS.R0 - RS.LIP_R0)} 唇"), (RS.LEDGE_R0, RS.R0, f"{F(RS.R0 - RS.LEDGE_R0)} 内沿")]),
+    holes=[dict(tag="M", pts=_rm, spec=f"Φ3.4 通凸台 Z{F(RS.Z0)}–{F(RS.BOSS_Z1)} + 上方 Φ{F(RS.ACC_D)} 起子让位孔 (斜撑/配重唇)",
+                where=xy(_rm) + f"  r{F(RS.HOLE_R)} @ 67.5°/292.5° (B 半: 247.5°/112.5°)\nM3×{F(RS.MNT_L)} 内六角 头支承 Z{F(RS.BOSS_Z1)}, 穿承载盘+毂盘进毂盘底 M3×4 铜螺母 Z{F(RS.INS_Z[0])}–{F(RS.INS_Z[1])}",
+                det=dict(kind="free", z=(RS.Z0, RS.GUS_Z1 + 1), pt=_rm[0], W=RS.ACC_D / 2 + 2.0, title="罩底凸台孔 M (径向剖)",
+                         zd=[(RS.Z0, RS.BOSS_Z1, f"{F(RS.BOSS_Z1 - RS.Z0)} 凸台")], ud=[(-1.7, 1.7, "Φ3.4"), (-RS.ACC_D / 2, RS.ACC_D / 2, f"Φ{F(RS.ACC_D)} (上)", 5)])),
+           dict(tag="W", pts=_rw, spec=f"Φ3.4 通配重唇 + 顶面 Φ{F(RS.W_CB_D)} 沉孔深 {F(RS.W_CB_H)}", lab_off=(-2.6, 2.0),
+                where=f"r{F(RS.W_R)} @ " + "/".join(F(a) for a in RS.W_A if math.cos(math.radians(a)) > 0) + "°"
+                      + f"\nM3×{F(RS.W_L)} 内六角 头顶 Z{F(RS.W_BEAR + 3)} < 罩顶; 唇下挂 ≤{RS.W_NUT_MAX} 颗 M3 螺母/垫片 (尾 Z{F(RS.W_TIP)})",
+                det=dict(kind="cb", d=3.4, D=RS.W_CB_D, h=RS.W_CB_H, side="top", z=(RS.LIP_Z0, RS.Z1), pt=RS.pol(RS.W_R, 45), title="配重孔 W")),
+           dict(tag="S", pts=[(RS.LUG_HX / 2, RS.LUG_SY), (RS.LUG_HX / 2, -RS.LUG_SY)],
+                spec=f"凸耳 Φ3.4 沿 X 横穿 ×2 层 (Z{F(RS.LUG_SZ[0])} / Z{F(RS.LUG_SZ[1])}), M3×{F(RS.SEAM_L)} + M3 螺母",
+                where=f"|y|{F(RS.LUG_SY)}; +y 缝: 外侧 (x{F(RS.LUG_HX - RS.NUT_DEPTH)}–{F(RS.LUG_HX)}) 六角螺母槽 {F(RS.NUT_AF)} 对边, 口朝罩内\n−y 缝: 螺丝头侧 (头坐 x{F(RS.LUG_HX)} 面); 装成整圈后两缝各 1 头 1 螺母",
+                det=dict(kind="free", z=(RS.LUG_Z0, RS.LIP_Z0 + 0.5), pt=(RS.LUG_HX / 2, RS.LUG_SY), ang=0, W=RS.LUG_HX / 2 + 2.0, title="+y 分缝凸耳 S (沿 x 剖)",
+                         zd=[(RS.LUG_Z0, RS.LIP_Z0 + 0.5, F(RS.LIP_Z0 + 0.5 - RS.LUG_Z0)), (RS.LUG_SZ[0], RS.LUG_SZ[1], F(RS.LUG_SZ[1] - RS.LUG_SZ[0]), 9)],
+                         ud=[(-RS.LUG_HX / 2, RS.LUG_HX / 2, F(RS.LUG_HX))]))],
+    notes=[f"罩壁 r{F(RS.R0)}–{F(RS.R1)} Z{F(RS.Z0)}–{F(RS.Z1)} (离不转玻璃座内壁 r{F(RS.ST_IN)} 留 {F(RS.ST_IN - RS.R1)}); 外面光滑, 分缝在 x=0",
+           "两半 A (+x) / B (−x) 是同一个打印件 (B = A 绕 Z 转 180°), 打 2 个",
+           f"罩底 4 凸台 @67.5/112.5/247.5/292.5° (每半 2) 压承载盘顶 + 45° 斜撑; |y|<{F(RS.BB_EDGE)} / |x|<{F(RS.WH_EDGE)} 削平",
+           f"配重唇 r{F(RS.LIP_R0)}–{F(RS.R0)} Z{F(RS.LIP_Z0)}–{F(RS.Z1)} @ 33°–147° / 213°–327°; 每半 {len(_rw)} 孔, 全罩 {len(RS.W_A)} 孔",
+           f"罩底内沿 r{F(RS.LEDGE_R0)}–{F(RS.R0)} Z{F(RS.Z0)}–{F(RS.LEDGE_Z1)} + 45° 斜面 (4 段, 让开 ±y |x|≤{F(RS.HOLDER_X)} 无线托盘)",
+           f"分缝凸耳 x0–{F(RS.LUG_HX)} × |y|{F(RS.LUG_Y0)}–{F(RS.LUG_Y1)} × Z{F(RS.LUG_Z0)}–{F(RS.LIP_Z0)} (底 > 无线托盘顶 Z50)",
+           "装/拆: 起子从罩顶开口竖直进, 穿配重唇 Φ6.5 让位孔拧罩底 M3×14",
+           "每孔配重 M3×18+1 螺母 1.84 g … +6 螺母 3.55 g (见 rotor_shroud_report.json)"]))
+
+# ---------------- 无线供电模块托盘 (11-16, wireless_holder_v1_2.py; import 只建几何) ----------------
+import wireless_holder_v1_2 as WH  # noqa: E402
+_wh_scr = WH.SCR_OUT + WH.SCR_IN
+SPECS.append(dict(
+    code="wireless_holder_v1_2", shape=WH.H, short="无线供电模块托盘", qty="1", material="PETG (建议) / PLA",
+    title=f"无线供电模块托盘: 托底 + r{F(WH.OUT_R)} 承力外墙 + 3×M3×8 锁承载盘 + 2 扎带",
+    subtitle=f"模块 {F(WH.MOD_W)}×{F(WH.MOD_L)}×{F(WH.MOD_H)} ({F(WH.MOD_G)} g) 长边沿 x, 中心 (0, {F(WH.MOD_YC)}), 坐托底 Z{F(WH.MZ0)}–{F(WH.MZ1)}; 转子盘 −y 侧",
+    orient=f"正立 (底面 Z{F(WH.RIM_TOP)} 贴床, 打印姿态 = 装配姿态); 底面扎带槽小搭桥",
+    sec=dict(ang=270, r0=24.0,
+             zd=[(WH.RIM_TOP, WH.OUT_Z1, f"{F(WH.OUT_Z1 - WH.RIM_TOP)} 外墙"), (WH.RIM_TOP, WH.IN_Z1, f"{F(WH.IN_Z1 - WH.RIM_TOP)} 内墙"),
+                 (WH.RIM_TOP, WH.MZ0, f"{F(WH.FLOOR_T)} 底")],   # 内舌高 4 (顶 Z36) 见说明
+             rd=[(-WH.TONGUE_Y1, -(WH.MOD_Y1 + WH.IN_T), f"{F(WH.TONGUE_Y1 - WH.MOD_Y1 - WH.IN_T)} 舌"), (-WH.MOD_Y1, -WH.MOD_Y0, f"{F(WH.MOD_W)} 模块"),
+                 (-WH.MOD_Y0, WH.OUT_R, f"{F(WH.OUT_R + WH.MOD_Y0)} 外墙")]),
+    holes=[dict(tag="M", pts=_wh_scr, spec=f"Φ3.4 通 + 顶面 Φ{F(WH.CB_D)} 沉孔 (头支承 Z{F(WH.CB_Z)}; 内舌顶即 Z{F(WH.TONGUE_Z1)})",
+                where=xy(_wh_scr, 3) + f"\nM3×8 内六角 → 承载盘 M3×4 铜螺母 Z{F(WH.RIM_TOP - 4)}–{F(WH.RIM_TOP)}, 啮合 4",
+                det=dict(kind="cb", d=3.4, D=WH.CB_D, h=WH.OUT_Z1 - WH.CB_Z, side="top", z=(WH.RIM_TOP, WH.OUT_Z1), pt=WH.SCR_OUT[0], ang=0, title="外墙螺丝孔 M (沿 x 剖)"))],
+    notes=[f"外墙 (−y 径向外) y{F(WH.MOD_Y0)} 到外面 r{F(WH.OUT_R)} 圆弧, 顶 Z{F(WH.OUT_Z1)}, 挡离心力 (承载盘 r85, 转子罩内壁 r86)",
+           f"侧墙 {F(WH.SIDE_T)} 厚顶 Z{F(WH.SIDE_Z1)}; 内矮墙 {F(WH.IN_T)} 厚顶 Z{F(WH.IN_Z1)}; 内舌 x±{F(WH.TONGUE_X)} 到 y{F(WH.TONGUE_Y1)} 顶 Z{F(WH.TONGUE_Z1)}",
+           f"扎带 ×2 (4.8 宽) @ y{F(WH.TIE_Y[0])} / {F(WH.TIE_Y[1])}: 模块顶 → 侧墙外槽 → 底面槽 {F(WH.TIE_W)}×{F(WH.TIE_T)}",
+           f"底窗 ×4: +x 端 2 个对承载盘 AC 引线孔 {xy(WH.AC_HOLES, 2)}, 线圈线直上焊 AC 脚",
+           "底窗 −x 端 2 个从侧墙底穿出, 24V/GND 线沿承载盘顶面出 (到底板 r2 P1)",
+           "整件 + 模块 + 螺丝 ≈ 39.1 g, 质心 (0.08, −63.39); 1200 rpm 离心力 ≈ 39.1 N (wireless_holder_report.json)"]))
+_D1116 = {"led_post_a_v1_2", "led_post_b_v1_2", "led_gate_v1_2", "led_top_v1_2", "led_comb_v1_2", "rotor_shroud_a_v1_2", "wireless_holder_v1_2"}
 for sp in SPECS:
+    if sp["code"] in _D1116:
+        sp.setdefault("date", "2026-11-16")      # 11-16 新转子布局
     sp.update({k: v for k, v in COMMON.items() if k not in sp})
     sp["stl"] = M / sp["code"] / f"{sp['code']}.stl"
     sp["src"] = f"v1.2/models/{sp['code']}/{sp['code']}.stl"

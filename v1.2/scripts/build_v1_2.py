@@ -167,27 +167,29 @@ LOG['hub'] = dict(v0=v0, v=vol(hub), fill=v_fill, old_holes_expected=v_old_holes
 # ---------------- 3 承载盘 ----------------
 r0 = one(C10 / 'rim_ring_v1_0.step'); v0 = vol(r0)
 rim = zdown(clean(op(BRepAlgoAPI_Common, r0, cyl(0, 0, RIM_D, 25, 50)))); LOG['rim'] = dict(v0=v0, v=vol(rim))
-# 用户 11-14: V2 灯板两端支撑 (led_support_v1_2.py) 底脚 2×M3 ×2 端 ⇒ 承载盘顶面压 M3×4 铜螺母 (Φ4.2×4.2, 顶面齐平); 盘顶 Z32
+# 11-16 用户改转子布局: 灯板下沿离盘 5; 转接板 r2 在 +y 侧 (pov3d-96), 无线供电模块独立在 −y 侧; 以下承载盘顶面孔表各归一个脚本管:
 _rim_pre = rim
-LS_FOOT_X, LS_FOOT_Y = 78.0, 7.6                  # 11-15: y 5.8 → 7.6 (内六角头 Φ5.5 让开灯板 |y|≤3.77, 起子可从上面下)
-LS_FOOT_PTS = [(sx * LS_FOOT_X, sy * LS_FOOT_Y) for sx in (1, -1) for sy in (1, -1)]
-rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.2, 33.0) for x, y in LS_FOOT_PTS]))
-# 11-15 pov3d-96 底板 r1: 4×M3 安装孔 → 承载盘顶面 Φ4.2×4.0 浅孔 (M3×3 铜螺母; r42–66 在线圈腔上, 盘只剩 4.5 厚)
-BB_HOLES = [(-42.0, 7.4), (-66.0, 7.6), (61.5, 21.0), (61.5, -24.0)]
+#   灯板两端支撑: 11-16 改 T 形脚用承载盘原有 R82.5 孔 (22.5/157.5/202.5/337.5°), 原 (±78,±7.6) 四孔作废 ⇒ 不再切
+LS_FOOT_PTS = []
+#   中间门形支撑 (led_support_v1_2; 横梁跨在 FPC 下缝上面): 2×M3 铜螺母 (Φ4.2×4.2)
+GATE_PTS = [(30.0, 0.0), (-30.0, 0.0)]
+rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.2, 33.0) for x, y in GATE_PTS]))
+# 11-16 pov3d-96 底板 r2 (layout/r2_pads, 板 x −51.3..47 y14..72): 4×M3 → 承载盘顶面 Φ4.2×4.0 浅孔 (M3×3 铜螺母; 线圈腔 r34–76 上盘只剩 4.5 厚)
+BB_HOLES = [(-46.0, 17.8), (42.0, 17.8), (-35.5, 68.2), (40.0, 66.0)]
 BB_INS_H = 4.0
 rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - BB_INS_H, 33.0) for x, y in BB_HOLES]))
-# 方案 1 无线接收模块: 线圈 (腔 r34–76) 两根 AC 引线从承载盘小孔上来, 焊模块 AC 脚 1 (−67.0, 39.7) r77.9 / 脚 2 (−67.8, 14.45) r69.3
-AC_PINS = [(-67.0, 39.7), (-67.8, 14.45)]
-AC_HOLE_R, AC_HOLE_D = 73.0, 3.0                  # 脚 1 超出腔外缘 ⇒ 孔沿同方位拉回 r73; 脚 2 在腔上方, 孔就在脚下
-AC_HOLES = [(AC_HOLE_R * math.cos(math.atan2(AC_PINS[0][1], AC_PINS[0][0])), AC_HOLE_R * math.sin(math.atan2(AC_PINS[0][1], AC_PINS[0][0]))), AC_PINS[1]]
+#   无线供电模块固定件 (wireless_holder_v1_2.py, −y 侧): M3 铜螺母孔
+MOD_HOLES = [(11.0, -79.5), (-11.0, -79.5), (0.0, -31.0)]
+rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.2, 33.0) for x, y in MOD_HOLES])) if MOD_HOLES else rim
+#   线圈 (腔 r34–76) 两根 AC 引线从承载盘小孔上来, 接无线供电模块 (−y 侧) —— 位置归 wireless_holder_v1_2.py
+AC_HOLE_D = 3.0
+AC_HOLES = [(21.0, -70.0), (21.0, -49.0)]
 rim = clean(cut(rim, *[cyl(x, y, AC_HOLE_D, 20.0, 33.0) for x, y in AC_HOLES]))
-# 配平 (led_support_v1_2 报告: 底板 r1 方案 2 估算 + 两端立板不对称 ⇒ 254 g·mm ⇒ 3.3 g @ r78 / 112°): M3 铜螺母孔, 螺丝 + DIN9021 大垫片叠加, 动平衡时增减
-CW_R, CW_ANG = 76.0, 112.0                       # r78 碰 V0.4 原 r82.5@112.5° 孔边 ⇒ 内收到 r76 (3.35 g)
-CW_PT = (CW_R * math.cos(math.radians(CW_ANG)), CW_R * math.sin(math.radians(CW_ANG)))
-rim = clean(cut(rim, cyl(*CW_PT, 4.2, 32.0 - 4.2, 33.0)))
+#   配平: 11-16 起改在转子罩内配重唇 (rotor_shroud_v1_2.py), 承载盘原 r76@112° 配平孔取消
+CW_PT = None
 # 校核: 每个新孔外 Φ8 环 (孔壁 1.9) 在盘顶下 4.5 内是实心
 LOG['rim_new_holes_solid'] = {f'{n_}{i}': round(vol(op(BRepAlgoAPI_Common, _rim_pre, cut(cyl(x, y, 8.0, 27.6, 32.0), cyl(x, y, 4.3, 27, 33)))) / vol(cut(cyl(x, y, 8.0, 27.6, 32.0), cyl(x, y, 4.3, 27, 33))), 3)
-                              for n_, pts in (('foot', LS_FOOT_PTS), ('bb', BB_HOLES), ('cw', [CW_PT])) for i, (x, y) in enumerate(pts)}
+                              for n_, pts in (('gate', GATE_PTS), ('bb', BB_HOLES), ('mod', MOD_HOLES)) for i, (x, y) in enumerate(pts)}
 
 # ---------------- 4 底盘 ----------------
 # 4a 电机控制板 (沿用 V1.0 motor_tray 11-04 做法, 托板并进底盘): 板平放底盘顶面 z0, 器件朝上;
@@ -335,15 +337,17 @@ IN_DEPTH, OUT_DEPTH = 20.0, 10.0                   # 内卡 20, 外卡贴玻璃�
 #   玻璃下加高, 内卡顶 (不透光部分的最高点) = LED 下沿 − VIEW_MARGIN
 BB_STANDOFF, BB_T, CZ06_H, CZ06_CLR = 3.0, 1.6, 6.6, 2.0   # 转接板垫柱 (让插件脚) / 板厚 / CZ06 堆高 / CZ06 顶 → 灯板下沿
 Z_BB0 = Z_RIM_TOP + BB_STANDOFF                    # 转接板底 35.0
-SCREEN_GAP = BB_STANDOFF + BB_T + CZ06_H + CZ06_CLR   # 承载盘顶 → 灯板下沿 13.2
+SCREEN_GAP = 5.0                                   # 用户 11-16: 灯板几乎贴盘, 下沿离承载盘顶 5 (要过 FPC/线); 转接板移到 +y 侧 (原 13.2 = 垫3+板1.6+CZ06 6.6+留2)
 LED_BOARD_H = 208.0                                # 灯板高 (板框 163.76 × 208.01)
 LED_LOW_OFF = 37.88                                # 灯板下沿 → 最下一行 LED 像素下沿 (行心 38.66 − 节距 1.5626/2)
-Z_SCR0 = Z_RIM_TOP + SCREEN_GAP                    # 灯板下沿 45.2
-Z_LED0 = Z_SCR0 + LED_LOW_OFF                      # LED 下沿 83.08
-Z_SCR1 = Z_SCR0 + LED_BOARD_H                      # 灯板上沿 253.2
-VIEW_MARGIN = 10.0                                 # 用户 11-13 晚: 玻璃下最高点 (内卡顶 = 可视下边界) 比最下一行 LED 低 10
-Z_VIEW0 = Z_LED0 - VIEW_MARGIN                     # 可视下边界 73.08
-Z_G = round(Z_VIEW0 - IN_DEPTH, 2)                 # 玻璃下端 53.08 (原 = 承载盘顶 32.0)
+Z_SCR0 = Z_RIM_TOP + SCREEN_GAP                    # 灯板下沿 37.0 (原 45.2)
+Z_LED0 = Z_SCR0 + LED_LOW_OFF                      # LED 下沿 74.88 (原 83.08)
+Z_SCR1 = Z_SCR0 + LED_BOARD_H                      # 灯板上沿 245.0
+# 用户 11-16: 底座已打印, 玻璃下两件不改 ⇒ 玻璃落座面钉死 53.08 (原 = LED 下沿 − 10 − 内卡 20); 内卡顶 73.08 仍低于 LED 下沿 1.8
+Z_G = 53.08                                        # 玻璃下端
+Z_VIEW0 = round(Z_G + IN_DEPTH, 2)                 # 可视下边界 = 内卡顶 73.08
+VIEW_MARGIN = round(Z_LED0 - Z_VIEW0, 2)           # 1.8 (原 10)
+assert VIEW_MARGIN >= 0, f'内卡顶 Z{Z_VIEW0} 挡住最下一行 LED Z{Z_LED0}'
 TAB_T, TAB_W = 3.5, 18.0                           # 耳片厚 / 宽; M6x10 从盘底, 螺母压耳片顶 (z3.5–8.5, 法兰底 9.3)
 NUT_T = 2.4                                        # M3 螺母
 gi, go = GL_OD / 2 - GL_T - GL_CLR, GL_OD / 2 + GL_CLR    # 94.8 / 100.2

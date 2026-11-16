@@ -164,8 +164,10 @@ def draw(spec):
         pg.ax.add_collection(LineCollection(tf(vis), colors="k", linewidths=0.4 * MM_PT, capstyle="round", zorder=3))
     vy0, vy1 = oy + e[2] * S, oy + e[3] * S
     vx0, vx1 = ox + e[0] * S, ox + e[1] * S
-    chain(pg, (vx0 - 6, vx1 + 6), oy, oy)
-    chain(pg, (ox, ox), vy0 - 6, vy1 + 6)
+    if e[2] - 1 <= 0 <= e[3] + 1:                 # 中心线只在轴心落在零件范围内时画 (偏心件不画, 免得穿进右侧说明区)
+        chain(pg, (vx0 - 6, vx1 + 6), oy, oy)
+    if e[0] - 1 <= 0 <= e[1] + 1:
+        chain(pg, (ox, ox), vy0 - 6, vy1 + 6)
     pg.text(cx, TOP_BOX[1] + 1, f"俯视图  Top View  ({slab})   尺寸单位: mm", size=3.6, ha="center")
     for i, d in enumerate(phis):
         yd = vy1 + 8 + 9 * i
@@ -173,12 +175,15 @@ def draw(spec):
     # 剖切线 A-A
     sec = spec["sec"]
     a = math.radians(sec["ang"])
-    R = max(W, H) / 2 * S + 8
     ax_, ay_ = math.cos(a), math.sin(a)
-    pg.ax.plot([ox, ox + ax_ * R], [oy, oy + ay_ * R], lw=0.35 * MM_PT, color="#c00000", ls=(0, (10, 2, 1.5, 2)), zorder=4)
+    # 剖切线沿剖切方向覆盖零件投影 (偏心件如端部立板: 轴心在零件外, 线从零件近端前 6 mm 起, 不从页外的轴心画起)
+    _pj = [x * ax_ + y * ay_ for x in e[:2] for y in e[2:]]
+    R = (max(W, H) / 2 if abs(e[0] + e[1]) < 1e-3 * W and abs(e[2] + e[3]) < 1e-3 * H else max(_pj)) * S + 8
+    Rs = max(0.0, min(_pj) * S - 6)
+    pg.ax.plot([ox + ax_ * Rs, ox + ax_ * R], [oy + ay_ * Rs, oy + ay_ * R], lw=0.35 * MM_PT, color="#c00000", ls=(0, (10, 2, 1.5, 2)), zorder=4)
     pg.arrow(ox + ax_ * R - ay_ * 5, oy + ay_ * R + ax_ * 5, -ay_, ax_, L=2.5)
     pg.text(ox + ax_ * (R + 4), oy + ay_ * (R + 4), "A", size=3.4, ha="center", va="center", halo=True)
-    pg.text(ox - 4, oy - 4, "A", size=3.4, ha="center", va="center", halo=True)
+    pg.text(ox + ax_ * Rs - 4, oy + ay_ * Rs - 4, "A", size=3.4, ha="center", va="center", halo=True)
     # 孔组字母
     for h in spec.get("holes", []):
         lo = h.get("lab_off", (2.4, 2.4))

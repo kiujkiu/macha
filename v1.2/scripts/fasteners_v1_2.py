@@ -1,6 +1,6 @@
 """V1.2 紧固件装配预览 (2026-11-12 晚, 按用户实物参数): 按 build_v1_2 的孔位/高度放螺丝、螺母、铜螺母, 出 3MF + 干涉/啮合表。
     cd v1.2/scripts && ../../.venv/bin/python fasteners_v1_2.py
-只 import build_v1_2 (不 import export_3mf_v1_2, 不写 models/); 输出:
+import build_v1_2 + 零件脚本 led_support / rotor_shroud / wireless_holder (只取几何, 不 import export_3mf_v1_2, 不写 models/); 输出:
     v1.2/assembly_v1_2_整机+螺丝.3mf   v1.2/out/fasteners_v1_2.json (表格数据)
 
 实物 (用户 11-12):
@@ -182,22 +182,79 @@ for i, (x, y) in enumerate(B.JN_PTS):
     _z0 = B.JN_NUT_Z1 - B.JN_NUT_H                 # 11-16 用户: 法兰朝上 (六角 6.9 在下, 法兰 Φ9.7×1.2 顶窝顶)
     add(f"M4 法兰螺母 玻璃下底座底 #{i}", cut(fuse(hexprism(x, y, 6.9, _z0, B.JN_NUT_Z1 - 1.2), cyl(x, y, 9.7, B.JN_NUT_Z1 - 1.2, B.JN_NUT_Z1)), cyl(x, y, 4.0, -1, 10)), "#707070")
 
-# 11 V2 灯板支撑 (11-15, led_support_v1_2): 两端立板底块 4×M3×8 内六角 (Φ5.5×3 头, 沉孔底 Z36) 往下拧承载盘顶面 M3×4 铜螺母 (Z27.8..32);
-#    底板 r1 4×M3: 承载盘顶面 Φ4.2×4.0 浅孔压 M3×3 铜螺母 (Z29..32), 上面 M3×3 铜柱 (公母, 公头 3 进铜螺母) + 板 + M3×5 (螺丝只列 BOM);
-#    配平: r76 @112° M3×4 铜螺母, 上面叠 DIN9021 大垫片 + M3 螺丝 (按动平衡增减; 只列 BOM)
+# 11 V2 灯板支撑 (11-16 改, led_support_v1_2): 两端 T 脚 4×M3×16 内六角 (Φ5.5×3 头, 坐 Φ8 凸台顶 Z37.5) 往下穿承载盘+毂盘 R82.5 原孔, 进毂盘底 M3×4 铜螺母 (Z21.5..25.5);
+#    门形支撑 2×M3×6 (沉孔底 Z34) 进承载盘 M3×4 铜螺母 (Z28..32); 梳齿 → 帽 2×M3×8 进帽内铜螺母 (只列 BOM 外, 这里也画);
+#    底板 r2 4×M3: 承载盘顶面 Φ4.2×4.0 浅孔压 M3×3 铜螺母 (Z29..32), 上面 M3×3 铜柱 (公母, 公头 3 进铜螺母) + 板 + M3×5 (螺丝只列 BOM)
 import led_support_v1_2 as L
 for i, (x, y) in enumerate(L.FOOT_PTS):
-    screw("M3x8 内六角 灯板立板底脚", i, x, y, L.FOOT_CB_Z, 8.0, False, hd=5.5, hh=3.0, engage=("铜螺母", L.RIM_TOP - INS_L_DISC, L.RIM_TOP))
-    add(f"M3x4 铜螺母 承载盘 立板脚 #{i}", insert(x, y, L.RIM_TOP - INS_L_DISC, INS_L_DISC), "#B8860B")
+    screw(f"M3x{L.FOOT_SCREW_L:g} 内六角 灯板 T 脚", i, x, y, L.FOOT_CB_Z, L.FOOT_SCREW_L, False, hd=5.5, hh=3.0, engage=("铜螺母", *L.HUB_INS))
+    add(f"M3x4 铜螺母 毂盘底 T 脚 #{i}", cut(cyl(x, y, INS_D - 0.02, L.HUB_INS[0], L.HUB_INS[1]), cyl(x, y, 3.0, 0, 50)), "#B8860B")   # Φ4.18: 与毂盘 Φ4.2 孔同轴同径时 OCC 布尔误报整环重叠
+for i, (x, y) in enumerate(L.GATE_PTS):
+    screw(f"M3x{L.GATE_SCREW_L:g} 内六角 灯板门形支撑", i, x, y, L.GATE_CB_Z, L.GATE_SCREW_L, False, hd=5.5, hh=3.0, engage=("铜螺母", *L.GATE_INS))
+    add(f"M3x4 铜螺母 承载盘 门腿 #{i}", insert(x, y, L.GATE_INS[0], L.GATE_INS[1] - L.GATE_INS[0]), "#B8860B")
+for i, sx in enumerate((1, -1)):
+    screw("M3x8 内六角 梳齿→帽", i, sx * L.COMB_FIX_X, 0.0, L.COMB_Z1, 8.0, False, hd=5.5, hh=3.0, engage=("铜螺母", L.Z1, L.Z1 + L.CAP_T))
+    add(f"M3x4 铜螺母 灯板顶帽 #{i}", insert(sx * L.COMB_FIX_X, 0.0, L.Z1, L.CAP_T), "#B8860B")
 for i, (x, y) in enumerate(B.BB_HOLES):
     add(f"M3x3 铜螺母 承载盘 底板 #{i}", insert(x, y, L.RIM_TOP - 3.0, 3.0), "#B8860B")
-add("M3x4 铜螺母 承载盘 配平", insert(*B.CW_PT, L.RIM_TOP - INS_L_DISC, INS_L_DISC), "#B8860B")
+# 11-16: 承载盘配平孔取消 (配重改到转子罩内唇)
+
+# 12 转子罩 a/b (11-16, rotor_shroud_v1_2): 罩底 4×M3×14 内六角 (Φ5.5×3 头, 凸台顶 Z36 支承; 凸台 67.5/112.5/247.5/292.5° @r82.5)
+#    往下穿凸台 4 + 承载盘 + 毂盘, 进毂盘底 M3×4 铜螺母 (与 T 脚同一圈 R82.5 的另外 4 个孔, 每孔一颗; 同 T 脚按底面齐平 Z21.5..25.5, Φ4.18 画);
+#    尾 Z22.0 ⇒ 啮合 3.5 (rotor_shroud 脚本按铜螺母顶到孔顶 Z22..26 算 4.0, 两种压法都够)
+import rotor_shroud_v1_2 as RS
+for i, a in enumerate(RS.MNT_A):
+    x, y = RS.pol(RS.HOLE_R, a)
+    screw(f"M3x{RS.MNT_L:g} 内六角 转子罩底", i, x, y, RS.BOSS_Z1, RS.MNT_L, False, hd=5.5, hh=3.0, engage=("铜螺母", *L.HUB_INS))
+    add(f"M3x4 铜螺母 毂盘底 转子罩 #{i}", cut(cyl(x, y, INS_D - 0.02, L.HUB_INS[0], L.HUB_INS[1]), cyl(x, y, 3.0, 0, 50)), "#B8860B")
+#    分缝 (x=0, ±y) 4×M3×14 切向 (沿 x): 头支承 x=∓7 (凸耳面), 尾 x=±7; M3 六角螺母 (对边 5.5×2.4) 在对侧凸耳槽 x ±4.5..±6.9 (口朝罩内)
+#    形状直接用 rotor_shroud 的外购件实体; 啮合/净空解析 + 沿 x 打探针
+SEAM_ROWS = []
+
+
+def probe_x(y, z, d, x, sx, span=60.0):
+    """从 x 沿 sx (±1) 方向打一根 Φd 横柱, 返回 (距离, 件名)"""
+    col = RS.xcyl(y, z, d, *sorted((x + sx * 1e-3, x + sx * span)))
+    best = (None, None)
+    for pn in PARTS:
+        for b in common_bbox(col, pn):
+            dist = (b[0] - x) if sx > 0 else (x - b[3])
+            if best[0] is None or dist < best[0]:
+                best = (dist, pn)
+    return best
+
+
+_k = 0
+for sy in (1, -1):
+    sxh = -1 if sy > 0 else 1                       # +y 缝头在 −x (B 侧), −y 缝头在 +x (A 侧)
+    for z in RS.LUG_SZ:
+        add(f"M3x{RS.SEAM_L:g} 内六角 转子罩分缝 #{_k}", RS.seam_scr[_k], "#C0C0C0")
+        add(f"M3 螺母 转子罩分缝 #{_k}", RS.seam_nut[_k], "#707070")
+        xb = sxh * RS.LUG_HX; xt = xb - sxh * RS.SEAM_L
+        xn = sorted((-sxh * (RS.LUG_HX - 0.1), -sxh * (RS.LUG_HX - 0.1 - RS.NUT_T)))
+        lo, hi = sorted((xb, xt))
+        SEAM_ROWS.append(dict(组=f"M3x{RS.SEAM_L:g} 内六角 转子罩分缝", 号=_k, x=None, y=round(sy * RS.LUG_SY, 2), Z=z, 方向="+X" if sxh < 0 else "−X",
+                              支承面x=xb, 尾端x=xt, 啮合="M3 螺母", 啮合长=round(max(0.0, min(hi, xn[1]) - max(lo, xn[0])), 2),
+                              螺母x=[round(v, 2) for v in xn], 尾端出螺母=round(abs(xt) - (RS.LUG_HX - 0.1), 2),
+                              _probe=(sy * RS.LUG_SY, z, xb + sxh * 3.0, sxh, xt, -sxh)))
+        _k += 1
+#    配重唇 M3×18 (24 孔, 按需装): 只放 1 个示例 (W_A[0]) + 唇下 1 颗锁紧螺母 (Z65.1..67.5)
+_wx, _wy = RS.pol(RS.W_R, RS.W_A[0])
+screw(f"M3x{RS.W_L:g} 内六角 转子罩配重 (示例)", 0, _wx, _wy, RS.W_BEAR, RS.W_L, False, hd=5.5, hh=3.0, engage=("M3 螺母", RS.LIP_Z0 - RS.NUT_T, RS.LIP_Z0))
+add("M3 螺母 转子罩配重 (示例) #0", cut(hexprism(_wx, _wy, RS.NUT_AF, RS.LIP_Z0 - RS.NUT_T, RS.LIP_Z0), cyl(_wx, _wy, 3.0, 0, 90)), "#707070")
+
+# 13 无线供电模块托盘 (11-16, wireless_holder_v1_2): 3×M3×8 内六角 (Φ6 沉孔底 Z36 支承) 进承载盘 M3×4 铜螺母 (Z28..32, Φ4.18 画)
+import wireless_holder_v1_2 as WH
+for i, (x, y) in enumerate(B.MOD_HOLES):
+    screw("M3x8 内六角 无线托盘", i, x, y, WH.CB_Z, 8.0, False, hd=5.5, hh=3.0, engage=("铜螺母", WH.RIM_TOP - 4.0, WH.RIM_TOP))
+    add(f"M3x4 铜螺母 承载盘 无线托盘 #{i}", cut(cyl(x, y, INS_D - 0.02, WH.RIM_TOP - 4.0, WH.RIM_TOP), cyl(x, y, 3.0, 0, 50)), "#B8860B")
 
 # ---------------- 零件 ----------------
-PARTS = {"灯板立板+x": L.post_a, "灯板立板-x": L.post_b, "底盘": B.disc, "线圈环": B.ring, "电机": B.motor, "控制板": B.board, "散热片": B.heatsink,
+PARTS = {"灯板立板+x": L.post_a, "灯板立板-x": L.post_b, "灯板门形支撑": L.gate_s, "灯板顶部件": L.top, "灯板梳齿": L.comb_s, "底盘": B.disc, "线圈环": B.ring, "电机": B.motor, "控制板": B.board, "散热片": B.heatsink,
          "法兰盘": B.flange_disc, "安装法兰": B.mounting_flange, "转子毂盘": B.hub, "承载盘": B.rim,
          "玻璃下底座": B.shroud_lo, "玻璃下玻璃座": B.shroud_hi, "外卡环": B.clamp_ring, "XT60压块": B.xt_clamp, "XT60底垫": B.xt_shim,
-         **({"MOS压块": B.CD.clamp} if B.CD.HAS_MC else {}), **({"电容卡件": B.CD.cap_clamp} if B.CD.HAS_CC else {}), "驱动板": B.CD.pcb, "驱动MOS": B.CD.mos, "驱动电解电容": B.CD.cap, "驱动散热片": B.CD.sink2, "按键支架": B.key_bracket, "按键板": B.key_board}
+         **({"MOS压块": B.CD.clamp} if B.CD.HAS_MC else {}), **({"电容卡件": B.CD.cap_clamp} if B.CD.HAS_CC else {}), "驱动板": B.CD.pcb, "驱动MOS": B.CD.mos, "驱动电解电容": B.CD.cap, "驱动散热片": B.CD.sink2, "按键支架": B.key_bracket, "按键板": B.key_board,
+         "转子罩a": RS.shr_a, "转子罩b": RS.shr_b, "无线托盘": WH.H, "无线模块 (占位)": WH.module, "底板 r2 (板框)": L.VB['baseboard']}   # 11-16 新件
 for i, p in enumerate(B.posts):
     PARTS[f"立柱{i}"] = p
 PB = {k: bbox(v) for k, v in PARTS.items()}
@@ -274,6 +331,12 @@ for s in S:
     print("  " + "  ".join(f"{k}={v}" for k, v in row.items()))
 for row in KEY_ROWS:                                               # 按键板横向螺丝 (沿 −Y), 不走 Z 向 probe
     T.append(row); print("  " + "  ".join(f"{k}={v}" for k, v in row.items()))
+for row in SEAM_ROWS:                                              # 转子罩分缝切向螺丝 (沿 ±X): 沿 x 打探针
+    y, z, hx, hs, tx, ts = row.pop('_probe')
+    hdist, hpart = probe_x(y, z, 5.5 - 0.2, hx, hs)
+    tdist, tpart = probe_x(y, z, 3.0, tx, ts)
+    row.update(尾端前方=tpart, 尾端距离=None if tdist is None else round(tdist, 2), 头外侧=hpart, 头外侧距离=None if hdist is None else round(hdist, 2), 头外侧x=round(hx, 2))
+    T.append(row); print("  " + "  ".join(f"{k}={v}" for k, v in row.items()))
 
 # 线圈环角法兰螺母 vs Φ77 圆台 (解析)
 ring_r = math.hypot(*B.RING_M3[0])
@@ -325,6 +388,7 @@ def write3mf(path, parts):
 
 
 # 控制板: 3MF 里去掉 < 1 mm 小件 (同 export 脚本), 干涉检查用全板
+import led_support_v1_2 as LS                       # 上面螺丝循环里 L 被当作长度变量覆盖, 这里重新取模块
 BOARD_LITE = comp([s for s in solids(B.board) if (lambda b: max(b[3] - b[0], b[4] - b[1]) >= 1.2 or b[5] - b[2] >= 1.0)(bbox(s))])
 grp = {}
 for n, sh, c in F:
@@ -337,7 +401,11 @@ P_ = [('底盘 Φ220×6', B.disc, '#8A8F98', 0.05), ('线圈环', B.ring, '#E0A0
       ('玻璃下-底座 glass_shroud_lower_v1_2', B.shroud_lo, '#7FB3D5', 0.05), ('玻璃下-玻璃座 glass_shroud_upper_v1_2', B.shroud_hi, '#5DADE2', 0.05), ('外卡环 glass_clamp_ring_v1_2', B.clamp_ring, '#2E86C1', 0.05), ('XT60 压块', B.xt_clamp, '#F1C232', 0.05), ('XT60 底垫', B.xt_shim, '#E69138', 0.05),
       *([('MOS 压块 mos_clamp_v1_2', B.CD.clamp, '#E69138', 0.05)] if B.CD.HAS_MC else []), *([('电容卡件 cap_clamp_v1_2', B.CD.cap_clamp, '#B45F06', 0.05)] if B.CD.HAS_CC else []), ('线圈驱动板 (元件级)', B.CD.pcb, '#38761D', 0.05), ('线圈驱动 MOS', B.CD.mos, '#222222', 0.05),
       ('线圈驱动 电解电容', B.CD.cap, '#1155CC', 0.05), ('线圈驱动 散热片', B.CD.sink2, '#C0392B', 0.05),
-      ('按键支架 key_bracket_v1_2', B.key_bracket, '#F1C232', 0.03), ('按键板 (简模)', B.key_board, '#2E7D32', 0.03)]
+      ('按键支架 key_bracket_v1_2', B.key_bracket, '#F1C232', 0.03), ('按键板 (简模)', B.key_board, '#2E7D32', 0.03),
+      ('灯板支撑 +x led_post_a', LS.post_a, '#F1C232', 0.03), ('灯板支撑 -x led_post_b', LS.post_b, '#E69138', 0.03), ('灯板门形支撑 led_gate', LS.gate_s, '#F6B26B', 0.03),
+      ('灯板顶部件 led_top', LS.top, '#6FA8DC', 0.03), ('灯板梳齿 led_comb', LS.comb_s, '#9FC5E8', 0.03),
+      ('转子罩 a rotor_shroud_a_v1_2', RS.shr_a, '#6FA8DC', 0.05), ('转子罩 b rotor_shroud_b_v1_2', RS.shr_b, '#93C47D', 0.05),
+      ('无线托盘 wireless_holder_v1_2', WH.H, '#F1C232', 0.03), ('无线供电模块 30.5×49×15 (占位)', WH.module, '#3D85C6', 0.05)]
 out = f"{B.V12 / 'assembly_v1_2'}_整机+螺丝.3mf"
 write3mf(out, P_ + FAST)
 print("wrote", out)
