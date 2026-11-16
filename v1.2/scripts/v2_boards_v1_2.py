@@ -1,8 +1,8 @@
-"""V2 转子电路 (占位, 用户 11-13 晚; 11-16 改读底板 r2): 转接板 POV3D_V2_BaseBoard r2 (x −51.3..47, y 14..72, 上两角 r83) + MLK CZ06 核心板 + V2 灯板 LED_V0.2.0 (11-13)。
+"""V2 转子电路 (占位, 用户 11-13 晚; 11-16 晚改读底板 r3): 转接板 POV3D_V2_BaseBoard r3 (多边形, x −51.2..40, y 14..80.4) + MLK CZ06 核心板 + V2 灯板 LED_V0.2.0 (11-13)。
 只给结构看位置/限高, 不是电路模型:
   - 转接板: 板框 + 每个器件按 F.CrtYd 外框 × 限高做方块 (限高按转接板 README「做矮」表 + 常见规格书, 偏保守)。
     器件全在顶面; 长边 (140) 平行屏面 = 世界 X; KiCad (150,100) = 转子中心, 世界 Y = −(ky−100)。
-  - CZ06: DF40 座 (合高 3.0) + 60×35 板 + 顶面件, 整体按 6.6 包络; r2: 中心 (0, 53.5), 长边沿 x (x ±30, y 36..71)。
+  - CZ06: DF40 座 (合高 3.0) + 60×35 板 + 顶面件, 整体按 6.6 包络; r3: 中心 (0, 48.5), 长边沿 x (x ±30, y 31..66)。
   - 灯板: kicad-cli 导出的整板 STEP (boards/led_v0.2.0_2026-11-13.step, 板心原点), 竖起来放在 XZ 面, LED 面 (B 面) 朝 +Y,
     板背面贴 Y=0 (只 1 块; 两块背靠背的间距/偏心 V2 还没定)。
 高度全从 build_v1_2 读: Z_BB0 (转接板底) / BB_T / CZ06_H / Z_SCR0 (灯板下沿)。
@@ -16,8 +16,15 @@ from OCP.BRep import BRep_Builder
 from OCP.TopoDS import TopoDS_Compound
 from helpers import read_step
 
-BB_PCB = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/layout/r2_pads/POV3D_V2_BaseBoard_r2.kicad_pcb')   # 11-16: r2 (只 +y 一侧; r1 作废)
-BB_STEP = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/review/结构交付/POV3D_V2_BaseBoard_r2.step')   # 原点 = 转轴, z0 = 板底
+BB_PCB = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/layout/r3_pads/POV3D_V2_BaseBoard_r3.kicad_pcb')   # 11-16 晚: r3 rev b (两 FPC 座一内一外, CZ06 夹中间; r2 作废)
+BB_STEP = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/review/结构交付/POV3D_V2_BaseBoard_r3.step')   # 原点 = 转轴, z0 = 板底
+# r3 板框多边形 (r3_说明 §1, 世界坐标)
+def _arc(p0, p1, r=81.7, n=12):
+    a0, a1 = math.atan2(p0[1], p0[0]), math.atan2(p1[1], p1[0])
+    return [(r * math.cos(a0 + (a1 - a0) * k / n), r * math.sin(a0 + (a1 - a0) * k / n)) for k in range(1, n)]
+# r3 rev c (11-16 晚, 96 提交 072a91f7): 板角收进 r81.7 (转子罩壁缩到 r82–85); ⌒ = 以转轴为心 r81.7 圆弧
+BB_POLY = ([(-51.2, 14), (40, 14), (40, 71.24)] + _arc((40, 71.24), (38.05, 72.3)) + [(38.05, 72.3), (27, 72.3), (27, 74.6), (21, 74.6), (21, 78.95)]
+           + _arc((21, 78.95), (-21, 78.95), n=24) + [(-21, 78.95), (-21, 74.6), (-27, 74.6), (-27, 72.3), (-31, 72.3), (-31, 64.5), (-49.9, 64.5), (-51.2, 63.5)])
 BB_R = 83.0                                          # 上两角 r83 圆弧
 BB_C = (150.0, 100.0)                                # 转轴 (KiCad); r2: 世界 (x, y) = (kx − 150, 100 − ky), 已与 bbox_r2.json 核对
 # 限高 (板顶以上, mm); 没列的 = 1.2 (0402~0805 / SOT / QFN 一类)
@@ -37,7 +44,7 @@ H_BY_FP = {
 }
 SKIP_FP = ('MountingHole', 'DF40HC')                 # 孔不建; DF40 归 CZ06
 CZ06_W, CZ06_D, DF40_H, CZ06_PCB_T = 60.0, 35.0, 3.0, 1.6
-CZ06_C = (0.0, 53.5)                                 # 11-16 r2: CZ06 中心, 长边 60 沿 x (r2_说明 §4)
+CZ06_C = (0.0, 48.32)                                # 11-16 r3 rev c: CZ06 中心 (板体 x±30 y30.82–65.82, 转 180°), 长边 60 沿 x
 LED_STEP = Path(__file__).resolve().parent.parent / 'boards' / 'led_v0.2.0_2026-11-13.step'
 LED_HALF_H = 104.004                                 # STEP 里板 y −104.004..104.004
 
@@ -95,7 +102,12 @@ def make(B):
     z0 = B.Z_BB0; zt = z0 + B.BB_T
     parts, (x0, y0, x1, y1) = baseboard_parts()
     rr = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, 0, z0 - 20), gp_Dir(0, 0, 1)), BB_R, 40).Shape()
-    pcb = _common(_box(x0, y0, z0, x1, y1, zt), rr)                     # r2 板框: 外接框 ∩ r83 (上两角圆弧)
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakePolygon, BRepBuilderAPI_MakeFace
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism
+    pg = BRepBuilderAPI_MakePolygon()
+    for x, y in BB_POLY: pg.Add(gp_Pnt(x, y, z0))
+    pg.Close()
+    pcb = BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(pg.Wire()).Face(), gp_Vec(0, 0, B.BB_T)).Shape()   # r3 多边形板框
     comps = [_box(a, b_, zt, c, d, zt + h) if h > 0 else _box(a, b_, z0 + h, c, d, z0) for _, _, (a, b_, c, d), h in parts]
     # r2: CZ06 中心 (0, 53.5), 长边 60 沿 x (r2_说明 §4)
     (cx, cy), w_, d_ = CZ06_C, CZ06_W, CZ06_D

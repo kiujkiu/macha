@@ -28,7 +28,7 @@ S={**({'cd_clamp':CD.clamp} if CD.HAS_MC else {}),**({'cd_capclamp':CD.cap_clamp
 for i,p in enumerate(posts): S[f'post{i}']=p
 # 11-16 新转子布局: 灯板支撑 5 件 + Φ8 轴/688, 转子罩两半, 无线托盘 + 模块占位, 底板 r2 (交付 STEP) + 两块灯板
 import led_support_v1_2 as LS, rotor_shroud_v1_2 as RS, wireless_holder_v1_2 as WH
-S.update({'led_post_a':LS.post_a,'led_post_b':LS.post_b,'led_gate':LS.gate_s,'led_top':LS.top,'led_comb':LS.comb_s,'rod':LS.rod,'brg688':LS.brg,
+S.update({'led_post_a':LS.post_a,'led_post_b':LS.post_b,'led_gate':LS.gate_s,'led_bar':LS.bar_s,'led_top':LS.top,'led_comb':LS.comb_s,'rod':LS.rod,'brg688':LS.brg,
           'led_a':LS.led_a,'led_b':LS.led_b,'bb_r2':LS.bb_step,'rotor_shroud_a':RS.shr_a,'rotor_shroud_b':RS.shr_b,'rotor_lid_a':RS.lid_a,'rotor_lid_b':RS.lid_b,'bridge_a':LS.br_a,'bridge_b':LS.br_b,
           'wireless_holder':WH.H,'wireless_module':WH.module})
 for i,(x,y) in enumerate(SH_M6): S[f'seat_nut{i}']=cyl(x,y,SH_NUT_D,NUT_Z0,NUT_Z0+3.7)   # 11-12 夜: M3 法兰螺母实高 3.7 (build 里 seat_nuts 仍按 2.4)
@@ -46,7 +46,7 @@ PAIRS=[('board',x) for x in ('ring','flange_disc','mounting_flange','motor','sea
  [('key_bracket',x) for x in ('disc','seat','shroud_split','key_board','ring','flange_disc','mounting_flange','rim')]+[('key_board',x) for x in ('disc','seat','shroud_split','ring','flange_disc','mounting_flange','rim')]+\
  [('glass_top',x) for x in ('tube','glass_disc','glass_top_hub')]+[('glass_top_hub','glass_disc')]+\
  [(a,x) for a in ('led_post_a','led_post_b') for x in ('rim','hub','led_a','led_b','led_gate','bb_r2','rotor_shroud_a','rotor_shroud_b','wireless_holder','wireless_module','shroud_lo','shroud_hi','tube')]+\
- [('led_gate',x) for x in ('rim','hub','led_a','led_b','bb_r2','wireless_holder','wireless_module')]+\
+ [('led_gate',x) for x in ('rim','hub','led_a','led_b','bb_r2','wireless_holder','wireless_module','led_bar')]+[('led_bar',x) for x in ('led_a','led_b','led_post_a','led_post_b','bridge_a','bridge_b','rim')]+\
  [('led_top',x) for x in ('led_a','led_b','led_comb','rod','glass_top_hub','glass_top')]+[('led_comb',x) for x in ('led_a','led_b','rod','glass_top_hub','glass_top')]+\
  [('rod',x) for x in ('glass_top_hub','glass_top','brg688')]+[('brg688','glass_top_hub')]+\
  [(a,x) for a in ('rotor_shroud_a','rotor_shroud_b') for x in ('rim','hub','shroud_lo','shroud_hi','tube','led_a','led_b','bb_r2','wireless_holder','wireless_module')]+[('rotor_shroud_a','rotor_shroud_b')]+\

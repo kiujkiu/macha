@@ -160,6 +160,8 @@ for sx in (1, -1):
         x, y = sx * ROTOR_R * s45, sy * ROTOR_R * s45
         h = cut(h, cyl(x, y, 3.2, 31.7 - 1, 36.7), cyl(x, y, 7.0, 36.7, 41.0))
 hub = zdown(clean(h))
+# 11-16 晚 用户: 转子盘和定子盘同半径 ⇒ 毂盘外圆 r87.5 → r85 (= 承载盘 r85 = 安装法兰 r85 = 转子罩外圆), 转子外面一整个 Φ170 圆柱
+hub = clean(op(BRepAlgoAPI_Common, hub, cyl(0, 0, 170.0, -100, 200)))
 import math as m
 v_old_holes = 4 * (m.pi * 1.6**2 * 5 + m.pi * 3.5**2 * 4)
 LOG['hub'] = dict(v0=v0, v=vol(hub), fill=v_fill, old_holes_expected=v_old_holes)
@@ -171,15 +173,20 @@ rim = zdown(clean(op(BRepAlgoAPI_Common, r0, cyl(0, 0, RIM_D, 25, 50)))); LOG['r
 _rim_pre = rim
 #   灯板两端支撑: 11-16 改 T 形脚用承载盘原有 R82.5 孔 (22.5/157.5/202.5/337.5°), 原 (±78,±7.6) 四孔作废 ⇒ 不再切
 LS_FOOT_PTS = []
-#   中间门形支撑 (led_support_v1_2; 横梁跨在 FPC 下缝上面): 2×M3 铜螺母 (Φ4.2×4.2)
-GATE_PTS = [(30.0, 0.0), (-30.0, 0.0)]
+#   中间 T 件 ×2 (led_support_v1_2, 11-16 晚 用户: 灯板下端沿用 V0.4 ⇒ 夹条 + T 件竖直螺丝; 原门形 (±30,0) 作废):
+#   每件 2×M3 进承载盘铜螺母 (Φ4.2×4.2), 脚孔在灯板/桥板外 (|y|10) 从上面够得着
+GATE_PTS = [(38.0, 10.0), (38.0, -10.0), (-38.0, 10.0), (-38.0, -10.0)]
 rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.2, 33.0) for x, y in GATE_PTS]))
-# 11-16 pov3d-96 底板 r2 (layout/r2_pads, 板 x −51.3..47 y14..72): 4×M3 → 承载盘顶面 Φ4.2×4.0 浅孔 (M3×3 铜螺母; 线圈腔 r34–76 上盘只剩 4.5 厚)
-BB_HOLES = [(-46.0, 17.8), (42.0, 17.8), (-35.5, 68.2), (40.0, 66.0)]
+# 11-16 晚 pov3d-96 底板 r3 rev b (layout/r3_pads, 两 FPC 座一内一外, CZ06 夹中间): 4×M3 → 承载盘顶面 Φ4.2×4.0 浅孔 (H5/H7/H6/H8; 线圈腔 r34–76 上盘只剩 4.5 厚)
+BB_HOLES = [(-46.0, 17.8), (15.0, 27.55), (-24.25, 69.9), (24.25, 69.9)]   # rev c: H6/H8 (±24.25, 69.9)
 BB_INS_H = 4.0
 rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - BB_INS_H, 33.0) for x, y in BB_HOLES]))
-#   无线供电模块固定件 (wireless_holder_v1_2.py, −y 侧): M3 铜螺母孔
-MOD_HOLES = [(11.0, -79.5), (-11.0, -79.5), (0.0, -31.0)]
+#   11-16 晚 用户: 转子罩照 V0.4 缩进坐盘上 (罩壁 r82–85, 外圆 = 盘 Φ170) ⇒ 罩底固定 + 两端 T 脚改承载盘顶面铜螺母 (Φ4.2×4.0, 原 R82.5 毂盘底铜螺母孔不再用)
+SHR_HOLES = [(78.5 * math.cos(math.radians(a)), 78.5 * math.sin(math.radians(a))) for a in (50.0, 140.0, 230.0, 320.0)]   # 罩底 4 孔 (避开底板 r3 / 无线托盘)
+END_T_HOLES = [(74.0, 10.0), (74.0, -10.0), (-74.0, 10.0), (-74.0, -10.0)]                                            # 两端 T 脚 4 孔 (线圈腔上方, 盘厚 4.5)
+rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.0, 33.0) for x, y in SHR_HOLES + END_T_HOLES]))
+#   无线供电模块固定件 (wireless_holder_v1_2.py, −y 侧): M3 铜螺母孔 (11-16 晚: 罩壁缩到 r82, 托盘整体往 +y 挪 3)
+MOD_HOLES = [(11.0, -76.5), (-11.0, -76.5), (0.0, -31.0)]   # 内舌孔留 −31 (挪到 −28 会贴承载盘内缘 r26)
 rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.2, 33.0) for x, y in MOD_HOLES])) if MOD_HOLES else rim
 #   线圈 (腔 r34–76) 两根 AC 引线从承载盘小孔上来, 接无线供电模块 (−y 侧) —— 位置归 wireless_holder_v1_2.py
 AC_HOLE_D = 3.0
@@ -189,7 +196,7 @@ rim = clean(cut(rim, *[cyl(x, y, AC_HOLE_D, 20.0, 33.0) for x, y in AC_HOLES]))
 CW_PT = None
 # 校核: 每个新孔外 Φ8 环 (孔壁 1.9) 在盘顶下 4.5 内是实心
 LOG['rim_new_holes_solid'] = {f'{n_}{i}': round(vol(op(BRepAlgoAPI_Common, _rim_pre, cut(cyl(x, y, 8.0, 27.6, 32.0), cyl(x, y, 4.3, 27, 33)))) / vol(cut(cyl(x, y, 8.0, 27.6, 32.0), cyl(x, y, 4.3, 27, 33))), 3)
-                              for n_, pts in (('gate', GATE_PTS), ('bb', BB_HOLES), ('mod', MOD_HOLES)) for i, (x, y) in enumerate(pts)}
+                              for n_, pts in (('gate', GATE_PTS), ('bb', BB_HOLES), ('mod', MOD_HOLES), ('shr', SHR_HOLES), ('endt', END_T_HOLES)) for i, (x, y) in enumerate(pts)}
 
 # ---------------- 4 底盘 ----------------
 # 4a 电机控制板 (沿用 V1.0 motor_tray 11-04 做法, 托板并进底盘): 板平放底盘顶面 z0, 器件朝上;
@@ -207,13 +214,24 @@ from OCP.BRep import BRep_Builder as _BB
 from OCP.TopoDS import TopoDS_Compound as _TC
 _raw = one(BOARD_F); _B = _BB(); _bc = _TC(); _B.MakeCompound(_bc); _drop = 0
 NOPOP = [(20.1, 28.4, 24.7, 41.0), (94.0, 99.5, 28.9, 41.0)]       # XT60 / MR30 (V1.0 同, 板系 +20/+10)
+CAP_H_MEAS, _CAP_FIX = 6.1, []
+HDR_H_RA, _HDR_FIX = 2.54, []
 for s__ in solids(_raw):
     b__ = bbox(s__)
     if any(b__[0] >= x0 - .01 and b__[3] <= x1 + .01 and b__[1] >= y0 - .01 and b__[4] <= y1 + .01 for x0, x1, y0, y1 in NOPOP) \
        and (b__[5] > 1.61 or b__[2] < -0.02):
         _drop += 1; continue
+    # 11-16 晚 用户实测: 板上 2 颗电解 (STEP 里 Φ6.3×7.7, 顶 Z9.31) 实物高 6.1 (板面起) ⇒ 换成 Φ 同径圆柱, 顶 = 板面 + 6.1 (Z≈7.7, 定子盘底 Z8.5 下 0.8, 不再挖坑)
+    _w, _d = b__[3] - b__[0], b__[4] - b__[1]
+    if 6.0 < _w < 7.3 and abs(_w - _d) < 0.5 and b__[5] > 9.0:
+        _CAP_FIX.append([round(v, 2) for v in b__])
+        s__ = cyl((b__[0] + b__[3]) / 2, (b__[1] + b__[4]) / 2, _w, b__[2], b__[2] + CAP_H_MEAS)
+    elif b__[5] > 9.5 and max(_w, _d) < 10.0:
+        # 11-16 晚 用户: 3P 直排针改弯排针 (卧装) ⇒ 包络压到板面 + 2.54 (塑料座高), 原顶 Z10.09; 定子盘底面不再挖方坑
+        _HDR_FIX.append([round(v, 2) for v in b__])
+        s__ = BRepPrimAPI_MakeBox(gp_Pnt(b__[0], b__[1], b__[2]), gp_Pnt(b__[3], b__[4], 1.6 + HDR_H_RA)).Shape()
     _B.Add(_bc, s__)
-board = xf(_bc, BT); LOG['board'] = dict(dropped_solids=_drop)
+board = xf(_bc, BT); LOG['board'] = dict(dropped_solids=_drop, caps_fixed=_CAP_FIX, cap_h=CAP_H_MEAS, header_fixed=_HDR_FIX)
 def bl(x0, y0, x1, y1, z0, z1):      # 板本地矩形 -> 全局实体 (z 为全局)
     return xf(BRepPrimAPI_MakeBox(gp_Pnt(x0, y0, z0 - BOARD_Z), gp_Pnt(x1, y1, z1 - BOARD_Z)).Shape(), BT)
 BHOLES = [(24.49, 14.49), (24.49, 45.49), (95.49, 14.49), (95.49, 45.49)]
@@ -440,7 +458,7 @@ _fd = cut(_fd, xf(gbox(-XT_HW - 0.5, XT_Y0 - 5, -1, XT_HW + 0.5, XT_Y1 + 0.5, XT
 # 用户 11-12: 外圈 r78 8 孔保留 (原 V0.4 定子盘/安装法兰上下盖互锁螺丝), 不再补实
 CAV_R0 = 31.7 + CB7                                # 线圈腔内壁 r40 → r38.7 (内墙 r31.7–38.7)
 CAV_R1 = 82.5 - CB7                                # 线圈腔外壁 r72.6 → r75.5 (外墙 r75.5–82.5)
-CAV_Z0 = FL_Z0 + 2.5                               # 腔底 Z11.0 不变 (底板 1.5 → 2.5, 11-12 夜)
+CAV_Z0 = FL_TOP - 2.8                              # 11-16 晚 用户: 线圈腔深 2.5 → 2.8 ⇒ 腔底 Z10.7 (底板 2.2)
 LID_R = 82.5 - CB7 / 2                             # 用户 11-12: 上下盖孔居中到外墙 r79 (原 V0.4 r77.5, 曾误开 r78)
 LID_SCREWS = [(LID_R * math.cos(math.radians(22.5 + 45 * k)), LID_R * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]   # 外圈 r79 8 孔 (上下盖互锁)
 LID_INS_D, LID_INS_H = INS_HOLE_D, INS_HOLE_H      # 原 Φ2.5 攻牙孔 → 铜螺母从定子盘底面压; 11-12 夜: Φ4.2×4.2 (M3×4 铜螺母), 外墙 5 厚顶留 0.8, 螺丝 M3×6 (尾端齐底面 8.5)

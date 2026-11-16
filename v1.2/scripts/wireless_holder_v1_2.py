@@ -1,13 +1,18 @@
 """V1.2 无线供电接收模块固定件 (用户 11-16: 线圈 → 24V 模块独立放转子盘 −y 侧, 两根线送 24V 到底板 r2)。
     cd v1.2/scripts && ../../.venv/bin/python wireless_holder_v1_2.py
 世界坐标 (同 build_v1_2): Z0 = 底盘顶, 承载盘顶 Z32, 灯板下沿 Z37, 灯板面平行 XZ。
-模块: 30.5×49×15, 19.2 g, 长边沿 x, 中心 (0, MOD_YC); 引脚 (KiCad POV3D_V2_BaseBoard_r1 P1 "AC-DC24V_Module" 封装, 框 48.6×30):
+11-16 晚改 (转子罩壁缩到 r82–85, 照 V0.4): 托盘 + 模块 + 引脚/螺丝/铜螺母整体随 B.MOD_HOLES 往 +y 挪 3,
+    外墙外面 r84.5 → r81.7 (罩内壁 r82 留 0.3); 整件最大半径 81.7。
+模块: 30.5×49×15, 19.2 g, 长边沿 x, 中心 (0, MOD_YC) = (0, −56.75), y −72…−41.5; 引脚 (KiCad POV3D_V2_BaseBoard_r1 P1 "AC-DC24V_Module" 封装, 框 48.6×30):
     1/2 = AC (接线圈) 在 +x 短边, 3 = 24V / 4 = GND 在 −x 短边; 假设脚从模块底面朝下伸出 ≤3 (托盘底窗口内焊线)。
 固定件 (打印 PETG/PLA, 一件):
-  托盘底 3 厚 (Z32–35) + 外侧 (−y, 径向外) 承力厚墙 (外面 r84.5 圆弧, 挡离心力) + 两端侧墙 + 内侧矮墙;
-  3×M3×8 内六角锁承载盘铜螺母: 外墙内 2 颗 (±11, −79.5) (r80.3, 线圈腔外 5 厚实心区) + 内侧舌 1 颗 (0, −31) (r31, 线圈腔内侧实心区);
-  2 条扎带 (4.8 宽) 沿 x 绕 "模块顶 → 侧墙外槽 → 托盘底面槽" 压住模块;
-  4 个底窗: +x 端 2 个对承载盘 AC 引线孔 (线圈线直上焊 AC 脚); −x 端 2 个从侧墙底穿出 (24V/GND 线沿承载盘顶面出)。
+  托盘底 3 厚 (Z32–35) + 外侧 (−y, 径向外) 承力厚墙 (外面 r81.7 圆弧, 挡离心力; x=0 处厚 9.7, 角 (±26.5, −77.28) 厚 5.3)
+  + 两端侧墙 + 内侧矮墙;
+  3×M3×8 内六角锁承载盘铜螺母: 外墙内 2 颗 (±11, −76.5) (r77.3, 沉孔 Φ6 外缘 r80.3, 到墙外面剩 1.4) + 内侧舌 1 颗 (0, −28) (r28);
+  2 条扎带 (4.8 宽, y −55 / −62.5, 槽在两窗之间) 沿 x 绕 "模块顶 → 侧墙外槽 → 托盘底面槽" 压住模块;
+  4 个底窗: +x 端 2 个对承载盘 AC 引线孔 (21, −70) / (21, −49) (线圈线 Φ3 孔直上进底窗, 焊 AC1 (21.5, −69.25) / AC2 (22.3, −44) 脚;
+            AC2 窗 y −51.5…−41.5 同时罩住孔和脚, 线在 3 深窗内横走 5); −x 端 2 个从侧墙底穿出
+            (24V (−21.6, −43.75) / GND (−22.0, −68.5) 线贴承载盘顶面向 −x 出, 到 x≈−55 再沿 +y 去底板)。
 输出: v1.2/models/wireless_holder_v1_2/wireless_holder_v1_2.{step,stl} (装配坐标, STEP 含模块占位/螺丝/铜螺母/引脚)
       out/打印STL/wireless_holder_v1_2.stl (打印姿态 = 装配姿态, 底落床)
       models/wireless_holder_v1_2/wireless_holder_report.json
@@ -24,11 +29,27 @@ from OCP.GProp import GProp_GProps
 from OCP.BRepCheck import BRepCheck_Analyzer
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.StlAPI import StlAPI_Writer
+from OCP.BRepExtrema import BRepExtrema_DistShapeShape
+from OCP.TopExp import TopExp_Explorer
+from OCP.TopAbs import TopAbs_FACE
+from OCP.TopoDS import TopoDS
+from OCP.TopLoc import TopLoc_Location
+from OCP.BRep import BRep_Tool
 
 cyl, cut, fuse, clean, gbox, vol, bbox, xf = B.cyl, B.cut, B.fuse, B.clean, B.gbox, B.vol, B.bbox, B.xf
 NAME = 'wireless_holder_v1_2'
 OUT = B.V12 / 'models' / NAME; OUT.mkdir(parents=True, exist_ok=True)
 def tr(dx, dy, dz): t = gp_Trsf(); t.SetTranslation(gp_Vec(dx, dy, dz)); return t
+def max_r(s):                               # 最大半径: 网格顶点 + 圆柱/圆弧 (取包围盒角与 r 采样的保守值)
+    BRepMesh_IncrementalMesh(s, 0.01, False, 0.05, True)
+    ex = TopExp_Explorer(s, TopAbs_FACE); r = 0.0
+    while ex.More():
+        f = TopoDS.Face(ex.Current()) if hasattr(TopoDS, "Face") else TopoDS.Face_s(ex.Current()); loc = TopLoc_Location(); tri = BRep_Tool.Triangulation_s(f, loc)
+        if tri is not None:
+            for i in range(1, tri.NbNodes() + 1):
+                p = tri.Node(i).Transformed(loc.Transformation()); r = max(r, math.hypot(p.X(), p.Y()))
+        ex.Next()
+    return r
 def common_v(a, b):
     o = BRepAlgoAPI_Common(a, b); o.Build(); return vol(o.Shape()) if o.IsDone() else -1
 def cog(s):
@@ -37,30 +58,35 @@ def cog(s):
 # ---------------- 尺寸 ----------------
 RIM_TOP = B.Z_RIM_TOP                       # 32.0
 MOD_L, MOD_W, MOD_H, MOD_G = 49.0, 30.5, 15.0, 19.2
-MOD_Y0 = -75.0                              # 模块外 (−y) 长边; 角 (±24.5, −75) r78.9 ≤ 80
-MOD_Y1 = MOD_Y0 + MOD_W                     # −44.5
-MOD_YC = (MOD_Y0 + MOD_Y1) / 2              # −59.75
+SCR_OUT = sorted(h for h in B.MOD_HOLES if h[1] < -50)    # 外墙 2 颗 (±11, −76.5)
+SCR_IN = [h for h in B.MOD_HOLES if h[1] >= -50]           # 内舌 1 颗 (0, −28)
+assert len(SCR_OUT) == 2 and len(SCR_IN) == 1, B.MOD_HOLES
+MOD_Y0 = SCR_OUT[0][1] + 4.5                # 模块外 (−y) 长边 −72 (螺丝外 4.5, 同原关系); 角 (±24.5, −72) r76.1
+MOD_Y1 = MOD_Y0 + MOD_W                     # −41.5
+MOD_YC = (MOD_Y0 + MOD_Y1) / 2              # −56.75
 FLOOR_T = 3.0
 MZ0 = RIM_TOP + FLOOR_T; MZ1 = MZ0 + MOD_H  # 模块 Z35–50
 HX = MOD_L / 2                              # 24.5
 SIDE_T, SIDE_Z1 = 2.0, MZ0 + 10.0           # 侧墙 2 厚, 顶 Z45
 IN_T, IN_Z1 = 2.0, MZ0 + 5.0                # 内侧矮墙 2 厚, 顶 Z40
-OUT_R, OUT_Z1 = 84.5, MZ1                   # 外墙外面 r84.5 (承载盘 r85, 转子罩内壁 r86), 顶 = 模块顶 Z50
+OUT_R, OUT_Z1 = 81.7, MZ1                   # 外墙外面 r81.7 (转子罩壁 r82–85, 留 0.3), 顶 = 模块顶 Z50
 OX = HX + SIDE_T                            # 26.5 外包 x
-SCR_OUT = [(11.0, -79.5), (-11.0, -79.5)]   # 外墙 2 颗
-SCR_IN = [(0.0, -31.0)]                     # 内舌 1 颗
-assert sorted(SCR_OUT + SCR_IN) == sorted(B.MOD_HOLES), (B.MOD_HOLES, '同步 build_v1_2.MOD_HOLES')
+R_MAX = 81.7                                # 罩内一切 ≤ r81.7
 CB_D, CB_Z = 6.0, RIM_TOP + 4.0             # M3×8 头 Φ5.5×3 → 沉孔 Φ6, 头支承 Z36 ⇒ 尾 Z28, 铜螺母 Z27.8–32 啮合 4
-TONGUE_X, TONGUE_Y1, TONGUE_Z1 = 6.0, -27.0, RIM_TOP + 4.0
+TONGUE_X, TONGUE_Y1, TONGUE_Z1 = 6.0, SCR_IN[0][1] + 4.0, RIM_TOP + 4.0   # 内舌到 y −24
 # 引脚 (封装本地 fx 向右, fy 向下, 框 48.6×30; 绕 Z 转 180° 使 AC 在 +x): X = −(fx − 24.3), Y = MOD_YC + (fy − 15)
 FP = {'AC1': (2.8, 2.5), 'AC2': (2.0, 27.75), '24V': (45.91, 28.0), 'GND': (46.28, 3.22)}
 PINS = {k: (round(-(fx - 24.3), 2), round(MOD_YC + (fy - 15.0), 2)) for k, (fx, fy) in FP.items()}
-AC_HOLES = B.AC_HOLES                       # (21, −70) / (21, −49): 线圈腔 r34–76 上方
-# 底窗 (x0, x1, y0, y1); −x 端两个穿出侧墙
-WIN = {'AC1': (17.0, HX, MOD_Y0, -66.5), 'AC2': (17.0, HX, -51.5, MOD_Y1),
-       'GND': (-OX - 1, -17.0, MOD_Y0, -66.5), '24V': (-OX - 1, -17.0, -51.5, MOD_Y1)}
+AC_HOLES = sorted(B.AC_HOLES, key=lambda h: h[1])   # (21, −70) / (21, −49): 线圈腔 r34–76 上方 (没动, 模块挪了窗按孔+脚取)
+# 底窗 (x0, x1, y0, y1); −x 端两个穿出侧墙。AC 窗同时罩住承载盘孔 (Φ3 + 0.5 余) 和模块脚
+_ac1 = max(AC_HOLES[0][1] + 2.0, PINS['AC1'][1] + 2.0)       # −67.25
+_ac2 = min(AC_HOLES[1][1] - 2.5, PINS['AC2'][1] - 3.0)       # −51.5
+WIN = {'AC1': (17.0, HX, MOD_Y0, _ac1), 'AC2': (17.0, HX, _ac2, MOD_Y1),
+       'GND': (-OX - 1, -17.0, MOD_Y0, PINS['GND'][1] + 2.5), '24V': (-OX - 1, -17.0, PINS['24V'][1] - 4.75, MOD_Y1)}
 TIE_W, TIE_T = 5.0, 1.5                     # 扎带 4.8×1.2 → 槽 5×1.5
-TIE_Y = [-55.0, -63.0]
+TIE_Y = [-55.0, -62.5]                      # 两窗之间 (y −66…−51.5; 槽 −65…−52.5)
+for _y in TIE_Y:
+    assert all(not (w[2] < _y + TIE_W / 2 and _y - TIE_W / 2 < w[3]) for w in WIN.values()), ('扎带槽撞底窗', _y)
 
 # ---------------- 固定件 ----------------
 def holder():
@@ -98,18 +124,20 @@ for y in TIE_Y:                                  # 扎带回路 (1.2 厚) 示意
 tie_s = fuse(*ties) if len(ties) > 1 else ties[0]
 # 注: 扎带竖段在侧墙外槽 (x ±25.0..26.5) 里, 底段在底面槽里 (Z33.5 以下 ⇒ 底面槽 Z32–33.5, 带 Z32.3–33.5)
 
-# ---------------- 周边禁区 (按 11-16 交底的框; 转子罩件尚无模型, 按交底尺寸做包络) ----------------
+# ---------------- 周边禁区 (按 11-16 晚接口规格 spec_wall82; 转子罩/T 脚按规格尺寸做包络) ----------------
 def ann(r0, r1, z0, z1): return cut(cyl(0, 0, 2 * r1, z0, z1), cyl(0, 0, 2 * r0, z0 - 1, z1 + 1))
 KEEP = {
-    'led_a(+y)': gbox(-81.88, 0, 37, 81.88, 3.77, 245), 'led_b(−y)': gbox(-81.88, -3.77, 37, 81.88, 0, 245),
+    'led_a(+y)': gbox(-81.88, 0, 37, 81.88, 4.36, 245), 'led_b(−y, 含 MIP 凸到 −4.36)': gbox(-81.88, -4.36, 37, 81.88, 0, 245),
+    '夹条 |y|≤2.3': gbox(-81.88, -2.3, 37, 81.88, 2.3, 54),
     'bridge_b': gbox(-32, -8.4, 37, 32, -3.77, 73), 'fpc_seat_b': gbox(-20.75, -10.4, 39, 20.75, -8.4, 43.4),
     'J3 VH+插头+线 (x±6 假设)': gbox(-58.75 - 6, -26, 38, -58.75 + 6, -3.77, 48),
-    'T脚 +x 底块': gbox(71, -12, 32, 84, 12, 60), 'T脚 −x 底块': gbox(-84, -12, 32, -71, 12, 60),
-    'T脚 @337.5° (Φ12 包络)': cyl(76.2, -31.6, 12, 32, 60), 'T脚 @202.5° (Φ12 包络)': cyl(-76.2, -31.6, 12, 32, 60),
-    '中间支撑腿 x+30 (Φ10 包络)': cyl(30, 0, 10, 32, 45), '中间支撑腿 x−30 (Φ10 包络)': cyl(-30, 0, 10, 32, 45),
+    '两端 T 脚 +x': gbox(70, -14, 32, 78, 14, 37), '两端 T 脚 −x': gbox(-78, -14, 32, -70, 14, 37),
+    '中间 T 件 +x': gbox(34, -14, 32, 42, 14, 37), '中间 T 件 −x': gbox(-42, -14, 32, -34, 14, 37),
+    '24V 线走廊 x≈−55 (±3, y≥−50)': gbox(-58, -50, 32, -52, 14, 37),
     'FPC 下缝 |x|≤18': gbox(-18, -10.4, 32, 18, 10.4, 37),
-    '转子罩壁 r86+': ann(86, 96, 25, 260), '转子罩配重唇 r80–86 Z60+': ann(80, 86, 60, 260),
-    '罩底凸台 @247.5° (Φ10 包络)': cyl(-31.6, -76.2, 10, 32, 60), '罩底凸台 @292.5° (Φ10 包络)': cyl(31.6, -76.2, 10, 32, 60),
+    '转子罩壁 r82–85': ann(82, 85, 32, B.Z_VIEW0), '罩内余量 r81.7–82': ann(R_MAX, 82, 24, B.Z_VIEW0),
+    **{f'罩底铜螺母孔 @{a}° (Φ8 包络)': cyl(x, y, 8, 28, 40) for a, (x, y) in zip((50, 140, 230, 320), B.SHR_HOLES)},
+    **{f'AC 线孔 ({x:g},{y:g}) Φ3 上方 Z32–35 (托盘不许盖)': cyl(x, y, 3.0, RIM_TOP, MZ0) for x, y in AC_HOLES},
     '底板 r2 (外框)': gbox(-51.3, 14, B.Z_BB0, 47, 72, B.Z_BB0 + B.BB_T),
     'rim': B.rim, 'hub': B.hub, 'shroud_lo': B.shroud_lo, 'shroud_hi': B.shroud_hi, 'glass': B.tube,
 }
@@ -120,6 +148,7 @@ def report():
     for a, sa in PARTS.items():
         for b, sb in KEEP.items():
             if a == 'inserts' and b == 'rim': continue          # 铜螺母本来就在承载盘孔里 (孔 Φ4.2 = 螺母外径, 应 0, 单列)
+            if a == 'pin AC1' and b.startswith('AC 线孔 (21,-70)'): continue   # AC1 脚就在孔正上方 (线直上焊脚, 本意)
             v = round(common_v(sa, sb), 4); rep['interf'][f'{a} × {b}'] = v
             if abs(v) > 1e-4: rep['interf_nonzero'][f'{a} × {b}'] = v
     rep['misc']['inserts × rim'] = round(common_v(PARTS['inserts'], B.rim), 4)
@@ -129,7 +158,16 @@ def report():
     rep['misc']['n_checks'] = len(rep['interf']) + 1
     rep['misc']['module_max_r'] = round(max(math.hypot(x, y) for x in (-HX, HX) for y in (MOD_Y0, MOD_Y1)), 2)
     hb = bbox(H); rep['misc']['holder_bbox'] = [round(v, 2) for v in hb]
-    rep['misc']['holder_max_r'] = round(max(math.hypot(x, y) for x in (-OX, OX) for y in (-math.sqrt(OUT_R**2 - OX**2),)), 2)
+    rep['misc']['holder_max_r'] = round(max_r(H), 3)
+    rep['misc']['max_r_all'] = {k: round(max_r(v), 3) for k, v in PARTS.items()}
+    rep['misc']['max_r_ok'] = max(rep['misc']['max_r_all'].values()) <= R_MAX + 1e-6
+    rep['gap'] = {}
+    asm = fuse(H, module, PARTS['screws'], tie_s)
+    for b in ('led_b(−y, 含 MIP 凸到 −4.36)', '夹条 |y|≤2.3', '中间 T 件 +x', '中间 T 件 −x', '两端 T 脚 +x', '两端 T 脚 −x',
+              '24V 线走廊 x≈−55 (±3, y≥−50)', '转子罩壁 r82–85', 'J3 VH+插头+线 (x±6 假设)', 'bridge_b',
+              *[k for k in KEEP if k.startswith('罩底铜螺母孔') or k.startswith('AC 线孔')]):
+        d = BRepExtrema_DistShapeShape(H if b.startswith('AC 线孔') else asm, KEEP[b]); d.Perform()
+        rep['gap'][('holder × ' if b.startswith('AC 线孔') else '整件 × ') + b] = round(d.Value(), 2)
     rep['misc']['ac_holes'] = {f'{x},{y}': round(math.hypot(x, y), 2) for x, y in AC_HOLES}
     rep['misc']['rim_new_holes_solid'] = {k: v for k, v in B.LOG['rim_new_holes_solid'].items() if k.startswith('mod')}
     rep['misc']['ac_hole_in_window'] = {f'{x},{y}': any(w[0] <= x - 1.5 and x + 1.5 <= w[1] and w[2] <= y - 1.5 and y + 1.5 <= w[3] for w in WIN.values()) for x, y in AC_HOLES}
