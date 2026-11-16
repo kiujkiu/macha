@@ -18,7 +18,7 @@ FPC (11-16 晚 桥板窗口定规格): 单层铜, 弯曲区 0.15 厚, 两端补�
   竖槽 (桥 A 座口 y4.71 → J6 口 y8.945) 只 4.24: A 的 180° 回弯和 B 进 J6 的 90° 弯 中线 R1.0 / 内 0.925 (6.2T, IPC-2223 单层静态 ≥6T), 不挪底板 (11-16 晚定);
   脚序: 两根都 1↔1 直通; B 根配底板 J6 网络镜像 (pin k ↔ 71−k)。
 """
-import io, contextlib, math, json, re
+import io, contextlib, math, json, re, os
 from pathlib import Path
 _f = io.StringIO()
 with contextlib.redirect_stdout(_f):
@@ -44,7 +44,11 @@ from OCP.StlAPI import StlAPI_Writer
 
 gbox, cut, fuse, xf, rotz, vol, bbox, cyl = B.gbox, B.cut, B.fuse, B.xf, B.rotz, B.vol, B.bbox, B.cyl
 tr, comp, cog = L.tr, L.comp, L.cog
-OUT = B.V12 / 'models' / 'fpc_v1_2'
+# 11-16 22:4x 用户定桥板最终装法 (= 新朝向, 默认): 桥板按 PCB 正放 (KiCad +y 朝转子盘), FPC 座在上沿插口朝下 (r11 P0: FPC1 原地转 180°, 中心 (132,104.4) 不变),
+#   FPC 贴 FPGA 面往下过桥板下沿去底板; J1/J2 与灯板逐脚对应 (桥 J1 插灯板 J1, 1 脚都在上端 Z70)。旧朝向 (FPC 在下沿, 与 PCB 电气差 180°) 留开关: FPC_BRIDGE_FLIP=0
+#   新朝向的插口位置是假设: FPC1 本体 (Fab) 位置不动, 只是口边从板边侧 (STEP y17.887) 换到板内侧 (y11.337), 转 180° 后座子在桥板上沿, 口朝下 (Z≈66.3)。等新桥板 STEP 再核。
+BRIDGE_FLIP = os.environ.get('FPC_BRIDGE_FLIP', '1') == '1'
+OUT = B.V12 / 'models' / 'fpc_v1_2' / ('新朝向_桥板转180' if BRIDGE_FLIP else '')
 
 # ---------------- 资料 ----------------
 BR_DIR = Path('/mnt/d/claude_workspace/pov3d/POV3D_V2桥_结构STEP与质量_2026-11-11')
@@ -52,7 +56,12 @@ BR_STEP = BR_DIR / 'V2桥_3D_结构简版.step'
 BR_MASS = json.load(open(BR_DIR / 'mass.json', encoding='utf-8'))
 BR_G = round(BR_MASS['total_g'], 2)               # 11.0 g (计算值, 未称重, ±10%)
 BR_COM = tuple(BR_MASS['com_mm'])                 # STEP 坐标 (0.21, −0.36, 0.77)
-BR_PCB = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_GW5A_Bridge_V2.0/hw_1110/pcb_v1/ProPrj_ICN2260转接板_V2_2026-11-10.kicad_pcb')
+BR_PCB_OLD = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_GW5A_Bridge_V2.0/hw_1110/pcb_v1/ProPrj_ICN2260转接板_V2_2026-11-10.kicad_pcb')
+# r11 P0 (FPC1 朝内): 只动 FPC1 (转 180°, 中心不变), 其余同 pcb_v1; 它的 STEP (P0_FPC朝内.step) 只有板 + U52, 原点 = KiCad 原点 ⇒ 器件仍取 11-11 结构简版 STEP, FPC1 座按 r11 封装建
+BR_R11 = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_GW5A_Bridge_V2.0/layout/r11/P0')
+BR_PCB = BR_R11 / 'ProPrj_ICN2260转接板_V2_2026-11-10.kicad_pcb' if BRIDGE_FLIP else BR_PCB_OLD
+LED_PCB = Path('/mnt/d/claude_workspace/_led_v020_1113/src/LED_V0.2.0/LED_V0.2.0.kicad_pcb')   # 灯板 V0.2.0 (11-13, 同 MIP json 出处); 板心 KiCad (175, 62)
+LED_C = (175.0, 62.0)
 BR_ORG = (132.0, 118.0)                           # kicad-cli --user-origin 132x118mm ⇒ STEP (x, y) = (kx − 132, 118 − ky)
 
 # ---------------- 尺寸 ----------------
@@ -136,16 +145,20 @@ _led_axk = {n: s for n, s in read_named(V.LED_STEP) if n in ('J1', 'J2')}
 # 灯板 STEP (x, y) → 世界 (x, Z = Z0 + LED_HALF_H + y); 桥板 STEP (x, y) → (x, ZC − y) ⇒ 每对 ZC = Z0 + LED_HALF_H + y灯 + y桥, x 残差 = x桥 − x灯
 AXK_PAIR = []
 for nl, sl in _led_axk.items():
-    cl = bbc(sl); nb, sb = min(_br_axk.items(), key=lambda kv: abs(bbc(kv[1])[0] - cl[0])); cb = bbc(sb)
-    AXK_PAIR.append(dict(led=nl, bridge=nb, x_led=round(cl[0], 3), x_br=round(cb[0], 3), dx=round(cb[0] - cl[0], 3),
-                         zc=Z0 + V.LED_HALF_H + cl[1] + cb[1]))
+    _sg = -1 if BRIDGE_FLIP else 1                  # 转 180°: 桥板 STEP (x, y) → (−x, −y)
+    cl = bbc(sl); nb, sb = min(_br_axk.items(), key=lambda kv: abs(_sg * bbc(kv[1])[0] - cl[0])); cb = bbc(sb)
+    AXK_PAIR.append(dict(led=nl, bridge=nb, x_led=round(cl[0], 3), x_br=round(_sg * cb[0], 3), dx=round(_sg * cb[0] - cl[0], 3),
+                         zc=Z0 + V.LED_HALF_H + cl[1] + _sg * cb[1]))
 ZC = round(sum(p['zc'] for p in AXK_PAIR) / len(AXK_PAIR), 3)   # ≈ 55.0 (方块 Z0+18 = 55.0)
 assert max(abs(p['dx']) for p in AXK_PAIR) < 0.2 and max(abs(p['zc'] - ZC) for p in AXK_PAIR) < 0.2, AXK_PAIR
 
 
 def T_BR():
     """桥板 STEP → 板 A 局部 (灯板组中面 y=0): (bx, by, bz) → (bx, Y_LED + AXK_H + bz, ZC − by), det = +1"""
-    t = gp_Trsf(); t.SetValues(1, 0, 0, 0, 0, 0, 1, Y_LED + AXK_H, 0, -1, 0, ZC); return t
+    t = gp_Trsf()
+    if BRIDGE_FLIP: t.SetValues(-1, 0, 0, 0, 0, 0, 1, Y_LED + AXK_H, 0, 1, 0, ZC)     # 先绕 STEP z 转 180°: (−bx, Y_LED+3+bz, ZC + by)
+    else: t.SetValues(1, 0, 0, 0, 0, 0, 1, Y_LED + AXK_H, 0, -1, 0, ZC)
+    return t
 
 
 def seat_box(xh, mouth, depth, dirn, z0, h=SEAT_H):
@@ -162,7 +175,10 @@ def pairw(s_loc):
 
 
 _t = T_BR()
-_seat_step = seat_box(BR_SEAT['xh'], BR_SEAT['mouth'], BR_SEAT['depth'], -1, BR_F)
+# r11: FPC1 (132,104.4) 转 0° ⇒ Fab 本体 KiCad y 102.137…108.687, 固定脚在 ky107.225 (板内侧) ⇒ 口边 ky108.687 朝板内 (朝 BGA); STEP y = 118 − ky
+BR_MOUTH = (BR_ORG[1] - (104.4 + 4.287)) if BRIDGE_FLIP else BR_SEAT['mouth']   # 新: 9.313 (口朝 STEP −y) / 旧: 17.887 (口朝 +y)
+_seat_step = seat_box(BR_SEAT['xh'], BR_MOUTH, BR_SEAT['depth'], 1 if BRIDGE_FLIP else -1, BR_F)
+if BRIDGE_FLIP: assert abs(kicad_pad(BR_PCB, 'FPC1', '71')[1] - 107.225) < 0.01 and abs(kicad_pad(BR_PCB, 'FPC1', '1')[1] - 101.575) < 0.01
 BR_LOC = [(n, xf(s, _t)) for n, s in _br_parts if n != 'FPC1'] + [('FPC1 座 (XW0525512 按 Fab, 高 2.0)', xf(_seat_step, _t))]
 _br_loc = comp([s for _, s in BR_LOC])
 _axk_loc = comp([xf(s, _t) for s in _br_axk.values()])
@@ -180,12 +196,27 @@ def _wp(p_step, which):
     q = q.Transformed(T_ECC); return (q.X(), q.Y(), q.Z())
 
 
-_mouth_c = (0.0, BR_SEAT['mouth'], BR_F + SLOT_Z)
+_mouth_c = (0.0, BR_MOUTH, BR_F + SLOT_Z)
 MOUTH_A, MOUTH_B = _wp(_mouth_c, 'a'), _wp(_mouth_c, 'b')   # 桥板座口中线 (世界): A (0, 4.71, 37.11) / B (0, −13.43, 37.11)
 COM_A, COM_B = _wp(BR_COM, 'a'), _wp(BR_COM, 'b')
 _k1 = kicad_pad(BR_PCB, 'FPC1', '1')
 _p1 = (_k1[0] - BR_ORG[0], BR_ORG[1] - _k1[1], BR_F)
 PIN1_BR = dict(step=(round(_p1[0], 3), round(_p1[1], 3)), a_world_x=round(_wp(_p1, 'a')[0], 2), b_world_x=round(_wp(_p1, 'b')[0], 2))
+
+
+def axk_check():
+    """桥 J1/J2 (插头) 与灯板 J1/J2 (插座) 脚 1/2/119/120 的世界坐标 (板 A): 同号脚 x/Z 应重合 (行距不同: 插头 4.05 / 插座 5.0, 中心同)"""
+    out = {}
+    for ref in ('J1', 'J2'):
+        row = {}
+        for pin in ('1', '2', '119', '120'):
+            kb = kicad_pad(BR_PCB, ref, pin); wb = _wp((kb[0] - BR_ORG[0], BR_ORG[1] - kb[1], 0.0), 'a')
+            kl = kicad_pad(LED_PCB, ref, pin); wl = (kl[0] - LED_C[0], Z0 + V.LED_HALF_H - (kl[1] - LED_C[1]))
+            row[pin] = dict(bridge_xz=(round(wb[0], 2), round(wb[2], 2)), led_xz=(round(wl[0], 2), round(wl[1], 2)))
+        out[ref] = row
+    mids = {r: abs((v['1']['bridge_xz'][0] + v['2']['bridge_xz'][0]) / 2 - (v['1']['led_xz'][0] + v['2']['led_xz'][0]) / 2) + abs(v['1']['bridge_xz'][1] - v['1']['led_xz'][1]) for r, v in out.items()}
+    out['ok_1to1'] = all(m < 0.1 for m in mids.values())
+    return out
 
 # ---------------- 底板 FPC 座 J5 / J6 (r4d) ----------------
 _bbp = {r: bb for r, fp, bb, h in V.baseboard_parts()[0]}
@@ -264,15 +295,42 @@ assert abs(MOUTH_B[2] - zM) < 1e-6
 OUT_A = STF_L - FPC_INS + BEND_GAP                  # 2.0 口外直段 (补强露出 1.0 + 隙 1.0)
 OUT_J6 = STF_L_J6 - FPC_INS + BEND_GAP              # 1.0 (J6 端补强 4.0)
 Y_RB = J6['mouth_y'] - OUT_J6 - R_CH                # B 竖段 y 6.945
-Y_RA = yA + 2 * R_CH                                # A 竖段 y 6.708
-assert Y_RB - Y_RA - FPC_T >= CH_GAP, (Y_RA, Y_RB)
+Y_RA = yA + 2 * R_CH                                # A 竖段 y 6.708 (旧朝向)
+assert BRIDGE_FLIP or Y_RB - Y_RA - FPC_T >= CH_GAP, (Y_RA, Y_RB)
+# 新朝向: 座口在桥板上沿 (Z≈66.3) 朝下, FPC 沿桥板 F 面往下要先外移 JOG 躲开 F 面器件 (BGA/SOT23-5 高 ≤1.57), 出桥板下沿后再接旧走线
+_fpart_h = max(bbox(s_)[5] for n_, s_ in _br_parts if n_ not in ('FPC1', '桥板 PCB') and bbox(s_)[2] > BR_F - 0.1
+               and bbox(s_)[3] > -FPC_W / 2 - 0.5 and bbox(s_)[0] < FPC_W / 2 + 0.5) - BR_F
+JOG = round(_fpart_h + 0.1 + FPC_T / 2 - SLOT_Z, 3) if BRIDGE_FLIP else 0.0   # 1.045
+R_JOG = 1.0                                         # 外移 S 弯 (中线, 内 0.925)
+BR_BOT = ZC - 18.0                                  # 桥板下沿 Z37.0
+
+
+def _jog(p, d, sgn, tag):
+    """S 弯侧移 d (在 YZ 面, 当前方向朝下; sgn=+1 往 +y)"""
+    phi = math.degrees(math.acos(1 - d / (2 * R_JOG)))
+    return p.arc(R_JOG, sgn * phi, tag).arc(R_JOG, -sgn * phi, tag)
+
+
 pb = Path2(yB, zM + FPC_INS, -90)
-pb.line(FPC_INS, '插入 桥板 B 座').line(zM - R_STD - Z_FLAT_B, '桥板 B 座口 → 下').arc(R_STD, 90, '弯 → 平铺')
+if BRIDGE_FLIP:
+    pb.line(FPC_INS + OUT_A, '插入 桥板 B 座 + 口外直段'); _jog(pb, JOG, -1, '外移躲 F 面器件')
+    pb.line(pb.p[1] - (R_STD + Z_FLAT_B), '沿桥板 B F 面下'); pb.arc(R_STD, 90, '弯 → 平铺')
+else:
+    pb.line(FPC_INS, '插入 桥板 B 座').line(zM - R_STD - Z_FLAT_B, '桥板 B 座口 → 下').arc(R_STD, 90, '弯 → 平铺')
 pb.line((Y_RB - R_STD) - pb.p[0], '毂盘顶平铺').arc(R_STD, 90, '弯 → 竖槽')
 pb.line((J6['slot_z'] - R_CH) - pb.p[1], '竖槽竖段').arc(R_CH, -90, '弯 → 进 J6').line(OUT_J6 + FPC_INS, 'J6 口外直段 + 插入')
 # A 根: 桥板 A 座朝下出 2.0 → 180° 回弯 → 竖直往上 (B 竖段的 −y 侧) → 过 J6 顶 → 贴 CZ06 顶 → 外沿 (过了 y53.3 才弯) 折下 → 进 J5
 pa = Path2(yA, zM + FPC_INS, -90)
-pa.line(FPC_INS + OUT_A, '插入 桥板 A 座 + 口外直段').arc(R_CH, 180, '座口下 180° 回弯')
+if BRIDGE_FLIP:
+    # 下行段贴 F 面器件外 (y yA+JOG) 下到桥板下沿以下, 往 −y 内收 (灯板组下面是空的), 180° 回弯, 竖段从下行段外侧 (+y) 上来过 J6 顶
+    Y_RA = yA + JOG + FPC_T + CH_GAP / 2            # A 竖段 (在下行段外侧, 层叠)
+    _yd = Y_RA - 2 * R_CH                           # 回弯起点 y
+    pa.line(FPC_INS + OUT_A, '插入 桥板 A 座 + 口外直段'); _jog(pa, JOG, 1, '外移躲 F 面器件')
+    pa.line(pa.p[1] - (BR_BOT - 0.3), '沿桥板 A F 面下'); _jog(pa, yA + JOG - _yd, -1, '出桥板下沿后内收')
+    pa.arc(R_CH, 180, '180° 回弯')
+    assert abs(pa.p[0] - Y_RA) < 1e-6 and Y_RB - Y_RA - FPC_T >= CH_GAP, (pa.p, Y_RA, Y_RB)
+else:
+    pa.line(FPC_INS + OUT_A, '插入 桥板 A 座 + 口外直段').arc(R_CH, 180, '座口下 180° 回弯')
 pa.line((Z_FLAT_A - R_STD) - pa.p[1], '竖段 (竖槽 −y 侧)').arc(R_STD, -90, '弯 → 过 J6 顶')
 _y1 = J5['mouth_y'] - OUT_A - 2 * R_J5
 assert _y1 >= CZ06_Y1, _y1                          # S 弯从 CZ06 外沿以外开始 (不压棱)
@@ -462,6 +520,29 @@ def report():
     rep['tape'] = tape_check()
     # 顶盖 (Z≥LID_Z0) 处桥板实际外伸: 方块按 F 面 (局部 Y_LED+4.6) +0.4 开槽; 真模型 F 面器件 (U56 等 高 1.57) 伸得更外
     o = BRepAlgoAPI_Common(_br_loc, gbox(-40, 0, RS.LID_Z0 - 0.4, 40, 30, 80)); o.Build(); yl = bbox(o.Shape())[4]
+    rep['axk'] = axk_check()
+    if BRIDGE_FLIP:
+        # FPC 出口净空 (给桥板挪件, KiCad 坐标): 区 1 = 座口 → 口外直段 + 外移 S 弯走完; 区 2 = 之后到桥板下沿 (FPC 已在外移后的平面)
+        jl = 2 * R_JOG * math.sin(math.acos(1 - JOG / (2 * R_JOG)))
+        ky0 = BR_ORG[1] - BR_MOUTH; ky1 = ky0 + OUT_A + jl
+        xz = (round(132 - FPC_W / 2 - 0.5, 2), round(132 + FPC_W / 2 + 0.5, 2))
+        h1 = round(SLOT_Z - FPC_T_STF / 2 - 0.1, 2); h2 = round(SLOT_Z + JOG - FPC_T / 2 - 0.1, 2)
+        viol = []
+        for n_, s_ in _br_parts:
+            if n_ in ('FPC1', '桥板 PCB'): continue
+            b = bbox(s_)
+            if b[2] < BR_F - 0.1 or b[3] < xz[0] - 132 or b[0] > xz[1] - 132: continue
+            kya, kyb = BR_ORG[1] - b[4], BR_ORG[1] - b[1]; h = round(b[5] - BR_F, 2)
+            if kyb > ky0 and kya < ky1 and h > h1: viol.append((n_, '区1', (round(b[0] + 132, 2), round(b[3] + 132, 2)), (round(kya, 2), round(kyb, 2)), h))
+            elif kyb > ky1 and h > h2: viol.append((n_, '区2', (round(b[0] + 132, 2), round(b[3] + 132, 2)), (round(kya, 2), round(kyb, 2)), h))
+        hit = {}
+        for n_, s_ in BR_LOC:
+            v = interf(xf(s_, T_ECC), fpc_a)
+            if v > 1e-4: hit[n_] = round(v, 3)
+        rep['keepout'] = dict(zone1=dict(kx=xz, ky=(round(ky0, 3), round(ky1, 3)), h_max_from_F=h1, note='座口外 2.0 直段 (补强露 1.0 + 隙 1.0) + 外移 S 弯 (中线 R%.1f, 侧移 %.3f, 长 %.2f)' % (R_JOG, JOG, jl)),
+                              zone2=dict(kx=xz, ky=(round(ky1, 3), 136.0), h_max_from_F=h2, note='FPC 外移后贴 F 面器件外走 (平面离 F 面 %.3f)' % (SLOT_Z + JOG)),
+                              violators=viol, fpc_a_hits=hit,
+                              alt_no_jog=dict(kx=xz, ky=(round(ky0, 3), 136.0), h_max_from_F=round(SLOT_Z - FPC_T / 2 - 0.1, 2), note='不外移 (FPC 一直在插口高度) 时整条带的限高'))
     rep['lid_pocket'] = dict(lid_z0=RS.LID_Z0, bridge_local_y_max=round(yl, 3), pocket_now=RS.BR_POCKET,
                              pocket_need={'a': round(ECC + yl + 0.4, 3), 'b': round(ECC - yl - 0.4, 3)},
                              note='rotor_shroud BR_POCKET 槽外边 Y_LED0+4.6+0.4 → Y_LED0+%.2f+0.4 (局部), 否则顶盖压桥板 F 面器件' % (yl - Y_LED))
@@ -513,7 +594,7 @@ def export():
              ('底板 FPC 座 J5/J6 (Fab 外形)', comp([seat_j5, seat_j6]), '#555555', 0.03),
              ('FPC A (桥A→J5)', fpc_a, '#E67E22', 0.02), ('FPC B (桥B→J6)', fpc_b, '#D35400', 0.02), ('双面胶 ×2', comp([tape_a, tape_b]), '#F4D03F', 0.02),
              ('灯板夹条 led_bar', L.bar_s, '#8E7CC3', 0.03), ('立板 +x led_post_a', L.post_a, '#F1C232', 0.03), ('立板 -x led_post_b', L.post_b, '#E69138', 0.03)]
-    write3mf(str(B.V12 / 'assembly_v1_2_FPC走线.3mf'), parts)
+    write3mf(str(B.V12 / ('assembly_v1_2_FPC走线.3mf' if BRIDGE_FLIP else 'assembly_v1_2_FPC走线_旧朝向.3mf')), parts)
 
 
 def _sample(p, n=24):
@@ -657,7 +738,117 @@ def drawing():
     T(184, 26, '展开 1.5:1 / 侧视 2:1 / 局部 6:1', 7.5); T(184, 14, '单位 mm', 7.5)
     T(240, 26, '2026-11-16', 7.5); T(240, 14, 'POV3D V1.2', 7.5)
     T(280, 26, f"A 下料 {L_['A']['cut_mm']:g} / B 下料 {L_['B']['cut_mm']:g}", 7.5); T(280, 14, '桥板窗口 11-16 晚定规格 (G 出图)', 7.0)
+    T(PW / 2, PH / 2, '草稿 - 待桥板 6 层重布后复核' if BRIDGE_FLIP else '草稿 - 旧桥板朝向 (作废待重算)', 46, ha='center', va='center', color='red', alpha=0.18, rotation=20)
+    T(PW - 15, PH - 14, '草稿', 16, ha='right', color='red')
     out = OUT / 'FPC_规格图_v1_2'
+    fig.savefig(f'{out}.pdf'); fig.savefig(f'{out}.png', dpi=130); plt.close(fig)
+    return out
+
+
+def combo():
+    """组合图 (新装法): 桥板 + 灯板 + FPC + 底板 + 转子盘; 正视 (看桥板 A FPGA 面, KiCad 视向) + 侧视 + 出口局部 → OUT/组合图_桥板FPC_v1_2.{pdf,png}"""
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    from matplotlib import font_manager
+    from matplotlib.patches import Rectangle, FancyArrow
+    font_manager.fontManager.addfont('/mnt/c/Windows/Fonts/simhei.ttf'); plt.rcParams['font.family'] = 'SimHei'; plt.rcParams['axes.unicode_minus'] = False
+    PW, PH = 420.0, 297.0
+    fig = plt.figure(figsize=(PW / 25.4, PH / 25.4)); ax = fig.add_axes([0, 0, 1, 1]); ax.set_xlim(0, PW); ax.set_ylim(0, PH); ax.axis('off')
+    T = lambda x, y, t, sz=7, **k: ax.text(x, y, t, fontsize=sz, **k)
+    ax.add_patch(Rectangle((5, 5), PW - 10, PH - 10, fill=False, lw=0.8))
+    T(PW / 2, PH - 13, 'POV3D V1.2 — 桥板 (最终装法) + 灯板 + 桥 FPC + 底板 + 转子盘  组合图', 13, ha='center')
+    T(PW / 2, PH - 19, ('新装法: 桥板按 PCB 正放 (KiCad +y 朝转子盘), FPC 座在上沿插口朝下, FPC 贴 FPGA 面往下; 桥 J1<->灯板 J1, 桥 J2<->灯板 J2' if BRIDGE_FLIP else '旧朝向 (作废)'), 8, ha='center')
+    T(PW - 15, PH - 13, '草稿 - 待桥板 6 层重布后复核', 9, ha='right', color='r')
+    BRS = [(n, xf(s_, T_ECC)) for n, s_ in BR_LOC]
+    def rect(P, b, **k):
+        a_ = P(b[0], b[1]); c_ = P(b[2], b[3]); ax.add_patch(Rectangle((min(a_[0], c_[0]), min(a_[1], c_[1])), abs(c_[0] - a_[0]), abs(c_[1] - a_[1]), **k))
+    # ---- 正视: 从 +y 看桥板 A 的 FPGA 面 (= KiCad 视向: 右 = KiCad +x = 世界 −x, 下 = KiCad +y = 世界 −Z), 1.5:1 ----
+    sf, ox, oz = 1.5, 145.0, 172.0
+    P = lambda x, z: (ox - x * sf, oz + (z - 28.0) * sf)
+    T(ox - 90 * sf, P(0, 82)[1] + 3, '正视 (从 +y 看桥板 A 的 FPGA 面 = KiCad 视向; 1.5:1)', 9)
+    rect(P, (-81.88, 28.0, 81.88, 30.5), fc='#AF9B6E', ec='none'); T(*P(80, 29), '转子盘 (毂盘顶 Z%.1f / 承载盘顶 Z32)' % HUB_TOP, 5.5, va='center')
+    rect(P, (-81.88, Z0, 81.88, 82), fc='#145A32', ec='none'); T(*P(78, 79), '灯板 A (看插座面)', 6, color='w')
+    bb = bbox(bridge_a); rect(P, (bb[0], ZC - 18, bb[3], ZC + 18), fc='#28B463', ec='k', lw=0.5)
+    for n_, s_ in BRS:
+        b = bbox(s_)
+        if n_ in ('J1', 'J2'):
+            rect(P, (b[0], b[2], b[3], b[5]), fc='none', ec='#BBBBBB', lw=0.6, ls='--')
+        elif n_ == 'U52':
+            rect(P, (b[0], b[2], b[3], b[5]), fc='#333333', ec='k', lw=0.4); T(*P((b[0] + b[3]) / 2, (b[2] + b[5]) / 2), 'U52 FPGA', 6, color='w', ha='center', va='center')
+        elif n_.startswith('FPC1'):
+            rect(P, (b[0], b[2], b[3], b[5]), fc='#1B1B1B', ec='k', lw=0.4); T(*P(-22, (b[2] + b[5]) / 2), 'FPC1 座 (插口朝下)', 6, va='center', color='#C0392B')
+    ax_ = axk_check()
+    for ref in ('J1', 'J2'):
+        bx_, bz_ = ax_[ref]['1']['bridge_xz']; lx_, lz_ = ax_[ref]['1']['led_xz']
+        ax.plot(*P(bx_, bz_), 'o', ms=4, color='#F1C40F'); ax.plot(*P(lx_, lz_), 'x', ms=5, color='#E74C3C')
+        T(*P(bx_ + (6 if bx_ < 0 else -6), bz_ - 3), f'桥 {ref} <-> 灯板 {ref}\n(黄点 桥脚 1 / 红叉 灯板脚 1)', 5.5, ha='center')
+    fp = bbox(fpc_a); u0 = P(FPC_W / 2, 0)[0]
+    zt_ = MOUTH_A[2]
+    ax.add_patch(Rectangle((u0, P(0, 30.6)[1]), FPC_W * sf, (zt_ - 30.6) * sf, fc='#E67E22', alpha=0.55, ec='#D35400', lw=0.5))
+    ax.add_patch(FancyArrow(P(0, zt_ - 1)[0], P(0, zt_ - 1)[1], 0, -12, width=1.2, head_width=4, head_length=4, color='#C0392B'))
+    T(*P(-19, 45), 'FPC A 贴 FPGA 面往下\n(过桥板下沿 → 底板 J5)', 6, color='#A04000')
+    rect(P, (-51.2, B.Z_BB0, 47.3, ZT), fc='none', ec='#1E8449', lw=0.7, ls='--'); T(*P(-50, ZT + 0.6), '底板 r4d (在前方 y8.6–66.6, 虚线)', 5.5, color='#1E8449')
+    for j, nm in ((J6, 'J6'), (J5, 'J5')):
+        rect(P, (-j['xh'], ZT, j['xh'], ZT + SEAT_H), fc='none', ec='#555', lw=0.5, ls=':')
+    ax.annotate('', P(-70, 70), P(-80, 70), arrowprops=dict(arrowstyle='->', lw=0.6)); T(*P(-70, 71.5), 'KiCad +x', 5.5)
+    ax.annotate('', P(-82, 60), P(-82, 70), arrowprops=dict(arrowstyle='->', lw=0.6)); T(*P(-83, 63), 'KiCad +y\n(朝转子盘)', 5.5)
+    # ---- 侧视: YZ (从 +x 看), 1.6:1 ----
+    sv, oy, oz2 = 1.6, 30.0, 40.0
+    Q = lambda y, z: (oy + (y + 16.0) * sv, oz2 + (z - 28.0) * sv)
+    T(oy, Q(0, 82)[1] + 3, '侧视 (x=0 剖, 从 +x 看; 1.6:1) — 橙 A 根 (桥 A→J5), 红 B 根 (桥 B→J6), 黄 = 双面胶', 9)
+    rect(Q, (-16, 28.0, 68, HUB_TOP), fc='#AF9B6E', ec='none')
+    for sg in (1, -1):
+        yl0, yl1 = ECC + sg * L.GAP_HALF, ECC + sg * Y_LED
+        rect(Q, (min(yl0, yl1), Z0, max(yl0, yl1), 82), fc='#145A32', ec='none')
+        yb0, yb1 = ECC + sg * (Y_LED + AXK_H), ECC + sg * (Y_LED + AXK_H + BR_F)
+        rect(Q, (min(yb0, yb1), ZC - 18, max(yb0, yb1), ZC + 18), fc='#28B463', ec='k', lw=0.3)
+        T(*Q((yb0 + yb1) / 2, ZC + 19.5), '桥板 A' if sg > 0 else '桥板 B', 6, ha='center')
+    for s_ in (seat_a, seat_b):
+        b = bbox(s_); rect(Q, (b[1], b[2], b[4], b[5]), fc='#1B1B1B', ec='none')
+    for nm in ('U52',):
+        for s_ in [xf(x_, T_ECC) for n_, x_ in BR_LOC if n_ == nm] + [xf(xf(x_, rotz(180)), T_ECC) for n_, x_ in BR_LOC if n_ == nm]:
+            b = bbox(s_); rect(Q, (b[1], b[2], b[4], b[5]), fc='#333333', ec='none'); T(*Q(b[4] + 0.5 if b[1] > 0 else b[1] - 3, (b[2] + b[5]) / 2), 'U52', 5)
+    rect(Q, (ECC - L.GAP_HALF, Z0, ECC + L.GAP_HALF, Z0 + 9), fc='#D2B4DE', ec='none')
+    rect(Q, (V.BB_POLY[0][1], B.Z_BB0, V.BB_POLY[2][1], ZT), fc='#A9DFBF', ec='k', lw=0.3); T(*Q(56, 35.3), '底板 r4d', 5.5)
+    cz = L.ENV['CZ06 (DF40+板+件)']; rect(Q, (cz[1], ZT, cz[3], CZ06_TOP), fc='#E5E8E8', ec='k', lw=0.3); T(*Q(35, 39.5), 'CZ06', 6, ha='center')
+    for j, nm in ((J6, 'J6 (口朝 -y)'), (J5, 'J5 (口朝 -y)')):
+        rect(Q, (j['mouth_y'], ZT, j['back_y'], ZT + SEAT_H), fc='#566573', ec='k', lw=0.3); T(*Q(j['mouth_y'], ZT - 2.2), nm, 5.5)
+    for p_, col in ((pa, '#E67E22'), (pb, '#C0392B')):
+        q = [Q(*t) for t in _sample(p_)]; ax.plot([t[0] for t in q], [t[1] for t in q], color=col, lw=1.1)
+    for t_ in (tape_a, tape_b):
+        b = bbox(t_); rect(Q, (b[1], b[2], b[4], b[5] + 0.3), fc='#F4D03F', ec='none')
+    T(*Q(MOUTH_A[1] + 2.5, MOUTH_A[2] + 1), '座口 (朝下)', 5.5, color='#C0392B'); T(*Q(MOUTH_B[1] - 7, MOUTH_B[2] + 1), '座口 (朝下)', 5.5, color='#C0392B')
+    # ---- 出口局部 (桥板 A 座口下, 8:1) ----
+    s8, ox8, oz8 = 8.0, 215.0, 45.0
+    Rz = lambda y, z: (ox8 + (y - 1.5) * s8, oz8 + (z - 57.5) * s8)
+    T(ox8, oz8 + 10.5 * s8 + 3, '局部: 桥板 A 座口出口 (8:1) — 2.0 直段 + 外移 S 弯 躲 FPGA', 8)
+    def rr(b):
+        y0_, z0_, y1_, z1_ = max(b[0], 1.5), max(b[1], 57.5), min(b[2], 9.0), min(b[3], 68.0)
+        if y1_ > y0_ and z1_ > z0_: rect(Rz, (y0_, z0_, y1_, z1_), **b[4])
+    yb0 = ECC + Y_LED + AXK_H
+    rr((yb0, ZC - 18, yb0 + BR_F, ZC + 18, dict(fc='#28B463', ec='k', lw=0.3)))
+    for n_, s_ in BRS:
+        b = bbox(s_)
+        if b[1] > yb0 + BR_F - 0.2 and abs(b[0] + b[3]) / 2 < 20:
+            rr((b[1], b[2], b[4], b[5], dict(fc='#1B1B1B' if n_.startswith('FPC1') else '#555555', ec='none')))
+    q = [Rz(*t) for t in _sample(pa, 60)]
+    cp = Rectangle(Rz(1.5, 57.5), 7.5 * s8, 10.5 * s8, fc='none', ec='#999', lw=0.4); ax.add_patch(cp)
+    ln, = ax.plot([t[0] for t in q], [t[1] for t in q], color='#E67E22', lw=FPC_T * s8 * 2.83, solid_capstyle='butt'); ln.set_clip_path(cp)
+    T(*Rz(MOUTH_A[1] + 0.3, MOUTH_A[2] + 0.3), '座口', 6, color='#C0392B')
+    kz = rep_keep = None
+    T(ox8, oz8 - 6, f'FPC 平面: 插口 F+{SLOT_Z:g} → 外移 {JOG:.3f} 到 F+{SLOT_Z + JOG:.3f}; S 弯中线 R{R_JOG:g} (内 {R_JOG - FPC_T / 2:g}); 灰 = 桥板 F 面器件 (x 投影全叠)', 5.8)
+    # ---- 说明 ----
+    L_ = fpc_len(); pin = PIN1_BR
+    notes = ['说明:', f"1. 桥 J1/J2 与灯板逐脚对应: 脚 1 都在上端 Z{ax_['J1']['1']['bridge_xz'][1]:.1f}, 桥 J1 在 x{ax_['J1']['1']['bridge_xz'][0]:+.1f} 侧 = 灯板 J1 ({'OK' if ax_['ok_1to1'] else '不对!'})",
+             f"2. FPC1 座在桥板上沿 (Z{MOUTH_A[2]:.2f}–{ZC + BR_MOUTH + BR_SEAT['depth']:.2f}), 插口朝下 (板内, 朝 FPGA)",
+             f"3. 线序: 桥 A 脚 1 x{pin['a_world_x']:+.2f} -> J5 脚 1 x{J5['pin1_x']:+.2f} ({'直通' if pin['a_world_x'] == J5['pin1_x'] else '反 => J5 镜像'});",
+             f"   桥 B 脚 1 x{pin['b_world_x']:+.2f} -> J6 脚 1 x{J6['pin1_x']:+.2f} ({'直通' if pin['b_world_x'] == J6['pin1_x'] else '反 => 底板 J6 镜像 (pin k <-> 71-k)'})",
+             f"4. FPC 长 (展开/下料): A {L_['A']['total_mm']:.1f}/{L_['A']['cut_mm']:g}, B {L_['B']['total_mm']:.1f}/{L_['B']['cut_mm']:g}; 最小内 R {min(L_['A']['min_R_inner'], L_['B']['min_R_inner']):g}",
+             '5. 双面胶: B 根贴毂盘顶平铺段, A 根贴 CZ06 顶; 弯曲处不贴', '6. 模型: v1.2/scripts/fpc_v1_2.py (BRIDGE_FLIP=True 默认)']
+    for i, t in enumerate(notes):
+        T(300, 140 - 6 * i, t, 5.8)
+    out = OUT / '组合图_桥板FPC_v1_2'
     fig.savefig(f'{out}.pdf'); fig.savefig(f'{out}.png', dpi=130); plt.close(fig)
     return out
 
@@ -665,6 +856,7 @@ def drawing():
 if __name__ == '__main__':
     export()
     drawing()
+    combo()
     rep = report()
     json.dump(rep, open(OUT / 'fpc_report.json', 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
     print(json.dumps(rep, indent=1, ensure_ascii=False))

@@ -1,7 +1,5 @@
 {
  "interf": {
-  "bridge_a × lid_a": 4.6495,
-  "bridge_b × lid_b": 4.6495,
   "_checked": "8 新件 × 34 对象 + 新件互查; 只列非 0 (FPC 插入段在座子插口里, 本体留缝不碰)"
  },
  "axk_mate": {
@@ -9,59 +7,59 @@
   "bridge_b AXK × led_b": 489.176
  },
  "gap": {
-  "fpc_a × fpc_b": 0.369,
+  "fpc_a × fpc_b": 0.087,
   "fpc_a × seat_a": 0.1,
   "fpc_a × seat_b": 17.286,
   "fpc_a × bridge_a": 0.1,
   "fpc_a × bb_pcb": 0.55,
-  "fpc_a × seat_j6": 1.587,
+  "fpc_a × seat_j6": 2.162,
   "fpc_a × seat_j5": 0.1,
-  "fpc_a × cz06": 0.006,
+  "fpc_a × cz06": 0.1,
   "fpc_a × led_a": 5.15,
   "fpc_a × led_b": 11.218,
-  "fpc_a × hub": 5.208,
+  "fpc_a × hub": 3.533,
   "fpc_a × rim": 5.15,
   "fpc_a × bar": 6.628,
-  "fpc_b × seat_a": 1.722,
+  "fpc_b × seat_a": 1.024,
   "fpc_b × seat_b": 0.1,
-  "fpc_b × bridge_a": 1.722,
-  "fpc_b × bb_pcb": 0.451,
+  "fpc_b × bridge_a": 1.024,
+  "fpc_b × bb_pcb": 0.55,
   "fpc_b × seat_j6": 0.1,
   "fpc_b × seat_j5": 45.63,
   "fpc_b × cz06": 5.355,
-  "fpc_b × led_a": 6.1,
+  "fpc_b × led_a": 6.25,
   "fpc_b × led_b": 5.15,
   "fpc_b × hub": 0.1,
-  "fpc_b × rim": 2.875,
-  "fpc_b × bar": 6.1,
-  "bridge_a × lid_a": 0.0,
-  "bridge_b × lid_b": 0.0,
+  "fpc_b × rim": 2.905,
+  "fpc_b × bar": 6.25,
+  "bridge_a × lid_a": 0.402,
+  "bridge_b × lid_b": 0.402,
   "bridge_a × bar": 2.233
  },
  "fpc": {
   "A": {
-   "centerline_mm": 63.9,
+   "centerline_mm": 68.6,
    "insert_mm": [
     4.0,
     4.0
    ],
-   "total_mm": 71.9,
-   "cut_mm": 75.0,
-   "min_R_centerline": 1.25,
-   "min_R_inner": 1.1,
+   "total_mm": 76.6,
+   "cut_mm": 80.0,
+   "min_R_centerline": 1.0,
+   "min_R_inner": 0.925,
    "segs": [
     [
-     "插入 桥板 A 座",
-     4.0
+     "插入 桥板 A 座 + 口外直段",
+     6.0
     ],
     [
      "座口下 180° 回弯",
-     3.927,
-     "R1.25"
+     3.142,
+     "R1"
     ],
     [
      "竖段 (竖槽 −y 侧)",
-     3.192
+     5.117
     ],
     [
      "弯 → 过 J6 顶",
@@ -70,38 +68,112 @@
     ],
     [
      "CZ06 顶平铺",
-     42.217
+     43.517
     ],
     [
      "CZ06 外沿折下",
-     4.712,
-     "R3"
+     2.513,
+     "R1.6"
     ],
     [
      "竖段",
-     0.15
+     2.875
     ],
     [
      "弯 → 进 J5",
-     4.712,
-     "R3"
+     2.513,
+     "R1.6"
     ],
     [
-     "插入 J5",
-     4.0
+     "J5 口外直段 + 插入",
+     6.0
     ]
-   ]
+   ],
+   "stiffener_mm": [
+    5.0,
+    5.0
+   ],
+   "finger_mm": 3.5,
+   "t_bend": 0.15,
+   "t_stiff": 0.3,
+   "bends": {
+    "list": [
+     {
+      "tag": "座口下 180° 回弯",
+      "R_center": 1.0,
+      "R_inner": 0.925,
+      "ang": 180,
+      "s": [
+       6.0,
+       9.14
+      ],
+      "from_end0": 6.0,
+      "from_end1": 67.48
+     },
+     {
+      "tag": "弯 → 过 J6 顶",
+      "R_center": 3.15,
+      "R_inner": 3.075,
+      "ang": 90,
+      "s": [
+       14.26,
+       19.21
+      ],
+      "from_end0": 14.26,
+      "from_end1": 57.42
+     },
+     {
+      "tag": "CZ06 外沿折下",
+      "R_center": 1.6,
+      "R_inner": 1.525,
+      "ang": 90,
+      "s": [
+       62.72,
+       65.24
+      ],
+      "from_end0": 62.72,
+      "from_end1": 11.39
+     },
+     {
+      "tag": "弯 → 进 J5",
+      "R_center": 1.6,
+      "R_inner": 1.525,
+      "ang": 90,
+      "s": [
+       68.11,
+       70.63
+      ],
+      "from_end0": 68.11,
+      "from_end1": 6.0
+     }
+    ],
+    "first_from_bridge_end": 6.0,
+    "last_from_board_end": 6.0,
+    "ok_bridge": true,
+    "ok_board": true,
+    "need": [
+     6.0,
+     6.0
+    ]
+   },
+   "contact": {
+    "bridge_end_pcb_side": "R",
+    "board_end_pcb_side": "R",
+    "same": true,
+    "kind": "同面"
+   },
+   "wiring": "1↔1 直通"
   },
   "B": {
-   "centerline_mm": 32.0,
+   "centerline_mm": 32.3,
    "insert_mm": [
     4.0,
     4.0
    ],
-   "total_mm": 40.0,
+   "total_mm": 40.3,
    "cut_mm": 43.5,
-   "min_R_centerline": 1.25,
-   "min_R_inner": 1.1,
+   "min_R_centerline": 1.0,
+   "min_R_inner": 0.925,
    "segs": [
     [
      "插入 桥板 B 座",
@@ -109,7 +181,7 @@
     ],
     [
      "桥板 B 座口 → 下",
-     3.208
+     3.283
     ],
     [
      "弯 → 平铺",
@@ -118,7 +190,7 @@
     ],
     [
      "毂盘顶平铺",
-     14.823
+     14.073
     ],
     [
      "弯 → 竖槽",
@@ -127,18 +199,108 @@
     ],
     [
      "竖槽竖段",
-     2.15
+     2.475
     ],
     [
      "弯 → 进 J6",
-     1.963,
-     "R1.25"
+     1.571,
+     "R1"
     ],
     [
-     "插入 J6",
-     4.0
+     "J6 口外直段 + 插入",
+     5.0
     ]
-   ]
+   ],
+   "stiffener_mm": [
+    5.0,
+    4.0
+   ],
+   "finger_mm": 3.5,
+   "t_bend": 0.15,
+   "t_stiff": 0.3,
+   "bends": {
+    "list": [
+     {
+      "tag": "弯 → 平铺",
+      "R_center": 3.15,
+      "R_inner": 3.075,
+      "ang": 90,
+      "s": [
+       7.28,
+       12.23
+      ],
+      "from_end0": 7.28,
+      "from_end1": 28.07
+     },
+     {
+      "tag": "弯 → 竖槽",
+      "R_center": 3.15,
+      "R_inner": 3.075,
+      "ang": 90,
+      "s": [
+       26.3,
+       31.25
+      ],
+      "from_end0": 26.3,
+      "from_end1": 9.05
+     },
+     {
+      "tag": "弯 → 进 J6",
+      "R_center": 1.0,
+      "R_inner": 0.925,
+      "ang": 90,
+      "s": [
+       33.73,
+       35.3
+      ],
+      "from_end0": 33.73,
+      "from_end1": 5.0
+     }
+    ],
+    "first_from_bridge_end": 7.28,
+    "last_from_board_end": 5.0,
+    "ok_bridge": true,
+    "ok_board": true,
+    "need": [
+     6.0,
+     5.0
+    ]
+   },
+   "contact": {
+    "bridge_end_pcb_side": "L",
+    "board_end_pcb_side": "R",
+    "same": false,
+    "kind": "异面"
+   },
+   "wiring": "1↔1 直通 (底板 J6 已做网络镜像 pin k ↔ 71−k)"
+  }
+ },
+ "tape": {
+  "tape_a": {
+   "tape_y": [
+    21.0,
+    51.0
+   ],
+   "flat_y": [
+    [
+     9.86,
+     53.38
+    ]
+   ],
+   "ok": true
+  },
+  "tape_b": {
+   "tape_y": [
+    -8.0,
+    3.0
+   ],
+   "flat_y": [
+    [
+     -10.28,
+     3.79
+    ]
+   ],
+   "ok": true
   }
  },
  "lid_pocket": {
@@ -147,11 +309,11 @@
   "pocket_now": {
    "a": [
     -32.5,
-    4.4079999999999995
+    5.978
    ],
    "b": [
     -32.5,
-    -13.128
+    -14.698
    ]
   },
   "pocket_need": {
@@ -217,7 +379,7 @@
    },
    "J5_x": 17.25,
    "J6_x": 17.25,
-   "note": "FPC 弯都绕 x 轴, 导体 x 位置全程不变: A 根 桥A 脚1 x+17.25 → J5 脚1 x+17.25 同侧 (1↔1 直通 OK); B 根 桥B 脚1 x-17.25 → J6 脚1 x+17.25 反侧 ⇒ 1↔1 直通的 B 根会把脚 1 接到 J6 脚 70, 需硬件确认 (B 根做反序 FPC / 或底板 J6 网络镜像)"
+   "note": "FPC 弯都绕 x 轴, 导体 x 位置全程不变: A 根 桥A 脚1 x+17.25 → J5 脚1 x+17.25 同侧, 1↔1 直通; B 根 桥B 脚1 x-17.25 → J6 脚1 x+17.25 反侧 ⇒ 11-16 晚定: B 根也用 1↔1 直通通用件, 底板 J6 已做网络镜像 (pin k ↔ 71−k, 96 走线前改)"
   }
  },
  "bridge": {
@@ -321,15 +483,15 @@
   "new_plus_fpc": {
    "U_gmm": [
     -85.2,
-    -1980.7
+    -1997.5
    ],
-   "U_abs": 1982.6,
-   "cw_g_r83": 23.89,
-   "cw_ang_deg": 87.5,
-   "z_eff": 100.3,
+   "U_abs": 1999.3,
+   "cw_g_r83": 24.09,
+   "cw_ang_deg": 87.6,
+   "z_eff": 99.8,
    "two_plane": {
-    "lo_g_r83": 17.49,
-    "lo_ang": 86.5,
+    "lo_g_r83": 17.69,
+    "lo_ang": 86.6,
     "hi_g_r40": 13.3,
     "hi_ang": 90.2
    }
@@ -358,20 +520,35 @@
    ]
   },
   "fpc_g": {
-   "FPC A": 1.38,
-   "FPC B": 0.77,
+   "FPC A": 0.83,
+   "FPC B": 0.47,
    "胶 A": 0.12,
-   "胶 B": 0.05
+   "胶 B": 0.04
   },
   "note": "其余件同 led_support report() (底板仍 44.5 g 估 @ 板框中心); 两面配平按 Z45/r83 + 梳齿 r40"
  },
- "fix": {
-  "J6_mouth_now": 8.945,
-  "J6_mouth_need": 14.56,
-  "shift": 5.61,
-  "bb_edge_need": 12.91,
-  "J5_gap_now": 5.275,
-  "J5_gap_need_R3inner": 6.3,
-  "note": "全程内 R≥3: J6 口边要 ≥ 上值 (现 y8.945), 底板下沿随之 ≥ ~口边−1.6; CZ06 外沿→J5 口 现 5.275, 内 R3 要 ≥6.3 (现在只能中线 R3.0)"
+ "channel": {
+  "mouth_A_y": 4.708,
+  "J6_mouth_y": 8.945,
+  "gap_A_B": 0.087,
+  "stf_J6_5mm": {
+   "R_center_inner": [
+    0.679,
+    0.604
+   ],
+   "note": "J6 端补强 5.0 ⇒ 内 R 只 ~0.6 < 6T, 不取"
+  },
+  "stf_J6_4mm": {
+   "R_center_inner": [
+    1.012,
+    0.937
+   ],
+   "used": [
+    1.0,
+    0.925
+   ],
+   "note": "J6 端补强缩到 4.0 (= 插入, 最小) ⇒ 取中线 R1.0 / 内 0.925 (6.2T)"
+  },
+  "need_R3_inner_J6_mouth": 15.13
  }
 }

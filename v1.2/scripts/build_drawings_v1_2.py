@@ -357,7 +357,7 @@ SPECS.append(dict(
            f"内孔 R{F(_R_BORE)} 套毂盘凸台; 底面下凸台 R{F(_R_BUMP[0])}–{F(_R_BUMP[1])} 高 {F(_R_PZ0 - _R_BUMP[2])} 落进毂盘顶面环槽",
            f"外圈 8 孔 r{F(B.RH_R)} @22.5°+45°k 与定子外圈上下对齐; V1.0 原 R82.5 孔补实",
            f"罩底孔 S @" + "/".join(F(a) for a in B.SHR_ANG) + "° (避开底板与立板耳朵); 两端 T 脚 / 中间 T 件孔填实; C / X 孔为 V1.0 原有",
-           f"装配: 底板螺丝头在承载盘底面 ⇒ 先把底板装到承载盘上, 再把承载盘装到毂盘上 (毂盘在螺丝头下让位 Φ{F(B.HUB_BB_CLR_D)})"]))
+           f"装配: 底板螺丝头在承载盘底面, 所以先把底板装到承载盘上, 再把承载盘装到毂盘上 (毂盘在螺丝头下让位 Φ{F(B.HUB_BB_CLR_D)})"]))
 
 # ---------------- 毂盘 hub_disc_v1_2 (build_v1_2.py; export_3mf 写 out/打印STL (原姿态落床); 出图现写装配坐标 STL) ----------------
 _HZ0, _HZ1 = B.bbox(B.hub)[2], B.bbox(B.hub)[5]                                # Z21.5 / Z30.5
@@ -675,4 +675,7 @@ if __name__ == "__main__":
         if sp["code"] in _FOLDER:                # 11-16 晚: 转子盘 / 定子盘 文件夹里的图纸出图即同步 (export_3mf_v1_2.py 也会拷, 但它先于出图跑)
             import shutil
             _gd = V12 / _FOLDER[sp["code"]]; _gd.mkdir(exist_ok=True)
-            shutil.copy2(out, _gd / f"{sp['code']}_drawing.pdf"); print(f"  → {_FOLDER[sp['code']]}/", flush=True)
+            try:
+                shutil.copy2(out, _gd / f"{sp['code']}_drawing.pdf"); print(f"  → {_FOLDER[sp['code']]}/", flush=True)
+            except PermissionError:                # 文件被 PDF 阅读器占用 ⇒ 另存 .NEW.pdf
+                shutil.copy2(out, _gd / f"{sp['code']}_drawing.NEW.pdf"); print(f"  !! {_FOLDER[sp['code']]}/{sp['code']}_drawing.pdf 被占用, 已另存 .NEW.pdf", flush=True)

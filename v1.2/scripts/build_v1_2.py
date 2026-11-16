@@ -266,7 +266,9 @@ HUB_BB_CLR_D = 8.4
 _raise = fuse(*[cut(cyl(0, 0, 2 * r1, 27.0, RIM_BOT), cyl(0, 0, 2 * (r0 - 0.5 if r0 < 30 else r0), 26.0, 30.0)) for r0, r1 in HUB_RAISE])
 _raise = cut(_raise, *[cyl(x, y, HUB_BOSS_CLR_D, 26.0, 30.0) for (x, y), _ in _boss_pts], *[cyl(x, y, HUB_BB_CLR_D, 26.0, 30.0) for x, y in BB_HOLES],
              *[cyl(x, y, 3.4, 20.0, 30.0) for x, y in RH_PTS], *[cyl(x, y, 3.2, 20.0, 30.0) for x, y in RIM_LOCK_PTS])
+_hub_v0 = vol(hub)
 hub = clean(fuse(hub, _raise))
+assert vol(hub) - _hub_v0 > 0.8 * vol(_raise), ('毂盘加高布尔静默失败', vol(hub) - _hub_v0, vol(_raise))
 assert len(solids(rim)) == 1 and len(solids(hub)) == 1 and abs(bbox(hub)[5] - 30.5) < 0.01, ('承载盘凸台 / 毂盘加高布尔出错', len(solids(rim)), len(solids(hub)), bbox(hub))
 LOG['rim_thin'] = dict(bot=RIM_BOT, hub_raise=HUB_RAISE, boss=(RIM_BOSS_D, RIM_BOSS_Z0), n_boss=len(_boss_pts), rim_v=vol(rim), hub_v=vol(hub),
                        rim_valid=BRepCheck_Analyzer(rim).IsValid(), hub_valid=BRepCheck_Analyzer(hub).IsValid(), rim_solids=len(solids(rim)), hub_solids=len(solids(hub)))

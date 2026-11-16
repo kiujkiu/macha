@@ -382,22 +382,22 @@
    ]
   },
   "盖a": {
-   "vol_mm3": 20578.9,
-   "g_PLA": 25.5,
-   "g_PETG": 26.1,
+   "vol_mm3": 20374.8,
+   "g_PLA": 25.3,
+   "g_PETG": 25.9,
    "cog": [
     0.0,
-    36.01,
-    72.05
+    36.32,
+    72.04
    ]
   },
   "盖b": {
-   "vol_mm3": 17733.3,
-   "g_PLA": 22.0,
-   "g_PETG": 22.5,
+   "vol_mm3": 17529.2,
+   "g_PLA": 21.7,
+   "g_PETG": 22.3,
    "cog": [
     -0.0,
-    -40.76,
+    -41.08,
     72.04
    ]
   },
@@ -560,11 +560,11 @@
    "br_pocket": {
     "a": [
      -32.5,
-     4.4079999999999995
+     5.978
     ],
     "b": [
      -32.5,
-     -13.128
+     -14.698
     ]
    },
    "ant_notch": [
@@ -643,8 +643,8 @@
   ]
  },
  "clear": {
-  "罩a ↔ baseboard": 0.312,
-  "罩a ↔ bb_env": 0.312,
+  "罩a ↔ baseboard": 2.665,
+  "罩a ↔ bb_env": 2.665,
   "罩a ↔ ears_env": 0.3,
   "罩a ↔ rh_heads": 0.25,
   "罩a ↔ antenna": 0.35,
@@ -653,8 +653,8 @@
   "罩a ↔ j3_b": 70.157,
   "罩a ↔ bridge_a": 47.385,
   "罩a ↔ bridge_b": 40.397,
-  "罩b ↔ baseboard": 0.312,
-  "罩b ↔ bb_env": 0.312,
+  "罩b ↔ baseboard": 0.407,
+  "罩b ↔ bb_env": 0.407,
   "罩b ↔ ears_env": 0.3,
   "罩b ↔ rh_heads": 0.25,
   "罩b ↔ antenna": 0.35,
@@ -664,16 +664,16 @@
   "罩b ↔ bridge_a": 47.385,
   "罩b ↔ bridge_b": 40.397,
   "盖a ↔ antenna": 0.4,
-  "盖a ↔ bridge_a": 0.4,
+  "盖a ↔ bridge_a": 0.5,
   "盖a ↔ bridge_b": 11.577,
   "盖a ↔ led_a": 1.03,
   "盖a ↔ led_b": 6.245,
   "盖a ↔ j3_a": 23.08,
   "盖a ↔ j3_b": 24.618,
-  "盖a ↔ wireless_holder": 45.779,
+  "盖a ↔ wireless_holder": 46.911,
   "盖b ↔ antenna": 0.614,
   "盖b ↔ bridge_a": 11.577,
-  "盖b ↔ bridge_b": 0.4,
+  "盖b ↔ bridge_b": 0.5,
   "盖b ↔ led_a": 6.245,
   "盖b ↔ led_b": 1.03,
   "盖b ↔ j3_a": 24.618,

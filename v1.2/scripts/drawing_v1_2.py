@@ -276,9 +276,13 @@ def hchain(pg, xs, labels, yg, yd, size=2.3, skip=(), dry=False):
         return x0 + (x1 - x0) * min(1.0, t)
     for k in sorted(range(len(segs)), key=lambda k: -(xs[segs[k] + 1] - xs[segs[k]])):
         fits = wid[k] <= (xs[segs[k] + 1] - xs[segs[k]]) + 0.6
-        for r in ([0] if fits else []) + [1, 2, 3, 4]:
+        w2 = wid[k] / 2
+        near = (0.0, -w2 + 0.6, w2 - 0.6, w2 + 0.6, -w2 - 0.6)          # 文字仍贴着本段中点
+        far = (wid[k] + 0.6, -wid[k] - 0.6)
+        cands = ([(0, 0.0)] if fits else []) + [(r, dx) for r in (1, 2, 3, 4) for dx in near] + [(r, dx) for r in (1, 2, 3, 4) for dx in far]
+        for r, dx in cands:
             done = False
-            for dx in (0.0, -wid[k] / 2, wid[k] / 2, wid[k] / 2 + 1.0, -wid[k] / 2 - 1.0, wid[k], -wid[k], 1.5 * wid[k], -1.5 * wid[k]):
+            for _ in (0,):
                 c = want[k] + dx
                 a, b = c - wid[k] / 2, c + wid[k] / 2
                 if not free(r, a, b):

@@ -73,5 +73,9 @@ for g, items in _GROUPS.items():
         srcs = ([d / f'{n}.step', d / f'{n}.stl', d / f'{n}_drawing.pdf'] if d else           # 定子盘: models/ 下 (export 本脚本写)
                 [OUT / '零件' / f'{n}.step', OUT / '打印STL' / f'{n}.stl', V12 / 'models' / n / f'{n}_drawing.pdf'])   # 转子盘: out/零件 + out/打印STL (打印姿态) + 图纸 (有就拷)
         for f in srcs:
-            if f.exists(): shutil.copy2(f, gd / f.name)
+            if not f.exists(): continue
+            try:
+                shutil.copy2(f, gd / f.name)
+            except PermissionError:                         # 11-16 晚: 用户在阅读器里开着 → 另存 .NEW, 不中断
+                shutil.copy2(f, gd / f'{f.stem}.NEW{f.suffix}'); print('  被占用, 另存', gd / f'{f.stem}.NEW{f.suffix}')
 print('定子盘 / 转子盘 文件夹已更新')
