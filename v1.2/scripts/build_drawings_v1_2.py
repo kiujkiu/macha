@@ -366,7 +366,7 @@ SPECS.append(dict(
     code="rotor_lid_v1_2", shape=RS.lid_a, short="转子罩顶盖 (±y 同件)", qty="2 (+y / −y 同一件, 转 180°)", material="PETG (建议) / PLA",
     title=f"转子罩顶盖 ×2: D 形板厚 {F(RS.LID_T)}, 顶面 Z{F(RS.Z1)} = 罩顶 = 玻璃托顶, 盖住 LED 以下",
     subtitle=f"图示 +y 片; −y 片 = 同一件绕 Z 转 180°。坐配重唇顶 Z{F(RS.LID_Z0)}, 外圆 r{F(RS.LID_R)} 嵌罩壁 r{F(RS.R0)}",
-    orient="顶面 (沉头锥口) 贴床, 免支撑",
+    orient="顶面贴床 (平底沉孔口朝床), 凸块朝上, 免支撑",
     sec=dict(ang=90, r0=0.0, zd=[(RS.LID_Z0, RS.Z1, F(RS.LID_T))], rd=[(RS.LID_Y0, RS.LID_R, f"y{F(RS.LID_Y0)}–r{F(RS.LID_R)}")]),
     holes=[dict(tag="C", pts=_lp, spec=f"Φ3.4 通 + 顶面平底沉孔 Φ{F(RS.LID_CB_D)} 深 {F(RS.LID_CB_H)} (底下凸块 {F(RS.LID_BOSS_RAD[1] - RS.LID_BOSS_RAD[0])}×{F(RS.LID_BOSS_W)}×{F(RS.LID_BOSS_H)} 插配重唇缺槽)",
                 where=xy(_lp) + f"  r{F(RS.W_R)} @ {"/".join(F(a) for a in RS.LID_SCR_A)}° (对准配重唇孔)\nM3×{F(RS.LID_SCR_L)} 内六角 DIN912, 头顶齐盖顶, 穿凸块底 2 + 唇, 唇下 M3 螺母",
