@@ -59,6 +59,9 @@ write3mf(str(OUT3), PARTS)
 # 11-16 晚 用户: 另出一个不带玻璃托 (玻璃下底座 / 玻璃座 / 外卡环) 的整机 3MF (玻璃本来就不装)
 OUT3_NS = B.V12 / 'assembly_v1_2_不装玻璃和玻璃托_整机+V2板.3mf'
 write3mf(str(OUT3_NS), [p for p in PARTS if not any(k in p[0] for k in ('玻璃下', '外卡环'))])
+# 11-16 晚 用户: 再出一个不带玻璃托、也不带转子罩/顶盖的, 看转子盘和 PCB 的关系
+OUT3_NSR = B.V12 / 'assembly_v1_2_不装玻璃玻璃托罩子_转子+PCB.3mf'
+write3mf(str(OUT3_NSR), [p for p in PARTS if not any(k in p[0] for k in ('玻璃下', '外卡环', '转子罩'))])
 import os as _os
 if _os.environ.get('ONLY_3MF'): raise SystemExit(0)
 
