@@ -135,7 +135,7 @@ def _cb_xy(sh, d=7.0):
     return out
 _mf0 = one(C10 / 'mounting_flange_v4.step')
 _mf_top = 25.5 - MF_THIN
-MF_THIN_LOW = 3.0                             # 11-12 夜: 只 flange_disc 加厚; 安装法兰外裙 (r82.5–85) 底仍按原 FL_THIN 3 切 ⇒ 底 Z9.5 (下罩法兰螺母顶 8.7 下方留 0.8)
+MF_THIN_LOW = FL_THIN                         # 11-16 晚 用户: 外裙 4 → 5, 底齐定子盘底 Z8.5 (从外面看定子盘是完整环形盘); 原 3.0 (底 Z9.5)
 _mf = cut(_mf0, cyl(0, 0, 400, -100, 15.5 + MF_THIN_LOW), cyl(0, 0, 400, _mf_top, 100))
 _cbs = _cb_xy(_mf0); assert len(_cbs) == 16, _cbs
 _cbs_out = [c for c in _cbs if math.hypot(*c) > 50]; assert len(_cbs_out) == 8   # 外圈 8 个原样
@@ -385,6 +385,9 @@ _cross = fuse(gbox(-200, -P_N, -1, 200, P_N, 20), gbox(-P_N, -200, -1, P_N, 200,
 s_ = fuse(s_, cut(cyl(0, 0, 2 * SPIG_IN + 1, 0, TRI_T), _cross))                # 四角三角块
 NUT_Z0 = TRI_T                                     # 用户 11-12 改 M3: M3x10 从盘底沉孔往上, 穿底盘+三角块, M3 螺母压三角块顶 (z5–7.4)
 assert abs(SH_R - (SPIG_IN - SH_NUT_D / 2)) < 1e-9, '下罩螺母要贴墙内面'
+# 11-16 晚: 安装法兰外裙伸到 Z8.5 后, 4 颗下罩 M3 法兰螺母 (r86.8 Φ8 含余量, Z5–8.7 实高 3.7) 顶到外裙 r82.5–85 ⇒ 外裙底局部挖 Φ8.6 到 Z9.0 (留 0.3)
+MF_NUT_RELIEF = (SH_NUT_D + 0.6, NUT_Z0 + 3.7 + 0.3)
+mounting_flange = clean(cut(mounting_flange, *[cyl(x, y, MF_NUT_RELIEF[0], FL_Z0 - 1, MF_NUT_RELIEF[1]) for x, y in SH_M6]))
 NUT_CLR_D = 0.0                                    # 用户 11-12: 螺母 r84–92 在定子盘 r82.5 外、顶 Z7.4 < 定子盘底 Z9.3 ⇒ 定子盘/安装法兰不再开让位 (原 Φ10)
 for x, y in SH_M6:
     s_ = cut(s_, cyl(x, y, 3.4, -1, TRI_T + 1))

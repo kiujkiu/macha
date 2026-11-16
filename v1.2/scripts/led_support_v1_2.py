@@ -17,7 +17,7 @@
       整体放上转子, 从上面拧 T 脚 4×M3×6 (承载盘铜螺母) + 中间 T 件 4×M3×6 (承载盘铜螺母)。
 外购: Φ8×50 钢轴 (h6), 688ZZ; M3×6 内六角 ×4 (两端 T 脚) + 承载盘顶面 M3×4 铜螺母 ×4 (END_T_HOLES); M3×6 内六角 ×4 + 承载盘 M3×4 铜螺母 ×4 (中间 T 件);
       M3×8 内六角 ×4 (T 件 → 夹条, 自攻); M3×12 内六角 ×2 + M3 法兰螺母 ×2 (H1/H2); M3×8 内六角 ×2 + M3×4 铜螺母 ×2 (梳齿 → 帽); 配重 M3×8 + M3 螺母 (按需);
-      Molex 219611 (Wi-Fi 6E, 35×15×0.1, MHF) ×2 竖贴两端。
+      WiFi 天线 18.5×37.7 软板 (11-16 晚 用户; 原 Molex 219611 35×15) ×2 竖贴两端。
 输出: v1.2/models/<件>/<件>.{step,stl} (装配坐标) + out/打印STL/<件>.stl (打印姿态);
       v1.2/models/led_support_v1_2/: 装配位 STEP + 干涉/平衡报告 led_support_report.json
 """
@@ -90,11 +90,13 @@ FOOT_Y = 14.0                                     # 横杆半长 |y|≤14 (同�
 FOOT_X0, FOOT_X1 = T_X - T_W / 2, None            # 兼容旧名 (FOOT_X1 = ANT_X1, 下面定)
 BLADE_X0, BLADE_X1, BLADE_Z1 = 75.6, 81.6, Z0 + 17.0   # 立刀 x75.6–81.6 (盖住下角 F.Mask 窗 75.9–81.9 / 下沿+7…17), 顶 Z54; 实体向外延到天线板
 # 天线板: 两端都竖贴; 外面 r≤84.7 (转子罩内壁 r86 要让); 内面让 H1 法兰螺母 (Φ7.6 → x82.43)
-ANT_X0, ANT_X1, ANT_HW = 82.6, 84.3, 8.0          # 厚 1.7, |y|≤8 ⇒ 外角 r = hypot(84.3, 8) = 84.68
-ANT_R_MAX = 84.7
-ANT_L, ANT_W, ANT_REC = 35.4, 15.4, 0.3           # Molex 219611 35×15×0.1 → 定位浅槽 35.4×15.4×0.3 (背胶贴)
-ANT_ZC = 56.6                                     # 槽 Z38.9–74.3 (长边沿 Z)
-ANT_Z1 = ANT_ZC + ANT_L / 2 + 1.3                 # 板顶 Z75.6
+ANT_X0, ANT_X1, ANT_HW = 82.6, 84.3, 9.75         # 厚 1.7, |y|≤9.75 (11-16 晚: 天线换 18.5×37.7 软板) ⇒ 外角 r = hypot(84.3, 9.75) = 84.86
+ANT_R_MAX = 84.9                                  # < 罩外圆 r85
+ANT_SZ = (37.7, 18.5)                             # 11-16 晚 用户: 实际天线 = 18.5×37.7 软板 (FPC), 长边沿 Z
+ANT_L, ANT_W, ANT_REC = ANT_SZ[0] + 0.4, ANT_SZ[1] + 0.4, 0.3   # 定位浅槽 38.1×18.9×0.3 (背胶贴)
+ANT_Z1_MAX = B.Z_VIEW0                            # 板顶不高于罩顶/顶盖 Z73.08 (原 75.6 冒出 2.5)
+ANT_ZC = round(ANT_Z1_MAX - 1.3 - ANT_L / 2, 2)    # 52.73 ⇒ 槽 Z33.7–71.8
+ANT_Z1 = ANT_ZC + ANT_L / 2 + 1.3                 # 板顶 Z73.08
 ANT_A = dict(y=ANT_HW, z0=RIM_TOP, z1=ANT_Z1, zc=ANT_ZC)   # 兼容旧名 (两端相同)
 ANT_B = ANT_A
 FOOT_X1 = ANT_X1
@@ -258,7 +260,7 @@ bar_scr = [('M3×8 内六角 T 件→夹条 (从下往上)', fuse(cyl(x, 0, 5.5,
 comb_scr = [('M3×8 内六角 梳齿→帽', sock(sx * COMB_FIX_X, 0, COMB_Z1, 8.0)) for sx in (1, -1)]
 comb_ins = [('M3×4 铜螺母 帽', ins(sx * COMB_FIX_X, 0, Z1, Z1 + CAP_T)) for sx in (1, -1)]
 # 天线 (35×15×0.1 片), 外面 x=±(ANT_X1 − 0.2)
-ant_a = gbox(ANT_X1 - ANT_REC, -ANT_W / 2 + 0.2, ANT_ZC - 17.5, ANT_X1 - ANT_REC + 0.1, ANT_W / 2 - 0.2, ANT_ZC + 17.5)
+ant_a = gbox(ANT_X1 - ANT_REC, -ANT_SZ[1] / 2, ANT_ZC - ANT_SZ[0] / 2, ANT_X1 - ANT_REC + 0.15, ANT_SZ[1] / 2, ANT_ZC + ANT_SZ[0] / 2)   # 软板 0.15 厚
 ant_b = xf(ant_a, rotz(180))
 
 # ---------------- 板子 ----------------

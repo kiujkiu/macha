@@ -50,7 +50,7 @@ PARTS = [  # (名, 形状, 颜色, 3MF 弦差)
     ('MIP LED 4合1 基板部分 (黑) ×2×10368', LED_BASE, '#151515', 0.05), ('MIP LED 4合1 发光面 (红) ×2×10368', LED_TOP, '#FF2020', 0.05),
     ('灯板支撑 +x T 脚 led_post_a', L.post_a, '#F1C232', 0.03), ('灯板支撑 -x T 脚 led_post_b', L.post_b, '#E69138', 0.03), ('灯板中间 T 件 led_mid_t ×2', L.gate_s, '#F6B26B', 0.03), ('灯板夹条 led_bar', L.bar_s, '#8E7CC3', 0.03),
     ('灯板顶部件 led_top', L.top, '#6FA8DC', 0.03), ('灯板梳齿 led_comb', L.comb_s, '#9FC5E8', 0.03),
-    (f'Φ8×{L.ROD_L:g} 钢轴', L.rod, '#999999', 0.03), ('桥板 A/B (占位)', L.comp([L.br_a, L.br_b]), '#1E8449', 0.05), ('天线 Molex 219611 ×2', L.comp([L.ant_a, L.ant_b]), '#C0392B', 0.03),
+    (f'Φ8×{L.ROD_L:g} 钢轴', L.rod, '#999999', 0.03), ('桥板 A/B (占位)', L.comp([L.br_a, L.br_b]), '#1E8449', 0.05), ('天线 18.5×37.7 软板 ×2', L.comp([L.ant_a, L.ant_b]), '#C0392B', 0.03),
     ('转子罩 a rotor_shroud_a_v1_2', RS.shr_a, '#A4C2F4', 0.05), ('转子罩 b rotor_shroud_b_v1_2', RS.shr_b, '#B6D7A8', 0.05), ('转子罩顶盖 rotor_lid_v1_2 ×2', L.comp([RS.lid_a, RS.lid_b]), '#CFE2F3', 0.05),
     ('无线托盘 wireless_holder_v1_2', WH.H, '#FFD966', 0.03), ('无线供电模块 30.5×49×15 (占位)', WH.module, '#3D85C6', 0.05),
 ]
@@ -137,9 +137,9 @@ _LED2 = L.comp([L.led_a, L.led_b])
 D_BB, D_CZ = _dist(_LED2, L.bb_step), _dist(_LED2, VB['cz06'])
 D_WH = _dist(_LED2, L.comp([WH.H, WH.module]))
 _M = dict((n, P) for n, P, _ in MESH)
-R_LED = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in ('灯板 A (+y)', '灯板 B (-y)', '灯板支撑 +x T 脚 led_post_a', '灯板支撑 -x T 脚 led_post_b', '天线 Molex 219611 ×2'))
+R_LED = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in ('灯板 A (+y)', '灯板 B (-y)', '灯板支撑 +x T 脚 led_post_a', '灯板支撑 -x T 脚 led_post_b', '天线 18.5×37.7 软板 ×2'))
 R_SHR = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in ('转子罩 a rotor_shroud_a_v1_2', '转子罩 b rotor_shroud_b_v1_2'))
-assert R_SHR < B.SPIG_IN - 1.0 and R_LED < RS.R1 - 0.3 and D_BB > 0.5 and D_CZ > 0.5 and D_WH > 0.5, (R_SHR, R_LED, D_BB, D_CZ, D_WH)
+assert R_SHR < B.SPIG_IN - 1.0 and R_LED < RS.R1 - 0.1 and D_BB > 0.5 and D_CZ > 0.5 and D_WH > 0.5, (R_SHR, R_LED, D_BB, D_CZ, D_WH)
 print('clearance', D_BB, D_CZ, D_WH, R_LED, R_SHR)
 from matplotlib.patches import Patch
 fig.legend(handles=[Patch(fc=c, label=n) for n, _, c in MESH], loc='upper left', bbox_to_anchor=(0.745, 0.46), fontsize=7, ncol=2, frameon=False, columnspacing=0.8, handlelength=1.2)
