@@ -320,9 +320,9 @@ _rw = [RS.pol(RS.W_R, a) for a in RS.W_A if math.cos(math.radians(a)) > 0]
 SPECS.append(dict(
     code="rotor_shroud_a_v1_2", shape=RS.shr_a, short="转子罩半壳 (A/B 同件)", qty="2 (A/B 同一件, B = A 绕 Z 转 180°)", material="PETG (建议) / PLA",
     title=f"转子罩半壳 ×2 (两半同件): 罩壁 r{F(RS.R0)}–{F(RS.R1)} + 罩底凸台 + 配重唇 + 分缝凸耳",
-    subtitle=f"图示 A 半 (+x); B 半 = 同一打印件绕 Z 转 180° 装在 −x。罩 Z{F(RS.Z0)}–{F(RS.Z1)} 坐承载盘顶, 顶开口",
-    orient=f"倒放 (罩顶 Z{F(RS.Z1)} + 配重唇顶面贴床), 免支撑",
-    sec=dict(ang=45, r0=74.0, zd=[(RS.Z0, RS.Z1), (RS.LIP_Z0, RS.Z1, f"{F(RS.Z1 - RS.LIP_Z0)} 唇"), (RS.Z0, RS.LEDGE_Z1, f"{F(RS.LEDGE_Z1 - RS.Z0)} 内沿")],
+    subtitle=f"图示 A 半 (+x); B 半 = 同一打印件绕 Z 转 180° 装在 −x。罩 Z{F(RS.Z0)}–{F(RS.Z1)} 坐承载盘顶, 罩顶 = 玻璃托顶; 上面盖顶盖 rotor_lid_v1_2 ×2 (坐配重唇)",
+    orient=f"倒放 (罩顶 Z{F(RS.Z1)} 贴床); 配重唇比罩顶低 {F(RS.LID_T)} (给顶盖) ⇒ 唇下加热床支撑",
+    sec=dict(ang=45, r0=74.0, zd=[(RS.Z0, RS.Z1), (RS.LIP_Z0, RS.LID_Z0, f"{F(RS.LID_Z0 - RS.LIP_Z0)} 唇"), (RS.Z0, RS.LEDGE_Z1, f"{F(RS.LEDGE_Z1 - RS.Z0)} 内沿")],
              rd=[(RS.R0, RS.R1, f"{F(RS.R1 - RS.R0)} 壁"), (RS.LIP_R0, RS.R0, f"{F(RS.R0 - RS.LIP_R0)} 唇"), (RS.LEDGE_R0, RS.R0, f"{F(RS.R0 - RS.LEDGE_R0)} 内沿")]),
     holes=[dict(tag="M", pts=_rm, spec=f"Φ3.4 通凸台 Z{F(RS.Z0)}–{F(RS.BOSS_Z1)} + 上方 Φ{F(RS.ACC_D)} 起子让位孔 (斜撑/配重唇)",
                 where=xy(_rm) + f"  r{F(RS.HOLE_R)} @ 67.5°/292.5° (B 半: 247.5°/112.5°)\nM3×{F(RS.MNT_L)} 内六角 头支承 Z{F(RS.BOSS_Z1)}, 穿承载盘+毂盘进毂盘底 M3×4 铜螺母 Z{F(RS.INS_Z[0])}–{F(RS.INS_Z[1])}",
@@ -330,8 +330,8 @@ SPECS.append(dict(
                          zd=[(RS.Z0, RS.BOSS_Z1, f"{F(RS.BOSS_Z1 - RS.Z0)} 凸台")], ud=[(-1.7, 1.7, "Φ3.4"), (-RS.ACC_D / 2, RS.ACC_D / 2, f"Φ{F(RS.ACC_D)} (上)", 5)])),
            dict(tag="W", pts=_rw, spec=f"Φ3.4 通配重唇 + 顶面 Φ{F(RS.W_CB_D)} 沉孔深 {F(RS.W_CB_H)}", lab_off=(-2.6, 2.0),
                 where=f"r{F(RS.W_R)} @ " + "/".join(F(a) for a in RS.W_A if math.cos(math.radians(a)) > 0) + "°"
-                      + f"\nM3×{F(RS.W_L)} 内六角 头顶 Z{F(RS.W_BEAR + 3)} < 罩顶; 唇下挂 ≤{RS.W_NUT_MAX} 颗 M3 螺母/垫片 (尾 Z{F(RS.W_TIP)})",
-                det=dict(kind="cb", d=3.4, D=RS.W_CB_D, h=RS.W_CB_H, side="top", z=(RS.LIP_Z0, RS.Z1), pt=RS.pol(RS.W_R, 45), title="配重孔 W")),
+                      + f"\nM3×{F(RS.W_L)} 内六角 头顶 Z{F(RS.W_BEAR + 3)} < 盖底 Z{F(RS.LID_Z0)}; 45/135° 两孔开切向缺槽给顶盖凸块 (M3×{F(RS.LID_SCR_L)} 内六角); 唇下挂 ≤{RS.W_NUT_MAX} 颗 M3 螺母/垫片 (尾 Z{F(RS.W_TIP)})",
+                det=dict(kind="cb", d=3.4, D=RS.W_CB_D, h=RS.W_CB_H, side="top", z=(RS.LIP_Z0, RS.LID_Z0), pt=RS.pol(RS.W_R, 37.5), title="配重孔 W")),
            dict(tag="S", pts=[(RS.LUG_HX / 2, RS.LUG_SY), (RS.LUG_HX / 2, -RS.LUG_SY)],
                 spec=f"凸耳 Φ3.4 沿 X 横穿 ×2 层 (Z{F(RS.LUG_SZ[0])} / Z{F(RS.LUG_SZ[1])}), M3×{F(RS.SEAM_L)} + M3 螺母",
                 where=f"|y|{F(RS.LUG_SY)}; +y 缝: 外侧 (x{F(RS.LUG_HX - RS.NUT_DEPTH)}–{F(RS.LUG_HX)}) 六角螺母槽 {F(RS.NUT_AF)} 对边, 口朝罩内\n−y 缝: 螺丝头侧 (头坐 x{F(RS.LUG_HX)} 面); 装成整圈后两缝各 1 头 1 螺母",
@@ -341,11 +341,24 @@ SPECS.append(dict(
     notes=[f"罩壁 r{F(RS.R0)}–{F(RS.R1)} Z{F(RS.Z0)}–{F(RS.Z1)} (离不转玻璃座内壁 r{F(RS.ST_IN)} 留 {F(RS.ST_IN - RS.R1)}); 外面光滑, 分缝在 x=0",
            "两半 A (+x) / B (−x) 是同一个打印件 (B = A 绕 Z 转 180°), 打 2 个",
            f"罩底 4 凸台 @67.5/112.5/247.5/292.5° (每半 2) 压承载盘顶 + 45° 斜撑; |y|<{F(RS.BB_EDGE)} / |x|<{F(RS.WH_EDGE)} 削平",
-           f"配重唇 r{F(RS.LIP_R0)}–{F(RS.R0)} Z{F(RS.LIP_Z0)}–{F(RS.Z1)} @ 33°–147° / 213°–327°; 每半 {len(_rw)} 孔, 全罩 {len(RS.W_A)} 孔",
+           f"配重唇 r{F(RS.LIP_R0)}–{F(RS.R0)} Z{F(RS.LIP_Z0)}–{F(RS.LID_Z0)} (顶 = 盖底) @ 33°–147° / 213°–327°; 每半 {len(_rw)} 孔, 全罩 {len(RS.W_A)} 孔",
            f"罩底内沿 r{F(RS.LEDGE_R0)}–{F(RS.R0)} Z{F(RS.Z0)}–{F(RS.LEDGE_Z1)} + 45° 斜面 (4 段, 让开 ±y |x|≤{F(RS.HOLDER_X)} 无线托盘)",
            f"分缝凸耳 x0–{F(RS.LUG_HX)} × |y|{F(RS.LUG_Y0)}–{F(RS.LUG_Y1)} × Z{F(RS.LUG_Z0)}–{F(RS.LIP_Z0)} (底 > 无线托盘顶 Z50)",
            "装/拆: 起子从罩顶开口竖直进, 穿配重唇 Φ6.5 让位孔拧罩底 M3×14",
-           "每孔配重 M3×18+1 螺母 1.84 g … +6 螺母 3.55 g (见 rotor_shroud_report.json)"]))
+           f"每孔配重 M3×{F(RS.W_L)} + 1…6 颗 M3 螺母 (见 rotor_shroud_report.json); 调配重先拆顶盖"]))
+_lp = [RS.pol(RS.W_R, a) for a in RS.LID_SCR_A]
+SPECS.append(dict(
+    code="rotor_lid_v1_2", shape=RS.lid_a, short="转子罩顶盖 (±y 同件)", qty="2 (+y / −y 同一件, 转 180°)", material="PETG (建议) / PLA",
+    title=f"转子罩顶盖 ×2: D 形板厚 {F(RS.LID_T)}, 顶面 Z{F(RS.Z1)} = 罩顶 = 玻璃托顶, 盖住 LED 以下",
+    subtitle=f"图示 +y 片; −y 片 = 同一件绕 Z 转 180°。坐配重唇顶 Z{F(RS.LID_Z0)}, 外圆 r{F(RS.LID_R)} 嵌罩壁 r{F(RS.R0)}",
+    orient="顶面 (沉头锥口) 贴床, 免支撑",
+    sec=dict(ang=90, r0=0.0, zd=[(RS.LID_Z0, RS.Z1, F(RS.LID_T))], rd=[(RS.LID_Y0, RS.LID_R, f"y{F(RS.LID_Y0)}–r{F(RS.LID_R)}")]),
+    holes=[dict(tag="C", pts=_lp, spec=f"Φ3.4 通 + 顶面平底沉孔 Φ{F(RS.LID_CB_D)} 深 {F(RS.LID_CB_H)} (底下凸块 {F(RS.LID_BOSS_RAD[1] - RS.LID_BOSS_RAD[0])}×{F(RS.LID_BOSS_W)}×{F(RS.LID_BOSS_H)} 插配重唇缺槽)",
+                where=xy(_lp) + f"  r{F(RS.W_R)} @ 45°/135° (对准配重唇孔)\nM3×{F(RS.LID_SCR_L)} 内六角 DIN912, 头顶齐盖顶, 穿凸块底 2 + 唇, 唇下 M3 螺母",
+                det=dict(kind="cb", d=3.4, D=RS.LID_CB_D, h=RS.LID_CB_H, side="top", z=(RS.LID_Z0 - RS.LID_BOSS_H, RS.Z1), pt=_lp[0], title="沉孔 C (过凸块)"))],
+    notes=[f"内边 y{F(RS.LID_Y0)} (LED 面 3.768 + MIP 0.59, 留 0.44); 桥板段 x{F(RS.BR_POCKET[0])}…{F(RS.BR_POCKET[2])} 通槽退到 y{F(RS.BR_POCKET[3])} (桥板顶 Z73.0)",
+           f"两端缺口 |x|≥{F(RS.ANT_NOTCH[0])}, y<{F(RS.ANT_NOTCH[1])}: 让立板天线板 (顶 Z75.6, 高出盖面, 待定是否压低)",
+           "装: 罩两半装好、配重调完后放盖 (凸块插进唇缺槽定位), 2 颗 M3×8 内六角 + 唇下螺母锁; 拆盖才能调配重 / 拧罩底螺丝"]))
 
 # ---------------- 无线供电模块托盘 (11-16, wireless_holder_v1_2.py; import 只建几何) ----------------
 import wireless_holder_v1_2 as WH  # noqa: E402

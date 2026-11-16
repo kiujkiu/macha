@@ -11,6 +11,7 @@ f_ = io.StringIO()
 with contextlib.redirect_stdout(f_):
     import build_v1_2 as B
 import v2_boards_v1_2 as V
+from OCP.gp import gp_Trsf, gp_Vec
 from mf3_v1_2 import mesh, write3mf
 from OCP.BRep import BRep_Builder
 from OCP.TopoDS import TopoDS_Compound
@@ -29,6 +30,11 @@ import wireless_holder_v1_2 as WH
 VB = L.VB
 CD = B.CD
 _ENV_KEEP = [k for k in L.env if not k.startswith(('底面件', 'J3 插头', '24V 线'))]   # 底板 r2 交付 STEP 里没 3D 的器件 (框 × 限高)
+# 11-16 用户: 灯板贴上真实 LED (MIP-CIMD07TN 4 合 1, 灯板 PCB 坐标 10368 颗/面), 发光面单独换色, 看底座/转子罩挡不挡
+_mb, _mt = V.led_mip(B)
+_ta = gp_Trsf(); _ta.SetTranslation(gp_Vec(0, L.Y_LED, 0))
+_mb_a, _mt_a = B.xf(_mb, _ta), B.xf(_mt, _ta)
+LED_BASE = L.comp([_mb_a, B.xf(_mb_a, B.rotz(180))]); LED_TOP = L.comp([_mt_a, B.xf(_mt_a, B.rotz(180))])
 PARTS = [  # (名, 形状, 颜色, 3MF 弦差)
     ('底盘 base_disc_v1_2', B.disc, '#8A8F98', 0.05), ('线圈环 coil_ring_v1_2', B.ring, '#E0A030', 0.05), ('电机 Φ55×21.5 (占位)', B.motor, '#333333', 0.05),
     ('电机控制板', board, '#2E7D32', 0.08), ('散热片 40×20×6', B.heatsink, '#C0392B', 0.05),
@@ -41,10 +47,11 @@ PARTS = [  # (名, 形状, 颜色, 3MF 弦差)
     ('XT60 压块', B.xt_clamp, '#F1C232', 0.05), ('XT60 底垫', B.xt_shim, '#E69138', 0.05),
     ('V2 底板 r2 (交付 STEP)', L.bb_step, '#1E8449', 0.05), ('底板 r2 器件包络 + CZ06', L.comp([L.env[k] for k in _ENV_KEEP]), '#7D8C8E', 0.05),
     ('灯板 A (+y)', L.led_a, '#145A32', 0.05), ('灯板 B (-y)', L.led_b, '#0E3B22', 0.05),
+    ('MIP LED 4合1 基板部分 (黑) ×2×10368', LED_BASE, '#151515', 0.05), ('MIP LED 4合1 发光面 (红) ×2×10368', LED_TOP, '#FF2020', 0.05),
     ('灯板支撑 +x T 脚 led_post_a', L.post_a, '#F1C232', 0.03), ('灯板支撑 -x T 脚 led_post_b', L.post_b, '#E69138', 0.03), ('灯板门形支撑 led_gate', L.gate_s, '#F6B26B', 0.03),
     ('灯板顶部件 led_top', L.top, '#6FA8DC', 0.03), ('灯板梳齿 led_comb', L.comb_s, '#9FC5E8', 0.03),
     (f'Φ8×{L.ROD_L:g} 钢轴', L.rod, '#999999', 0.03), ('桥板 A/B (占位)', L.comp([L.br_a, L.br_b]), '#1E8449', 0.05), ('天线 Molex 219611 ×2', L.comp([L.ant_a, L.ant_b]), '#C0392B', 0.03),
-    ('转子罩 a rotor_shroud_a_v1_2', RS.shr_a, '#A4C2F4', 0.05), ('转子罩 b rotor_shroud_b_v1_2', RS.shr_b, '#B6D7A8', 0.05),
+    ('转子罩 a rotor_shroud_a_v1_2', RS.shr_a, '#A4C2F4', 0.05), ('转子罩 b rotor_shroud_b_v1_2', RS.shr_b, '#B6D7A8', 0.05), ('转子罩顶盖 rotor_lid_v1_2 ×2', L.comp([RS.lid_a, RS.lid_b]), '#CFE2F3', 0.05),
     ('无线托盘 wireless_holder_v1_2', WH.H, '#FFD966', 0.03), ('无线供电模块 30.5×49×15 (占位)', WH.module, '#3D85C6', 0.05),
 ]
 OUT3 = B.V12 / 'assembly_v1_2_不装玻璃_整机+V2板.3mf'
@@ -94,8 +101,8 @@ axF = fig.add_axes([0.03, 0.12, 0.33, 0.80]); axS = fig.add_axes([0.37, 0.12, 0.
 render(axF, [(P, c) for _, P, c in MESH], 0, 2, 1, (0, 1, 0), flip_u=True)
 axF.set_title('主视图 (从 +Y 看 LED 面)', fontsize=11)
 # 剖视 A-A: X=0 平面, 只画 X∈[−0.05, 0.05] 薄片 (= 剖面), 从 +X 看; 后面加 X<0 半边淡色
-SEC = [(n, tris(slab(s, -0.05, 0.05), 0.1), mcolors.to_rgb(c)) for n, s, c, d in PARTS]
-BACK = [(n, tris(slab(s, -200, -0.05), max(d, 0.2)), mcolors.to_rgb(c)) for n, s, c, d in PARTS]
+SEC = [(n, tris(slab(s, -0.05, 0.05), 0.1), mcolors.to_rgb(c)) for n, s, c, d in PARTS if not n.startswith('MIP')]
+BACK = [(n, tris(slab(s, -200, -0.05), max(d, 0.2)), mcolors.to_rgb(c)) for n, s, c, d in PARTS if not n.startswith('MIP')]   # 2 万颗小盒子剖切太慢; 剖视里 LED 只有 0.59 厚, 省掉
 render(axS, [(P, tuple(0.55 + 0.45 * np.array(c))) for _, P, c in BACK], 1, 2, 0, (1, 0, 0))
 render(axS, [(P, c) for _, P, c in SEC], 1, 2, 0, (1, 0, 0))
 axS.set_title('剖视 A-A (X=0 平面, 从 +X 看; 浅色 = 剖面后的半边)', fontsize=11)

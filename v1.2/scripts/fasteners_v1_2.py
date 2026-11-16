@@ -242,6 +242,9 @@ for sy in (1, -1):
 _wx, _wy = RS.pol(RS.W_R, RS.W_A[0])
 screw(f"M3x{RS.W_L:g} 内六角 转子罩配重 (示例)", 0, _wx, _wy, RS.W_BEAR, RS.W_L, False, hd=5.5, hh=3.0, engage=("M3 螺母", RS.LIP_Z0 - RS.NUT_T, RS.LIP_Z0))
 add("M3 螺母 转子罩配重 (示例) #0", cut(hexprism(_wx, _wy, RS.NUT_AF, RS.LIP_Z0 - RS.NUT_T, RS.LIP_Z0), cyl(_wx, _wy, 3.0, 0, 90)), "#707070")
+#    顶盖 (11-16): 4×M3×8 内六角 (平底沉孔, 头顶齐盖顶 Z73.08) 穿盖 + 配重唇 45/135/225/315°, 唇下 M3 螺母 (沉头锥头直接用 rotor_shroud 的形状)
+for i, (sh, nt) in enumerate(zip(RS.FAST['M3×8 内六角 (顶盖)'], RS.FAST['M3 螺母 (顶盖, 唇下)'])):
+    add(f"M3x{RS.LID_SCR_L:g} 内六角 转子罩顶盖 #{i}", sh, "#C0C0C0"); add(f"M3 螺母 转子罩顶盖 (唇下) #{i}", nt, "#707070")
 
 # 13 无线供电模块托盘 (11-16, wireless_holder_v1_2): 3×M3×8 内六角 (Φ6 沉孔底 Z36 支承) 进承载盘 M3×4 铜螺母 (Z28..32, Φ4.18 画)
 import wireless_holder_v1_2 as WH
@@ -254,7 +257,7 @@ PARTS = {"灯板立板+x": L.post_a, "灯板立板-x": L.post_b, "灯板门形�
          "法兰盘": B.flange_disc, "安装法兰": B.mounting_flange, "转子毂盘": B.hub, "承载盘": B.rim,
          "玻璃下底座": B.shroud_lo, "玻璃下玻璃座": B.shroud_hi, "外卡环": B.clamp_ring, "XT60压块": B.xt_clamp, "XT60底垫": B.xt_shim,
          **({"MOS压块": B.CD.clamp} if B.CD.HAS_MC else {}), **({"电容卡件": B.CD.cap_clamp} if B.CD.HAS_CC else {}), "驱动板": B.CD.pcb, "驱动MOS": B.CD.mos, "驱动电解电容": B.CD.cap, "驱动散热片": B.CD.sink2, "按键支架": B.key_bracket, "按键板": B.key_board,
-         "转子罩a": RS.shr_a, "转子罩b": RS.shr_b, "无线托盘": WH.H, "无线模块 (占位)": WH.module, "底板 r2 (板框)": L.VB['baseboard']}   # 11-16 新件
+         "转子罩a": RS.shr_a, "转子罩b": RS.shr_b, "转子罩顶盖+y": RS.lid_a, "转子罩顶盖-y": RS.lid_b, "无线托盘": WH.H, "无线模块 (占位)": WH.module, "底板 r2 (板框)": L.VB['baseboard']}   # 11-16 新件
 for i, p in enumerate(B.posts):
     PARTS[f"立柱{i}"] = p
 PB = {k: bbox(v) for k, v in PARTS.items()}
@@ -404,7 +407,7 @@ P_ = [('底盘 Φ220×6', B.disc, '#8A8F98', 0.05), ('线圈环', B.ring, '#E0A0
       ('按键支架 key_bracket_v1_2', B.key_bracket, '#F1C232', 0.03), ('按键板 (简模)', B.key_board, '#2E7D32', 0.03),
       ('灯板支撑 +x led_post_a', LS.post_a, '#F1C232', 0.03), ('灯板支撑 -x led_post_b', LS.post_b, '#E69138', 0.03), ('灯板门形支撑 led_gate', LS.gate_s, '#F6B26B', 0.03),
       ('灯板顶部件 led_top', LS.top, '#6FA8DC', 0.03), ('灯板梳齿 led_comb', LS.comb_s, '#9FC5E8', 0.03),
-      ('转子罩 a rotor_shroud_a_v1_2', RS.shr_a, '#6FA8DC', 0.05), ('转子罩 b rotor_shroud_b_v1_2', RS.shr_b, '#93C47D', 0.05),
+      ('转子罩 a rotor_shroud_a_v1_2', RS.shr_a, '#6FA8DC', 0.05), ('转子罩 b rotor_shroud_b_v1_2', RS.shr_b, '#93C47D', 0.05), ('转子罩顶盖 rotor_lid_v1_2 ×2', RS.comp([RS.lid_a, RS.lid_b]), '#CFE2F3', 0.05),
       ('无线托盘 wireless_holder_v1_2', WH.H, '#F1C232', 0.03), ('无线供电模块 30.5×49×15 (占位)', WH.module, '#3D85C6', 0.05)]
 out = f"{B.V12 / 'assembly_v1_2'}_整机+螺丝.3mf"
 write3mf(out, P_ + FAST)

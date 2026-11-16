@@ -25,6 +25,7 @@ with _cl.redirect_stdout(_io.StringIO()):
 ROT=[('灯板支撑 +x led_post_a_v1_2',LS.post_a,'#F1C232',0.03),('灯板支撑 −x led_post_b_v1_2',LS.post_b,'#E69138',0.03),
      ('灯板门形支撑 led_gate_v1_2',LS.gate_s,'#B45F06',0.03),('灯板顶部件 led_top_v1_2',LS.top,'#6FA8DC',0.03),('顶部配平梳齿 led_comb_v1_2',LS.comb_s,'#3D85C6',0.03),
      ('转子罩 A rotor_shroud_a_v1_2',RS.shr_a,'#6FA8DC',0.05),('转子罩 B rotor_shroud_b_v1_2 (= A 转 180°)',RS.shr_b,'#93C47D',0.05),
+     ('转子罩顶盖 +y rotor_lid_v1_2',RS.lid_a,'#CFE2F3',0.05),('转子罩顶盖 −y (同件转 180°)',RS.lid_b,'#CFE2F3',0.05),
      ('无线模块托盘 wireless_holder_v1_2',WH.H,'#F1C232',0.03)]
 GTOP=[('玻璃上 glass_top_v1_2',glass_top,'#7FB3D5',0.05),('圆环玻璃 OD180×ID20×10 (外购)',glass_disc,'#AED6F1',0.1),('中心堵头 glass_top_hub_v1_2',glass_top_hub,'#2E86C1',0.02)]
 write3mf(f'{A}_底盘+线圈环+电机+控制板.3mf',P_)
@@ -33,7 +34,7 @@ write3mf(f'{A}_含法兰+转子盘+玻璃罩定位环.3mf',P_+EXT+[('玻璃下 (
 write3mf(f'{A}_玻璃罩版整机_合并.3mf',P_+EXT+ROT+[('玻璃下 (下罩+定位环) glass_shroud_v1_2',seat,'#7FB3D5',0.05),('玻璃罩 OD200x5 H245',tube,'#D6EAF8',0.1),*GTOP,('XT60 压块',xt_clamp,'#F1C232',0.05),('XT60 底垫',xt_shim,'#E69138',0.05)])
 write3mf(f'{A}_玻璃罩版整机_分体外卡环.3mf',P_+EXT+ROT+[('玻璃下-底座 glass_shroud_lower_v1_2',shroud_lo,'#7FB3D5',0.05),('玻璃下-玻璃座 glass_shroud_upper_v1_2',shroud_hi,'#5DADE2',0.05),('外卡环 glass_clamp_ring_v1_2',clamp_ring,'#2E86C1',0.05),('玻璃罩 OD200x5 H245',tube,'#D6EAF8',0.1),*GTOP,('XT60 压块',xt_clamp,'#F1C232',0.05),('XT60 底垫',xt_shim,'#E69138',0.05)])
 for n,sh in (('base_disc_v1_2',disc),('coil_ring_v1_2',ring),('flange_disc_v1_2',flange_disc),('mounting_flange_v1_2',mounting_flange),('glass_shroud_v1_2',seat),('glass_shroud_lower_v1_2',shroud_lo),('glass_shroud_upper_v1_2',shroud_hi),('glass_clamp_ring_v1_2',clamp_ring),('glass_top_v1_2',glass_top),('glass_top_hub_v1_2',glass_top_hub),
-             ('led_gate_v1_2',LS.gate_s),('led_comb_v1_2',LS.comb_s),('rotor_shroud_a_v1_2',RS.shr_a),('rotor_shroud_b_v1_2',RS.shr_b),('wireless_holder_v1_2',WH.H)):
+             ('led_gate_v1_2',LS.gate_s),('led_comb_v1_2',LS.comb_s),('rotor_shroud_a_v1_2',RS.shr_a),('rotor_shroud_b_v1_2',RS.shr_b),('rotor_lid_v1_2',RS.lid_a),('wireless_holder_v1_2',WH.H)):
     d = V12 / 'models' / n; d.mkdir(parents=True, exist_ok=True)
     BRepMesh_IncrementalMesh(sh,0.02,False,0.2,True); w=StlAPI_Writer(); w.ASCIIMode=False; w.Write(sh,str(d / f'{n}.stl'))
     if n == 'wireless_holder_v1_2':   # 它的 STEP 由 wireless_holder_v1_2.py 写 (含模块占位/螺丝/铜螺母/引脚, led_support/rotor_shroud 干涉校核要读), 不覆盖

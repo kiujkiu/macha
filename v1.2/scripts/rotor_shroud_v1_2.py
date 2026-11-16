@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
-"""V1.2 转子罩 (11-16, 方案见 v1.2/concept/shroud_balance_concept.png; 高度按 11-16 新布局: 灯板下沿 Z37 / LED 下沿 Z74.88)。
+"""V1.2 转子罩 (11-16, 方案见 v1.2/concept/shroud_balance_concept.png; 高度按 11-16 新布局: 灯板下沿 Z37 / LED 下沿 Z74.88; 罩顶 + 顶盖 = 玻璃托顶 Z73.08)。
     cd v1.2/scripts && ../../.venv/bin/python rotor_shroud_v1_2.py
 世界坐标同 build_v1_2: 承载盘顶 Z32, 不转玻璃座内卡内壁 r90.8 (顶 Z73.08)。
 结构:
-  - 罩壁 r86–89, Z32–72.5 (顶开口; 外面一整圈光滑, 只有 x=0 两条分缝), 两半 A (+x) / B (−x); B = A 绕 Z 转 180° (同一个件, 打 2 个)。
+  - 罩壁 r86–89, Z32–73.08 (= 玻璃托顶, 上面盖顶盖; 外面一整圈光滑, 只有 x=0 两条分缝), 两半 A (+x) / B (−x); B = A 绕 Z 转 180° (同一个件, 打 2 个)。
   - 罩底 4 个凸台 (67.5/112.5/247.5/292.5° @ r82.5) 压承载盘顶 Z32: M3×14 内六角从上往下, 穿承载盘 + 毂盘进毂盘底 M3 铜螺母;
     凸台上面 45° 斜撑接罩壁, 斜撑里 Φ6.5 竖孔让螺丝头/起子 (起子从罩顶开口竖直进, 穿配重唇 Φ6.5 让位孔)。凸台在 |y|<72.3 削平 (让底板 r2 板边 y72)。
-  - 分缝 (x=0, ±y) 内侧凸耳 x±7 × r77.5–罩壁 × Z51–67.5 (上接配重唇), 2 颗切向 M3×14 (Z55 / Z63.5), 一侧螺丝头, 另一侧六角螺母槽 (槽口朝罩内, 螺母从内侧推进)。
+  - 分缝 (x=0, ±y) 内侧凸耳 x±7 × r77.5–罩壁 × Z51–67.5 (上接配重唇), 2 颗切向 M3×14 (Z55 / Z62.5), 一侧螺丝头, 另一侧六角螺母槽 (槽口朝罩内, 螺母从内侧推进)。
     +y 缝: 头在 B 侧 (x<0), 螺母在 A 侧; −y 缝相反 (180° 对称)。凸耳底 Z51 > 无线模块固定件顶 Z50。
-  - 配重唇 r78–86, Z67.5–72.5, 33°–147° / 213°–327° (让开 ±x 灯板两端/支撑/天线); 24 个 M3 孔 @ r82 (每侧 12 个, 7.5° 左右间距),
-    顶面 Φ6 沉孔深 3.2 (M3×18 内六角头顶 Z72.3 < 罩顶 72.5); 唇下挂 M3 螺母/垫片 (最多 6 颗螺母, 尾端 Z51.3 > 模块固定件顶 Z50)。
+  - 顶盖 rotor_lid_v1_2 ×2 (±y D 形, 同件转 180°): 厚 2, Z71.08–73.08 顶面 = 罩顶 = 玻璃托顶, 坐配重唇上, 内边 |y|4.8; 桥板处通槽 (内边退到 y8.77), 两端天线板缺口; 每片 2×M3×8 内六角 (借 45°/135° 配重孔; 盖底凸块 7.8×9.6×3 插进唇缺槽, 平底沉孔 Φ6×3 头埋平) + 唇下螺母。
+  - 配重唇 r78–86, Z66.08–71.08 (顶 = 盖底), 33°–147° / 213°–327° (让开 ±x 灯板两端/支撑/天线); 24 个 M3 孔 @ r82 (每侧 12 个, 7.5° 左右间距),
+    顶面 Φ6 沉孔深 3.2 (M3×16 内六角头顶 Z70.88 < 盖底 71.08); 唇下挂 M3 螺母/垫片 (最多 6 颗螺母, 尾端 Z51.88 > 模块固定件顶 Z50)。
   - 罩底内沿 r83.5–86 Z32–34.5 + 45° 斜面 (33°–70.9° / 109.1°–147° 及对侧, 让开 ±y |x|≤27.5 的无线模块固定件 r84.5)。
-打印: 倒放 (罩顶 Z72.5 + 配重唇顶面落床), 免支撑 (凸台/凸耳/内沿全部 45° 或从唇上长出; 只有 Φ6.5 / Φ6 孔顶小搭桥)。
+打印: 倒放 (罩顶 Z73.08 落床; 配重唇顶比罩顶低 2 (给顶盖), 倒放时唇悬空 2 mm ⇒ 唇下加热床支撑) (凸台/凸耳/内沿全部 45° 或从唇上长出; 只有 Φ6.5 / Φ6 孔顶小搭桥)。
 """
 import io, contextlib, json, math
 from pathlib import Path
@@ -71,10 +72,10 @@ def hexprism_x(y, z, af, x0, x1):
 
 # ---------------- 尺寸 ----------------
 Z0 = B.Z_RIM_TOP                    # 32.0 罩底 = 承载盘顶
-Z1 = 72.5                           # 罩顶 (内卡顶 Z_VIEW0 73.08 下 0.58; LED 下沿 74.88)
+Z1 = B.Z_VIEW0                      # 罩顶 = 玻璃托 (内卡) 顶 73.08 (用户 11-16: 罩子上沿和玻璃托齐平; 顶盖也在这高度, LED 下沿 ~75.0)
 R0, R1 = 86.0, 89.0                 # 罩壁 (离静止内壁 r90.8 留 1.8)
 ST_IN = B.SPIG_IN                   # 90.8
-assert Z1 <= B.Z_VIEW0 - 0.5 and Z1 < B.Z_LED0
+assert Z1 == B.Z_VIEW0 and Z1 < B.Z_LED0
 # 底部固定 (4 孔)
 HOLE_R = 82.5
 MNT_A = [67.5, 112.5, 247.5, 292.5]
@@ -88,19 +89,33 @@ INS_Z = (22.0, 26.0)                           # 毂盘底 Φ4.2 盲孔 Z21.5–
 # 分缝凸耳
 LUG_HX, LUG_Y0, LUG_Y1 = 7.0, 77.5, 87.0       # x 0..±7, |y| 77.5..87 (外端埋进罩壁)
 LUG_Z0 = 51.0                                  # > 无线模块固定件顶 Z50
-LUG_SY, LUG_SZ = 82.0, (55.0, 63.5)            # 切向螺丝轴线 |y|=82, Z55 / Z63.5
+LUG_SY, LUG_SZ = 82.0, (55.0, 62.5)            # 切向螺丝轴线 |y|=82, Z55 / Z62.5 (头顶 65.25 < 唇底 66.08)
 NUT_AF, NUT_T, NUT_DEPTH = 5.5, 2.4, 2.5       # M3 螺母; 槽 x 4.5..7 (口朝罩内)
 SEAM_L = 14.0                                  # M3×14: 头支承 x=∓7 ⇒ 尾 ±7 (与螺母外面齐)
 # 配重唇
-LIP_R0, LIP_Z0 = 78.0, 67.5
+# 顶盖 (11-16 用户截图: 罩子要把 LED 以下从上面也盖住) — 两片 D 形 (±y, 同件转 180°), 顶面 = 罩顶 = LED 下沿, 坐在配重唇上
+LID_T = 2.0
+LID_Z0 = Z1 - LID_T                  # 71.08 盖底 = 唇顶
+LID_Y0 = 4.8                         # 盖内边 |y| (LED 面 3.768 + MIP 0.59 = 4.36, 留 0.44)
+LID_R = R0 - 0.1                     # 盖外圆 (罩壁内面 r86, 打印件嵌套单边 0.1)
+BR_POCKET = (-32.5, 0.0, 32.5, 8.77, -1.0)   # 桥板 x±32 y6.77–8.37 顶 Z73.0 ≈ 盖顶: 通槽 (盖内边在这段退到 y8.77)
+ANT_NOTCH = (82.2, 8.4)              # 两端立板天线板 x82.6–84.3 |y|≤8 顶 Z75.6: 缺口 |x|≥82.2, |y|≤8.4
+LID_SCR_A = [45.0, 135.0]            # +y 盖 2 颗 M3 内六角, 借配重孔 (−y 盖 = 转 180° ⇒ 225/315)
+LID_SCR_ALL = LID_SCR_A + [a + 180 for a in LID_SCR_A]
+# 11-16 用户: 不能用 V 形沉头 ⇒ 普通 M3 内六角 (头 Φ5.5×3) 平底沉孔; 盖底下长凸块插进配重唇缺槽, 局部加厚到 5 让螺丝头埋平
+LID_BOSS_RAD = (78.1, 85.9)          # 凸块径向 (唇 r78–86 留单边 0.1)
+LID_BOSS_W, LID_BOSS_H = 9.6, 3.0    # 凸块切向宽 / 往下伸 (盖底 71.08 → 68.08); 唇缺槽 切向 10 × 深 3.1 (槽底 67.98)
+LID_CB_D, LID_CB_H = 6.0, 3.0        # 平底沉孔 Φ6 深 3 (头顶齐盖顶, 头支承 Z70.08, 下面剩 2 厚)
+LID_SCR_L = 8.0                      # M3×8 内六角 DIN912: 支承 70.08 → 尾 62.08, 穿凸块底 2 + 唇剩余 1.9, 唇下 M3 螺母 (63.68–66.08)
+LIP_R0, LIP_Z0 = 78.0, LID_Z0 - 5.0      # 唇厚 5, 顶 = 盖底
 LIP_ARCS = [(33.0, 147.0), (213.0, 327.0)]
 W_R = 82.0
 _Q = [37.5, 45.0, 52.5, 60.0, 74.5, 80.0]      # 第一象限; 镜像到四个象限 (让开 67.5/112.5 起子孔与 x=0 分缝凸耳/螺丝头)
 W_A = sorted(set([a for q in _Q for a in (q, 180 - q, 180 + q, 360 - q)]))
-W_CB_D, W_CB_H = 6.0, 3.2                      # 沉孔 (头 Φ5.5×3 ⇒ 头顶 Z72.3)
-W_L, W_NUT_MAX = 18.0, 6                       # M3×18 内六角, 唇下最多 6 颗 M3 螺母
-W_BEAR = Z1 - W_CB_H                           # 69.3
-W_TIP = W_BEAR - W_L                           # 51.3
+W_CB_D, W_CB_H = 6.0, 3.2                      # 沉孔 (头 Φ5.5×3 ⇒ 头顶 Z70.88)
+W_L, W_NUT_MAX = 16.0, 6                       # M3×16 内六角 (罩顶降到 73.08 后 18 会碰无线托盘), 唇下最多 6 颗 M3 螺母
+W_BEAR = LID_Z0 - W_CB_H                       # 67.88 (头顶 70.88 < 盖底 71.08)
+W_TIP = W_BEAR - W_L                           # 51.88
 assert W_TIP >= 50.5
 # 罩底内沿 (承载盘顶压一圈)
 LEDGE_R0, LEDGE_Z1 = 83.5, 34.5
@@ -113,7 +128,7 @@ RHO_PLA, RHO_ST, RHO_BR = 1.24e-3, 7.85e-3, 8.5e-3
 # ---------------- 罩 (整圈, 再切两半) ----------------
 def ring_body():
     s = B.ann(R0, R1, Z0, Z1)
-    for a0, a1 in LIP_ARCS: s = fuse(s, sector(LIP_R0, R0 + 0.5, LIP_Z0, Z1, a0, a1))
+    for a0, a1 in LIP_ARCS: s = fuse(s, sector(LIP_R0, R0 + 0.5, LIP_Z0, LID_Z0, a0, a1))
     # 内沿: r83.5–86 Z32–34.5 + 45° 斜面到 (r86, Z37)
     lr = fuse(B.ann(LEDGE_R0, R0 + 0.5, Z0, LEDGE_Z1),
               cut(cyl(0, 0, 2 * (R0 + 0.5), LEDGE_Z1, LEDGE_Z1 + R0 - LEDGE_R0),
@@ -132,7 +147,10 @@ def ring_body():
         s = cut(s, cyl(x, y, 3.4, Z0 - 1, BOSS_Z1 + 0.01), cyl(x, y, ACC_D, BOSS_Z1, Z1 + 1))
     for a in W_A:
         x, y = pol(W_R, a)
-        s = cut(s, cyl(x, y, 3.4, LIP_Z0 - 1, Z1 + 1), cyl(x, y, W_CB_D, W_BEAR, Z1 + 1))
+        if a in LID_SCR_ALL:      # 顶盖螺丝位: 只开 Φ3.4 + 切向缺槽 (盖凸块插进来), 不做配重沉孔
+            s = cut(s, cyl(x, y, 3.4, LIP_Z0 - 1, Z1 + 1), xf(gbox(LIP_R0 - 1, -(LID_BOSS_W + 0.4) / 2, LID_Z0 - LID_BOSS_H - 0.1, R0, (LID_BOSS_W + 0.4) / 2, Z1 + 1), rotz(a)))
+        else:
+            s = cut(s, cyl(x, y, 3.4, LIP_Z0 - 1, Z1 + 1), cyl(x, y, W_CB_D, W_BEAR, Z1 + 1))
     return clean(s)
 
 
@@ -176,8 +194,8 @@ for sy in (1, -1):
         seam_nut.append(cut(hexprism_x(sy * LUG_SY, z, NUT_AF - 0.02, *sorted((xn0, xn1))), xcyl(sy * LUG_SY, z, 3.0, -20, 20)))
 FAST['M3×14 内六角 (分缝切向)'] = seam_scr
 FAST['M3 螺母 (分缝)'] = seam_nut
-w_scr = [sock_z(*pol(W_R, a), W_BEAR, W_L) for a in W_A]
-w_stack = [cut(cyl(*pol(W_R, a), 7.0, LIP_Z0 - W_NUT_MAX * NUT_T, LIP_Z0), cyl(*pol(W_R, a), 3.0, 0, 90)) for a in W_A]   # 满载包络 Φ7 (垫片外径/螺母外接圆 6.35)
+w_scr = [sock_z(*pol(W_R, a), W_BEAR, W_L) for a in W_A if a not in LID_SCR_ALL]   # 盖螺丝占的 4 个孔不放配重螺丝 (唇下照样能挂螺母)
+w_stack = [cut(cyl(*pol(W_R, a), 7.0, LIP_Z0 - W_NUT_MAX * NUT_T, LIP_Z0), cyl(*pol(W_R, a), 3.0, 0, 90)) for a in W_A if a not in LID_SCR_ALL]   # 满载包络 Φ7 (垫片外径/螺母外接圆 6.35)
 FAST['M3×18 内六角 (配重)'] = w_scr
 FAST['配重 M3 螺母/垫片 满载包络 Φ7×14.4'] = w_stack
 
@@ -192,6 +210,46 @@ VB = V.make(B)
 Y_LED = 2.3 + 1.468
 led_a = xf(VB['led'], tr(0, Y_LED, 0)); led_b = xf(led_a, rotz(180))
 j3_a = gbox(54.85, Y_LED, 38.0, 63.55, 26.0, 48.0); j3_b = xf(j3_a, rotz(180))   # J3 VH 座 + 插头包络
+
+
+# ---------------- 顶盖 (+y 片; −y 片 = 转 180°) ----------------
+def lid_boss(a):
+    return xf(gbox(LID_BOSS_RAD[0], -LID_BOSS_W / 2, LID_Z0 - LID_BOSS_H, LID_BOSS_RAD[1], LID_BOSS_W / 2, LID_Z0 + 0.01), rotz(a))
+
+
+def lid_hole(x, y):
+    """Φ3.4 通 + 顶面平底沉孔 Φ6 深 3"""
+    return fuse(cyl(x, y, 3.4, LID_Z0 - LID_BOSS_H - 1, Z1 + 1), cyl(x, y, LID_CB_D, Z1 - LID_CB_H, Z1 + 1))
+
+
+def lid_a_make():
+    s = common(cyl(0, 0, 2 * LID_R, LID_Z0, Z1), gbox(-100, LID_Y0, LID_Z0 - 1, 100, 100, Z1 + 1))
+    x0, y0, x1, y1, t = BR_POCKET
+    s = cut(s, gbox(x0, y0, LID_Z0 - 1, x1, y1, Z1 - t))                                # 桥板顶让位
+    nx, ny = ANT_NOTCH
+    s = cut(s, gbox(nx, -1, LID_Z0 - 1, 100, ny, Z1 + 1), gbox(-100, -1, LID_Z0 - 1, -nx, ny, Z1 + 1))   # 天线板缺口
+    # 灯板 LED 面上伸进盖高度 (Z71.08–73.08, 带 0.4 余量) 的器件: 按包围盒 +0.4 让开
+    from OCP.TopExp import TopExp_Explorer
+    from OCP.TopAbs import TopAbs_SOLID
+    e = TopExp_Explorer(led_a, TopAbs_SOLID); cuts = []
+    while e.More():
+        b = bbox(e.Current())
+        if b[5] > LID_Z0 - 0.4 and b[2] < Z1 + 0.4 and b[4] > LID_Y0 - 0.4:
+            cuts.append(gbox(b[0] - 0.4, b[1] - 0.4, LID_Z0 - 1, b[3] + 0.4, b[4] + 0.4, Z1 + 1))
+        e.Next()
+    if cuts: s = cut(s, *cuts)
+    s = fuse(s, *[lid_boss(a) for a in LID_SCR_A])
+    s = cut(s, *[lid_hole(*pol(W_R, a)) for a in LID_SCR_A])
+    return clean(s), len(cuts)
+
+
+lid_a, LID_LED_CUTS = lid_a_make()
+lid_b = clean(xf(lid_a, rotz(180)))
+LIDS = dict(a=lid_a, b=lid_b)
+# 盖螺丝: M3×8 内六角, 头顶 = 盖顶 Z1 (支承 Z1−3), 唇下 M3 螺母
+FAST['M3×8 内六角 (顶盖)'] = [sock_z(*pol(W_R, a), Z1 - LID_CB_H, LID_SCR_L) for a in LID_SCR_ALL]
+FAST['M3 螺母 (顶盖, 唇下)'] = [cut(cyl(*pol(W_R, a), 6.3, LIP_Z0 - NUT_T, LIP_Z0 - 0.01), cyl(*pol(W_R, a), 3.0, 0, 90)) for a in LID_SCR_ALL]
+assert Z1 - LID_CB_H - LID_SCR_L < LIP_Z0 - NUT_T, '盖螺丝够不到唇下螺母'
 BB_DIR = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/review/结构交付')
 bb_r2 = xf(read_step(BB_DIR / 'POV3D_V2_BaseBoard_r2.step'), tr(0, 0, B.Z_BB0))
 WH = B.V12 / 'models' / 'wireless_holder_v1_2' / 'wireless_holder_v1_2.step'
@@ -207,9 +265,13 @@ def report():
         for o, so in OTHERS.items():
             rep['interf'][f'{k} × {o}'] = round(common_v(s, so), 4)
     rep['interf']['a × b'] = round(common_v(shr_a, shr_b), 4)
+    for k, s in LIDS.items():
+        for o, so in list(OTHERS.items()) + list(HALVES.items()):
+            rep['interf'][f'盖{k} × {o}'] = round(common_v(s, so), 4)
+    rep['interf']['盖a × 盖b'] = round(common_v(lid_a, lid_b), 4)
     allf = {n: comp(v) for n, v in FAST.items()}
     for n, c in allf.items():
-        for k, s in HALVES.items():
+        for k, s in list(HALVES.items()) + [('盖' + k, s) for k, s in LIDS.items()]:
             rep['fasteners'][f'{n} × 罩{k}'] = round(common_v(c, s), 4)
         for o in ('rim', 'hub', 'shroud_lo', 'shroud_hi', 'baseboard_r2', 'wireless_holder', 'led_a', 'led_b', 'j3_a', 'j3_b'):
             v = common_v(c, OTHERS[o])
@@ -228,12 +290,12 @@ def report():
     from mf3_v1_2 import mesh
     def rz(shape, defl=0.05):
         Vv, T = mesh(shape, defl); return np.hypot(Vv[:, 0], Vv[:, 1]), Vv[:, 2]
-    rot = [shr_a, shr_b] + [s for v in FAST.values() for s in v]
+    rot = [shr_a, shr_b, lid_a, lid_b] + [s for v in FAST.values() for s in v]
     R = [rz(s) for s in rot]
     r_rot = np.concatenate([r for r, z in R]); z_rot = np.concatenate([z for r, z in R])
     st = {k: rz(s, 0.05) for k, s in dict(shroud_lo=B.shroud_lo, shroud_hi=B.shroud_hi, glass=B.tube).items()}
     rows = []
-    for z0 in np.arange(20, 74, 1.0):
+    for z0 in np.arange(20, 80, 1.0):
         m = (z_rot >= z0) & (z_rot < z0 + 1)
         if not m.any(): continue
         rmax = r_rot[m].max()
@@ -248,6 +310,9 @@ def report():
     for k, s in HALVES.items():
         m, c = cog(s)
         rep['mass'][f'罩{k}'] = dict(vol_mm3=round(m, 1), g_PLA=round(m * RHO_PLA, 1), g_PETG=round(m * 1.27e-3, 1), cog=[round(v, 2) for v in c])
+    for k, s in LIDS.items():
+        m, c = cog(s)
+        rep['mass'][f'盖{k}'] = dict(vol_mm3=round(m, 1), g_PLA=round(m * RHO_PLA, 1), g_PETG=round(m * 1.27e-3, 1), cog=[round(v, 2) for v in c])
     rep['mass']['钢件单重_g'] = {'M3×14 内六角': round(m_sock(14), 3), 'M3×18 内六角': round(m_sock(18), 3), 'M3 螺母': round(M_NUT, 3), 'M3 平垫 7×0.5': round(M_WASH, 3)}
     # 配重唇可调范围
     m_min = m_sock(W_L) + M_NUT                 # 螺丝 + 1 颗锁紧螺母
@@ -269,11 +334,12 @@ def report():
                           engage=round(INS_Z[1] - max(INS_Z[0], BOSS_Z1 - MNT_L), 2), hub_bottom=21.5,
                           note='铜螺母若与毂盘底面齐 (Z21.5–25.5) 则啮合 3.5; 尾端 Z22.0 在毂盘底上 0.5'),
         '分缝 M3×14': dict(head_x='∓10..∓7', nut_x='4.5..6.9 (槽 4.5..7, 口朝罩内)', engage=NUT_T, tip='与螺母外面齐'),
+        '顶盖 M3×8 内六角': dict(bear_z=Z1 - LID_CB_H, head_top=Z1, tip_z=Z1 - LID_CB_H - LID_SCR_L, nut_z=(LIP_Z0 - NUT_T, LIP_Z0), at=LID_SCR_ALL, r=W_R, through='凸块底 2 + 唇缺槽下剩 1.9'),
         '配重 M3×18': dict(bear_z=W_BEAR, head_top=W_BEAR + 3, tip_z=W_TIP, below_lip=round(LIP_Z0 - W_TIP, 1), max_nuts=W_NUT_MAX),
     }
-    rep['valid'] = {k: BRepCheck_Analyzer(v).IsValid() for k, v in HALVES.items()}
+    rep['valid'] = {k: BRepCheck_Analyzer(v).IsValid() for k, v in list(HALVES.items()) + [('盖' + k, v) for k, v in LIDS.items()]}
     rep['misc'] = dict(Z0=Z0, Z1=Z1, R=(R0, R1), static_in=ST_IN, Z_VIEW0=B.Z_VIEW0, Z_LED0=B.Z_LED0,
-                       lip=dict(r=(LIP_R0, R0), z=(LIP_Z0, Z1), arcs=LIP_ARCS), ledge_arcs=[(round(a, 1), round(b, 1)) for a, b in LEDGE_ARCS],
+                       lip=dict(r=(LIP_R0, R0), z=(LIP_Z0, LID_Z0), arcs=LIP_ARCS), lid=dict(t=LID_T, z=(LID_Z0, Z1), y0=LID_Y0, r=LID_R, br_pocket=BR_POCKET, ant_notch=ANT_NOTCH, led_cuts=LID_LED_CUTS, bbox_a=[round(v, 2) for v in bbox(lid_a)]), ledge_arcs=[(round(a, 1), round(b, 1)) for a, b in LEDGE_ARCS],
                        lug=dict(x=LUG_HX, y=(LUG_Y0, LUG_Y1), z=(LUG_Z0, LIP_Z0), screw_z=LUG_SZ),
                        wireless_holder=str(WH) if WH.exists() else '占位盒', bbox_a=[round(v, 2) for v in bbox(shr_a)])
     return rep
@@ -281,7 +347,7 @@ def report():
 
 if __name__ == '__main__':
     NAMES = dict(a='rotor_shroud_a_v1_2', b='rotor_shroud_b_v1_2'); COL = dict(a='#6FA8DC', b='#93C47D')
-    # 打印姿态: 绕 X 转 180° (倒放), 罩顶 Z72.5 / 配重唇顶面落床; 分缝面 x=0 竖直
+    # 打印姿态: 绕 X 转 180° (倒放), 罩顶 Z73.08 / 配重唇顶面落床; 分缝面 x=0 竖直
     fx = gp_Trsf(); fx.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), math.pi)
     for k, s in HALVES.items():
         d = B.V12 / 'models' / NAMES[k]; d.mkdir(exist_ok=True)
@@ -291,7 +357,18 @@ if __name__ == '__main__':
         t = xf(s, fx); bb = bbox(t); t = xf(t, tr(-(bb[0] + bb[3]) / 2, -(bb[1] + bb[4]) / 2, -bb[2]))
         BRepMesh_IncrementalMesh(t, 0.02, False, 0.2, True)
         w = StlAPI_Writer(); w.ASCIIMode = False; assert w.Write(t, str(B.OUT / '打印STL' / f'{NAMES[k]}.stl'))
-    items = [(NAMES[k], s, COL[k], None, False) for k, s in HALVES.items()]
+    # 顶盖: 打印 顶面朝下 (沉头锥口在床面), 免支撑 (桥板让位槽在上面)
+    for k, s in LIDS.items():
+        n = f'rotor_lid_{k}_v1_2' if k == 'b' else 'rotor_lid_v1_2'
+        if k == 'b': continue                                    # 同件, 只出一个
+        d = B.V12 / 'models' / n; d.mkdir(exist_ok=True)
+        write_doc([(n, s, '#CFE2F3', None, False)], d / f'{n}.step', n)
+        BRepMesh_IncrementalMesh(s, 0.02, False, 0.2, True)
+        w = StlAPI_Writer(); w.ASCIIMode = False; assert w.Write(s, str(d / f'{n}.stl'))
+        t = xf(s, fx); bb = bbox(t); t = xf(t, tr(-(bb[0] + bb[3]) / 2, -(bb[1] + bb[4]) / 2, -bb[2]))
+        BRepMesh_IncrementalMesh(t, 0.02, False, 0.2, True)
+        w = StlAPI_Writer(); w.ASCIIMode = False; assert w.Write(t, str(B.OUT / '打印STL' / f'{n}.stl'))
+    items = [(NAMES[k], s, COL[k], None, False) for k, s in HALVES.items()] + [(f'rotor_lid_{k}', s, '#CFE2F3', None, False) for k, s in LIDS.items()]
     for n, v in FAST.items():
         items += [(f'{n} {i}', s, '#888888' if '包络' not in n else '#E69138', None, False) for i, s in enumerate(v)]
     write_doc(items, OUT / 'rotor_shroud_装配位.step', 'rotor_shroud_asm')

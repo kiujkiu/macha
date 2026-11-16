@@ -29,7 +29,7 @@ for i,p in enumerate(posts): S[f'post{i}']=p
 # 11-16 新转子布局: 灯板支撑 5 件 + Φ8 轴/688, 转子罩两半, 无线托盘 + 模块占位, 底板 r2 (交付 STEP) + 两块灯板
 import led_support_v1_2 as LS, rotor_shroud_v1_2 as RS, wireless_holder_v1_2 as WH
 S.update({'led_post_a':LS.post_a,'led_post_b':LS.post_b,'led_gate':LS.gate_s,'led_top':LS.top,'led_comb':LS.comb_s,'rod':LS.rod,'brg688':LS.brg,
-          'led_a':LS.led_a,'led_b':LS.led_b,'bb_r2':LS.bb_step,'rotor_shroud_a':RS.shr_a,'rotor_shroud_b':RS.shr_b,
+          'led_a':LS.led_a,'led_b':LS.led_b,'bb_r2':LS.bb_step,'rotor_shroud_a':RS.shr_a,'rotor_shroud_b':RS.shr_b,'rotor_lid_a':RS.lid_a,'rotor_lid_b':RS.lid_b,'bridge_a':LS.br_a,'bridge_b':LS.br_b,
           'wireless_holder':WH.H,'wireless_module':WH.module})
 for i,(x,y) in enumerate(SH_M6): S[f'seat_nut{i}']=cyl(x,y,SH_NUT_D,NUT_Z0,NUT_Z0+3.7)   # 11-12 夜: M3 法兰螺母实高 3.7 (build 里 seat_nuts 仍按 2.4)
 P={k:pts(v) for k,v in S.items()}; print('sampled',f'{time.time()-T0:.0f}s',flush=True)

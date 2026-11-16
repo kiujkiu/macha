@@ -111,3 +111,21 @@ def make(B):
     return dict(baseboard=pcb, bb_parts=_comp(comps), cz06=cz, led=led, bb_step=bb_step,
                 info=dict(outline=(x0, y0, x1, y1), outline_r=BB_R, n_parts=len(parts), n_bottom=sum(1 for p in parts if p[3] < 0),
                           tall=[(ref, fp, round(h, 2), tuple(round(v, 1) for v in bb)) for h, ref, fp, bb in tall]))
+
+# ---- 11-16 用户: 灯板 STEP 里没有 LED, 按灯板 PCB 真实坐标贴上 MIP-CIMD07TN 4 合 1 (国星, 1.32×1.32×0.59, 2×2 像素 0.781) ----
+MIP_JSON = Path(__file__).resolve().parent.parent / 'boards' / 'led_v0.2.0_mip_xy.json'   # 10368 颗, B.Cu (从 LED_V0.2.0.kicad_pcb 提)
+MIP_W, MIP_BASE, MIP_H = 1.32, 0.29, 0.59      # 外形 / 底部白漆+绿漆基板厚 / 总厚 (规格书 p6 侧视图)
+
+
+def led_mip(B):
+    """→ (基板部分 compound, 发光面部分 compound), 坐标系同 make()['led'] (B 面 y=0, LED 朝 +y; 世界 x = kx−cx, z = −(ky−cy) + Z_SCR0 + LED_HALF_H)"""
+    import json as _j
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox
+    d = _j.load(open(MIP_JSON, encoding='utf-8')); cx, cy = d['center_kicad']
+    zc = B.Z_SCR0 + LED_HALF_H; h = MIP_W / 2
+    base, top = [], []
+    for kx, ky in d['xy_kicad']:
+        x, z = kx - cx, -(ky - cy) + zc
+        base.append(BRepPrimAPI_MakeBox(gp_Pnt(x - h, 0.0, z - h), gp_Pnt(x + h, MIP_BASE, z + h)).Shape())
+        top.append(BRepPrimAPI_MakeBox(gp_Pnt(x - h, MIP_BASE, z - h), gp_Pnt(x + h, MIP_H, z + h)).Shape())
+    return _comp(base), _comp(top)
