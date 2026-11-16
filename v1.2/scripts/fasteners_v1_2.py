@@ -176,11 +176,11 @@ for i, s_ in enumerate(_K['board_screws']):
     KEY_ROWS.append(dict(组=f"M3x{L:g} 按键板", 号=i, x=round(x, 2), Z=round(z, 2), 方向="−Y", 支承面y=round(by, 2), 尾端y=round(tip, 2),
                          啮合="法兰螺母", 啮合长=round(max(0.0, min(ny, by) - max(tip, ny - NUT_T)), 2)))
 
-# 7 玻璃下 上段↔下段 8×M3×50 (11-14 四): 上段顶面 Φ7 沉孔往下, 穿通两段, 下段底面 Φ8.2 孔里法兰螺母 (Z3.3..7.0, 法兰朝上)
+# 7 玻璃下 玻璃座↔底座 8×M3×50 (11-14 四): 玻璃座顶面 Φ7 沉孔往下, 穿通两段, 底座底面 Φ8.2 孔里法兰螺母 (Z3.3..7.0, 法兰朝上)
 for i, (x, y) in enumerate(B.JN_PTS):
-    screw("M4x50 超薄头 玻璃下上下段", i, x, y, B.JN_BEAR, B.JN_L, False, d=4.0, hd=8.5, hh=B.JN_HH, engage=("M4 法兰螺母", B.JN_NUT_Z1 - B.JN_NUT_H, B.JN_NUT_Z1))
+    screw("M4x50 超薄头 玻璃下底座+玻璃座", i, x, y, B.JN_BEAR, B.JN_L, False, d=4.0, hd=8.5, hh=B.JN_HH, engage=("M4 法兰螺母", B.JN_NUT_Z1 - B.JN_NUT_H, B.JN_NUT_Z1))
     _z0 = B.JN_NUT_Z1 - B.JN_NUT_H                 # 11-16: M4 法兰螺母法兰朝下 (法兰 Φ9.7×1.2 + 六角 6.9)
-    add(f"M4 法兰螺母 玻璃下下段底 #{i}", cut(fuse(cyl(x, y, 9.7, _z0, _z0 + 1.2), hexprism(x, y, 6.9, _z0 + 1.2, B.JN_NUT_Z1)), cyl(x, y, 4.0, -1, 10)), "#707070")
+    add(f"M4 法兰螺母 玻璃下底座底 #{i}", cut(fuse(cyl(x, y, 9.7, _z0, _z0 + 1.2), hexprism(x, y, 6.9, _z0 + 1.2, B.JN_NUT_Z1)), cyl(x, y, 4.0, -1, 10)), "#707070")
 
 # 11 V2 灯板支撑 (11-15, led_support_v1_2): 两端立板底块 4×M3×8 内六角 (Φ5.5×3 头, 沉孔底 Z36) 往下拧承载盘顶面 M3×4 铜螺母 (Z27.8..32);
 #    底板 r1 4×M3: 承载盘顶面 Φ4.2×4.0 浅孔压 M3×3 铜螺母 (Z29..32), 上面 M3×3 铜柱 (公母, 公头 3 进铜螺母) + 板 + M3×5 (螺丝只列 BOM);
@@ -196,7 +196,7 @@ add("M3x4 铜螺母 承载盘 配平", insert(*B.CW_PT, L.RIM_TOP - INS_L_DISC, 
 # ---------------- 零件 ----------------
 PARTS = {"灯板立板+x": L.post_a, "灯板立板-x": L.post_b, "底盘": B.disc, "线圈环": B.ring, "电机": B.motor, "控制板": B.board, "散热片": B.heatsink,
          "法兰盘": B.flange_disc, "安装法兰": B.mounting_flange, "转子毂盘": B.hub, "承载盘": B.rim,
-         "下罩下段": B.shroud_lo, "下罩上段": B.shroud_hi, "外卡环": B.clamp_ring, "XT60压块": B.xt_clamp, "XT60底垫": B.xt_shim,
+         "玻璃下底座": B.shroud_lo, "玻璃下玻璃座": B.shroud_hi, "外卡环": B.clamp_ring, "XT60压块": B.xt_clamp, "XT60底垫": B.xt_shim,
          **({"MOS压块": B.CD.clamp} if B.CD.HAS_MC else {}), **({"电容卡件": B.CD.cap_clamp} if B.CD.HAS_CC else {}), "驱动板": B.CD.pcb, "驱动MOS": B.CD.mos, "驱动电解电容": B.CD.cap, "驱动散热片": B.CD.sink2, "按键支架": B.key_bracket, "按键板": B.key_board}
 for i, p in enumerate(B.posts):
     PARTS[f"立柱{i}"] = p
@@ -334,7 +334,7 @@ P_ = [('底盘 Φ220×6', B.disc, '#8A8F98', 0.05), ('线圈环', B.ring, '#E0A0
       ('电机控制板', BOARD_LITE, '#2E7D32', 0.08), ('散热片 40×20×6', B.heatsink, '#C0392B', 0.05),
       ('法兰盘 flange_disc_v1_2', B.flange_disc, '#D9A441', 0.05), ('安装法兰 mounting_flange_v1_2', B.mounting_flange, '#B5895A', 0.05),
       ('转子毂盘 hub_disc_v1_2', B.hub, '#4F86C6', 0.05), ('承载盘 rim_ring Φ170', B.rim, '#6AA84F', 0.05),
-      ('玻璃下-下段 glass_shroud_lower_v1_2', B.shroud_lo, '#7FB3D5', 0.05), ('玻璃下-上段 glass_shroud_upper_v1_2', B.shroud_hi, '#5DADE2', 0.05), ('外卡环 glass_clamp_ring_v1_2', B.clamp_ring, '#2E86C1', 0.05), ('XT60 压块', B.xt_clamp, '#F1C232', 0.05), ('XT60 底垫', B.xt_shim, '#E69138', 0.05),
+      ('玻璃下-底座 glass_shroud_lower_v1_2', B.shroud_lo, '#7FB3D5', 0.05), ('玻璃下-玻璃座 glass_shroud_upper_v1_2', B.shroud_hi, '#5DADE2', 0.05), ('外卡环 glass_clamp_ring_v1_2', B.clamp_ring, '#2E86C1', 0.05), ('XT60 压块', B.xt_clamp, '#F1C232', 0.05), ('XT60 底垫', B.xt_shim, '#E69138', 0.05),
       *([('MOS 压块 mos_clamp_v1_2', B.CD.clamp, '#E69138', 0.05)] if B.CD.HAS_MC else []), *([('电容卡件 cap_clamp_v1_2', B.CD.cap_clamp, '#B45F06', 0.05)] if B.CD.HAS_CC else []), ('线圈驱动板 (元件级)', B.CD.pcb, '#38761D', 0.05), ('线圈驱动 MOS', B.CD.mos, '#222222', 0.05),
       ('线圈驱动 电解电容', B.CD.cap, '#1155CC', 0.05), ('线圈驱动 散热片', B.CD.sink2, '#C0392B', 0.05),
       ('按键支架 key_bracket_v1_2', B.key_bracket, '#F1C232', 0.03), ('按键板 (简模)', B.key_board, '#2E7D32', 0.03)]

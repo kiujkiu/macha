@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""玻璃下 上段 + 下段 组合 2D 图 (11-16): 过螺丝孔 22.5° 的竖剖面 (整宽 + 局部放大) + 俯视孔位。
+"""玻璃下 玻璃座 + 底座 组合 2D 图 (11-16): 过螺丝孔 22.5° 的竖剖面 (整宽 + 局部放大) + 俯视孔位。
 读 models/*/STEP (装配坐标), 不 import build_v1_2 (太慢); 螺丝/螺母按参数画。
     cd v1.2/scripts && ../../.venv/bin/python drawing_glass_split_asm_v1_2.py
 → models/glass_shroud_upper_v1_2/glass_split_组合图.{pdf,png}"""
@@ -53,8 +53,8 @@ def section(shape, ang):
     return tris
 
 M = V12 / 'models'
-parts = [('下段 glass_shroud_lower_v1_2', M / 'glass_shroud_lower_v1_2/glass_shroud_lower_v1_2.step', '#E8C99A'),
-         ('上段 glass_shroud_upper_v1_2', M / 'glass_shroud_upper_v1_2/glass_shroud_upper_v1_2.step', '#A9CCE3'),
+parts = [('底座 glass_shroud_lower_v1_2', M / 'glass_shroud_lower_v1_2/glass_shroud_lower_v1_2.step', '#E8C99A'),
+         ('玻璃座 glass_shroud_upper_v1_2', M / 'glass_shroud_upper_v1_2/glass_shroud_upper_v1_2.step', '#A9CCE3'),
          ('外卡环 glass_clamp_ring_v1_2', M / 'glass_clamp_ring_v1_2/glass_clamp_ring_v1_2.step', '#CFD8DC'),
          ('底盘 base_disc', M / 'base_disc_v1_2/base_disc_v1_2.step', '#E0E0E0')]
 secs = [(n, section(load(p), ANG), c) for n, p, c in parts if p.exists()]
@@ -69,7 +69,7 @@ def draw_hw(ax, sgn):
     ax.add_patch(Rectangle((r * 1 - 0 + (95 - JN_R if sgn > 0 else -100 + JN_R) * 0 + (95 if sgn > 0 else -100) - r, Z_G), 5, 30, color='#D6EAF8', ec='#5DADE2', zorder=4))
 
 fig = plt.figure(figsize=(16.54, 11.69))   # A3
-fig.suptitle(f'玻璃下 上段 + 下段 组合图 (V1.2, 11-16)  —  8× M4×{JN_L:g} 超薄头 (头 Φ8.5×1.8) 穿通 + 下段底面 M4 法兰螺母', fontsize=15, y=0.975)
+fig.suptitle(f'玻璃下 玻璃座 + 底座 组合图 (V1.2, 11-16)  —  8× M4×{JN_L:g} 超薄头 (头 Φ8.5×1.8) 穿通 + 底座底面 M4 法兰螺母', fontsize=15, y=0.975)
 # 整宽剖面
 ax = fig.add_axes([0.04, 0.52, 0.92, 0.40])
 for n, tris, c in secs:
@@ -79,7 +79,7 @@ ax.set_xlim(-115, 115); ax.set_ylim(-8, 80); ax.set_aspect('equal'); ax.grid(alp
 ax.set_title(f'剖面 A-A (过 {ANG:g}° / {ANG + 180:g}° 两个螺丝孔的竖剖面, 1:1 比例按图宽缩放)', fontsize=12)
 ax.axhline(SPLIT_Z, color='r', ls='--', lw=0.8); ax.text(-112, SPLIT_Z + 0.8, f'分缝 Z{SPLIT_Z:g}', color='r', fontsize=9)
 ax.axhline(Z_G, color='#1F77B4', ls=':', lw=0.8); ax.text(-112, Z_G + 0.8, f'玻璃底 Z{Z_G:g}', color='#1F77B4', fontsize=9)
-ax.text(-60, 10, '下段 Z0→32 (浅黄)', fontsize=11); ax.text(-60, 42, f'上段 Z32→{Z_G:g} (+ 内卡到 Z{Z_VIEW0:g}) (浅蓝)', fontsize=11)
+ax.text(-60, 10, '底座 Z0→32 (浅黄)', fontsize=11); ax.text(-60, 42, f'玻璃座 Z32→{Z_G:g} (+ 内卡到 Z{Z_VIEW0:g}) (浅蓝)', fontsize=11)
 ax.text(30, -5.5, '底盘', fontsize=10)
 ax.set_xlabel('r (mm, 剖面内, 中心 = 转轴)'); ax.set_ylabel('Z (mm)')
 # 局部放大
@@ -98,7 +98,7 @@ dim(bx, JN_R - JN_CB / 2, JN_R + JN_CB / 2, Z_G + 1.2, f'沉孔 Φ{JN_CB:g} 深 
 dim(bx, JN_R - JN_NUT_FD / 2, JN_R + JN_NUT_FD / 2, -5.5, f'法兰窝 Φ{JN_NUT_FD:g} 深 {JN_NUT_FZ:g}')
 dim(bx, 0, JN_NUT_Z1, 105.5, f'螺母窝深 {JN_NUT_Z1:g}\n(六角对边 {JN_NUT_AF:g})', vert=True)
 dim(bx, JN_TIP, JN_BEAR, 88.5, f'M4×{JN_L:g}\n支承 Z{JN_BEAR:.2f}\n尾 Z{JN_TIP:.2f}', vert=True)
-bx.text(JN_R + 5, 20, f'通孔 Φ{JN_D:g}\n(上下段)', fontsize=9)
+bx.text(JN_R + 5, 20, f'通孔 Φ{JN_D:g}\n(底座+玻璃座)', fontsize=9)
 bx.text(96, 56.5, '玻璃 (r95–100)', fontsize=9, color='#2874A6')
 bx.set_xlabel('r (mm)'); bx.set_ylabel('Z (mm)')
 # 俯视孔位 + 说明
@@ -120,18 +120,18 @@ txt = f'''紧固件 (按用户实物):
    法兰 Φ9.7, 对边 6.9, 厚 4.3
 
 尺寸:
- · 上段: Φ{JN_D:g} 通, 顶面沉孔 Φ{JN_CB:g} 深 {Z_G - JN_BEAR:.1f}
+ · 玻璃座: Φ{JN_D:g} 通, 顶面沉孔 Φ{JN_CB:g} 深 {Z_G - JN_BEAR:.1f}
    头顶 Z{JN_BEAR + JN_HH:.2f}, 玻璃端面下 {Z_G - JN_BEAR - JN_HH:.1f}
- · 下段: Φ{JN_D:g} 通, 底面法兰圆窝
+ · 底座: Φ{JN_D:g} 通, 底面法兰圆窝
    Φ{JN_NUT_FD:g} 深 {JN_NUT_FZ:g} + 六角窝 {JN_NUT_AF:g} 到深 {JN_NUT_Z1:g}
    螺母 Z0.3..{JN_NUT_Z1:g} (法兰朝下, 防转)
  · 尾 Z{JN_TIP:.2f}, 啮合 {JN_NUT_Z1 - JN_TIP:.2f}
 
 装配顺序:
- 1. 8 个法兰螺母法兰朝下放进下段底面窝
- 2. 下段放上底盘 (底盘托住螺母)
- 3. 上段扣上 (止口凸筋 r104–106 对位)
- 4. 从上段顶面拧 8 颗 M4×{JN_L:g}
+ 1. 8 个法兰螺母法兰朝下放进底座底面窝
+ 2. 底座放上底盘 (底盘托住螺母)
+ 3. 玻璃座扣上 (止口凸筋 r104–106 对位)
+ 4. 从玻璃座顶面拧 8 颗 M4×{JN_L:g}
  5. 放玻璃, 装外卡环
 
 注: 沉孔 Φ{JN_CB:g} 下切内卡根 0.7 (只在玻璃座下 {Z_G - JN_BEAR:.1f}),
