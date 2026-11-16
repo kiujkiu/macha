@@ -113,6 +113,205 @@ def merge(segs):                             # 共线短段合并, 减小 PDF
     return segs
 
 
+# ---------------- 自动链式尺寸 (11-16: 剖视每段厚度 / 每个台阶半径) ----------------
+def _tw(s, size):
+    """文字宽 (页面 mm) 估算: ASCII 0.56·size, 其它 (中文/Φ/°) 1.0·size。"""
+    return sum(0.56 * size if ord(c) < 128 else 1.0 * size for c in s)
+
+
+def step_levels(polys, u0, u1, w0, w1, axis, tol=1e-3, min_len=0.4, merge_gap=0.3):
+    """剖面轮廓里水平 (axis='w': 返回 Z 值) 或竖直 (axis='u': 返回 u 值) 直线段的位置 → [(值, 总长)]。
+    只计窗口 [u0,u1]×[w0,w1] 内部分; 间隔 < merge_gap 的合并 (取长者)。"""
+    acc = {}
+    for P in polys:
+        for a, b in zip(P[:-1], P[1:]):
+            du, dw = b[0] - a[0], b[1] - a[1]
+            if axis == "w":
+                if abs(dw) > tol:
+                    continue
+                lo, hi = max(min(a[0], b[0]), u0), min(max(a[0], b[0]), u1)
+                v = (a[1] + b[1]) / 2
+                if not (w0 - 1e-6 <= v <= w1 + 1e-6):
+                    continue
+            else:
+                if abs(du) > tol:
+                    continue
+                lo, hi = max(min(a[1], b[1]), w0), min(max(a[1], b[1]), w1)
+                v = (a[0] + b[0]) / 2
+                if not (u0 - 1e-6 <= v <= u1 + 1e-6):
+                    continue
+            if hi - lo > 1e-6:
+                k = round(v, 3)
+                acc[k] = acc.get(k, 0.0) + (hi - lo)
+    lv = sorted((v, L) for v, L in acc.items() if L >= min_len)
+    out = []
+    for v, L in lv:
+        if out and v - out[-1][0] < merge_gap:
+            pv, pL = out[-1]
+            out[-1] = (pv if pL >= L else v, pL + L)
+        else:
+            out.append((v, L))
+    return out
+
+
+def thin_levels(lv, ends, nmax=9):
+    """层级太多时只留主要台阶: 两端必留, 其余按边长取前 nmax-2。"""
+    vals = [v for v, _ in lv]
+    keep = set()
+    for e in ends:
+        if e is None:
+            continue
+        keep.add(min(vals, key=lambda v: abs(v - e)) if vals and min(abs(v - e) for v in vals) < 0.3 else e)
+    rest = sorted([(L, v) for v, L in lv if v not in keep], reverse=True)
+    for L, v in rest[:max(0, nmax - len(keep))]:
+        keep.add(v)
+    out = []
+    for v in sorted(keep):
+        if out and v - out[-1] < 0.3:
+            continue
+        out.append(v)
+    return out
+
+
+def spread(pos, sizes, lo=None, hi=None):
+    """一维去重叠: pos 期望中心, sizes 各自占宽; 返回新中心 (保序, 相邻间距 ≥ (s_i+s_j)/2), 整组尽量贴原位。"""
+    n = len(pos)
+    if n == 0:
+        return []
+    order = sorted(range(n), key=lambda i: pos[i])
+    p = [pos[i] for i in order]
+    s = [sizes[i] for i in order]
+    # 聚类合并法 (每簇居中于其成员期望位置均值)
+    clusters = [[k] for k in range(n)]
+
+    def place(c):
+        need = [0.0]
+        for a, b in zip(c[:-1], c[1:]):
+            need.append(need[-1] + (s[a] + s[b]) / 2)
+        off = sum(p[k] - need[j] for j, k in enumerate(c)) / len(c)
+        return [off + d for d in need]
+    pl = [place(c) for c in clusters]
+    changed = True
+    while changed:
+        changed = False
+        for i in range(len(clusters) - 1):
+            a, b = clusters[i], clusters[i + 1]
+            if pl[i][-1] + (s[a[-1]] + s[b[0]]) / 2 > pl[i + 1][0] + 1e-9:
+                clusters[i] = a + b
+                pl[i] = place(clusters[i])
+                del clusters[i + 1], pl[i + 1]
+                changed = True
+                break
+    flat = [x for q in pl for x in q]
+    if lo is not None and flat[0] - s[0] / 2 < lo:
+        d = lo - (flat[0] - s[0] / 2)
+        flat = [x + d for x in flat]
+    if hi is not None and flat[-1] + s[-1] / 2 > hi:
+        d = (flat[-1] + s[-1] / 2) - hi
+        flat = [x - d for x in flat]
+    out = [0.0] * n
+    for j, i in enumerate(order):
+        out[i] = flat[j]
+    return out
+
+
+def _tick(pg, x, y, dx, dy, seg_page):
+    if seg_page >= 2 * ARR_L + 0.6:
+        pg.arrow(x, y, dx, dy, L=ARR_L)
+    else:
+        pg.arrow(x, y, dx, dy, L=min(ARR_L, max(1.2, seg_page * 0.45)), Wd=0.7)
+
+
+def vchain(pg, ys, labels, xg, xd, size=2.3, skip=()):
+    """竖向链式尺寸: ys 页面 y (升序), labels[i] 对应 ys[i]..ys[i+1]; 文字放尺寸线右侧, 挤时上下推开 + 引线。
+    skip: 不画文字/箭头的段号 (与手写重复)。返回文字最右 x。"""
+    for y in ys:
+        pg.line(xg + 0.8, y, xd + 1.6, y, lw=0.15)
+    pg.line(xd, ys[0], xd, ys[-1], lw=0.15)
+    segs = [i for i in range(len(ys) - 1) if i not in skip]
+    for i in segs:
+        h = ys[i + 1] - ys[i]
+        _tick(pg, xd, ys[i], 0, -1, h)
+        _tick(pg, xd, ys[i + 1], 0, 1, h)
+    th = size * 1.05
+    want = [(ys[i] + ys[i + 1]) / 2 for i in segs]
+    got = spread(want, [th] * len(segs))
+    xmax = xd
+    for k, i in enumerate(segs):
+        lab = mm(labels[i])
+        moved = abs(got[k] - want[k]) > 0.3
+        tx = xd + (3.6 if moved else 1.2)
+        if moved:
+            pg.line(xd, want[k], xd + 1.0, want[k], lw=0.12)
+            pg.line(xd + 1.0, want[k], tx - 0.3, got[k], lw=0.12)
+        pg.text(tx, got[k], lab, size=size, ha="left", va="center", halo=True)
+        xmax = max(xmax, tx + _tw(lab, size))
+    return xmax
+
+
+def hchain(pg, xs, labels, yg, yd, size=2.3, skip=(), dry=False):
+    """横向链式尺寸 (尺寸线在 yg 下方 yd): 文字在尺寸线上方, 挤时左右推开 + 引线 (文字上抬一行)。"""
+    segs = [i for i in range(len(xs) - 1) if i not in skip]
+    if not dry:
+        for x in xs:
+            pg.line(x, yg - 0.8, x, yd - 1.6, lw=0.15)
+        pg.line(xs[0], yd, xs[-1], yd, lw=0.15)
+        for i in segs:
+            w = xs[i + 1] - xs[i]
+            _tick(pg, xs[i], yd, -1, 0, w)
+            _tick(pg, xs[i + 1], yd, 1, 0, w)
+    labs = [mm(labels[i]) for i in segs]
+    want = [(xs[i] + xs[i + 1]) / 2 for i in segs]
+    wid = [_tw(t, size) + 1.2 for t in labs]
+    # 第 0 行 = 尺寸线上方 (放得下的段); 放不下的依次进下方 1..3 行 (引线连段中点); 再放不下的最后一行左右推开
+    rows = {}
+    place = {}
+    leads = []                                   # (x0 在尺寸线, x1 在文字, 行)
+    rowy = lambda r: yd - 1.4 - (r - 1) * (size + 0.9) - size * 0.5   # noqa: E731  第 r 行文字中线 y
+    free = lambda r, a, b: all(b <= a2 or a >= b2 for a2, b2 in rows.get(r, []))   # noqa: E731
+
+    def lead_x(x0, x1, r, q):                    # 引线 (尺寸线 x0 → 第 r 行 x1) 在第 q 行中线处的 x
+        y_end = rowy(r) + size * 0.5
+        t = (yd - rowy(q)) / max(1e-6, yd - y_end)
+        return x0 + (x1 - x0) * min(1.0, t)
+    for k in sorted(range(len(segs)), key=lambda k: -(xs[segs[k] + 1] - xs[segs[k]])):
+        fits = wid[k] <= (xs[segs[k] + 1] - xs[segs[k]]) + 0.6
+        for r in ([0] if fits else []) + [1, 2, 3, 4]:
+            done = False
+            for dx in (0.0, -wid[k] / 2, wid[k] / 2, wid[k] / 2 + 1.0, -wid[k] / 2 - 1.0, wid[k], -wid[k], 1.5 * wid[k], -1.5 * wid[k]):
+                c = want[k] + dx
+                a, b = c - wid[k] / 2, c + wid[k] / 2
+                if not free(r, a, b):
+                    continue
+                if r >= 1 and any(not free(q, lead_x(want[k], c, r, q) - 0.4, lead_x(want[k], c, r, q) + 0.4) for q in range(1, r)):
+                    continue                     # 本引线穿过上面行的文字
+                if r >= 1 and any(lr > r and a - 0.4 < lead_x(l0, l1, lr, r) < b + 0.4 for l0, l1, lr in leads):
+                    continue                     # 文字压到更深行的引线
+                rows.setdefault(r, []).append((a, b))
+                place[k] = (r, c)
+                if r >= 1:
+                    leads.append((want[k], c, r))
+                done = True
+                break
+            if done:
+                break
+    rest = [k for k in range(len(segs)) if k not in place]
+    if rest:
+        got = spread([want[k] for k in rest], [wid[k] for k in rest])
+        for k, g in zip(rest, got):
+            place[k] = (5, g)
+    for k, (r, x) in place.items():
+        if dry:
+            continue
+        if r == 0:
+            pg.text(x, yd + 0.8, labs[k], size=size, ha="center", va="bottom", halo=True)
+        else:
+            ty = yd - 1.4 - (r - 1) * (size + 0.9)
+            pg.line(want[k], yd, x, ty + 0.1, lw=0.12)
+            pg.text(x, ty, labs[k], size=size, ha="center", va="top", halo=True)
+    return max([r for r, _ in place.values()] + [0])
+
+
 def pick_scale(sizes_avail, cap=5):
     for s, lab in SCALES:
         if s <= cap and all(sz * s <= av for sz, av in sizes_avail):
@@ -204,14 +403,61 @@ def draw(spec):
     SB = (244, 0, 412, 268)
     nz = len(sec.get("zd", []))
     nr = len(sec.get("rd", []))
-    hmax = sec.get("hmax", 52 if dets else 120)
-    s2, slab2 = pick_scale([(r1 - r0, SB[2] - SB[0] - 16 - 10 * nz), (z1 - z0, hmax)], cap=4)
+    # 剖视可用高度: 页高 − 标题栏 − 下方 (径向尺寸行 + 详图 + 孔表/说明) 估算; 窄高件 (罩壁类) 因此能放大
+    _txt = 4.6 + sum(3.5 + 3.1 * len([q for q in h.get("where", "").split("\n") if q]) for h in spec.get("holes", [])) \
+        + 5.7 + 3.3 * len(spec.get("notes", []))
+    _below = 7 * (nr + 1) + 6 + 12 + (math.ceil(len(dets) / 3) * spec.get("det_h", 46.0) + 5 if dets else 0) + _txt
+    hmax = sec.get("hmax", min(120.0, max(52.0 if dets else 60.0, SB[3] - 14 - 40 - _below)))
+    # 自动链式尺寸 (sec['auto_dims'] = False 关; 手写 zd/rd 优先, 重复段不画)
+    auto = sec.get("auto_dims", True)
+    nmax = sec.get("auto_nmax", 9)
+    close = lambda a, b: abs(a - b) < 0.05   # noqa: E731
+    zl, ul, zskip, uskip = [], [], set(), set()
+    if auto and sec.get("auto_z", True):
+        zl = thin_levels(step_levels(polys, r0, r1, z0, z1, "w"), (z0, z1), nmax)
+        zl = sorted(set([z0] + [z for z in zl if z0 + 0.25 < z < z1 - 0.25] + [z1]))
+        if len(zl) < 3:                      # 只有一段 = 总高, 交给"总高"一条
+            zl = []
+    if auto and sec.get("auto_r", True):      # auto_r=False: 只关径向链 (如多孔平板, 竖边全是孔壁)
+        ul = thin_levels(step_levels(polys, r0, r1, z0, z1, "u"), (), nmax)
+        if r0 <= 0 and ul and ul[0] > 0.25:
+            ul = [0.0] + ul
+        if len(ul) < 2:
+            ul = []
+    man_z = [(min(d[0], d[1]), max(d[0], d[1])) for d in sec.get("zd", [])]
+    man_r = [(min(d[0], d[1]), max(d[0], d[1])) for d in sec.get("rd", [])]
+    for i in range(len(zl) - 1):
+        if any(close(zl[i], a) and close(zl[i + 1], b) for a, b in man_z):
+            zskip.add(i)
+    for i in range(len(ul) - 1):
+        if any(close(ul[i], a) and close(ul[i + 1], b) for a, b in man_r):
+            uskip.add(i)
+    if zl and len(zskip) == len(zl) - 1:
+        zl = []
+    if ul and len(uskip) == len(ul) - 1:
+        ul = []
+    zlab = [F(b - a) for a, b in zip(zl[:-1], zl[1:])]
+    rpre = "" if any(abs(c) > 1e-6 for c in sec.get("origin", (0.0, 0.0))) else "R"   # 偏心剖切面: u 不是半径
+    ulab = [f"{rpre}{F(b)}" if abs(a) < 1e-9 else F(b - a) for a, b in zip(ul[:-1], ul[1:])]
+    want_tot = auto and not any(close(a, z0) and close(b, z1) for a, b in man_z)
+    W_a = max(10.0, 7.6 + max(_tw(mm(s), 2.3) for s in zlab)) + 1 if zl else 0.0
+    W_tot = 10.0 if want_tot else 0.0
+    # 手写 zd 列距按文字宽自适应 (长标签不再压到外一列尺寸线)
+    zcol = [0.0]
+    for zd in sec.get("zd", []):
+        lab = zd[2] if len(zd) > 2 else F(zd[1] - zd[0])
+        zcol.append(zcol[-1] + max(10.0, _tw(mm(lab), 2.8) + 3.0))
+    s2, slab2 = pick_scale([(r1 - r0, SB[2] - SB[0] - 16 - zcol[-1] - W_a - W_tot), (z1 - z0, hmax)], cap=4)
+    print(f"  auto {spec['code']}: Z链 {[F(z) for z in zl]}  径向链 {[F(u) for u in ul]}", flush=True)
     px0 = SB[0] + 10
     py0 = SB[3] - 14 - (z1 - z0) * s2
-    sec_bot = py0 - 7 * nr - 6
 
     def T2(u, w):
         return px0 + (u - r0) * s2, py0 + (w - z0) * s2
+    nra = 1 if ul else 0
+    hrows = hchain(None, [T2(u, z0)[0] for u in ul], ulab, py0, py0 - 7, skip=uskip, dry=True) if ul else 0
+    hext = (hrows * 3.2 + 1.0) if hrows else 0.0          # 径向链下方引出文字占高
+    sec_bot = py0 - 7 * (nr + nra) - 6 - hext
     segs = clip(polys, r0, r1, z0 - 1, z1 + 1)
     if segs:
         a2 = np.array([[T2(*p), T2(*q)] for p, q in segs])
@@ -221,14 +467,24 @@ def draw(spec):
     pg.text((SB[0] + SB[2]) / 2, SB[3] - 2, f"剖视图  Section A-A  ({slab2})   尺寸单位: mm", size=3.6, ha="center")
     pg.text((SB[0] + SB[2]) / 2, SB[3] - 7, f"半剖: 轴线 → 外缘, 沿 {F(sec['ang'])}° 方向; Z = 装配高度", size=2.4, ha="center")
     xr = T2(r1, 0)[0]
+    xcol = xr + 6
+    if zl:                                    # 自动竖向链: 紧贴剖视, 每段厚度
+        xm = vchain(pg, [T2(0, z)[1] for z in zl], zlab, xr + 1, xcol, skip=zskip)
+        xcol = max(xcol + 10, xm + 4)
     for i, zd in enumerate(sec.get("zd", [])):
         za, zb = zd[0], zd[1]
         lab = zd[2] if len(zd) > 2 else F(zb - za)
-        vdim(pg, T2(0, za)[1], T2(0, zb)[1], xr + 1, xr + 6 + 10 * i, lab)
+        vdim(pg, T2(0, za)[1], T2(0, zb)[1], xr + 1, xcol + zcol[i], lab)
+    if want_tot:                              # 总高: 最外侧
+        vdim(pg, T2(0, z0)[1], T2(0, z1)[1], xr + 1, xcol + zcol[nz], F(z1 - z0))
+    if ul:                                    # 自动径向链: 紧贴剖视下方
+        hchain(pg, [T2(u, z0)[0] for u in ul], ulab, py0, py0 - 7, skip=uskip)
+        if ul[0] > 1e-9:                      # 链起点的绝对半径 (第一条界线左侧, 尺寸线上方)
+            pg.text(T2(ul[0], z0)[0] - 1.0, py0 - 6.2, (f"R{F(ul[0])}" if rpre else f"起 {F(ul[0])}"), size=2.3, ha="right", va="bottom", halo=True)
     for i, rd in enumerate(sec.get("rd", [])):
         ra, rb = rd[0], rd[1]
         lab = rd[2] if len(rd) > 2 else (f"R{F(rb)}" if ra == 0 else F(rb - ra))
-        yb = py0 - 7 - 7 * i
+        yb = py0 - 7 - 7 * (i + nra) - hext
         hdim(pg, T2(ra, z0)[0], T2(rb, z0)[0], py0, yb, lab, size=2.5)
     # Z 标签 (底/顶)
     pg.text(px0 - 1.5, py0, f"Z{F(z0)}", size=2.3, ha="right", va="center")

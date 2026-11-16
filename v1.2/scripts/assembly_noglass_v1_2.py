@@ -25,11 +25,12 @@ for s in B.solids(B.board):
     bb = B.bbox(s)
     if max(bb[3] - bb[0], bb[4] - bb[1]) >= 1.2 or bb[5] - bb[2] >= 1.0: _b.Add(board, s)
 import led_support_v1_2 as L
+import fpc_v1_2 as F                              # 11-16 晚: 桥板真模型 + 两根 FPC 实体 + 双面胶 + 底板真 FPC 座
 import rotor_shroud_v1_2 as RS
 import wireless_holder_v1_2 as WH
 VB = L.VB
 CD = B.CD
-_ENV_KEEP = [k for k in L.env if not k.startswith(('底面件', 'J3 插头', '24V 线'))]   # 底板 r3 交付 STEP 里没 3D 的器件 (框 × 限高)
+_ENV_KEEP = [k for k in L.env if not k.startswith(('底面件', 'J3 插头', '24V 线', 'J5', 'J6'))]   # J5/J6 改用 F.seat_j5/j6 真外形   # 底板 r3 交付 STEP 里没 3D 的器件 (框 × 限高)
 # 11-16 用户: 灯板贴上真实 LED (MIP-CIMD07TN 4 合 1, 灯板 PCB 坐标 10368 颗/面), 发光面单独换色, 看底座/转子罩挡不挡
 _mb, _mt = V.led_mip(B)
 LED_BASE = L.comp(list(L.pair(_mb))); LED_TOP = L.comp(list(L.pair(_mt)))   # 11-16 晚 偏心: 随灯板一起 pair() (含 Y_LED 和 ECC)
@@ -48,7 +49,7 @@ PARTS = [  # (名, 形状, 颜色, 3MF 弦差)
     ('MIP LED 4合1 基板部分 (黑) ×2×10368', LED_BASE, '#151515', 0.05), ('MIP LED 4合1 发光面 (红) ×2×10368', LED_TOP, '#FF2020', 0.05),
     ('灯板支撑 +x T 脚 led_post_a', L.post_a, '#F1C232', 0.03), ('灯板支撑 -x T 脚 led_post_b', L.post_b, '#E69138', 0.03), ('灯板夹条 led_bar', L.bar_s, '#8E7CC3', 0.03),
     ('灯板顶部件 led_top', L.top, '#6FA8DC', 0.03), ('灯板梳齿 led_comb', L.comb_s, '#9FC5E8', 0.03),
-    (f'Φ8×{L.ROD_L:g} 钢轴', L.rod, '#999999', 0.03), ('桥板 A/B (占位)', L.comp([L.br_a, L.br_b]), '#1E8449', 0.05), ('天线 18.5×37.7 软板 ×2', L.comp([L.ant_a, L.ant_b]), '#C0392B', 0.03),
+    (f'Φ8×{L.ROD_L:g} 钢轴', L.rod, '#999999', 0.03), ('桥板 A/B (真模型 V2桥)', L.comp([F.bridge_a, F.bridge_b]), '#1E8449', 0.05), ('FPC A (桥 A → J5)', F.fpc_a, '#E67E22', 0.03), ('FPC B (桥 B → J6)', F.fpc_b, '#D35400', 0.03), ('FPC 双面胶', L.comp([F.tape_a, F.tape_b]), '#F7DC6F', 0.03), ('底板 FPC 座 J5/J6', L.comp([F.seat_j5, F.seat_j6]), '#5D6D7E', 0.03), ('天线 18.5×37.7 软板 ×2', L.comp([L.ant_a, L.ant_b]), '#C0392B', 0.03),
     ('转子罩 a rotor_shroud_a_v1_2', RS.shr_a, '#A4C2F4', 0.05), ('转子罩 b rotor_shroud_b_v1_2', RS.shr_b, '#B6D7A8', 0.05), ('转子罩顶盖 +y rotor_lid_v1_2', RS.lid_a, '#CFE2F3', 0.05), ('转子罩顶盖 −y rotor_lid_b_v1_2', RS.lid_b, '#D9EAD3', 0.05),
     ('无线托盘 wireless_holder_v1_2', WH.H, '#FFD966', 0.03), ('无线供电模块 30.5×49×15 (占位)', WH.module, '#3D85C6', 0.05),
 ]

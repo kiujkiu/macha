@@ -34,6 +34,82 @@ def ring_txt(pts):
     return f"r{F(r)} @ " + "/".join(F(round(x, 1)) for x in a) + "°"
 
 
+_CYL_CACHE = {}
+
+
+def cyls(shape):
+    """B-rep 里全部圆柱面 → [(直径, x, y, z0, z1)] (几何实测; V1.0 STEP 带来的孔 build 里没有变量, 从这里读)。"""
+    k = id(shape)
+    if k not in _CYL_CACHE:
+        from OCP.TopExp import TopExp_Explorer
+        from OCP.TopAbs import TopAbs_FACE
+        from OCP.TopoDS import TopoDS
+        from OCP.BRepAdaptor import BRepAdaptor_Surface
+        from OCP.GeomAbs import GeomAbs_Cylinder
+        out, e = [], TopExp_Explorer(shape, TopAbs_FACE)
+        while e.More():
+            f = TopoDS.Face(e.Current())
+            a = BRepAdaptor_Surface(f)
+            if a.GetType() == GeomAbs_Cylinder:
+                c = a.Cylinder(); p = c.Location(); bb = B.bbox(f)
+                out.append((round(2 * c.Radius(), 2), round(p.X(), 2), round(p.Y(), 2), round(bb[2], 2), round(bb[5], 2)))
+            e.Next()
+        _CYL_CACHE[k] = out
+    return _CYL_CACHE[k]
+
+
+def cyl_at(shape, d, pt=None, centered=False, tol=0.05):
+    """直径 d 的圆柱面 (pt: 只取轴心在 pt 的; centered: 只取轴心在原点的), 同轴分段合并 → [(x, y, z0, z1)]。"""
+    acc = {}
+    for dd, x, y, za, zb in cyls(shape):
+        if abs(dd - d) > tol:
+            continue
+        if centered and math.hypot(x, y) > 0.1:
+            continue
+        if pt is not None and math.hypot(x - pt[0], y - pt[1]) > 0.1:
+            continue
+        if not centered and pt is None and math.hypot(x, y) < 0.1:
+            continue
+        kk = (round(x, 1), round(y, 1))
+        z = acc.get(kk, (x, y, za, zb))
+        acc[kk] = (z[0], z[1], min(z[2], za), max(z[3], zb))
+    return sorted(acc.values(), key=lambda v: (round(math.degrees(math.atan2(v[1], v[0])) % 360, 1), math.hypot(v[0], v[1])))
+
+
+def by_r(rows, n=None):
+    """按半径分组 → {r: [rows]} (n: 只留个数 = n 的组)。"""
+    g = {}
+    for r_ in rows:
+        g.setdefault(round(math.hypot(r_[0], r_[1]), 1), []).append(r_)
+    return {k: v for k, v in g.items() if n is None or len(v) == n}
+
+
+def hole_segs(shape, pt, dmax=8.0):
+    """pt 处同轴圆柱段 (实测, 自下而上) → [(直径, z0, z1)]。"""
+    return sorted(((d, z0, z1) for d, x, y, z0, z1 in cyls(shape) if d <= dmax and math.hypot(x - pt[0], y - pt[1]) < 0.1), key=lambda v: (v[1], v[2]))
+
+
+def hole_txt(shape, pt):
+    """孔段文字 (实测): 'Φ6 Z28–30 / Φ3.4 Z30–32' (自下而上, 同径相邻段合并)。"""
+    out = []
+    for d, z0, z1 in hole_segs(shape, pt):
+        if out and abs(out[-1][0] - d) < 0.05 and z0 <= out[-1][2] + 0.05:
+            out[-1] = (d, out[-1][1], max(out[-1][2], z1))
+        else:
+            out.append((d, z0, z1))
+    return " / ".join(f"Φ{F(d)} Z{F(z0)}–{F(z1)}" for d, z0, z1 in out)
+
+
+def hole_det(shape, pt, tag_title, W=4.0, z=None):
+    """孔详图 (free, 实测各段高度标在右侧; z 给定时窗口取 z, 用来带出凸台)。"""
+    sg = hole_segs(shape, pt)
+    za, zb = z or (min(v[1] for v in sg), max(v[2] for v in sg))
+    zs = sorted({round(v, 3) for d, z0, z1 in sg for v in (z0, z1)})
+    return dict(kind="free", z=(za, zb), pt=pt, W=W, title=tag_title,
+                zd=[(a, b, F(b - a), 4 * (i % 2)) for i, (a, b) in enumerate(zip(zs[:-1], zs[1:]))],
+                ud=[(-d / 2, d / 2, f"Φ{F(d)}", 4 * i) for i, d in enumerate(sorted({v[0] for v in sg}))])
+
+
 def vd(z0, z1, u, off, label):     # 主视 (X-Z) 竖直尺寸, 尺寸线放视图右侧 off
     return dict(view="front", kind="v", p0=(u, z0), p1=(u, z1), off=off, label=label)
 
@@ -58,7 +134,8 @@ SPECS.append(dict(
     subtitle="沉孔 / 铜螺母孔全部开在底面 (Z-6); 顶面 Z0 = 装配基准 (电机/控制板/线圈环/下罩都坐在上面)",
     orient="顶面 (Z0) 贴床",
     phi=[24, 2 * B.R_SCREW, 2 * B.STATOR_R, (2 * B.RING_M3_XY, f"{F(2 * B.RING_M3_XY)} (方)"), 2 * B.SH_R, B.DISC_D],
-    sec=dict(ang=45, zd=[(-B.DISC_T, 0.0)], rd=[(0, B.STATOR_R), (0, math.hypot(B.RING_M3_XY, B.RING_M3_XY)), (0, B.SH_R)]),
+    det_h=38.0,                                   # 11-16: 孔表长, 详图行高压到 38 免压标题栏
+    sec=dict(ang=45, auto_r=False, zd=[(-B.DISC_T, 0.0)], rd=[(0, B.STATOR_R), (0, math.hypot(B.RING_M3_XY, B.RING_M3_XY)), (0, B.SH_R)]),
     holes=[
         dict(tag="A", pts=B.POSTS, spec=cb6 + " (立柱)", where="V0.4 柱位 " + xy(B.POSTS),
              det=dict(kind="cb", d=B.M6_D, D=B.CB_D, h=B.CB_H, side="bot", z=ZD, pt=B.POSTS[0], title="M6 沉孔 (A/B 同)")),
@@ -234,28 +311,105 @@ import led_support_v1_2 as L  # noqa: E402
 _HUB_R = B.bbox(B.hub)[3]
 _rz0, _rz1 = B.bbox(B.rim)[2], B.Z_RIM_TOP
 _rh_std = [B.RH_PTS[k] for k in B.RH_STD_IDX]
+_rh_ear = [B.RH_PTS[k] for k in B.RH_EAR_IDX]
+_ang_txt = lambda pts: "/".join(F(round(ang(p), 1)) for p in pts) + "°"        # noqa: E731
+# 承载盘剖面层级 (几何实测): 内孔 = 最小同心圆柱, 盘底 = 内孔底; 下凸台 = 盘底以下、裙边以内的同心圆柱
+# 承载盘剖面层级: 盘底 B.RIM_BOT / 内孔 B.RIM_BORE_R / 下凸台 B.RIM_BUMP_R (凸台底 Z 实测)
+_R_BORE, _R_PZ0 = B.RIM_BORE_R, B.RIM_BOT
+_R_BUMP = (B.RIM_BUMP_R[0], B.RIM_BUMP_R[1], min(c[2] for c in cyl_at(B.rim, 2 * B.RIM_BUMP_R[0], centered=True)))
+_rl = [(x, y) for x, y in B.RIM_LOCK_PTS]                                       # r30 锁盘孔 (V1.0 原有)
+_R_LOCK = math.hypot(*_rl[0])
+_rl_cb = [(x, y, c) for x, y in _rl for c in cyls(B.rim) if 5 < c[0] < 12 and math.hypot(c[1] - x, c[2] - y) < 0.1]
+_known = list(B.SHR_HOLES) + list(B.MOD_HOLES) + list(B.BB_HOLES)
+_rx = [c for c in cyl_at(B.rim, 4.2) if min(math.hypot(c[0] - x, c[1] - y) for x, y in _known) > 0.5]   # 其它 Φ4.2 (V1.0 原有底面铜螺母孔)
+_rc = cyl_at(B.rim, 4.0)                                                        # Φ4 通孔 (V1.0 原有)
 SPECS.append(dict(
-    code="rim_ring_v1_2_D170", shape=B.rim, short=f"承载盘 Φ{F(B.RIM_D)}", qty="1",
+    code="rim_ring_v1_2_D170", shape=B.rim, short=f"承载盘 Φ{F(B.RIM_D)}", qty="1", stl_asm=True,   # 俯视 STL 出图时从 B.rim 现写, 不依赖 export 是否已重跑
     title=f"承载盘 Φ{F(B.RIM_D)}: 裙边 r{F(B.RIM_SKIRT[0])}–{F(B.RIM_SKIRT[1])} 下到 Z{F(B.RIM_SKIRT[2])} 包住毂盘 r{F(_HUB_R)}; 外圈 8×Φ3.4 通孔 r{F(B.RH_R)}",
-    subtitle=f"顶面 Z{F(B.Z_RIM_TOP)} 平 (无沉孔); 顶面铜螺母孔: 罩底 4 + 无线托盘 3 + 底板 r4b 4; 中间 T 件 / 两端 T 脚孔取消 (填实)",
+    subtitle=f"盘体 Z{F(B.RIM_BOT)}–{F(B.Z_RIM_TOP)} (厚 {F(B.Z_RIM_TOP - B.RIM_BOT)}), 顶面平; 顶面铜螺母孔: 罩底 {len(B.SHR_HOLES)} + 无线托盘 {len(B.MOD_HOLES)} (盘底 Φ{F(B.RIM_BOSS_D)} 凸台); "
+             f"底板 {len(B.BB_HOLES)} 孔螺丝从盘底往上",
     orient="翻面: 顶面 (托盘面) 贴床, 裙边朝上 (out/打印STL 已是此姿态)",
     phi=[2 * B.RH_R, 2 * B.RIM_SKIRT[0], B.RIM_D],
-    sec=dict(ang=0, r0=20.0, zd=[(B.RIM_SKIRT[2], _rz1), (_rz0, _rz1)] if _rz0 > B.RIM_SKIRT[2] + 0.1 else [(B.RIM_SKIRT[2], _rz1)],
-             rd=[(B.RIM_SKIRT[0], B.RIM_SKIRT[1], F(B.RIM_SKIRT[1] - B.RIM_SKIRT[0]))]),
+    sec=dict(ang=0, r0=20.0, auto_dims=False,
+             zd=[(_R_PZ0, _rz1), (_R_BUMP[2], _R_PZ0), (B.RIM_SKIRT[2], _R_PZ0), (B.RIM_SKIRT[2], _rz1)],
+             rd=[(_R_BORE, _R_BUMP[0], f"{F(_R_BUMP[0] - _R_BORE)} mm (内孔 R{F(_R_BORE)} → 凸台 R{F(_R_BUMP[0])})"),
+                 (_R_BUMP[0], _R_BUMP[1], f"凸台宽 {F(_R_BUMP[1] - _R_BUMP[0])} mm (R{F(_R_BUMP[0])}–R{F(_R_BUMP[1])})"),
+                 (B.RIM_SKIRT[0], B.RIM_SKIRT[1], f"裙边 {F(B.RIM_SKIRT[1] - B.RIM_SKIRT[0])} mm (R{F(B.RIM_SKIRT[0])}–R{F(B.RIM_SKIRT[1])})")]),
     holes=[dict(tag="R", pts=B.RH_PTS, spec="Φ3.4 通 (8 孔全通孔, 无沉孔)",
                 where=ring_txt(B.RH_PTS) + f"  → 毂盘底 M3×4 铜螺母 Z{F(B.RH_INS[0])}–{F(B.RH_INS[1])}\n"
-                      f"67.5/112.5/247.5/292.5°: M3×{F(B.RH_L)} 头压盘顶 Z{F(B.RH_HEAD_Z0)}; 22.5/157.5/202.5/337.5°: 立板耳朵 M3×{F(L.FOOT_SCREW_L)} (头压耳朵顶 Z{F(L.FOOT_CB_Z)})",
+                      f"{_ang_txt(_rh_std)}: M3×{F(B.RH_L)} 头压盘顶 Z{F(B.RH_HEAD_Z0)}; {_ang_txt(_rh_ear)}: 立板耳朵 M3×{F(L.FOOT_SCREW_L)} (头压耳朵顶 Z{F(L.FOOT_CB_Z)})",
                 det=dict(kind="free", z=(B.RIM_SKIRT[2], _rz1), pt=B.RH_PTS[1], W=5.0, title="外圈孔 R (径向剖, 含裙边)",
                          zd=[(B.RIM_SKIRT[2], _rz1, F(_rz1 - B.RIM_SKIRT[2]))], ud=[(-1.7, 1.7, "Φ3.4")])),
-           dict(tag="S", pts=B.SHR_HOLES, spec="Φ4.2×4.0 盲孔 (顶面) 压 M3×4 铜螺母", where=ring_txt(B.SHR_HOLES) + "  转子罩底 M3×8",
-                det=dict(kind="blind", D=4.2, h=4.0, side="top", z=(_rz0, _rz1), pt=B.SHR_HOLES[0], title="铜螺母孔 S (M 同, 深 4.2)")),
-           dict(tag="M", pts=B.MOD_HOLES, spec="Φ4.2×4.2 盲孔 (顶面) 压 M3×4 铜螺母  同详图 S", where=xy(B.MOD_HOLES, 3) + "  无线托盘 M3×8"),
-           dict(tag="P", pts=B.BB_HOLES, spec=f"Φ4.2×{F(B.BB_INS_H)} 盲孔 (顶面) 压 M3×3 铜螺母", where=xy(B.BB_HOLES) + "  底板 r4b H5/H6/H7/H8 (M3×3 铜柱 + M3×4)"),
+           dict(tag="S", pts=B.SHR_HOLES, spec=f"转子罩底 {len(B.SHR_HOLES)} 孔: 顶面铜螺母孔 " + hole_txt(B.rim, B.SHR_HOLES[0]) + f"; 盘底凸台 Φ{F(B.RIM_BOSS_D)} 到 Z{F(B.RIM_BOSS_Z0)}",
+                where=ring_txt(B.SHR_HOLES) + "  压 M3×4 铜螺母",
+                det=hole_det(B.rim, B.SHR_HOLES[0], f"罩底孔 S (M 同, 带 Φ{F(B.RIM_BOSS_D)} 凸台)", W=B.RIM_BOSS_D / 2 + 1.0, z=(B.RIM_BOSS_Z0, _rz1))),
+           dict(tag="M", pts=B.MOD_HOLES, spec=f"无线托盘 {len(B.MOD_HOLES)} 孔: 顶面铜螺母孔 " + hole_txt(B.rim, B.MOD_HOLES[0]) + "  凸台同详图 S", where=xy(B.MOD_HOLES, 3) + "  压 M3×4 铜螺母"),
+           dict(tag="P", pts=B.BB_HOLES, spec=f"底板 {len(B.BB_HOLES)} 孔: " + hole_txt(B.rim, B.BB_HOLES[0]) + " (盘底沉孔, 螺丝从下往上)",
+                where=xy(B.BB_HOLES) + f"\n底板 H5/H7/H6/H8: {B.BB_SCREW_SPEC} + {B.BB_STANDOFF_SPEC} + {getattr(B, 'BB_NUT_SPEC', '')}",
+                det=hole_det(B.rim, B.BB_HOLES[0], "底板孔 P (盘底沉孔)")),
+           dict(tag="L", pts=_rl, spec=f"Φ3.2 通 (r{F(_R_LOCK)} 锁盘孔, V1.0 原有)" + (f"; 其中 {len(_rl_cb)} 个顶面 Φ{F(_rl_cb[0][2][0])}×{F(_rl_cb[0][2][4] - _rl_cb[0][2][3])} 沉孔" if _rl_cb else ""),
+                where=ring_txt(_rl) + "  → 毂盘底铜螺母 (毂盘图 L)" + (f"; 沉孔在 {_ang_txt([(x, y) for x, y, _ in _rl_cb])}" if _rl_cb else "")),
+           *([dict(tag="X", pts=[(c[0], c[1]) for c in _rx], spec=hole_txt(B.rim, _rx[0][:2]) + " (V1.0 原有底面铜螺母孔, 现未用)", where=xy([(c[0], c[1]) for c in _rx]))] if _rx else []),
+           *([dict(tag="C", pts=[(c[0], c[1]) for c in _rc], spec="Φ4 通 (V1.0 原有, 现未用)", where=xy([(c[0], c[1]) for c in _rc]))] if _rc else []),
            dict(tag="A", pts=B.AC_HOLES, spec=f"Φ{F(B.AC_HOLE_D)} 通 (线圈 AC 引线)", where=xy(B.AC_HOLES) + "  进无线托盘底窗")],
-    notes=[f"承载盘 Φ{F(B.RIM_D)}, 裙边 r{F(B.RIM_SKIRT[0])}–{F(B.RIM_SKIRT[1])} 到 Z{F(B.RIM_SKIRT[2])} (= 毂盘底), 毂盘 r{F(_HUB_R)} 嵌进去 (同定子嵌套)",
+    notes=[f"承载盘 Φ{F(B.RIM_D)}, 盘体 Z{F(_R_PZ0)}–{F(_rz1)} 厚 {F(_rz1 - _R_PZ0)}; 裙边 r{F(B.RIM_SKIRT[0])}–{F(B.RIM_SKIRT[1])} 到 Z{F(B.RIM_SKIRT[2])} (= 毂盘底), 毂盘 r{F(_HUB_R)} 嵌进去 (同定子嵌套)",
+           f"剖视竖向 (左→右): 盘厚 {F(_rz1 - _R_PZ0)} / 下凸台高 {F(_R_PZ0 - _R_BUMP[2])} / 裙边伸出盘底 {F(_R_PZ0 - B.RIM_SKIRT[2])} / 总高 {F(_rz1 - B.RIM_SKIRT[2])}",
+           f"内孔 R{F(_R_BORE)} 套毂盘凸台; 底面下凸台 R{F(_R_BUMP[0])}–{F(_R_BUMP[1])} 高 {F(_R_PZ0 - _R_BUMP[2])} 落进毂盘顶面环槽",
            f"外圈 8 孔 r{F(B.RH_R)} @22.5°+45°k 与定子外圈上下对齐; V1.0 原 R82.5 孔补实",
-           f"罩底孔 S @" + "/".join(F(a) for a in B.SHR_ANG) + "° (避开底板与立板耳朵); 原两端 T 脚与中间 T 件 (±38, ±10) 孔不再切 (填实)",
-           "配平改到转子罩配重唇 / 顶部梳齿, 承载盘不再开配平孔"]))
+           f"罩底孔 S @" + "/".join(F(a) for a in B.SHR_ANG) + "° (避开底板与立板耳朵); 两端 T 脚 / 中间 T 件孔填实; C / X 孔为 V1.0 原有",
+           f"装配: 底板螺丝头在承载盘底面 ⇒ 先把底板装到承载盘上, 再把承载盘装到毂盘上 (毂盘在螺丝头下让位 Φ{F(B.HUB_BB_CLR_D)})"]))
+
+# ---------------- 毂盘 hub_disc_v1_2 (build_v1_2.py; export_3mf 写 out/打印STL (原姿态落床); 出图现写装配坐标 STL) ----------------
+_HZ0, _HZ1 = B.bbox(B.hub)[2], B.bbox(B.hub)[5]                                # Z21.5 / Z30.5
+_H_TOP = B.RIM_BOT                                                              # 两圈接触环顶 (= 承载盘底, 11-16 晚 加高)
+_H_BOSS = (B.RIM_BORE_R,)                                                       # 中心凸台 R25 (伸进承载盘内孔)
+_H_GROOVE = (B.HUB_RAISE[0][1], B.HUB_RAISE[1][0], min(c[2] for c in cyl_at(B.hub, 2 * B.HUB_RAISE[0][1], centered=True)))   # 环槽 R35–77.5, 槽底 Z 实测
+_HUB_R = B.HUB_RAISE[1][1]
+# 外圈 8 孔 (B.RH_PTS, B.RH_INS) / 电机 4 孔 (B.ROTOR_R) / 盘心窝 (B.POCKET_*); r30 锁盘 + 方 4 孔 V1.0 原有 ⇒ 实测
+_h42 = [c for c in cyl_at(B.hub, 4.2) if abs(math.hypot(c[0], c[1]) - B.RH_R) > 0.5]
+_hl = list(by_r(_h42, 8).values())[0]                                           # r30 ×8
+_hq = list(by_r(_h42, 4).values())[0]                                           # (±15, ±15) ×4
+_H_LOCK = math.hypot(_hl[0][0], _hl[0][1])
+_hm_pts = [(sx * B.ROTOR_R * B.s45, sy * B.ROTOR_R * B.s45) for sx in (1, -1) for sy in (1, -1)]
+_hm_th = [c for c in cyls(B.hub) if math.hypot(c[1] - _hm_pts[0][0], c[2] - _hm_pts[0][1]) < 0.1]
+_HM_d = min(c[0] for c in _hm_th); _HM_D = max(c[0] for c in _hm_th)
+_HM_CB0 = min(c[3] for c in _hm_th if c[0] == _HM_D)                            # 沉孔底 Z26.5
+_ins_h = lambda rows: rows[0][3] - rows[0][2]                                   # noqa: E731
+_hu = [c for d in (B.HUB_BOSS_CLR_D, B.HUB_BB_CLR_D) for c in cyl_at(B.hub, d)]   # 加高环上的让位 (实测: 实际落在环上的才有)
+SPECS.append(dict(
+    code="hub_disc_v1_2", shape=B.hub, short=f"毂盘 Φ{F(2 * _HUB_R)}", qty="1", stl_asm=True,
+    title=f"转子毂盘 Φ{F(2 * _HUB_R)}: 嵌进承载盘裙边 r{F(B.RIM_SKIRT[0])}–{F(B.RIM_SKIRT[1])}; 底面外圈 8×M3 铜螺母 r{F(B.RH_R)}",
+    subtitle=f"Z{F(_HZ0)}–{F(_HZ1)} (底面 = 电机顶 Z{F(B.ROTOR_TOP)}); 铜螺母全部从底面压入; 电机 4 孔顶面沉孔",
+    orient=f"原姿态: 底面 (Z{F(_HZ0)}) 贴床, 凸台朝上 (out/打印STL 已是此姿态)",
+    phi=[2 * _H_BOSS[0], 2 * _H_GROOVE[0], 2 * _H_GROOVE[1], 2 * _HUB_R],
+    sec=dict(ang=0, r0=20.0, auto_dims=False,
+             zd=[(_HZ0, _H_GROOVE[2]), (_H_GROOVE[2], _H_TOP), (_H_TOP, _HZ1), (_HZ0, _H_TOP), (_HZ0, _HZ1)],
+             rd=[(_H_BOSS[0], _H_GROOVE[0], f"内环 {F(_H_GROOVE[0] - _H_BOSS[0])} mm (凸台 R{F(_H_BOSS[0])} → 槽 R{F(_H_GROOVE[0])})"),
+                 (_H_GROOVE[0], _H_GROOVE[1], f"环槽宽 {F(_H_GROOVE[1] - _H_GROOVE[0])} mm (R{F(_H_GROOVE[0])}–R{F(_H_GROOVE[1])})"),
+                 (_H_GROOVE[1], _HUB_R, f"外环 {F(_HUB_R - _H_GROOVE[1])} mm (R{F(_H_GROOVE[1])}–R{F(_HUB_R)})")]),
+    holes=[dict(tag="R", pts=B.RH_PTS, spec=f"Φ3.4 通 + 底面 Φ4.2×{F(B.RH_INS[1] - B.RH_INS[0])} 铜螺母孔 (M3×4 铜螺母齐底面)",
+                where=ring_txt(B.RH_PTS) + f"  铜螺母 Z{F(B.RH_INS[0])}–{F(B.RH_INS[1])}, 承载盘 R 孔螺丝从上往下\n"
+                      f"k={'/'.join(str(k) for k in B.RH_EAR_IDX)} ({_ang_txt(_rh_ear)}) 被立板耳朵压住: M3×{F(L.FOOT_SCREW_L)}; "
+                      f"k={'/'.join(str(k) for k in B.RH_STD_IDX)} ({_ang_txt(_rh_std)}): M3×{F(B.RH_L)}",
+                det=dict(kind="ins", d=3.4, D=4.2, h=B.RH_INS[1] - B.RH_INS[0], side="bot", z=(_HZ0, _H_TOP), pt=B.RH_PTS[0], title="外圈铜螺母孔 R (径向剖)")),
+           dict(tag="L", pts=[(c[0], c[1]) for c in _hl], spec=f"Φ3.2 通 + 底面 Φ4.2×{F(_ins_h(_hl))} 铜螺母孔 (r{F(_H_LOCK)} 锁盘, V1.0 原有)",
+                where=ring_txt([(c[0], c[1]) for c in _hl]) + "  = 承载盘 L 孔, 螺丝从承载盘顶往下",
+                det=dict(kind="ins", d=3.2, D=4.2, h=_ins_h(_hl), side="bot", z=(_HZ0, _H_TOP), pt=(_hl[0][0], _hl[0][1]), title="锁盘铜螺母孔 L (径向剖)")),
+           dict(tag="Q", pts=[(c[0], c[1]) for c in _hq], spec=f"Φ3.2 通 + 底面 Φ4.2×{F(_ins_h(_hq))} 铜螺母孔 (V1.0 原有, 现未用)", where=xy([(c[0], c[1]) for c in _hq]), lab_off=(-2.4, 2.4)),
+           dict(tag="E", pts=_hm_pts, spec=f"Φ{F(_HM_d)} 通 + 顶面 Φ{F(_HM_D)}×{F(_HZ1 - _HM_CB0)} 沉孔 (电机转子)",
+                where=f"对角 {F(2 * B.ROTOR_R)} (r{F(B.ROTOR_R)} @45°+90°k)", lab_off=(2.4, -2.4),
+                det=dict(kind="cb", d=_HM_d, D=_HM_D, h=_HZ1 - _HM_CB0, side="top", z=(_HZ0, _HZ1), pt=_hm_pts[0], title="电机沉孔 E (径向剖)")),
+           *([dict(tag="U", pts=[(c[0], c[1]) for c in _hu], spec=f"接触环让位: 承载盘凸台下 Φ{F(B.HUB_BOSS_CLR_D)} / 底板螺丝头下 Φ{F(B.HUB_BB_CLR_D)}, 顶面 Z{F(_H_TOP)} 往下到 Z{F(min(c[2] for c in _hu))}",
+                  where=xy([(c[0], c[1]) for c in _hu], 3), lab_off=(2.4, -2.4))] if _hu else [])],
+    dets=[dict(tag="K", kind="blind", D=B.POCKET_D, h=B.POCKET_H, side="bot", z=(_HZ0, _HZ1), pt=(0.0, 0.0), ang=0.0, W=5.0,
+               title=f"盘心 Φ{F(B.POCKET_D)}×{F(B.POCKET_H)} 盲窝 (底面, 电机轴头)")],
+    notes=[f"剖视竖向 (左→右): 槽底板 {F(_H_GROOVE[2] - _HZ0)} / 环槽深 {F(_H_TOP - _H_GROOVE[2])} / 中心凸台 {F(_HZ1 - _H_TOP)} / 盘厚 (外环、内环) {F(_H_TOP - _HZ0)} / 总高 {F(_HZ1 - _HZ0)}",
+           f"外径 Φ{F(2 * _HUB_R)} (r{F(_HUB_R)}), 嵌进承载盘裙边 r{F(B.RIM_SKIRT[0])}–{F(B.RIM_SKIRT[1])}, Z{F(_HZ0)}–{F(_HZ1)}",
+           f"底面平 Z{F(_HZ0)}; 顶面: 外环 R{F(_H_GROOVE[1])}–{F(_HUB_R)} 与内环 R{F(_H_BOSS[0])}–{F(_H_GROOVE[0])} 顶 Z{F(_H_TOP)} 托承载盘, "
+           f"环槽 R{F(_H_GROOVE[0])}–{F(_H_GROOVE[1])} 深 {F(_H_TOP - _H_GROOVE[2])} 收承载盘下凸台; 中心凸台 R{F(_H_BOSS[0])} 高 {F(_HZ1 - _H_TOP)} 穿承载盘内孔",
+           f"外圈 8 孔 (R) 中 k={'/'.join(str(k) for k in B.RH_EAR_IDX)} 被立板耳朵压住, 用 M3×{F(L.FOOT_SCREW_L)}; k={'/'.join(str(k) for k in B.RH_STD_IDX)} 用 M3×{F(B.RH_L)} (头压承载盘顶)",
+           "铜螺母 M3×4 全部从底面压入 (贴床面, 打印后再压); V1.0 原电机菱形 4 孔已补实",
+           f"电机 E 组 4 颗从顶面沉孔往下拧进电机转子; 盘心窝 Φ{F(B.POCKET_D)}×{F(B.POCKET_H)} 让电机轴头"]))
 
 # ---------------- V2 灯板支撑四件 (11-16 晚 偏心 SCR_ECC + 耳朵脚 + 中间 T 件取消; led_support_v1_2.py) ----------------
 import rotor_shroud_v1_2 as RS  # noqa: E402  (罩壁半径等, 下面立板说明也用)
@@ -485,7 +639,7 @@ SPECS.append(dict(
            f"走线: 出线口 → (30, −45) → 往下到 y≈−62 → 沿 x 穿本件 → (−40, −60) → (−64, −40) → MR30 座 −y 端",
            f"离两 M6 孔边各 {F(min(abs(gx - MW.CL_XC) for gx in (-37.5, -12.5)) - B.M6_D / 2 - MW.CL_HX)}"]))
 _D1116 = {"led_post_a_v1_2", "led_post_b_v1_2", "led_bar_v1_2", "led_top_v1_2", "led_comb_v1_2", "rotor_shroud_a_v1_2", "rotor_shroud_b_v1_2",
-          "rotor_lid_v1_2", "rotor_lid_b_v1_2", "wireless_holder_v1_2", "rim_ring_v1_2_D170", "base_disc_v1_2", "mr30_seat_v1_2", "motor_wire_clamp_v1_2"}
+          "rotor_lid_v1_2", "rotor_lid_b_v1_2", "wireless_holder_v1_2", "rim_ring_v1_2_D170", "hub_disc_v1_2", "base_disc_v1_2", "mr30_seat_v1_2", "motor_wire_clamp_v1_2"}
 for sp in SPECS:
     if sp["code"] in _D1116:
         sp.setdefault("date", "2026-11-16")      # 11-16 新转子布局 / 11-16 晚 偏心 + 耳朵脚
@@ -496,6 +650,8 @@ for sp in SPECS:
         sp["stl"] = V12 / "out" / "dwg_stl" / f"{sp['code']}.stl"
         sp["src"] = f"v1.2/out/dwg_stl/{sp['code']}.stl (装配坐标; 打印件 models/{sp['code']}/)"
     sp.setdefault("origin_note", ORIG)
+
+_FOLDER = {"rim_ring_v1_2_D170": "转子盘", "hub_disc_v1_2": "转子盘", "flange_disc_v1_2": "定子盘", "mounting_flange_v1_2": "定子盘"}
 
 if __name__ == "__main__":
     only = set(sys.argv[1:])
@@ -516,3 +672,7 @@ if __name__ == "__main__":
             sp["out"] = sp["out"].with_name(f"{sp['code']}_drawing.NEW.pdf")
             out, png, sl = draw(sp)
         print(f"wrote {out}  ({sl})", flush=True)
+        if sp["code"] in _FOLDER:                # 11-16 晚: 转子盘 / 定子盘 文件夹里的图纸出图即同步 (export_3mf_v1_2.py 也会拷, 但它先于出图跑)
+            import shutil
+            _gd = V12 / _FOLDER[sp["code"]]; _gd.mkdir(exist_ok=True)
+            shutil.copy2(out, _gd / f"{sp['code']}_drawing.pdf"); print(f"  → {_FOLDER[sp['code']]}/", flush=True)

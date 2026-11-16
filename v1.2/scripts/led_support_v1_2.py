@@ -73,7 +73,7 @@ H1_X, H1_Z = 78.63, Z0 + 4.0                      # H1/H2 M3 (±78.63, 下沿+4 
 CLR = 0.1                                         # 立刀/舌 与板 F 面单边
 BLADE_T = 2 * (GAP_HALF - CLR)                    # 4.4
 RIM_TOP = B.Z_RIM_TOP                             # 32.0
-HUB_TOP = 30.4                                    # 毂盘顶 (r<24.5, 实测 build 毂盘)
+HUB_TOP = 30.5                                    # 毂盘顶 (r<24.5; 11-16 晚 G 实测 30.5, 原写 30.4)
 R_CLIP = 81.7                                     # 11-16 晚 改回 Φ170: 转子罩内壁 r82 ⇒ 罩内件外缘 ≤ r81.7 (Φ175 时曾 84.2); 腹板+天线板例外 (罩壁缝里, r≤ANT_R_MAX)
 
 # ---------------- 两端立板: 耳朵脚 (11-16 晚 方案 A; 改回 Φ170 后耳朵切 r81.7) ----------------
@@ -447,8 +447,8 @@ def report():
     LED_G = round(vmax * 1.9e-3 + 30.0, 1)
     for nm, s in (('灯板 A (PCB+件 估)', led_a), ('灯板 B (PCB+件 估)', led_b)):
         _, c = cog(s); add(nm, LED_G, *c)
-    for nm, s in (('桥板 A (估 12 g)', br_a), ('桥板 B (估 12 g)', br_b)):
-        _, c = cog(s); add(nm, 12.0, *c)
+    for nm, c in (('桥板 A (真模型 mass.json 10.99 g)', (0.21, 3.18, 55.36)), ('桥板 B (真模型 10.99 g)', (-0.21, -11.90, 55.36))):   # 11-16 晚 fpc_v1_2 (G) 实算重心
+        add(nm, 10.99, *c)
     bal['led_board_g_est'] = LED_G
     grp_U = (round(Ux - sup_U[0], 1), round(Uy - sup_U[1], 1)); bal['led_group_boards_U_gmm'] = grp_U
     # 底板: r4c 五边形 x −51.2…47.3 y8.6–66.6, 质量沿用 r3 估 44.5 g, 质心取板框包围盒中心

@@ -356,6 +356,10 @@ vd(pg, TB(0, 0)[1], TB(0, g.RIM_H)[1], xL, xL, xL - 15, f"{F(g.RIM_H)}", side="l
 xR = TB(Y_FC, 0)[0]
 vd(pg, TB(0, 0)[1], TB(0, g.CH_H_B)[1], xR, xR, xR + 7, F(g.CH_H_B), side="r")
 vd(pg, TB(0, 0)[1], TB(0, g.CH_H_S)[1], TB(g.Y_STEP, 0)[0], xR, xR + 15, F(g.CH_H_S), side="r")
+for _y, _h in (((g.Y_STEP + Y_FC) / 2, g.CH_H_B), ((g.Y_CAPI + g.Y_STEP) / 2, g.CH_H_S)):   # 11-16 链式: 槽顶厚, 标在槽腔里
+    _x = TB(_y, 0)[0]
+    vd(pg, TB(0, _h)[1], TB(0, g.HTOP)[1], _x, _x, _x, f"顶 {F(g.HTOP - _h)}", side="r", ty=TB(0, _h)[1] - 4.0)
+vd(pg, TB(0, g.RIM_H)[1], TB(0, g.HTOP)[1], xL, xL, xL - 15, F(g.HTOP - g.RIM_H), side="l")
 leader(pg, TB(g.Y_END - 1.5, g.RIM_H * 0.5), (xL - 4, TB(0, -g.BASE_T)[1] - 2.0),
        f"后边止口: 压块台阶 {F(g.BACK_RIM_W + g.ASSY_CLR)} 宽 × {F(g.RIM_H)} 高\n底垫后边框 {F(g.BACK_RIM_W)}×{F(g.RIM_H)} (0.1 装配隙)", ha="right", size=2.2)
 leader(pg, TB(Y_FC + 1.0, g.HTOP - 0.8), (xR + 2, TB(0, g.HTOP)[1] + 7),
@@ -394,6 +398,13 @@ leader(pg, TD(-g.HX - g.NUT_FL_D / 2 + 0.5, g.HTOP + 0.5), (TD(-g.HALF_L, 0)[0] 
        f"M3 法兰螺母 (法兰 Φ{F(g.NUT_FL_D)}) 平坐顶面, 无螺母座; 全局 Z{F(g.NUT_Z0_G)}..{F(g.NUT_Z1_G)}", ha="left", size=2.2)
 xl = TD(-g.HALF_L, 0)[0]
 vd(pg, TD(0, DISC_L0)[1], TD(0, -g.BASE_T)[1], xl - 3, xl - 3, xl - 6, f"{F(g.DISC_T)}", side="l")
+vd(pg, TD(0, -g.BASE_T)[1], TD(0, 0)[1], xl - 3, xl, xl - 6, f"底垫 {F(g.BASE_T)}", side="l", ty=TD(0, -g.BASE_T / 2)[1] - 0.3)   # 11-16 链式: 底垫 / 止口 / 槽 / 槽顶
+vd(pg, TD(0, 0)[1], TD(0, g.RIM_H)[1], xl, xl, xl - 6, F(g.RIM_H), side="l", ty=TD(0, g.RIM_H / 2)[1] + 0.6)
+vd(pg, TD(0, g.RIM_H)[1], TD(0, g.HTOP)[1], xl, xl, xl - 6, F(g.HTOP - g.RIM_H), side="l")
+vd(pg, TD(0, 0)[1], TD(0, g.HTOP)[1], xl, xl, xl - 14, F(g.HTOP), side="l")
+_xc = TD(-g.CH_W_B / 2, 0)[0]
+vd(pg, TD(0, 0)[1], TD(0, g.CH_H_B)[1], _xc, _xc, TD(-g.CH_W_B / 2 + 2.6, 0)[0], f"槽 {F(g.CH_H_B)}", side="r")
+vd(pg, TD(0, g.CH_H_B)[1], TD(0, g.HTOP)[1], _xc, _xc, TD(-g.CH_W_B / 2 + 2.6, 0)[0], f"顶 {F(g.HTOP - g.CH_H_B)}", side="r", ty=TD(0, g.CH_H_B)[1] - 4.5)
 leader(pg, TD(-g.HALF_L + RIM_C / 2, g.RIM_H / 2), (xl - 3, TD(0, DISC_L0)[1] - 4),
        f"侧止口: 压块台阶 {F(RIM_C)}×{F(g.RIM_H)}\n底垫边框 {F(g.RIM_W)}×{F(g.RIM_H)}", ha="right", size=2.2)
 yb = TD(0, DISC_L0)[1]
@@ -553,7 +564,10 @@ hd(pg, TB(g.Y_END, 0)[0], TB(Y_FC, 0)[0], yb0, yb0, yb0 - 13, f"{F(LEN_C)} (中�
 xR = TB(Y_FC, 0)[0]
 vd(pg, TB(0, 0)[1], TB(0, g.SHIM_T)[1], xR, xR, xR + 6, F(g.SHIM_T), side="r", ty=TB(0, g.SHIM_T)[1] + 5)
 xL = TB(g.Y_END, 0)[0]
-vd(pg, TB(0, -g.BASE_T)[1], TB(0, g.RIM_H)[1], xL, xL, xL - 6, F(g.BASE_T + g.RIM_H), side="l")
+vd(pg, TB(0, -g.BASE_T)[1], TB(0, g.RIM_H)[1], xL, xL, xL - 24, F(g.BASE_T + g.RIM_H), side="l")
+vd(pg, TB(0, -g.BASE_T)[1], TB(0, 0)[1], xL, xL, xL - 6, f"底板 {F(g.BASE_T)}", side="l")   # 11-16 链式
+vd(pg, TB(0, 0)[1], TB(0, g.RIM_H)[1], xL, xL, xL - 6, f"止口 {F(g.RIM_H)}", side="l")
+vd(pg, TB(0, -g.BASE_T)[1], TB(0, 0)[1], xR, xR, xR + 6, F(g.BASE_T), side="r")
 pg.text(BX, yb0 - 19, f"凸台顶 z {F(g.SHIM_T)} 托本体 (本体底面离护套底面 {F(g.BODY_LIFT)}); 护套直接坐底板顶 z 0, 后端顶后边框", size=2.2, ha="center")
 
 # 详图 K2

@@ -185,7 +185,8 @@ for i, (x, y) in enumerate(B.JN_PTS):
 # 11 V2 灯板支撑 (11-16 晚 偏心 SCR_ECC + 耳朵脚, led_support_v1_2): 中间 T 件取消;
 #    两端立板耳朵 4×M3×14 内六角 (头支承 = 耳朵顶 Z36) 穿耳朵 + 承载盘 Φ3.4 → 毂盘底 M3×4 铜螺母 (= 外圈锁盘 k=0/3/4/7, 铜螺母在下面外圈循环里一起放, 不重复计);
 #    立板底面 Φ6×3 沉孔 2×M3×8 从下往上自攻进夹条 (x=±73, y=ECC); 梳齿 → 帽 2×M3×8 进帽内铜螺母 (y=ECC);
-#    底板 r4d 4×M3 (四角): 承载盘顶面 Φ4.2×4 孔压 M3×3 铜螺母, 上面尼龙光孔垫柱 Φ6×3 + 板 1.6, M3×8 尼龙盘头从板顶拧进铜螺母 (B.BB_SCREW_SPEC)
+#    底板 r4e 4×M3 (四角, 11-16 晚 改一颗螺丝穿到底): M3×8 超薄头 (Φ7×1.5) 从承载盘底 Φ7.4×1.5 沉孔往上 (头支承 Z31) → 承载盘 Φ3.4 → 尼龙光孔垫柱 Φ6×3
+#    → 板 1.6 → 板顶 M3 尼龙螺母 (B.BB_NUT_SPEC, 高 2.4); 承载盘不再压铜螺母; 装配: 底板先装承载盘, 再装承载盘到毂盘
 import led_support_v1_2 as L
 for i, (x, y) in enumerate(L.FOOT_PTS):
     screw(f"M3x{L.FOOT_SCREW_L:g} 内六角 立板耳朵 (兼锁盘)", i, x, y, L.FOOT_CB_Z, L.FOOT_SCREW_L, False, hd=5.5, hh=3.0, engage=("铜螺母", *L.HUB_INS))
@@ -194,10 +195,11 @@ for i, x in enumerate(L.BAR_SCR_X):
 for i, sx in enumerate((1, -1)):
     screw("M3x8 内六角 梳齿→帽", i, sx * L.COMB_FIX_X, L.ECC, L.COMB_Z1, 8.0, False, hd=5.5, hh=3.0, engage=("铜螺母", L.Z1, L.Z1 + L.CAP_T))
     add(f"M3x4 铜螺母 灯板顶帽 #{i}", insert(sx * L.COMB_FIX_X, L.ECC, L.Z1, L.CAP_T), "#B8860B")
+BB_NUT_Z0 = L.RIM_TOP + B.BB_STANDOFF + B.BB_T                 # 板顶 Z36.6
 for i, (x, y) in enumerate(B.BB_HOLES):
-    add(f"M3x3 铜螺母 承载盘 底板 #{i}", insert(x, y, L.RIM_TOP - 3.0, 3.0), "#B8860B")   # 孔 Φ4.2×BB_INS_H(4), 铜螺母 M3×3 顶齐盘顶
     add(f"尼龙光孔垫柱 Φ6×3 底板 #{i}", cut(cyl(x, y, 6.0, L.RIM_TOP, L.RIM_TOP + B.BB_STANDOFF), cyl(x, y, 3.2, 0, 60)), "#EEEEEE")
-    screw(f"M3x{B.BB_SCREW_L:g} 尼龙盘头 底板", i, x, y, B.BB_SCREW_HEAD_Z, B.BB_SCREW_L, False, hd=5.5, hh=1.8, engage=("铜螺母", L.RIM_TOP - 3.0, L.RIM_TOP))
+    screw(f"M3x{B.BB_SCREW_L:g} 超薄头 底板", i, x, y, B.BB_SCREW_HEAD_Z, B.BB_SCREW_L, True, engage=("尼龙螺母", BB_NUT_Z0, BB_NUT_Z0 + B.BB_NUT_H))
+    add(f"M3 尼龙螺母 底板 #{i}", cut(hexprism(x, y, 5.5, BB_NUT_Z0, BB_NUT_Z0 + B.BB_NUT_H), cyl(x, y, 3.0, 0, 60)), "#F5F5F0")   # 对边 5.5 × 2.4
 # 11-16 晚: 承载盘+毂盘外圈 8 孔 B.RH_R @22.5°+45°k 全 Φ3.4 通孔 (无沉孔); k=1/2/5/6 M3×RH_L 头压盘顶 Z32, k=0/3/4/7 被立板耳朵占 (上面 M3×14)
 for i, k in enumerate(B.RH_STD_IDX):
     x, y = B.RH_PTS[k]
