@@ -536,8 +536,9 @@ def report():
             if kyb > ky0 and kya < ky1 and h > h1: viol.append((n_, '区1', (round(b[0] + 132, 2), round(b[3] + 132, 2)), (round(kya, 2), round(kyb, 2)), h))
             elif kyb > ky1 and h > h2: viol.append((n_, '区2', (round(b[0] + 132, 2), round(b[3] + 132, 2)), (round(kya, 2), round(kyb, 2)), h))
         hit = {}
-        for n_, s_ in BR_LOC:
-            v = interf(xf(s_, T_ECC), fpc_a)
+        _brw = [(n_, xf(s_, T_ECC)) for n_, s_ in BR_LOC]          # 先留住 (interf 按 id 缓存, 临时对象 id 会复用)
+        for n_, s_ in _brw:
+            v = interf(s_, fpc_a)
             if v > 1e-4: hit[n_] = round(v, 3)
         rep['keepout'] = dict(zone1=dict(kx=xz, ky=(round(ky0, 3), round(ky1, 3)), h_max_from_F=h1, note='座口外 2.0 直段 (补强露 1.0 + 隙 1.0) + 外移 S 弯 (中线 R%.1f, 侧移 %.3f, 长 %.2f)' % (R_JOG, JOG, jl)),
                               zone2=dict(kx=xz, ky=(round(ky1, 3), 136.0), h_max_from_F=h2, note='FPC 外移后贴 F 面器件外走 (平面离 F 面 %.3f)' % (SLOT_Z + JOG)),
