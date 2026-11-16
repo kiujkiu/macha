@@ -56,6 +56,11 @@ PARTS = [  # (名, 形状, 颜色, 3MF 弦差)
 ]
 OUT3 = B.V12 / 'assembly_v1_2_不装玻璃_整机+V2板.3mf'
 write3mf(str(OUT3), PARTS)
+# 11-16 晚 用户: 另出一个不带玻璃托 (玻璃下底座 / 玻璃座 / 外卡环) 的整机 3MF (玻璃本来就不装)
+OUT3_NS = B.V12 / 'assembly_v1_2_不装玻璃和玻璃托_整机+V2板.3mf'
+write3mf(str(OUT3_NS), [p for p in PARTS if not any(k in p[0] for k in ('玻璃下', '外卡环'))])
+import os as _os
+if _os.environ.get('ONLY_3MF'): raise SystemExit(0)
 
 # ---------------- 装配图 ----------------
 import matplotlib
