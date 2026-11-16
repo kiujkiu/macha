@@ -476,25 +476,30 @@ LOG['split'] = dict(ring=vol(clamp_ring), shroud=vol(shroud_split))
 #   对中: 下段顶面凸筋 r104–106 高 2 插上段底槽 (单边 0.1, 同外卡环); 螺丝 r98.5 @22.5°+45k (避开 +X XT60 / +Y 按键),
 #   沉孔 Φ7 开在上段顶面 (玻璃座) 被玻璃端面 + 外卡环盖住; 拆: 外卡环 → 玻璃 → 8 螺丝 → 上段, 不用翻整机。
 SPLIT_Z = Z_RIM_TOP                                # 32.0
-JN_N, JN_R, JN_ANG0 = 8, 98.5, 22.5               # 沉孔 Φ7 r95.0–102.0: 内卡外面 r94.8 外, 外卡环槽 r103.9 内
-# 用户 11-14 (二): 要真夹持 ⇒ 螺丝穿通上下两段, 下段底面 Φ8.2 沉孔里放 M3 法兰螺母 (Φ7.6×3.7, 法兰朝上顶孔顶), 底面仍平坐底盘。
-JN_BEAR = Z_G - 2.0                                # 用户 11-14: 上段顶面 Φ7 沉孔深 2 ⇒ 支承 Z51.08, 超薄头顶 Z52.58 (玻璃底下 0.5)
-JN_L = 50.0                                        # M3×50 Φ7 超薄头 (用户 11-14 四)
+JN_N, JN_R, JN_ANG0 = 8, 98.5, 22.5               # 沉孔 Φ8.8 r94.1–102.9: 下切内卡根 0.7 (只在 Z_G 下 2), 离外卡环槽 (r103.8) 0.9
+# 用户 11-14 (二): 要真夹持 ⇒ 螺丝穿通上下两段。11-16 用户买到实物 (图): M4×50 超薄头 (头 Φ8.5×1.8, 2.5 六角) + M4 法兰螺母 (法兰 Φ9.7, 对边 6.9, 厚 4.3)
+#   上段顶面 Φ8.8 沉孔深 2.1 (头顶在玻璃底下 0.3); 下段底面: 法兰圆窝 Φ10.1 到 Z1.8 + 六角窝 7.1AF 到 Z4.6 (防转), 法兰朝下, 螺母落底盘上也能吃上
+JN_D, JN_CB = 4.5, 8.8                             # M4 通孔 / 沉孔 (头 Φ8.5)
+JN_L, JN_HH = 50.0, 1.8                            # M4×50 超薄头, 头厚 1.8
+JN_BEAR = Z_G - 2.1                                # 沉孔深 2.1 ⇒ 支承 Z50.98, 头顶 Z52.78 (玻璃底下 0.3)
 JN_TIP = JN_BEAR - JN_L                            # 尾端 Z1.08
-JN_NUT_H, JN_NUT_D = 3.7, RING_NUT_CLR_D           # 法兰螺母总厚 3.7, 让位孔 Φ8.2
-JN_NUT_Z1 = 4.0                                    # 用户 11-14 四: 底面螺母孔深 4 ⇒ 螺母 Z0.3..4.0 (底面缩进 0.3), 尾 Z1.08 ⇒ 啮合 2.92
+JN_NUT_AF, JN_NUT_H, JN_NUT_FD = 7.1, 4.3, 10.1    # 六角窝对边 (螺母 6.9) / 螺母厚 / 法兰圆窝 (法兰 Φ9.7)
+JN_NUT_FZ = 1.8                                    # 法兰圆窝顶 (法兰厚约 1.2 + 0.3 缩进 + 余)
+JN_NUT_Z1 = 0.3 + JN_NUT_H                         # 窝顶 Z4.6 ⇒ 拧紧后螺母 Z0.3..4.6, 啮合 3.52
+JN_NUT_D = JN_NUT_FD                               # 只用于校核
 JN_PTS = [(JN_R * math.cos(math.radians(JN_ANG0 + 45 * k)), JN_R * math.sin(math.radians(JN_ANG0 + 45 * k))) for k in range(JN_N)]
 RG_R0, RG_W, RG_H, RG_CLR = 104.0, 2.0, 2.0, 0.1   # 两段止口凸筋 (在下段顶)
-assert JN_R - CB7 / 2 >= gi and JN_R + CB7 / 2 <= TG_R0 - TG_CLR - 1.5, '沉孔碰内卡或外卡环槽'
+assert JN_R - JN_CB / 2 >= gi - 0.75 and JN_R + JN_CB / 2 <= TG_R0 - TG_CLR - 0.85, '沉孔碰内卡或外卡环槽'   # 11-16 Φ8.8: 下切内卡根 0.7, 离槽 0.9
 assert JN_R - JN_NUT_D / 2 >= SPIG_IN + 2 and JN_R + JN_NUT_D / 2 <= SH_OUT - 2, '螺母孔离墙面太近'
-assert JN_R + 1.7 <= RG_R0 - RG_CLR - 1.5, '通孔碰止口凸筋'
+assert JN_R + JN_D / 2 <= RG_R0 - RG_CLR - 1.5, '通孔碰止口凸筋'
+assert JN_BEAR + JN_HH <= Z_G - 0.3, '头顶碰玻璃'
 assert JN_BEAR - SPLIT_Z >= 10, '上段沉孔下面肉太薄'
 _lo_box = cyl(0, 0, 2 * SH_OUT + 10, -5, SPLIT_Z)
-_s = cut(op(BRepAlgoAPI_Common, shroud_split, _lo_box), *[fuse(cyl(x, y, 3.4, -1, SPLIT_Z + 1), cyl(x, y, JN_NUT_D, -1, JN_NUT_Z1)) for x, y in JN_PTS])
+_s = cut(op(BRepAlgoAPI_Common, shroud_split, _lo_box), *[fuse(cyl(x, y, JN_D, -1, SPLIT_Z + 1), cyl(x, y, JN_NUT_FD, -1, JN_NUT_FZ), coil_drv_geom.hexprism(x, y, JN_NUT_AF, JN_NUT_FZ - 0.01, JN_NUT_Z1)) for x, y in JN_PTS])
 _kb = KEY['pocket_bbox']                           # 11-14: 按键让位腔竖直打通到 Z32 ⇒ 止口凸筋在按键段断开 (不然凸筋悬空跨腔)
 shroud_lo = clean(fuse(_s, cut(ann(RG_R0, RG_R0 + RG_W, SPLIT_Z - 0.5, SPLIT_Z + RG_H), gbox(_kb[0] - 0.5, _kb[2], SPLIT_Z - 1, _kb[1] + 0.5, SH_OUT + 1, SPLIT_Z + RG_H + 1))))
 _s = cut(shroud_split, _lo_box, ann(RG_R0 - RG_CLR, RG_R0 + RG_W + RG_CLR, SPLIT_Z - 1, SPLIT_Z + RG_H + RG_CLR))
-for x, y in JN_PTS: _s = cut(_s, cyl(x, y, 3.4, SPLIT_Z - 1, JN_BEAR + 0.01), cyl(x, y, CB7, JN_BEAR, Z_G + 0.01))
+for x, y in JN_PTS: _s = cut(_s, cyl(x, y, JN_D, SPLIT_Z - 1, JN_BEAR + 0.01), cyl(x, y, JN_CB, JN_BEAR, Z_G + 0.01))
 shroud_hi = clean(_s)
 LOG['split2'] = dict(split_z=SPLIT_Z, lo=vol(shroud_lo), hi=vol(shroud_hi), pts=[(round(x, 2), round(y, 2)) for x, y in JN_PTS], bear=JN_BEAR, tip=JN_TIP, nut_z1=JN_NUT_Z1)
 tube = ann(GL_OD / 2 - GL_T, GL_OD / 2, Z_G, Z_G + GL_H)                     # 玻璃罩 OD200x5 高 245

@@ -96,7 +96,7 @@ def screw(group, i, x, y, bear, L, up, d=3.0, engage=None, **kw):
     sh = (screw_up if up else screw_down)(x, y, bear, L, d=d, **kw)
     add(f"{group} #{i}", sh, "#C0C0C0")
     S.append(dict(group=group, i=i, x=x, y=y, up=up, bear=bear, L=L, tip=bear + L if up else bear - L, d=d,
-                  hh=kw.get('hh', M3_HEAD_H), engage=engage, shape=sh))
+                  hh=kw.get('hh', M3_HEAD_H), hd=kw.get('hd'), engage=engage, shape=sh))
 
 
 # 1 电机 4×M3 盘底沉孔往上, 拧电机底面螺纹 (螺纹深度待电机规格书)
@@ -178,8 +178,9 @@ for i, s_ in enumerate(_K['board_screws']):
 
 # 7 玻璃下 上段↔下段 8×M3×50 (11-14 四): 上段顶面 Φ7 沉孔往下, 穿通两段, 下段底面 Φ8.2 孔里法兰螺母 (Z3.3..7.0, 法兰朝上)
 for i, (x, y) in enumerate(B.JN_PTS):
-    screw("M3x50 玻璃下上下段", i, x, y, B.JN_BEAR, B.JN_L, False, engage=("法兰螺母", B.JN_NUT_Z1 - B.JN_NUT_H, B.JN_NUT_Z1))
-    add(f"M3 法兰螺母 玻璃下下段底 #{i}", flange_nut_inv(x, y, B.JN_NUT_Z1 - B.JN_NUT_H), "#707070")   # 法兰朝上顶下段底面 Φ8.2 孔顶
+    screw("M4x50 超薄头 玻璃下上下段", i, x, y, B.JN_BEAR, B.JN_L, False, d=4.0, hd=8.5, hh=B.JN_HH, engage=("M4 法兰螺母", B.JN_NUT_Z1 - B.JN_NUT_H, B.JN_NUT_Z1))
+    _z0 = B.JN_NUT_Z1 - B.JN_NUT_H                 # 11-16: M4 法兰螺母法兰朝下 (法兰 Φ9.7×1.2 + 六角 6.9)
+    add(f"M4 法兰螺母 玻璃下下段底 #{i}", cut(fuse(cyl(x, y, 9.7, _z0, _z0 + 1.2), hexprism(x, y, 6.9, _z0 + 1.2, B.JN_NUT_Z1)), cyl(x, y, 4.0, -1, 10)), "#707070")
 
 # 11 V2 灯板支撑 (11-15, led_support_v1_2): 两端立板底块 4×M3×8 内六角 (Φ5.5×3 头, 沉孔底 Z36) 往下拧承载盘顶面 M3×4 铜螺母 (Z27.8..32);
 #    底板 r1 4×M3: 承载盘顶面 Φ4.2×4.0 浅孔压 M3×3 铜螺母 (Z29..32), 上面 M3×3 铜柱 (公母, 公头 3 进铜螺母) + 板 + M3×5 (螺丝只列 BOM);
@@ -264,7 +265,7 @@ for s in S:
         eng = max(0.0, min(hi, z1) - max(lo, z0))
     tdist, tpart = probe(x, y, d, tip, up)
     head_out = bear - s['hh'] if up else bear + s['hh']
-    hdist, hpart = probe(x, y, (M6_HEAD_D if d > 3 else M3_HEAD_D) - 0.2, head_out, not up)
+    hdist, hpart = probe(x, y, (s['hd'] or (M6_HEAD_D if d > 3 else M3_HEAD_D)) - 0.2, head_out, not up)   # 11-16: 有 hd 用实际头径 (M4 超薄头 8.5)
     row = dict(组=s['group'], 号=s['i'], x=round(x, 2), y=round(y, 2), r=round(math.hypot(x, y), 2), 方向="↑" if up else "↓",
                支承面Z=round(bear, 2), 尾端Z=round(tip, 2), 啮合=en, 啮合长=round(eng, 2),
                尾端前方=tpart, 尾端距离=None if tdist is None else round(tdist, 2),
