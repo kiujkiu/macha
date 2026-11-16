@@ -41,3 +41,15 @@ for n,sh in (('base_disc_v1_2',disc),('coil_ring_v1_2',ring),('flange_disc_v1_2'
         continue
     write_doc([(n, sh, '#8A8F98', None, False)], d / f'{n}.step', n)
 print('ok')
+# 11-16 晚 用户: 定子盘 2 件 / 转子盘 2 件 各放一个文件夹 (每次导出都覆盖成最新)
+import shutil
+_GROUPS = {'定子盘': [('flange_disc_v1_2', V12 / 'models' / 'flange_disc_v1_2'), ('mounting_flange_v1_2', V12 / 'models' / 'mounting_flange_v1_2')],
+           '转子盘': [('rim_ring_v1_2_D170', None), ('hub_disc_v1_2', None)]}
+for g, items in _GROUPS.items():
+    gd = V12 / g; gd.mkdir(exist_ok=True)
+    for n, d in items:
+        srcs = ([d / f'{n}.step', d / f'{n}.stl', d / f'{n}_drawing.pdf'] if d else
+                [OUT / '零件' / f'{n}.step', OUT / '打印STL' / f'{n}.stl'])
+        for f in srcs:
+            if f.exists(): shutil.copy2(f, gd / f.name)
+print('定子盘 / 转子盘 文件夹已更新')

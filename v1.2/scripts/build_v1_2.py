@@ -161,7 +161,7 @@ for sx in (1, -1):
         h = cut(h, cyl(x, y, 3.2, 31.7 - 1, 36.7), cyl(x, y, 7.0, 36.7, 41.0))
 hub = zdown(clean(h))
 # 11-16 晚 用户: 转子盘和定子盘同半径 ⇒ 毂盘外圆 r87.5 → r85 (= 承载盘 r85 = 安装法兰 r85 = 转子罩外圆), 转子外面一整个 Φ170 圆柱
-hub = clean(op(BRepAlgoAPI_Common, hub, cyl(0, 0, 170.0, -100, 200)))
+hub = clean(op(BRepAlgoAPI_Common, hub, cyl(0, 0, 2 * 82.4, -100, 200)))   # 11-16 晚 再改: 毂盘 r82.4 嵌进承载盘裙边 (同定子: 定子盘 r82.5 嵌安装法兰外裙)
 import math as m
 v_old_holes = 4 * (m.pi * 1.6**2 * 5 + m.pi * 3.5**2 * 4)
 LOG['hub'] = dict(v0=v0, v=vol(hub), fill=v_fill, old_holes_expected=v_old_holes)
@@ -178,13 +178,27 @@ LS_FOOT_PTS = []
 GATE_PTS = [(38.0, 10.0), (38.0, -10.0), (-38.0, 10.0), (-38.0, -10.0)]
 rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.2, 33.0) for x, y in GATE_PTS]))
 # 11-16 晚 pov3d-96 底板 r3 rev b (layout/r3_pads, 两 FPC 座一内一外, CZ06 夹中间): 4×M3 → 承载盘顶面 Φ4.2×4.0 浅孔 (H5/H7/H6/H8; 线圈腔 r34–76 上盘只剩 4.5 厚)
-BB_HOLES = [(-46.0, 17.8), (15.0, 27.55), (-24.25, 69.9), (24.25, 69.9)]   # rev c: H6/H8 (±24.25, 69.9)
+BB_HOLES = [(-46.0, 17.8), (18.1, 27.55), (-24.25, 69.9), (24.25, 69.9)]   # rev d (96 acf181c5): H7 (18.1, 27.55) 让开 r30 锁盘螺丝; rev c: H6/H8 (±24.25, 69.9)
 BB_INS_H = 4.0
 rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - BB_INS_H, 33.0) for x, y in BB_HOLES]))
 #   11-16 晚 用户: 转子罩照 V0.4 缩进坐盘上 (罩壁 r82–85, 外圆 = 盘 Φ170) ⇒ 罩底固定 + 两端 T 脚改承载盘顶面铜螺母 (Φ4.2×4.0, 原 R82.5 毂盘底铜螺母孔不再用)
-SHR_HOLES = [(78.5 * math.cos(math.radians(a)), 78.5 * math.sin(math.radians(a))) for a in (50.0, 140.0, 230.0, 320.0)]   # 罩底 4 孔 (避开底板 r3 / 无线托盘)
-END_T_HOLES = [(74.0, 10.0), (74.0, -10.0), (-74.0, 10.0), (-74.0, -10.0)]                                            # 两端 T 脚 4 孔 (线圈腔上方, 盘厚 4.5)
+SHR_HOLES = [(79.0 * math.cos(math.radians(a)), 79.0 * math.sin(math.radians(a))) for a in (50.0, 140.0, 230.0, 320.0)]   # 罩底 4 孔 r79 (11-16 晚 用户: 转子外圈螺丝同定子 r79; 原 r78.5)
+END_T_HOLES = [(74.0, 8.5), (74.0, -8.5), (-74.0, 8.5), (-74.0, -8.5)]   # 11-16 晚: y ±10 → ±8.5 (离承载盘原 (70.91,12.5) Φ4 通孔留 0.95)                                            # 两端 T 脚 4 孔 (线圈腔上方, 盘厚 4.5)
 rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.0, 33.0) for x, y in SHR_HOLES + END_T_HOLES]))
+#   11-16 晚 用户: 转子外圈螺丝和定子同半径 ⇒ 承载盘+毂盘外圈 8 孔从 V1.0 的 R82.5 挪到 r79 @22.5°+45°k (= 定子盘/安装法兰外圈 LID_SCREWS, 上下对齐);
+#   8×M3×8 内六角从承载盘顶沉孔往下, 进毂盘底 M3×4 铜螺母 (Z21.5–25.5) —— 两盘锁成一体
+RH_R = 79.0
+RH_PTS = [(RH_R * math.cos(math.radians(22.5 + 45 * k)), RH_R * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]
+RH_OLD = [(82.5 * math.cos(math.radians(22.5 + 45 * k)), 82.5 * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]
+RH_CB_D, RH_BEAR, RH_L = 6.0, 29.0, 8.0          # 11-16 晚 改: 承载盘顶 Φ6×3 沉孔 (头支承 Z29, 头顶齐盘顶 Z32), M3×8 往下, 尾 Z21.0 (毂盘底下露 0.5)
+RH_INS = (21.5, 25.5)                             # 毂盘底 M3×4 铜螺母 (底面齐平压入)
+#   用户: 转子两盘要像定子一样嵌套 (V0.4/V1.0 原样) ⇒ 承载盘补裙边 r82.5–85 下到毂盘底 Z21.5, 毂盘 r82.4 嵌在里面; 转子外面 = 承载盘一个 Φ170 圆柱
+RIM_SKIRT = (82.5, 85.0, 21.5)
+rim = clean(fuse(rim, *[cyl(x, y, 4.0, 27.0, 32.0) for x, y in RH_OLD]))                                     # 旧 R82.5 Φ3.6 通孔补实
+rim = clean(fuse(rim, cut(cyl(0, 0, 2 * RIM_SKIRT[1], RIM_SKIRT[2], 27.6), cyl(0, 0, 2 * RIM_SKIRT[0], RIM_SKIRT[2] - 1, 28.0))))   # 裙边
+rim = clean(cut(rim, *[fuse(cyl(x, y, 3.4, 20.0, 33.0), cyl(x, y, RH_CB_D, RH_BEAR, 33.0)) for x, y in RH_PTS]))
+hub = clean(fuse(hub, op(BRepAlgoAPI_Common, fuse(*[cyl(x, y, 4.6, 21.5, 27.0) for x, y in RH_OLD]), cyl(0, 0, 2 * 82.4, 0, 40))))   # 旧 R82.5 孔残口补实 (不出 r82.4)
+hub = clean(cut(hub, *[fuse(cyl(x, y, 3.4, 20.0, 28.0), cyl(x, y, 4.2, 20.0, RH_INS[1])) for x, y in RH_PTS]))
 #   无线供电模块固定件 (wireless_holder_v1_2.py, −y 侧): M3 铜螺母孔 (11-16 晚: 罩壁缩到 r82, 托盘整体往 +y 挪 3)
 MOD_HOLES = [(11.0, -76.5), (-11.0, -76.5), (0.0, -31.0)]   # 内舌孔留 −31 (挪到 −28 会贴承载盘内缘 r26)
 rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.2, 33.0) for x, y in MOD_HOLES])) if MOD_HOLES else rim
