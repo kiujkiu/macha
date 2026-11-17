@@ -1,6 +1,6 @@
 """
 ★ fr4_plate_v1_2b —— 转子盘B 玻纤加强板 (2026-11-17 用户定)
-  无铜 FR4 光板 Φ170 × 2.0, 垫在毂盘 hub_disc_v1_2b 底面 (夹在电机顶面与毂盘之间), 坐标 = 毂盘零件系 (盘心原点, 孔位一一对应)。
+  无铜 FR4 光板 Φ165 × 2.0, 垫在毂盘 hub_disc_v1_2b 底面 (夹在电机顶面与毂盘之间), 坐标 = 毂盘零件系 (盘心原点, 孔位一一对应)。
   - 内圈 R30 ×8 + 外圈 R77.5 ×8 (@22.5°+45°k): M3 通孔 Φ3.2 + 底面 Φ7.2×1 平底沉孔; 螺丝从下往上穿玻纤板 + 毂盘, 终点承载盘 rim_ring_v1_2b 的铜螺母
   - 电机 4 孔 (正方形对角 16, R8 @45°+90°k): M3 通孔 Φ3.2, 不开沉孔 (电机螺丝从毂盘顶面往下拧, 底面贴电机法兰)
   - 中心: M5 通孔, 实际 Φ5.2 (电机轴头)
@@ -13,7 +13,7 @@ import manifold3d as m3d
 import numpy as np, struct
 
 HERE = Path(__file__).resolve().parent
-OD, T = 170.0, 2.0   # 11-17: 175 → 170 (用户: 转子盘改从 V0.4 起, Φ170; 托住毂盘 Φ165 + 承载盘外唇 OD170)
+OD, T = 165.0, 2.0   # 11-17: 175 → 170 → 165 (用户: = 毂盘 Φ165, 正好垫在毂盘下; 承载盘外唇 ID165/OD170 下沿齐毂盘底, 落在板外)
 M3_D, CB_D, CB_H = 3.2, 7.2, 1.0
 CENTER_D = 5.2
 ring = lambda r, n, a0: [(r * math.cos(math.radians(a0 + 360 / n * k)), r * math.sin(math.radians(a0 + 360 / n * k))) for k in range(n)]  # noqa: E731
@@ -65,7 +65,7 @@ def write_dxf(out):
 
 if __name__ == '__main__':
     part = build()
-    v = write_stl(part, HERE / 'fr4_plate_v1_2b.stl', 'POV3D fr4_plate_v1_2b D170x2 FR4')
+    v = write_stl(part, HERE / 'fr4_plate_v1_2b.stl', 'POV3D fr4_plate_v1_2b D165x2 FR4')
     write_dxf(HERE / 'fr4_plate_v1_2b.dxf')
     vol = part.volume()
     print(f'bbox Z {v[:, 2].min():.2f}..{v[:, 2].max():.2f}  体积 {vol:.1f} mm³  重量 ≈ {vol * 1.85e-3:.1f} g (FR4 1.85 g/cm³)  genus {part.genus()}')
