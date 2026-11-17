@@ -76,7 +76,15 @@ AXK_H = 3.0                                       # AXK5A2137YG (灯板) + AXK6A
 BR_F = 1.6                                        # 桥板 F 面 (STEP z, 名义板厚)
 ZT = B.Z_BB0 + B.BB_T                             # 底板顶 36.6
 CZ06_TOP = ZT + B.CZ06_H                          # 43.2
-CZ06_Y1 = L.ENV['CZ06 (DF40+板+件)'][3]           # 53.3 (CZ06 外沿)
+# 11-17 96 选项: J6 再往 +y 挪 (焊盘离板边 ≥ 铣边余量), CZ06 整组可跟着往 +y 挪 (环境变量, 默认 0)
+J6_DY_EXTRA = float(os.environ.get('FPC_J6_DY_EXTRA', '0'))
+CZ06_DY = float(os.environ.get('FPC_CZ06_DY', '0'))
+CZ06_BOX = list(L.ENV['CZ06 (DF40+板+件)']); CZ06_BOX[1] += CZ06_DY; CZ06_BOX[3] += CZ06_DY   # (x0, y0, x1, y1, h)
+CZ06_ENV = gbox(CZ06_BOX[0], CZ06_BOX[1], ZT, CZ06_BOX[2], CZ06_BOX[3], ZT + CZ06_BOX[4])     # 保守包络 (整块)
+# 按实物: DF40 合高 3.0 区 (四边各内缩 2, 同 v2_boards) + CZ06 板体及顶面件 Z ZT+3.0 … 43.2
+CZ06_REAL = fuse(gbox(CZ06_BOX[0] + 2, CZ06_BOX[1] + 2, ZT, CZ06_BOX[2] - 2, CZ06_BOX[3] - 2, ZT + V.DF40_H),
+                 gbox(CZ06_BOX[0], CZ06_BOX[1], ZT + V.DF40_H, CZ06_BOX[2], CZ06_BOX[3], ZT + CZ06_BOX[4]))
+CZ06_Y1 = CZ06_BOX[3]                                # 53.3 (+CZ06_DY) CZ06 外沿
 # FPC 座 (XW0525512-702R-001, 70P 0.5, 翻盖; 高按底板需求表 "约 2" 取 2.0 偏保守, 桥板 STEP 占位是 1.2 — 都待规格书核)
 SEAT_H = 2.0
 SLOT_W, SLOT_H, SLOT_Z, SLOT_D = 36.0, 0.5, 0.7, 5.0   # 插口: 宽 36 / 高 0.5 / 中心离 PCB 面 0.7 / 深 5 (FPC 插 4.0, 留 1.0)
@@ -254,8 +262,18 @@ def _bb_seat(ref, rot=False, dy=0.0):
 # in: J6 转 180° 后口朝 +y, B 要从 J6 顶上翻过来 U 形回弯 (中线 R1.0) 再朝 −y 进口, 口外要 OUT_J6 + R + t/2 = 2.075 到 CZ06 外沿 y18.3 之前
 #     ⇒ J6 本体 (Fab) 贴到板下沿 y8.6 (CrtYd 出板边 0.2), 口边 y16.2, U 弯最外 y18.275 (离 CZ06 包络 0.025)
 J6_DY_IN = 8.6 - 9.345                               # 转 180° 后 Fab 后沿 9.345 → 8.6
-seat_j6, J6 = _bb_seat('J6', rot=BB_SEAT_MODE == 'in', dy=J6_DY_IN if BB_SEAT_MODE == 'in' else 0.0)
-seat_j5, J5 = _bb_seat('J5', rot=BB_SEAT_MODE == 'out')
+seat_j6, J6 = _bb_seat('J6', rot=BB_SEAT_MODE == 'in', dy=(J6_DY_IN + J6_DY_EXTRA) if BB_SEAT_MODE == 'in' else 0.0)
+if CZ06_DY or J6_DY_EXTRA: OUT = OUT.parent / f'{OUT.name}_J6{J6_DY_EXTRA:+g}_CZ06{CZ06_DY:+g}'
+J5_DY = float(os.environ.get('FPC_J5_DY', '0'))       # 11-17: 按 96 的口边口径 (r4g: CZ06 外沿 → J5 口 4.73 ⇒ 口 y58.33) 可把 J5 整体往 −y 让 (偏保守)
+seat_j5, J5 = _bb_seat('J5', rot=BB_SEAT_MODE == 'out', dy=J5_DY)
+# 底板交付 STEP 可用环境变量换版 (默认 = v2_boards 里的 BB_STEP); r4g = J6 掉头 + CZ06 上移 0.3
+_bbs = os.environ.get('FPC_BB_STEP')
+if _bbs:
+    from helpers import read_step
+    BB_STEP_USED = xf(read_step(_bbs), tr(0, 0, B.Z_BB0)); BB_STEP_NAME = Path(_bbs).stem
+else:
+    BB_STEP_USED = L.bb_step; BB_STEP_NAME = Path(str(V.BB_STEP)).stem
+if _bbs or J5_DY: OUT = OUT.parent / (OUT.name + (f'_{BB_STEP_NAME.split("_")[-1]}' if _bbs else '') + (f'_J5{J5_DY:+g}' if J5_DY else ''))
 
 
 # ---------------- FPC 中线 (YZ 面) ----------------
@@ -366,6 +384,9 @@ else:
     pa.line(FPC_INS + OUT_A, '插入 桥板 A 座 + 口外直段').arc(R_CH, 180, '座口下 180° 回弯')
 pa.line((Z_FLAT_A - R_STD) - pa.p[1], '竖段 (竖槽 −y 侧)').arc(R_STD, -90, '弯 → 过 J6 顶')
 if J5['face'] < 0:
+    _rmax = (J5['mouth_y'] - OUT_A - CZ06_Y1 - 0.075) / 2     # S 弯起点在 CZ06 外沿以外 ≥0.075 (r4f 现状正好 R1.6)
+    if _rmax < R_J5 - 1e-9: R_J5 = math.floor(_rmax * 20 + 1e-6) / 20   # CZ06 外移时 S 弯收小 (取 0.05 档)
+    assert R_J5 - FPC_T / 2 >= 0.925, R_J5
     _y1 = J5['mouth_y'] - OUT_A - 2 * R_J5
     assert _y1 >= CZ06_Y1, _y1                      # S 弯从 CZ06 外沿以外开始 (不压棱)
     pa.line(_y1 - pa.p[0], 'CZ06 顶平铺').arc(R_J5, -90, 'CZ06 外沿折下')
@@ -513,11 +534,12 @@ def report():
     with contextlib.redirect_stdout(io.StringIO()):
         import rotor_shroud_v1_2 as RS
     mip = comp(list(L.pair(gbox(-74.88, 0.0, 75.0, 74.88, V.MIP_H, 243.5))))   # MIP 两万颗太慢 ⇒ 每板一块包络 (同 assembly_noglass 绘图)
-    env = {k: v for k, v in L.env.items() if k not in ('J5', 'J6', '底面件 (r2 B.CrtYd × 限高)')}   # J5/J6 方块包络换成真座子
+    env = {k: v for k, v in L.env.items() if k not in ('J5', 'J6', '底面件 (r2 B.CrtYd × 限高)', 'CZ06 (DF40+板+件)')}   # J5/J6 方块包络换成真座子
+    env['CZ06 (DF40+板+件)'] = CZ06_ENV
     env['底板器件 CrtYd×限高 (除 J5/J6)'] = comp([gbox(a, b_, ZT, c, d, ZT + h) if h > 0 else gbox(a, b_, B.Z_BB0 + h, c, d, B.Z_BB0)
                                          for r, _, (a, b_, c, d), h in V.baseboard_parts()[0] if r not in ('J5', 'J6')])
     OBJ = dict(led_a=L.led_a, led_b=L.led_b, mip_env=mip, bar=L.bar_s, post_a=L.post_a, post_b=L.post_b, ant_a=L.ant_a, ant_b=L.ant_b,
-               bb_step_r4d=L.bb_step, bb_pcb=L.VB['baseboard'], hub=B.hub, rim=B.rim, wireless_holder=L.wl, top=L.top,
+               bb_step=BB_STEP_USED, bb_pcb=L.VB['baseboard'], hub=B.hub, rim=B.rim, wireless_holder=L.wl, top=L.top,
                shroud_a=RS.shr_a, shroud_b=RS.shr_b, lid_a=RS.lid_a, lid_b=RS.lid_b, **{f'env {k}': v for k, v in env.items()})
     NEW = dict(fpc_a=fpc_a, fpc_b=fpc_b, tape_a=tape_a, tape_b=tape_b, seat_j5=seat_j5, seat_j6=seat_j6,
                bridge_a=br_rest_a, bridge_b=br_rest_b)
@@ -549,7 +571,7 @@ def report():
     G['fpc_a × fpc_b'] = dist(fpc_a, fpc_b)
     for nm, f in (('fpc_a', fpc_a), ('fpc_b', fpc_b)):
         for b, s in (('seat_a', seat_a), ('seat_b', seat_b), ('bridge_a', br_rest_a), ('bb_pcb', L.VB['baseboard']), ('seat_j6', seat_j6), ('seat_j5', seat_j5),
-                     ('cz06', L.env['CZ06 (DF40+板+件)']), ('led_a', L.led_a), ('led_b', L.led_b), ('hub', B.hub), ('rim', B.rim), ('bar', L.bar_s)):
+                     ('cz06', CZ06_ENV), ('cz06_real', CZ06_REAL), ('led_a', L.led_a), ('led_b', L.led_b), ('hub', B.hub), ('rim', B.rim), ('bar', L.bar_s)):
             G[f'{nm} × {b}'] = dist(f, s)
     G['bridge_a × lid_a'] = dist(bridge_a, RS.lid_a); G['bridge_b × lid_b'] = dist(bridge_b, RS.lid_b)
     G['bridge_a × bar'] = dist(br_rest_a, L.bar_s)
@@ -644,7 +666,7 @@ def export():
     parts = [('转子毂盘 hub_disc_v1_2', B.hub, '#4F86C6', 0.05), ('承载盘 rim_ring', B.rim, '#6AA84F', 0.05),
              ('灯板 A (+y)', L.led_a, '#145A32', 0.05), ('灯板 B (-y)', L.led_b, '#0E3B22', 0.05),
              ('桥板 A (真模型)', bridge_a, '#27AE60', 0.03), ('桥板 B (真模型)', bridge_b, '#229954', 0.03),
-             ('底板 r4d (交付 STEP)', L.bb_step, '#1E8449', 0.05), ('CZ06 包络', L.env['CZ06 (DF40+板+件)'], '#7D8C8E', 0.05),
+             (f'底板 {BB_STEP_NAME} (交付 STEP)', BB_STEP_USED, '#1E8449', 0.05), ('CZ06 包络', CZ06_ENV, '#7D8C8E', 0.05),
              ('底板 FPC 座 J5/J6 (Fab 外形)', comp([seat_j5, seat_j6]), '#555555', 0.03),
              ('FPC A (桥A→J5)', fpc_a, '#E67E22', 0.02), ('FPC B (桥B→J6)', fpc_b, '#D35400', 0.02), ('双面胶 ×2', comp([tape_a, tape_b]), '#F4D03F', 0.02),
              ('灯板夹条 led_bar', L.bar_s, '#8E7CC3', 0.03), ('立板 +x led_post_a', L.post_a, '#F1C232', 0.03), ('立板 -x led_post_b', L.post_b, '#E69138', 0.03)]
@@ -731,7 +753,7 @@ def drawing():
     T(ox, Pz(0, 49.5)[1] + 4, '走线侧视 (x=0 剖, 从 +x 看; 2:1; Y →, Z ↑)', 9)
     box(-14.5, 29.5, 60, HUB_TOP, fc='#D5DBDB', ec='none'); T(*Pz(-12, 29.9), '毂盘顶 Z%.1f' % HUB_TOP, 5.5)
     box(V.BB_POLY[0][1], B.Z_BB0, 60, ZT, fc='#A9DFBF', ec='k', lw=0.3); T(*Pz(20, 35.3), '底板 r4d', 5.5)
-    cz = L.ENV['CZ06 (DF40+板+件)']; box(cz[1], ZT, min(cz[3], 60), CZ06_TOP, fc='#E5E8E8', ec='k', lw=0.3); T(*Pz(30, 39.5), 'CZ06', 6)
+    cz = CZ06_BOX; box(cz[1], ZT, min(cz[3], 60), CZ06_TOP, fc='#E5E8E8', ec='k', lw=0.3); T(*Pz(30, 39.5), 'CZ06', 6)
     for j in (J6, J5):
         if j['mouth_y'] < 60: box(j['mouth_y'], ZT, min(j['back_y'], 60), ZT + SEAT_H, fc='#566573', ec='k', lw=0.3)
     for sgn, nm in ((1, 'A'), (-1, 'B')):
@@ -865,7 +887,7 @@ def combo():
             b = bbox(s_); rect(Q, (b[1], b[2], b[4], b[5]), fc='#333333', ec='none'); T(*Q(b[4] + 0.5 if b[1] > 0 else b[1] - 3, (b[2] + b[5]) / 2), 'U52', 5)
     rect(Q, (ECC - L.GAP_HALF, Z0, ECC + L.GAP_HALF, Z0 + 9), fc='#D2B4DE', ec='none')
     rect(Q, (V.BB_POLY[0][1], B.Z_BB0, V.BB_POLY[2][1], ZT), fc='#A9DFBF', ec='k', lw=0.3); T(*Q(56, 35.3), '底板 r4d', 5.5)
-    cz = L.ENV['CZ06 (DF40+板+件)']; rect(Q, (cz[1], ZT, cz[3], CZ06_TOP), fc='#E5E8E8', ec='k', lw=0.3); T(*Q(35, 39.5), 'CZ06', 6, ha='center')
+    cz = CZ06_BOX; rect(Q, (cz[1], ZT, cz[3], CZ06_TOP), fc='#E5E8E8', ec='k', lw=0.3); T(*Q(35, 39.5), 'CZ06', 6, ha='center')
     for j, nm in ((J6, 'J6 (口朝 %s)' % ('+y' if J6['face'] > 0 else '-y')), (J5, 'J5 (口朝 %s)' % ('+y' if J5['face'] > 0 else '-y'))):
         rect(Q, (j['mouth_y'], ZT, j['back_y'], ZT + SEAT_H), fc='#566573', ec='k', lw=0.3); T(*Q(min(j['mouth_y'], j['back_y']), ZT - 2.2), nm, 5.5)
     for p_, col in ((pa, '#E67E22'), (pb, '#C0392B')):
