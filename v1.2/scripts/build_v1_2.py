@@ -641,7 +641,7 @@ def revol(rz):                                     # (r,z) 闭合折线绕 Z 轴
     return BRepPrimAPI_MakeRevol(_MF(pg.Wire()).Face(), gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), 2 * math.pi).Shape()
 Z_GT = Z_G + GL_H                                  # 玻璃上端 (11-13 晚 Z_G 53.08 ⇒ 298.08; 原 277.0)
 GT_DEPTH = 12.8                                    # 内/外卡深 (玻璃下 20/10; 这里同深, 底面同高好打印); 11-17 压圈: 12 → 12.8 (托台下移 0.8 放底垫, 45° 斜面要这 0.8)
-GT_TOP_T = 4.6                                     # 玻璃端面以上板厚 (11-17 压圈: 4 → 4.6, 圆环玻璃 Z 不动)
+GT_TOP_T = 5.6                                     # 玻璃端面以上板厚 (11-17 压圈: 4 → 4.6; 11-17 晚 用户红/绿分件: 再 +1 → 5.6, 铜螺母底下留 1.4; 圆环玻璃 Z 不动)
 GT_Z0, GT_Z1 = Z_GT - GT_DEPTH, Z_GT + GT_TOP_T    # 265 / 281
 assert Z_SCR1 + 3.0 <= GT_Z0, f'灯板上沿 Z{Z_SCR1} 离玻璃上最低处 Z{GT_Z0} 不足 3'
 LOG['screen'] = dict(z_board=(Z_SCR0, Z_SCR1), z_led0=round(Z_LED0, 2), z_view0=round(Z_VIEW0, 2), z_g=Z_G, z_gt=Z_GT, top_clear=round(GT_Z0 - Z_SCR1, 2), min_gl_h=round(Z_SCR1 + 3.0 + GT_DEPTH - Z_G, 2))
@@ -652,7 +652,8 @@ GD_OD, GD_ID, GD_T = 180.0, 20.0, 10.0             # 圆环玻璃 (用户 11-13:
 #   压圈底面直接落在环顶 = 硬限位 ⇒ 垫子压缩量固定 GK_COMP (拧多紧都不会再多压玻璃); 上下垫同半径 ⇒ 玻璃只受压不受弯
 GK_T, GK_COMP = 1.0, 0.2                           # 环垫厚 / 压缩率 (压后 0.8)
 GK_H = GK_T * (1 - GK_COMP)                        # 0.8
-GD_CLR, GD_RECESS = 0.3, GK_H                      # 玻璃窝径向单边 / 玻璃顶低于环顶 (= 上垫压后厚; 原 0.2)
+GC_LIP = 1.0                                       # 11-17 晚: 外件 (绿) 底面凸缘伸进玻璃窝 1 压上垫 (环顶加厚 1 而玻璃不动)
+GD_CLR, GD_RECESS = 0.3, GK_H + GC_LIP             # 玻璃窝径向单边 / 玻璃顶低于环顶 (= 上垫压后 + 凸缘; 原 0.2)
 GD_Z1 = GT_Z1 - GD_RECESS                          # 280.8
 GD_Z0 = GD_Z1 - GD_T                               # 291.88 (11-17 前后不变)
 GT_LEDGE_Z = GD_Z0 - GK_H                          # 托台顶 291.08 (下垫压后 0.8); 窝深 11.6
@@ -660,29 +661,32 @@ GD_POCKET_R = GD_OD / 2 + GD_CLR                   # 90.3
 GT_LEDGE_R, GT_LEDGE_V = 85.5, 0.5                 # 托台内缘 r85.5 (搭玻璃 4.5), 内缘直边 0.5, 下面 45° 斜回内卡内面
 _gin = gi - SPIG_T                                 # 90.8
 assert (GT_LEDGE_Z - GT_LEDGE_V - GT_Z0) >= (_gin - GT_LEDGE_R) - 1e-6, '托台底面要 ≥45° (正立打印免支撑)'
-GT_RZ = [(_gin, GT_Z0), (gi, GT_Z0), (gi, Z_GT), (go, Z_GT), (go, GT_Z0), (go + GT_FOOT, GT_Z0),
-         (SH_OUT, Z_GT - LIP_EDGE), (SH_OUT, GT_Z1),                                    # 11-17: 顶外缘倒角移到压圈上 (环顶被压圈盖满)
+# 11-17 晚 用户草图: 玻璃上拆红/绿两件 —— 红 (本件 glass_top_v1_2) = 内卡 + 托台/玻璃窝 + 盖过玻璃罩端面到 r100.1 (坐在端面上);
+#   绿 (glass_top_clamp_v1_2) = 顶板 (压玻璃) + 外卡 一体; 螺丝从绿顶面往下进红件桥上的铜螺母 (在玻璃罩壁正上方)
+GT_RO = go - 0.1                                   # 红件外面 r100.1 (绿件内面 r100.2, 嵌套单边 0.1)
+GT_RZ = [(_gin, GT_Z0), (gi, GT_Z0), (gi, Z_GT), (GT_RO, Z_GT), (GT_RO, GT_Z1),
          (GD_POCKET_R + 0.5, GT_Z1), (GD_POCKET_R, GT_Z1 - 0.5),                       # 窝口 0.5 倒角 (放玻璃)
          (GD_POCKET_R, GT_LEDGE_Z), (GT_LEDGE_R, GT_LEDGE_Z), (GT_LEDGE_R, GT_LEDGE_Z - GT_LEDGE_V)]
 GT_CONE_DEG = math.degrees(math.atan2(Z_GT - LIP_EDGE - GT_Z0, SH_OUT - go - GT_FOOT))   # 外卡斜面与水平 (≥45 免支撑)
-# 压圈 glass_top_clamp_v1_2: r85.5 (= 托台内缘, 不多挡显示区) – r110, 厚 3, 顶外缘倒角 1; 8×M3×6 超薄头 (Φ7×1.5, 头在顶面) r105 @22.5°+45k
-#   进环顶 Φ4.2×4.2 铜螺母 (r102.9–107.1 在外卡实体里, 离玻璃罩槽 r100.2 有 2.7); 尾 Z299.68 啮合 3.0
+# 绿件 glass_top_clamp_v1_2: 顶板 r85.5 (= 托台内缘, 不多挡显示区) – r110 厚 3 (顶外缘倒角 1) + 底面凸缘 r85.5–90.0 高 1 压上垫 + 外卡 r100.2–110 (斜面同原)
+#   8×M3×6 超薄头 (Φ7×1.5, 头在顶面) @22.5°+45k, r = 红件桥中线 (r90.8–100.1 中点) → 红件顶面 Φ4.2×4.2 铜螺母, 底下离玻璃罩端面 1.4
 GC_R0, GC_T, GC_CH, GC_IN_CH = GT_LEDGE_R, 3.0, 1.0, 0.5
-GC_Z0, GC_Z1 = GT_Z1, GT_Z1 + GC_T                 # 302.68 / 305.68
-GC_N, GC_R, GC_ANG0, GC_HOLE = 8, 105.0, 22.5, 3.4
+GC_LIP_R1 = GD_POCKET_R - 0.3                      # 凸缘外 r90.0 (玻璃窝 r90.3, 单边 0.3)
+GC_Z0, GC_Z1 = GT_Z1, GT_Z1 + GC_T                 # 303.68 / 306.68 (顶板底 = 红件顶 = 硬限位)
+GC_N, GC_R, GC_ANG0, GC_HOLE = 8, (gi - SPIG_T + 0.5 + GT_RO) / 2, 22.5, 3.4   # r95.45
 GC_INS_D, GC_INS_H = 4.2, 4.2
 GC_SCREW_L, GC_HEAD_D, GC_HEAD_H = 6.0, 7.0, 1.5
 GC_PTS = [(GC_R * math.cos(math.radians(GC_ANG0 + 45 * k)), GC_R * math.sin(math.radians(GC_ANG0 + 45 * k))) for k in range(GC_N)]
-assert GC_R - GC_INS_D / 2 >= go + 2.5, '铜螺母孔离玻璃罩槽太近'
-assert GC_R + GC_HEAD_D / 2 <= SH_OUT - GC_CH - 0.5, '螺丝头出压圈外缘'
-assert GT_Z1 - GC_INS_H > Z_GT, '铜螺母孔打穿到玻璃罩端面'
-_gz = GT_Z0 + (GC_R - GC_INS_D / 2 - go - GT_FOOT) * math.tan(math.radians(GT_CONE_DEG))   # 孔内侧处外卡斜面底高
-assert GT_Z1 - GC_INS_H - _gz >= 2.0, '铜螺母孔底下外卡肉太薄'
+assert GC_R - GC_INS_D / 2 >= GD_POCKET_R + 0.5 + 2.0 and GC_R + GC_INS_D / 2 <= GT_RO - 2.0, '铜螺母孔离红件桥两侧太近'
+_ins_floor = GT_Z1 - GC_INS_H - Z_GT               # 铜螺母底 → 玻璃罩端面
+assert _ins_floor >= 1.2, '铜螺母孔底离玻璃罩端面太薄'
+assert GC_Z1 - GC_SCREW_L >= GT_Z1 - GC_INS_H, '螺丝尖超出铜螺母'
 glass_top = clean(cut(revol(GT_RZ), *[cyl(x, y, GC_INS_D, GT_Z1 - GC_INS_H, GT_Z1 + 1) for x, y in GC_PTS]))
-glass_top_clamp = clean(cut(revol([(GC_R0, GC_Z0), (SH_OUT, GC_Z0), (SH_OUT, GC_Z1 - GC_CH), (SH_OUT - GC_CH, GC_Z1), (GC_R0 + GC_IN_CH, GC_Z1), (GC_R0, GC_Z1 - GC_IN_CH)]),
-                            *[cyl(x, y, GC_HOLE, GC_Z0 - 1, GC_Z1 + 1) for x, y in GC_PTS]))
+glass_top_clamp = clean(cut(revol([(GC_R0, GC_Z0 - GC_LIP), (GC_LIP_R1, GC_Z0 - GC_LIP), (GC_LIP_R1, GC_Z0), (go, GC_Z0), (go, GT_Z0), (go + GT_FOOT, GT_Z0),
+                                   (SH_OUT, Z_GT - LIP_EDGE), (SH_OUT, GC_Z1 - GC_CH), (SH_OUT - GC_CH, GC_Z1), (GC_R0 + GC_IN_CH, GC_Z1), (GC_R0, GC_Z1 - GC_IN_CH)]),
+                            *[cyl(x, y, GC_HOLE, GT_Z0 - 1, GC_Z1 + 1) for x, y in GC_PTS]))
 glass_gasket_bot = ann(GT_LEDGE_R, GD_OD / 2, GT_LEDGE_Z, GD_Z0)               # 外购/裁切 硅胶垫 OD180×ID171×1 (画压后 0.8)
-glass_gasket_top = ann(GT_LEDGE_R, GD_OD / 2, GD_Z1, GC_Z0)
+glass_gasket_top = ann(GT_LEDGE_R, GD_OD / 2, GD_Z1, GD_Z1 + GK_H)
 glass_disc = ann(GD_ID / 2, GD_OD / 2, GD_Z0, GD_Z1)                           # 外购圆环玻璃 (装配用实体)
 # 中心堵头 (一件): 顶法兰 Φ32 压玻璃顶; 管 r8.2–9.8 穿 Φ20 孔 (单边 0.2); 孔下 30° 倒钩到 r11 (钩 1.0), 45° 导入到 r9; 6 条 2 宽槽 → 6 爪
 GT_BEARING = bool(int(os.environ.get('GT_BEARING', '1')))   # 11-14: 灯板顶轴进 688 ⇒ 默认开轴承窝   # 默认堵头; 1 = 法兰内开 688 轴承窝 (Φ8 轴从下穿爪内孔进来)
@@ -711,7 +715,7 @@ LOG['glass_top'] = dict(v=vol(glass_top), z=(GT_Z0, GT_Z1), z_tube_top=Z_GT, con
                         hub_v=vol(glass_top_hub), hub_z=(round(_zt, 2), GD_Z1 + _fl_t), finger_L=round(GH_L, 2), finger_strain=round(GH_STRAIN, 4), bearing=GT_BEARING,
                         valid=(BRepCheck_Analyzer(glass_top).IsValid(), BRepCheck_Analyzer(glass_top_hub).IsValid(), BRepCheck_Analyzer(glass_top_clamp).IsValid()),
                         clamp_v=vol(glass_top_clamp), clamp_z=(GC_Z0, GC_Z1), ledge_z=GT_LEDGE_Z, gasket=(GK_T, GK_COMP), clamp_pts=[(round(x, 2), round(y, 2)) for x, y in GC_PTS],
-                        ins_floor_meat=round(GT_Z1 - GC_INS_H - _gz, 2), screw_tip=GC_Z1 - GC_SCREW_L)
+                        ins_floor_meat=round(_ins_floor, 2), screw_tip=GC_Z1 - GC_SCREW_L)
 nuts = []
 seat_nuts = [cyl(x, y, SH_NUT_D, NUT_Z0, NUT_Z0 + NUT_T) for x, y in SH_M6]
 hang_nuts = [cyl(x, y, 6.35, FL_Z0 - 2.4, FL_Z0) for x, y in OUT_HANG]          # M3 螺母 (对角 6.35 x 2.4) 吊在定子盘底
