@@ -1,14 +1,9 @@
 """
-★ hub_disc_v1_2b (2026-11-17 用户: 「从 V1.0 的转子盘开始改」) = v1.0/models/hub_disc_v1_0/build_stl.py 原样拷贝,
-  第 1 步只改电机 5 个孔 (其余几何/孔与 V1.0 逐项相同):
-  - A 组 4 孔: V1.0 菱形 (±6,0)/(0,±7.5) → 新电机 Φ55×21.5 转子 4×M3 正方形对角 16 (R8 @ 45°+90°k); Φ3.2 通 + 顶面 Φ7×4 沉孔 (同 V1.0 做法)
-  - 中心盲窝: Φ6.2×2.2 → Φ6.2×3.5 (底面, 让新电机轴头; 同 V1.2 现行)
-  后续改动按用户逐条往下加。
+★ hub_disc_v1_2b (2026-11-17 用户: 转子盘从 V0.4 起改, Φ170 转子) = models/hub_disc/build_stl.py (V0.4 现行, 与 v0.4/print 同) 原样拷贝,
+  第 1 步只改电机 5 孔: A 组 菱形 12×15 → 正方形对角 16 (R8 @45°), 中心底窝 Φ6.2 深 2.2 → 3.5。其余与 V0.4 逐项相同。
+  (同日先从 V1.0 Φ175 起改过一版, 用户改主意: 应该用 V0.4 ⇒ 已替换)
 """
 """
-★ hub_disc_v1_0 (2026-10-20) = models/hub_disc 拷贝改 4 个参数: 底盘 Φ165→175, 外凸台 ID145/OD165→155/175,
-  外圈 8 孔 (D 组) R77.5→82.5。其余 (中心凸台/菱形/方形/内圈 R30) 不变。下文旧尺寸注释以参数为准。
-
 Build POV 3D hub disc STL using manifold3d.
 
 Geometry (all mm, axis along +Z, base bottom at Z=0):
@@ -49,7 +44,7 @@ import numpy as np
 import manifold3d as m3d
 
 # ===== Parameters =====
-BASE_OD = 175.0     # V1.0: 165 -> 175 (盘扩径 Φ180, 套 rim_ring 外唇 ID175)
+BASE_OD = 165.0
 BASE_T  = 3.0      # Z = 0 .. 3
 
 # 2026-07-21 深夜 (中央凸台一部分让渡给 rim_ring 的新内凸台环 OD80/ID70x2.5):
@@ -61,8 +56,8 @@ LOWER_BOSS_T = 2.5   # Z = 3 .. 5.5
 UPPER_BOSS_D = 50.0
 UPPER_BOSS_T = 3.5   # Z = 5.5 .. 9
 
-RIM_BOSS_ID = 155.0  # V1.0: 145 -> 155 (外圈孔外推 5, 外凸台同步外推)
-RIM_BOSS_OD = 175.0
+RIM_BOSS_ID = 145.0
+RIM_BOSS_OD = 165.0
 RIM_BOSS_T  = 2.5    # Z = 3 .. 5.5
 
 TOTAL_H = BASE_T + LOWER_BOSS_T + UPPER_BOSS_T   # 9
@@ -77,7 +72,7 @@ RING_CB_DEPTH = 4.5   # PCD 环形 16 孔沉深 4→4.5 (2026-07-14 用户)
 # Center counterbore — Φ6.2 × 2.2 mm, opens from the BOTTOM face (Z=0..2.2)
 # at (0, 0). Pocket only (no through-hole), recessed into the base from below.
 CENTER_CB_DIAM  = 6.2
-CENTER_CB_DEPTH = 3.5   # 11-17: 2.2 → 3.5 (新电机轴头, 同 V1.2 现行)
+CENTER_CB_DEPTH = 3.5   # 11-17 第 1 步: 2.2 → 3.5 (新电机轴头)
 
 # Direction toggle: the central diamond (pattern A) counterbore now opens
 # from the TOP face (top of upper boss, Z=TOTAL_H) downward, so the screw
@@ -90,7 +85,8 @@ DIAMOND_CB_FROM_TOP = True
 RING_HOLE_ROTATION = 22.5
 
 
-# Pattern A — 电机 4 孔 (11-17 改): 新电机转子 4×M3, 正方形对角 16 ⇒ R8 @ 45°+90°k (原 V1.0 菱形对角 12×15)
+# Pattern A — center diamond, diagonals 12 and 15
+# 11-17 第 1 步: 电机 4 孔 → 新电机转子 4×M3, 正方形对角 16 ⇒ R8 @ 45°+90°k (原 V0.4 菱形对角 12×15)
 MOTOR_DIAG = 16.0
 PATTERN_A = [(MOTOR_DIAG / 2 * math.cos(math.radians(45 + 90 * k)),
               MOTOR_DIAG / 2 * math.sin(math.radians(45 + 90 * k))) for k in range(4)]
@@ -109,7 +105,7 @@ PATTERN_C = [(INNER_PCD_R * math.cos(math.radians(k * 360.0 / 8 + RING_HOLE_ROTA
              for k in range(8)]
 
 # Pattern D — outer PCD ring Φ155 (8 holes), rotated by RING_HOLE_ROTATION
-OUTER_PCD_R = 82.5    # Φ165 (V1.0: 77.5 -> 82.5, 用户 2026-10-20 外推 5)
+OUTER_PCD_R = 77.5    # Φ155
 PATTERN_D = [(OUTER_PCD_R * math.cos(math.radians(k * 360.0 / 8 + RING_HOLE_ROTATION)),
               OUTER_PCD_R * math.sin(math.radians(k * 360.0 / 8 + RING_HOLE_ROTATION)))
              for k in range(8)]
@@ -196,7 +192,7 @@ tris  = np.asarray(mesh.tri_verts)
 
 out = Path(__file__).with_name("hub_disc_v1_2b.stl")
 with out.open("wb") as f:
-    f.write(b"POV3D hub_disc_v1_2b OD175 (V1.0 + new motor holes)".ljust(80, b" "))
+    f.write(b"POV3D hub_disc_v1_2b OD165 (V0.4 + new motor holes)".ljust(80, b" "))
     f.write(struct.pack("<I", len(tris)))
     for t in tris:
         v0, v1, v2 = verts[t[0]], verts[t[1]], verts[t[2]]

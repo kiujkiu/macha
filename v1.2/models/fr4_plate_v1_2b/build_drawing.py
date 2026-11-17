@@ -12,7 +12,7 @@ SP = dict(
     origin_note='原点 = 盘心 (= 毂盘 hub_disc_v1_2b 零件系), 底面 Z0。',
     holes=[
         dict(tag='A', pts=HOLES_IN, spec=f'M3 通 Φ{M3_D:g} + 底面 Φ{CB_D:g}×{CB_H:g} 平底沉孔', where='内圈 R30 @ 22.5°+45°k'),
-        dict(tag='B', pts=HOLES_OUT, spec=f'M3 通 Φ{M3_D:g} + 底面 Φ{CB_D:g}×{CB_H:g} 平底沉孔', where='外圈 R82.5 @ 22.5°+45°k'),
+        dict(tag='B', pts=HOLES_OUT, spec=f'M3 通 Φ{M3_D:g} + 底面 Φ{CB_D:g}×{CB_H:g} 平底沉孔', where='外圈 R77.5 @ 22.5°+45°k'),
         dict(tag='C', pts=HOLES_MOTOR, spec=f'M3 通 Φ{M3_D:g} (不沉)', where='电机 4 孔: 正方形对角 16 (R8 @ 45°+90°k)', lab_off=(0, 4.5)),
         dict(tag='D', pts=[(0, 0)], spec=f'M5 通 Φ{CENTER_D:g}', where='盘心 (电机轴头)', lab_off=(-3, -3)),
     ],
@@ -20,7 +20,7 @@ SP = dict(
            'A/B 16 孔: 螺丝从下往上, 穿本板 + 毂盘, 锁进承载盘铜螺母;',
            f'  沉孔深 {CB_H:g}: 只藏得下头高 ≤{CB_H:g} 的超薄头 M3',
            'C 4 孔: 电机螺丝从毂盘顶面往下拧, 穿本板进电机 (比无板时加长 2)',
-           f'外圈沉孔边到板边 {OD / 2 - 82.5 - CB_D / 2:.1f}; 重量约 87 g (密度 1.85 g/cm3)',
+           f'外圈沉孔边到板边 {OD / 2 - 77.5 - CB_D / 2:.1f}; 重量约 87 g (密度 1.85 g/cm3)',
            '下单: DXF 同目录 (OUTLINE 外形 / HOLES 通孔 / CB_BOTTOM 沉孔示意), 沉孔按本图底面控深'],
     views=('front', 'top'), dims=[], proj='V1.2', date='2026-11-17', material='FR4 无铜')
 SP['out'] = HERE / 'fr4_plate_v1_2b_drawing.pdf'
