@@ -48,7 +48,12 @@ tr, comp, cog = L.tr, L.comp, L.cog
 #   FPC 贴 FPGA 面往下过桥板下沿去底板; J1/J2 与灯板逐脚对应 (桥 J1 插灯板 J1, 1 脚都在上端 Z70)。旧朝向 (FPC 在下沿, 与 PCB 电气差 180°) 留开关: FPC_BRIDGE_FLIP=0
 #   新朝向的插口位置是假设: FPC1 本体 (Fab) 位置不动, 只是口边从板边侧 (STEP y17.887) 换到板内侧 (y11.337), 转 180° 后座子在桥板上沿, 口朝下 (Z≈66.3)。等新桥板 STEP 再核。
 BRIDGE_FLIP = os.environ.get('FPC_BRIDGE_FLIP', '1') == '1'
+# 11-17 用户: 底板 J5/J6 插口朝向方案 (同型座, 只改位置/朝向; 板框 r4f 和 CZ06 不动), 环境变量 FPC_BB_SEAT_MODE:
+#   same = r4f 现状 (两口都朝 −y); out = 两口朝外 (J6 −y 不变, J5 转 180° 口朝 +y 板外沿); in = 面对面朝内 (J6 转 180° 口朝 +y 朝 CZ06, J5 −y 不变)
+BB_SEAT_MODE = os.environ.get('FPC_BB_SEAT_MODE', 'same')
+assert BB_SEAT_MODE in ('same', 'out', 'in'), BB_SEAT_MODE
 OUT = B.V12 / 'models' / 'fpc_v1_2' / ('新朝向_桥板转180' if BRIDGE_FLIP else '')
+if BB_SEAT_MODE != 'same': OUT = B.V12 / 'models' / 'fpc_v1_2' / '底板座反向方案' / BB_SEAT_MODE
 
 # ---------------- 资料 ----------------
 BR_DIR = Path('/mnt/d/claude_workspace/pov3d/POV3D_V2桥_结构STEP与质量_2026-11-11')
@@ -220,17 +225,37 @@ def axk_check():
 
 # ---------------- 底板 FPC 座 J5 / J6 (r4d) ----------------
 _bbp = {r: bb for r, fp, bb, h in V.baseboard_parts()[0]}
-def _bb_seat(ref):
+def _fp_at(pcb, ref):
+    s_ = Path(pcb).read_text(encoding='utf-8')
+    for m in re.finditer(r'\n\t\(footprint "([^"]+)"', s_):
+        b = s_[m.start():s_.find('\n\t)', m.start())]
+        if f'(property "Reference" "{ref}"' in b:
+            at = re.search(r'\n\t\t\(at ([-\d.]+) ([-\d.]+)(?: ([-\d.]+))?\)', b).groups(); return float(at[0]), float(at[1]), float(at[2] or 0)
+    raise KeyError(ref)
+
+
+def _bb_seat(ref, rot=False, dy=0.0):
+    """rot = 绕封装原点 (KiCad at) 转 180° (口 −y → +y, 脚 1 x 反号); dy = 世界 y 平移"""
     x0, y0, x1, y1 = _bbp[ref]                      # CrtYd; Fab = CrtYd 内缩 0.2
     xh, mouth, depth = (x1 - x0) / 2 - 0.2, y0 + 0.2, (y1 - y0) - 0.4
     assert abs((x0 + x1) / 2) < 0.05, (ref, x0, x1)
     k = kicad_pad(V.BB_PCB, ref, '1'); kc = V._w(*k)
     sig_y = kc[1]
-    assert sig_y > mouth + 3, (ref, sig_y, mouth)   # 信号脚在 +y 侧 ⇒ 插口朝 −y
-    return seat_box(xh, mouth, depth, +1, ZT), dict(xh=round(xh, 3), mouth_y=round(mouth, 3), back_y=round(mouth + depth, 3), z=(ZT, ZT + SEAT_H),
-                                                    slot_z=ZT + SLOT_Z, pin1_x=round(kc[0], 2), sig_row_y=round(sig_y, 3))
-seat_j6, J6 = _bb_seat('J6')
-seat_j5, J5 = _bb_seat('J5')
+    assert sig_y > mouth + 3, (ref, sig_y, mouth)   # r4f 现状: 信号脚在 +y 侧 ⇒ 插口朝 −y
+    kx, ky, ka = _fp_at(V.BB_PCB, ref); oy = V._w(kx, ky)[1]
+    face, px = -1, kc[0]
+    if rot: mouth, face, px, sig_y = 2 * oy - mouth, 1, -kc[0], 2 * oy - sig_y
+    mouth += dy; sig_y += dy
+    back = mouth - face * depth
+    kic = (kx, round(ky - dy, 3), (ka + (180 if rot else 0)) % 360)
+    return seat_box(xh, mouth, depth, -face, ZT), dict(xh=round(xh, 3), mouth_y=round(mouth, 3), back_y=round(back, 3), face=face, z=(ZT, ZT + SEAT_H),
+                                                       slot_z=ZT + SLOT_Z, pin1_x=round(px, 2), sig_row_y=round(sig_y, 3), kicad_at=kic,
+                                                       origin_world_y=round(oy + dy, 3), rot=rot, dy=dy)
+# in: J6 转 180° 后口朝 +y, B 要从 J6 顶上翻过来 U 形回弯 (中线 R1.0) 再朝 −y 进口, 口外要 OUT_J6 + R + t/2 = 2.075 到 CZ06 外沿 y18.3 之前
+#     ⇒ J6 本体 (Fab) 贴到板下沿 y8.6 (CrtYd 出板边 0.2), 口边 y16.2, U 弯最外 y18.275 (离 CZ06 包络 0.025)
+J6_DY_IN = 8.6 - 9.345                               # 转 180° 后 Fab 后沿 9.345 → 8.6
+seat_j6, J6 = _bb_seat('J6', rot=BB_SEAT_MODE == 'in', dy=J6_DY_IN if BB_SEAT_MODE == 'in' else 0.0)
+seat_j5, J5 = _bb_seat('J5', rot=BB_SEAT_MODE == 'out')
 
 
 # ---------------- FPC 中线 (YZ 面) ----------------
@@ -294,7 +319,7 @@ yB = MOUTH_B[1]
 assert abs(MOUTH_B[2] - zM) < 1e-6
 OUT_A = STF_L - FPC_INS + BEND_GAP                  # 2.0 口外直段 (补强露出 1.0 + 隙 1.0)
 OUT_J6 = STF_L_J6 - FPC_INS + BEND_GAP              # 1.0 (J6 端补强 4.0)
-Y_RB = J6['mouth_y'] - OUT_J6 - R_CH                # B 竖段 y 6.945
+Y_RB = (J6['mouth_y'] if J6['face'] < 0 else 8.945) - OUT_J6 - R_CH   # B 竖段 y 6.945 (in 方案沿用同一竖槽位置)
 Y_RA = yA + 2 * R_CH                                # A 竖段 y 6.708 (旧朝向)
 assert BRIDGE_FLIP or Y_RB - Y_RA - FPC_T >= CH_GAP, (Y_RA, Y_RB)
 # 新朝向: 座口在桥板上沿 (Z≈66.3) 朝下, FPC 沿桥板 F 面往下要先外移 JOG 躲开 F 面器件 (BGA/SOT23-5 高 ≤1.57), 出桥板下沿后再接旧走线
@@ -317,8 +342,16 @@ if BRIDGE_FLIP:
     pb.line(pb.p[1] - (R_STD + Z_FLAT_B), '沿桥板 B F 面下'); pb.arc(R_STD, 90, '弯 → 平铺')
 else:
     pb.line(FPC_INS, '插入 桥板 B 座').line(zM - R_STD - Z_FLAT_B, '桥板 B 座口 → 下').arc(R_STD, 90, '弯 → 平铺')
-pb.line((Y_RB - R_STD) - pb.p[0], '毂盘顶平铺').arc(R_STD, 90, '弯 → 竖槽')
-pb.line((J6['slot_z'] - R_CH) - pb.p[1], '竖槽竖段').arc(R_CH, -90, '弯 → 进 J6').line(OUT_J6 + FPC_INS, 'J6 口外直段 + 插入')
+R_U = 1.0                                           # 进 +y 向口的 180° 回弯 (中线, 内 0.925)
+if J6['face'] < 0:
+    pb.line((Y_RB - R_STD) - pb.p[0], '毂盘顶平铺').arc(R_STD, 90, '弯 → 竖槽')
+    pb.line((J6['slot_z'] - R_CH) - pb.p[1], '竖槽竖段').arc(R_CH, -90, '弯 → 进 J6').line(OUT_J6 + FPC_INS, 'J6 口外直段 + 插入')
+else:   # in: 竖槽上来 → 翻过 J6 顶 (Z = 口高 + 2R_U) → 180° 回弯朝 −y 进口
+    _zo = J6['slot_z'] + 2 * R_U
+    assert _zo - FPC_T / 2 >= ZT + SEAT_H + 0.1, _zo
+    pb.line((Y_RB - R_STD) - pb.p[0], '毂盘顶平铺').arc(R_STD, 90, '弯 → 竖槽')
+    pb.line((_zo - R_STD) - pb.p[1], '竖槽竖段').arc(R_STD, -90, '弯 → 过 J6 顶')
+    pb.line((J6['mouth_y'] + OUT_J6) - pb.p[0], 'J6 顶上平段').arc(R_U, -180, '180° 回弯 → 进 J6').line(OUT_J6 + FPC_INS, 'J6 口外直段 + 插入')
 # A 根: 桥板 A 座朝下出 2.0 → 180° 回弯 → 竖直往上 (B 竖段的 −y 侧) → 过 J6 顶 → 贴 CZ06 顶 → 外沿 (过了 y53.3 才弯) 折下 → 进 J5
 pa = Path2(yA, zM + FPC_INS, -90)
 if BRIDGE_FLIP:
@@ -332,12 +365,16 @@ if BRIDGE_FLIP:
 else:
     pa.line(FPC_INS + OUT_A, '插入 桥板 A 座 + 口外直段').arc(R_CH, 180, '座口下 180° 回弯')
 pa.line((Z_FLAT_A - R_STD) - pa.p[1], '竖段 (竖槽 −y 侧)').arc(R_STD, -90, '弯 → 过 J6 顶')
-_y1 = J5['mouth_y'] - OUT_A - 2 * R_J5
-assert _y1 >= CZ06_Y1, _y1                          # S 弯从 CZ06 外沿以外开始 (不压棱)
-pa.line(_y1 - pa.p[0], 'CZ06 顶平铺').arc(R_J5, -90, 'CZ06 外沿折下')
-pa.line(pa.p[1] - (J5['slot_z'] + R_J5), '竖段').arc(R_J5, 90, '弯 → 进 J5').line(OUT_A + FPC_INS, 'J5 口外直段 + 插入')
-assert abs(pb.p[0] - (J6['mouth_y'] + FPC_INS)) < 1e-6 and abs(pb.p[1] - J6['slot_z']) < 1e-6, pb.p
-assert abs(pa.p[0] - (J5['mouth_y'] + FPC_INS)) < 1e-6 and abs(pa.p[1] - J5['slot_z']) < 1e-6, pa.p
+if J5['face'] < 0:
+    _y1 = J5['mouth_y'] - OUT_A - 2 * R_J5
+    assert _y1 >= CZ06_Y1, _y1                      # S 弯从 CZ06 外沿以外开始 (不压棱)
+    pa.line(_y1 - pa.p[0], 'CZ06 顶平铺').arc(R_J5, -90, 'CZ06 外沿折下')
+    pa.line(pa.p[1] - (J5['slot_z'] + R_J5), '竖段').arc(R_J5, 90, '弯 → 进 J5').line(OUT_A + FPC_INS, 'J5 口外直段 + 插入')
+else:   # out: CZ06 顶平铺过 J5 顶伸出板外沿 → 180° 回弯 (直径 = 平铺高 − 口高) 朝 −y 进口
+    _ru = (Z_FLAT_A - J5['slot_z']) / 2
+    pa.line((J5['mouth_y'] + OUT_A) - pa.p[0], 'CZ06/J5 顶平铺 (伸出板外沿)').arc(_ru, -180, '板外 180° 回弯 → 进 J5').line(OUT_A + FPC_INS, 'J5 口外直段 + 插入')
+for _p, _j in ((pb, J6), (pa, J5)):
+    assert abs(_p.p[0] - (_j['mouth_y'] - _j['face'] * FPC_INS)) < 1e-6 and abs(_p.p[1] - _j['slot_z']) < 1e-6, (_p.p, _j)
 assert all(m[1] >= -1e-9 for m in pa.marks + pb.marks), (pa.marks, pb.marks)
 STF = dict(A=(STF_L, STF_L), B=(STF_L, STF_L_J6))   # (桥板端, 底板端) 补强长
 
@@ -550,9 +587,25 @@ def report():
     rep['seats'] = dict(J5=J5, J6=J6, bridge=dict(mouth_a=tuple(round(v, 3) for v in MOUTH_A), mouth_b=tuple(round(v, 3) for v in MOUTH_B),
                                                    step_fab=BR_SEAT, z_world=(round(zM, 3), round(ZC - (BR_SEAT['mouth'] - BR_SEAT['depth']), 3))),
                         pin1=dict(bridge=PIN1_BR, J5_x=J5['pin1_x'], J6_x=J6['pin1_x'],
-                                  note='FPC 弯都绕 x 轴, 导体 x 位置全程不变: A 根 桥A 脚1 x%+.2f → J5 脚1 x%+.2f 同侧, 1↔1 直通; '
-                                       'B 根 桥B 脚1 x%+.2f → J6 脚1 x%+.2f 反侧 ⇒ 11-16 晚定: B 根也用 1↔1 直通通用件, 底板 J6 已做网络镜像 (pin k ↔ 71−k, 96 走线前改)'
-                                       % (PIN1_BR['a_world_x'], J5['pin1_x'], PIN1_BR['b_world_x'], J6['pin1_x'])))
+                                  A_direct=PIN1_BR['a_world_x'] == J5['pin1_x'], B_direct=PIN1_BR['b_world_x'] == J6['pin1_x'],
+                                  note='FPC 弯都绕 x 轴, 导体 x 位置全程不变: A 根 桥A 脚1 x%+.2f → J5 脚1 x%+.2f (%s); B 根 桥B 脚1 x%+.2f → J6 脚1 x%+.2f (%s)'
+                                       % (PIN1_BR['a_world_x'], J5['pin1_x'], '1↔1 直通' if PIN1_BR['a_world_x'] == J5['pin1_x'] else '反序 ⇒ 需 J5 网络镜像',
+                                          PIN1_BR['b_world_x'], J6['pin1_x'], '1↔1 直通' if PIN1_BR['b_world_x'] == J6['pin1_x'] else '反序 ⇒ 需 J6 网络镜像')))
+    # 11-17: 底板座朝向方案汇总 + 等长 (同一料号) 评估
+    Lf = rep['fpc']; la, lb = Lf['A']['total_mm'], Lf['B']['total_mm']; slack = round(abs(la - lb), 1)
+    flat_b = [g for g in pb.segs if g[0] == 'L' and abs(g[1][1] - Z_FLAT_B) < 1e-6]
+    fl = max(abs(g[2][0] - g[1][0]) for g in flat_b)
+    rep['bb_seat_mode'] = dict(mode=BB_SEAT_MODE, J5=dict(kicad_at=J5['kicad_at'], face='+y' if J5['face'] > 0 else '-y', mouth_y=J5['mouth_y'], body_y=sorted((J5['mouth_y'], J5['back_y']))),
+                               J6=dict(kicad_at=J6['kicad_at'], face='+y' if J6['face'] > 0 else '-y', mouth_y=J6['mouth_y'], body_y=sorted((J6['mouth_y'], J6['back_y']))),
+                               pins=dict(A=rep['seats']['pin1']['A_direct'], B=rep['seats']['pin1']['B_direct']),
+                               contact=dict(A=CONTACT['A']['kind'], B=CONTACT['B']['kind'], same_kind=CONTACT['A']['kind'] == CONTACT['B']['kind']),
+                               length=dict(A=la, B=lb, diff=slack, unified_cut=max(Lf['A']['cut_mm'], Lf['B']['cut_mm']),
+                                           take_up=dict(where='短的那根 (B) 毂盘顶平铺段 (y %.1f…%.1f, Z%.3f) 做一个 Z 形叠折: 两个 180° 折 (中线 R1.0, 内 0.925), 三层叠高 Z%.2f…%.2f (< 桥板/夹条下沿 Z37)'
+                                                              % (min(min(g[1][0], g[2][0]) for g in flat_b), max(max(g[1][0], g[2][0]) for g in flat_b), Z_FLAT_B,
+                                                                 Z_FLAT_B - FPC_T / 2, Z_FLAT_B + 4 * 1.0 + FPC_T / 2),
+                                                        fold_layer_len=round(slack / 2, 2), flat_len=round(fl, 2),
+                                                        ok=slack / 2 + 2 * 1.0 <= fl - 2.0 and Z_FLAT_B + 4.0 + FPC_T / 2 < Z0 - 0.5,
+                                                        note='叠折段不贴胶 (胶只贴最下层平直段两端); 叠层间留 1.85 空隙')))
     rep['bridge'] = dict(zc=ZC, axk=AXK_PAIR, bbox_a=[round(v, 2) for v in bbox(bridge_a)], bbox_b=[round(v, 2) for v in bbox(bridge_b)],
                          vs_block=dict(block_seat=dict(x=20.75, y_local=(round(Y_LED + 4.6, 3), round(Y_LED + 6.6, 3)), z=(Z0 + 2.0, Z0 + 6.4), mouth_z=Z0 + 2.0, fpc_plane_y_local=round(Y_LED + 5.6, 3)),
                                        real_seat=dict(x=BR_SEAT['xh'], y_local=(round(Y_LED + AXK_H + BR_F, 3), round(Y_LED + AXK_H + BR_F + SEAT_H, 3)),
@@ -813,8 +866,8 @@ def combo():
     rect(Q, (ECC - L.GAP_HALF, Z0, ECC + L.GAP_HALF, Z0 + 9), fc='#D2B4DE', ec='none')
     rect(Q, (V.BB_POLY[0][1], B.Z_BB0, V.BB_POLY[2][1], ZT), fc='#A9DFBF', ec='k', lw=0.3); T(*Q(56, 35.3), '底板 r4d', 5.5)
     cz = L.ENV['CZ06 (DF40+板+件)']; rect(Q, (cz[1], ZT, cz[3], CZ06_TOP), fc='#E5E8E8', ec='k', lw=0.3); T(*Q(35, 39.5), 'CZ06', 6, ha='center')
-    for j, nm in ((J6, 'J6 (口朝 -y)'), (J5, 'J5 (口朝 -y)')):
-        rect(Q, (j['mouth_y'], ZT, j['back_y'], ZT + SEAT_H), fc='#566573', ec='k', lw=0.3); T(*Q(j['mouth_y'], ZT - 2.2), nm, 5.5)
+    for j, nm in ((J6, 'J6 (口朝 %s)' % ('+y' if J6['face'] > 0 else '-y')), (J5, 'J5 (口朝 %s)' % ('+y' if J5['face'] > 0 else '-y'))):
+        rect(Q, (j['mouth_y'], ZT, j['back_y'], ZT + SEAT_H), fc='#566573', ec='k', lw=0.3); T(*Q(min(j['mouth_y'], j['back_y']), ZT - 2.2), nm, 5.5)
     for p_, col in ((pa, '#E67E22'), (pb, '#C0392B')):
         q = [Q(*t) for t in _sample(p_)]; ax.plot([t[0] for t in q], [t[1] for t in q], color=col, lw=1.1)
     for t_ in (tape_a, tape_b):
