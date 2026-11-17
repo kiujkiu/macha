@@ -651,7 +651,7 @@ SPECS.append(dict(
            f"走线: 出线口 → (30, −45) → 往下到 y≈−62 → 沿 x 穿本件 → (−40, −60) → (−64, −40) → MR30 座 −y 端",
            f"离两 M6 孔边各 {F(min(abs(gx - MW.CL_XC) for gx in (-37.5, -12.5)) - B.M6_D / 2 - MW.CL_HX)}"]))
 # ---------------- 转子盘B 承载盘单件 rim_ring_v1_2b (rotor_b_v1_2.py; 11-17 夜) —— 只在点名出图时 import (rotor_b 要建整套转子件, 慢) ----------------
-if any(a.endswith("_v1_2b") for a in sys.argv[1:]):
+if any("_v1_2b" in a for a in sys.argv[1:]):
     import io as _io, contextlib as _cl
     with _cl.redirect_stdout(_io.StringIO()):
         import rotor_b_v1_2 as RB
@@ -687,7 +687,32 @@ if any(a.endswith("_v1_2b") for a in sys.argv[1:]):
                f"线圈 ID80 × 厚 2.7 放线圈腔 (腔深 {F(RB.CAV_H)}, 线圈坐玻纤板上); 外环宽 {F(RB.LIP_R0 - RB.COIL_R1)} (铜螺母环)",
                f"屏幕固定件坐盘顶 Z{F(_ztop)}–{F(RB.H_Z1)} (另件); 罩子锁点改在固定件上 (r{F(RB.SHR_LOCK_R)})",
                "装配: 桌上 玻纤板 + 本件 + 固定件 16 颗从下往上锁好 → 整体上电机 (电机 4 颗从顶面) → 底板/托盘/灯板 → 罩子"]))
-    _FOLDER_B = {"rim_ring_v1_2b": "转子盘B"}
+    def _hold_spec(k):
+        sx = 1 if k == "a" else -1
+        sh = RB.hold_a if k == "a" else RB.hold_b
+        anc = RB.ANC_A if k == "a" else RB.ANC_B
+        lk = RB.LK_A if k == "a" else RB.LK_B
+        tb = [(sx * RB.LS.BAR_SCR_X[0], RB.LS.ECC)]
+        side = "+x" if sx > 0 else "−x"
+        return dict(
+            code=f"screen_holder_v1_2b_{k}", shape=sh, stl_asm=True, date="2026-11-17", qty="1", material="PETG (建议) / PLA",
+            short=f"屏幕固定件 {side} (转子盘B)",
+            title=f"转子盘B 屏幕固定件 {side}: V1.2 立板 (横杆 + 腹板 + 天线板) 去耳朵, 换弧形带 R{F(RB.H_R0)}–{F(RB.H_R1)} ±{F(RB.H_SPAN)}° 厚 {F(RB.H_Z1 - RB.LS.RIM_TOP)}",
+            subtitle=f"带底坐承载盘顶 Z{F(RB.LS.RIM_TOP)}, 带顶 = 横杆顶 = 灯板下沿 Z{F(RB.H_Z1)}; 与另一件互为镜像 (灯板偏心 y{F(RB.LS.ECC)})",
+            orient=f"带底面 (Z{F(RB.LS.RIM_TOP)}) 贴床, 腹板/天线板竖直朝上",
+            sec=dict(ang=0 if sx > 0 else 180, r0=60.0, auto_dims=False,
+                     zd=[(RB.LS.RIM_TOP, RB.H_Z1), (RB.H_Z1 - RB.INS_H, RB.H_Z1), (RB.LS.RIM_TOP, RB.LS.ANT_Z1)],
+                     rd=[(RB.H_R0, RB.H_R1, f"弧形带 R{F(RB.H_R0)}–R{F(RB.H_R1)}")]),
+            holes=[dict(tag="G", pts=anc, spec=f"锚孔 Φ3.4 通 ×{len(anc)}", where=ring_txt(anc) + f"\nM3 从玻纤板底往上穿 玻纤板 + 承载盘 + 本件, 顶面 M3 法兰螺母 (凸出 3.7)"),
+                   dict(tag="S", pts=lk, spec=f"罩子锁点 顶面 Φ{F(RB.INS_D)}×{F(RB.INS_H)} 盲孔, 压 M3×4 铜螺母 ×{len(lk)}", where=ring_txt(lk) + "  罩子耳朵坐带顶, M3 从上往下",
+                        det=hole_det(sh, lk[0], "罩子锁点 S", W=4.0, z=(RB.LS.RIM_TOP, RB.H_Z1))),
+                   dict(tag="T", pts=tb, spec="底面 Φ6×3 沉孔 + Φ3.4 通 (立板原有)", where=xy(tb) + f"  M3×{F(RB.LS.BAR_SCR_L)} 从下往上锁夹条 (先锁, 再上承载盘)")],
+            notes=[f"弧形带 R{F(RB.H_R0)}–{F(RB.H_R1)}, 中心 {'0' if sx > 0 else '180'}° ±{F(RB.H_SPAN)}°, Z{F(RB.LS.RIM_TOP)}–{F(RB.H_Z1)} (厚 {F(RB.H_Z1 - RB.LS.RIM_TOP)}); 避开底板 r4j 上角 (47° 起)",
+                   f"横杆 / 腹板 / 天线板 同 V1.2 led_post (灯板下沿坐横杆顶 Z{F(RB.H_Z1)}); 原两只耳朵取消",
+                   f"锚孔 = 原耳朵孔位 (R{F(RB.R_OUT)} {'/'.join(F(round(ang(p), 1)) for p in anc)}°); 罩子锁点 r{F(RB.SHR_LOCK_R)} (罩子随后改)",
+                   "装配: 桌上 玻纤板 + 承载盘 + 本件 用锚孔螺丝一起锁; 屏幕最后装"])
+    SPECS += [_hold_spec("a"), _hold_spec("b")]
+    _FOLDER_B = {"rim_ring_v1_2b": "转子盘B", "screen_holder_v1_2b_a": "转子盘B", "screen_holder_v1_2b_b": "转子盘B"}
 else:
     _FOLDER_B = {}
 _D1116 = {"led_post_a_v1_2", "led_post_b_v1_2", "led_bar_v1_2", "led_top_v1_2", "led_comb_v1_2", "rotor_shroud_a_v1_2", "rotor_shroud_b_v1_2",

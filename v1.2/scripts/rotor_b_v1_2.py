@@ -13,7 +13,8 @@
 螺丝 (全部在桌上装好再上电机):
   - 16 颗从玻纤板底往上 (头埋玻纤板 Φ7.2×1.5 沉孔): 内圈 R34 ×8 + 外圈 67.5/112.5/247.5/292.5° ×4 → 承载盘顶面 M3×4 铜螺母;
     外圈 22.5/157.5/202.5/337.5° ×4 → 穿承载盘 + 固定件, 固定件顶面 M3 法兰螺母
-  - 电机 4×M3 从承载盘顶面 Φ7×4 沉孔往下, 穿玻纤板进电机
+  - 电机 4×M3×10 从承载盘顶面 Φ7×5 沉孔往下 (头顶 Z30), 穿玻纤板进电机 4.5
+  - 托盘顶面中间开 FPC B 让位槽 37×22.5 深 2 (到 Z30): FPC B 过转轴时最低 Z30.6
   - 底板 r4j 4 孔: 承载盘底面 Φ7.4×1.5 沉孔 (头埋进托盘, 不进线圈腔) 往上
 """
 import io, contextlib, json, math
@@ -67,6 +68,9 @@ SHR_LOCK_ANG = (40.0, 140.0, 220.0, 320.0)        # 角度同 V1.2 (B.SHR_ANG)
 SHR_LOCK_PTS = [pol(SHR_LOCK_R, a) for a in SHR_LOCK_ANG]
 H_R0, H_R1, H_SPAN = 73.0, LS.R_CLIP, 44.0        # 固定件弧形带
 H_Z1 = LS.Z0                                      # 37.0 = 灯板下沿 = 横杆顶
+MOT_CB_H = 5.0                                    # 电机螺丝顶面 Φ7 沉孔深 (原 4): 头 Φ5.5×3 顶到 Z30, 低于 FPC B 让位槽底
+# FPC B 从桥板 B 下沿过转轴到底板 J6, 实测最低 Z30.6 (x±17.75, y −14.26…6.74), 比盘顶 Z32 低 ⇒ 托盘顶面开让位槽 (V1.2 原承载盘中心是 Φ50 通孔, 自然让开)
+FPC_POCKET = (-18.5, -15.0, 18.5, 7.5, 30.0)      # x0, y0, x1, y1, 槽底 Z (FPC 下留 0.6)
 
 # ---------------- 玻纤板 (装配体, 与 models/fr4_plate_v1_2b/build.py 同参数) ----------------
 fr4 = cyl(0, 0, FR4_OD, Z_F0, Z_F1)
@@ -82,8 +86,9 @@ rim = fuse(cyl(0, 0, 2 * RIM_R, Z_T0, Z_TOP),                      # 托盘
 rim = clean(rim)
 cuts = []
 for x, y in MOT_PTS:                                                # 电机 4 孔: Φ3.2 通 + 顶面 Φ7×4 沉孔
-    cuts += [cyl(x, y, 3.2, Z_F0 - 1, Z_TOP + 1), cyl(x, y, 7.0, Z_TOP - 4.0, Z_TOP + 1)]
+    cuts += [cyl(x, y, 3.2, Z_F0 - 1, Z_TOP + 1), cyl(x, y, 7.0, Z_TOP - MOT_CB_H, Z_TOP + 1)]
 cuts.append(cyl(0, 0, CENTER_D, Z_F1 - 1, Z_F1 + CENTER_H))        # 中心窝 Φ5.2×3.5 (底面)
+cuts.append(gbox(FPC_POCKET[0], FPC_POCKET[1], FPC_POCKET[4], FPC_POCKET[2], FPC_POCKET[3], Z_TOP + 1))   # FPC B 让位槽
 for x, y in IN_PTS + OUT_NUT_PTS:                                   # 12 颗从下往上进铜螺母: Φ3.2 通 + 顶面 Φ4.2×4
     cuts += [cyl(x, y, 3.2, Z_F0 - 1, Z_TOP + 1), cyl(x, y, INS_D, Z_TOP - INS_H, Z_TOP + 1)]
 for x, y in ANCHOR_PTS:                                             # 4 颗穿到固定件: Φ3.4 通
@@ -124,8 +129,10 @@ rep = dict(z=dict(fr4=(Z_F0, Z_F1), cavity=(Z_F1, Z_T0), tray=(Z_T0, Z_TOP), hol
            solids=dict(rim=len(solids(rim)), hold_a=len(solids(hold_a)), hold_b=len(solids(hold_b))))
 coil = cut(ann(COIL_R0 + 0.1, COIL_R1 - 0.1, Z_F1, Z_F1 + 2.7), *[cyl(x, y, 4.0, Z_F1 - 1, Z_T0) for x, y in B.AC_HOLES])
 VB = LS.VB
+from helpers import read_step
+_fpc = {n: read_step(B.V12 / 'models' / 'fpc_v1_2' / 'r4i_定稿' / f'{n}.step') for n in ('fpc_a_v1_2', 'fpc_b_v1_2', 'bridge_a_v1_2', 'bridge_b_v1_2', 'bb_fpc_seats_v1_2')}
 others = dict(底板=VB['baseboard'], 底板器件=VB['bb_parts'], CZ06=VB['cz06'], 灯板=VB['led'], 夹条=LS.bar_s, 顶部件=LS.top,
-              无线托盘=WH.H, 罩子A=RS.shr_a, 罩子B=RS.shr_b, 电机=B.motor, 定子盘=B.flange_disc, 安装法兰=B.mounting_flange, 线圈环=B.ring)
+              无线托盘=WH.H, 罩子A=RS.shr_a, 罩子B=RS.shr_b, FPC_A=_fpc['fpc_a_v1_2'], FPC_B=_fpc['fpc_b_v1_2'], 桥板A=_fpc['bridge_a_v1_2'], 桥板B=_fpc['bridge_b_v1_2'], FPC座=_fpc['bb_fpc_seats_v1_2'], 电机=B.motor, 定子盘=B.flange_disc, 安装法兰=B.mounting_flange, 线圈环=B.ring)
 mine = dict(玻纤板=fr4, 承载盘=rim, 固定件A=hold_a, 固定件B=hold_b, 线圈=coil)
 inter = {}
 for n1, s1 in mine.items():
