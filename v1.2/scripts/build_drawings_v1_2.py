@@ -650,6 +650,46 @@ SPECS.append(dict(
     notes=[f"线束中心 y{F(MW.CL_YC)}, 3 线 Φ3 贴在一起; 洞单边 +{F(MW.CL_CLR)}; 洞顶到件顶 {F(MW.CL_H - MW.CL_CH_H)}",
            f"走线: 出线口 → (30, −45) → 往下到 y≈−62 → 沿 x 穿本件 → (−40, −60) → (−64, −40) → MR30 座 −y 端",
            f"离两 M6 孔边各 {F(min(abs(gx - MW.CL_XC) for gx in (-37.5, -12.5)) - B.M6_D / 2 - MW.CL_HX)}"]))
+# ---------------- 转子盘B 承载盘单件 rim_ring_v1_2b (rotor_b_v1_2.py; 11-17 夜) —— 只在点名出图时 import (rotor_b 要建整套转子件, 慢) ----------------
+if any(a.endswith("_v1_2b") for a in sys.argv[1:]):
+    import io as _io, contextlib as _cl
+    with _cl.redirect_stdout(_io.StringIO()):
+        import rotor_b_v1_2 as RB
+    _zf0, _zf1, _zt0, _ztop = RB.Z_F0, RB.Z_F1, RB.Z_T0, RB.Z_TOP
+    _rb_ins = [(x, y) for x, y in RB.IN_PTS]
+    SPECS.append(dict(
+        code="rim_ring_v1_2b", shape=RB.rim, short="承载盘 Φ170 (转子盘B, 并入毂盘)", qty="1", stl_asm=True, date="2026-11-17",
+        title=f"转子盘B 承载盘单件: 托盘 Z{F(_zt0)}–{F(_ztop)} + 底面线圈腔 R{F(RB.COIL_R0)}–{F(RB.COIL_R1)} 深 {F(RB.CAV_H)}; 中心/外环落玻纤板 Z{F(_zf1)}",
+        subtitle=f"下面是玻纤板 Φ{F(RB.FR4_OD)}×{F(RB.FR4_T)} (Z{F(_zf0)}–{F(_zf1)}, 压电机顶); 外唇 R{F(RB.LIP_R0)}–{F(RB.RIM_R)} 往下包住玻纤板边到 Z{F(_zf0)}; 盘顶 Z{F(_ztop)} 与 V1.2 相同",
+        orient=f"打印: 托盘顶面 (Z{F(_ztop)}) 朝下贴床, 线圈腔 / 外环 / 外唇朝上 (免支撑; models/ 下 _print.stl 已是此姿态)",
+        phi=[2 * RB.COIL_R0, 2 * RB.COIL_R1, 2 * RB.LIP_R0, 2 * RB.RIM_R],
+        sec=dict(ang=22.5, r0=0.0, auto_dims=False,
+                 zd=[(_zf0, _zf1), (_zf1, _zt0), (_zt0, _ztop), (_ztop - RB.INS_H, _ztop), (_zf1, _ztop), (_zf0, _ztop)],
+                 rd=[(0.0, RB.COIL_R0, f"中心实体 R{F(RB.COIL_R0)} (外圆 Φ{F(2 * RB.COIL_R0)} 套线圈 ID80)"),
+                     (RB.COIL_R0, RB.COIL_R1, f"线圈腔 宽 {F(RB.COIL_R1 - RB.COIL_R0)} (R{F(RB.COIL_R0)}–R{F(RB.COIL_R1)})"),
+                     (RB.COIL_R1, RB.LIP_R0, f"外环 {F(RB.LIP_R0 - RB.COIL_R1)} (R{F(RB.COIL_R1)}–R{F(RB.LIP_R0)})"),
+                     (RB.LIP_R0, RB.RIM_R, f"外唇 {F(RB.RIM_R - RB.LIP_R0)} (包玻纤板边)")]),
+        holes=[dict(tag="M", pts=RB.MOT_PTS, spec="电机 4 孔: " + hole_txt(RB.rim, RB.MOT_PTS[0]), where=ring_txt(RB.MOT_PTS) + "  M3×12 从顶面往下, 穿玻纤板进电机",
+                    det=hole_det(RB.rim, RB.MOT_PTS[0], "电机孔 M (顶面沉孔)", W=5.0, z=(_zf1, _ztop))),
+               dict(tag="N", pts=_rb_ins + RB.OUT_NUT_PTS, spec="铜螺母孔 ×12: " + hole_txt(RB.rim, _rb_ins[0]),
+                    where=f"内圈 {ring_txt(_rb_ins)}\n外圈 {ring_txt(RB.OUT_NUT_PTS)}\nM3 从玻纤板底往上, 顶面压 M3×4 铜螺母",
+                    det=hole_det(RB.rim, _rb_ins[0], "铜螺母孔 N", W=4.0, z=(_zf1, _ztop))),
+               dict(tag="G", pts=RB.ANCHOR_PTS, spec="固定件锚孔 ×4: " + hole_txt(RB.rim, RB.ANCHOR_PTS[0]),
+                    where=ring_txt(RB.ANCHOR_PTS) + "\nM3 从玻纤板底往上穿本件 + 屏幕固定件, 固定件顶面法兰螺母"),
+               dict(tag="P", pts=list(B.BB_HOLES), spec="底板 r4j 4 孔: " + hole_txt(RB.rim, B.BB_HOLES[0]),
+                    where=xy(B.BB_HOLES) + "\n螺丝从底面往上, 薄头 Φ7×1.5 埋进托盘 (不进线圈腔)",
+                    det=hole_det(RB.rim, B.BB_HOLES[0], "底板孔 P (底面沉孔)", W=5.0, z=(_zf1, _ztop))),
+               dict(tag="W", pts=list(B.MOD_HOLES), spec="无线托盘 3 孔: " + hole_txt(RB.rim, B.MOD_HOLES[0]), where=xy(B.MOD_HOLES, 3) + "  顶面压 M3×4 铜螺母"),
+               dict(tag="A", pts=list(B.AC_HOLES), spec=f"线圈 AC 引线 Φ{F(B.AC_HOLE_D)} 通", where=xy(B.AC_HOLES) + "  (21,−70) 在外环处另开 Φ3.4 缺口"),
+               dict(tag="C", pts=[(0.0, 0.0)], spec=f"底面中心窝 Φ{F(RB.CENTER_D)}×{F(RB.CENTER_H)} (电机轴头)", where="盘心", lab_off=(-3, -3))],
+        notes=[f"各层高度 (装配 Z): 外唇底 Z{F(_zf0)} (= 电机顶 = 玻纤板底) / 中心+外环底 Z{F(_zf1)} (= 玻纤板顶) / 线圈腔顶 = 托盘底 Z{F(_zt0)} / 盘顶 Z{F(_ztop)}",
+               f"剖视竖向: 外唇伸出 {F(_zf1 - _zf0)} / 线圈腔 {F(_zt0 - _zf1)} / 托盘 {F(_ztop - _zt0)} / 中心·外环总高 {F(_ztop - _zf1)} / 全高 {F(_ztop - _zf0)}",
+               f"线圈 ID80 × 厚 2.7 放线圈腔 (腔深 {F(RB.CAV_H)}, 线圈坐玻纤板上); 外环宽 {F(RB.LIP_R0 - RB.COIL_R1)} (铜螺母环)",
+               f"屏幕固定件坐盘顶 Z{F(_ztop)}–{F(RB.H_Z1)} (另件); 罩子锁点改在固定件上 (r{F(RB.SHR_LOCK_R)})",
+               "装配: 桌上 玻纤板 + 本件 + 固定件 16 颗从下往上锁好 → 整体上电机 (电机 4 颗从顶面) → 底板/托盘/灯板 → 罩子"]))
+    _FOLDER_B = {"rim_ring_v1_2b": "转子盘B"}
+else:
+    _FOLDER_B = {}
 _D1116 = {"led_post_a_v1_2", "led_post_b_v1_2", "led_bar_v1_2", "led_top_v1_2", "led_comb_v1_2", "rotor_shroud_a_v1_2", "rotor_shroud_b_v1_2",
           "rotor_lid_v1_2", "rotor_lid_b_v1_2", "wireless_holder_v1_2", "rim_ring_v1_2_D170", "hub_disc_v1_2", "base_disc_v1_2", "mr30_seat_v1_2", "motor_wire_clamp_v1_2"}
 for sp in SPECS:
@@ -663,7 +703,7 @@ for sp in SPECS:
         sp["src"] = f"v1.2/out/dwg_stl/{sp['code']}.stl (装配坐标; 打印件 models/{sp['code']}/)"
     sp.setdefault("origin_note", ORIG)
 
-_FOLDER = {"rim_ring_v1_2_D170": "转子盘", "hub_disc_v1_2": "转子盘", "flange_disc_v1_2": "定子盘", "mounting_flange_v1_2": "定子盘"}
+_FOLDER = {"rim_ring_v1_2_D170": "转子盘", "hub_disc_v1_2": "转子盘", "flange_disc_v1_2": "定子盘", "mounting_flange_v1_2": "定子盘", **_FOLDER_B}
 
 if __name__ == "__main__":
     only = set(sys.argv[1:])
