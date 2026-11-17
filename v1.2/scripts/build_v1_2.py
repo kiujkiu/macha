@@ -327,6 +327,7 @@ def bl(x0, y0, x1, y1, z0, z1):      # 板本地矩形 -> 全局实体 (z 为全
 BHOLES = [(24.49, 14.49), (24.49, 45.49), (95.49, 14.49), (95.49, 45.49)]
 SINK = (72.0, 10.0, 92.0, 50.0)                                     # 板系 x52..72 y0..40, 盖 6 颗 MOS
 RELIEFS = [(21.0, 28.3, 24.8, 40.9), (94.1, 99.0, 29.0, 40.9), (54.7, 62.3, 10.3, 12.8)]   # x0,x1,y0,y1 背面焊点/排针
+RELIEF_THRU = {2}                                   # 11-17 晚 用户: 第 3 个 (电机控制板下载排针背面焊脚) 由深 3 改通槽
 def sink_shape():                                                   # 40x20x6: 底座 2 + 7 鳍, 鳍朝下
     sh = bl(SINK[0], SINK[1], SINK[2], SINK[3], -2.0, 0.0)
     for i in range(7):
@@ -400,8 +401,8 @@ for x, y in FIXED + EXTRA:
 for x, y in MOTOR_HOLES:                                                                  # 电机 4×M3 从盘底往上
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1))
 d = cut(d, bl(SINK[0], SINK[1], SINK[2], SINK[3], -DISC_T - 1, 1))                       # 散热片通槽 20x40, 零间隙
-for x0, x1, y0, y1 in RELIEFS:
-    d = cut(d, bl(x0, y0, x1, y1, -3.0, 1))                                               # 背面让位 深 3
+for i_, (x0, x1, y0, y1) in enumerate(RELIEFS):
+    d = cut(d, bl(x0, y0, x1, y1, -DISC_T - 1 if i_ in RELIEF_THRU else -3.0, 1))           # 背面让位 深 3; RELIEF_THRU 里的打通
 for x, y in BHOLES:
     p = gp_Pnt(x, y, 0).Transformed(BT)
     d = cut(d, cyl(p.X(), p.Y(), M3_D, -DISC_T - 1, 1), cyl(p.X(), p.Y(), M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))  # 用户 11-13: 控制板 4×M3 改盘底 Φ7×2 沉孔往上, 法兰螺母坐板顶 (原板顶往下进铜螺母)

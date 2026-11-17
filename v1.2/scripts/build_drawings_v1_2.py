@@ -155,13 +155,13 @@ SPECS.append(dict(
              where=xy(B.MW_M3, 2) + "  MR30 座 M3×12 / 线夹 M3×10 往上, 进件顶热压 M3×4 铜螺母"),
     ],
     dets=[dict(tag="J", kind="blind", D=12.0, h=3.0, side="top", z=ZD, pt=(0.0, 0.0), ang=0.0, W=9.0, title="盘心 Φ12×3 盲窝 (顶面)"),
-          dict(tag="K", kind="free", z=ZD, pt=(_rp.X(), _rp.Y()), ang=0.0, W=6.0, title="控制板背面让位槽 ×3 (顶面)",
+          dict(tag="K", kind="free", z=ZD, pt=(_rp.X(), _rp.Y()), ang=0.0, W=6.0, title="控制板背面让位槽 ×2 深 3 (顶面) + 下载排针通槽",
                zd=[(-3.0, 0.0, "3")]),
           dict(tag="P", kind="free", z=ZD, pt=((B.MW_POCKET[0] + B.MW_POCKET[2]) / 2, (B.MW_POCKET[1] + B.MW_POCKET[3]) / 2), ang=90.0, W=6.0,
                title=f"MR30 护套坑 {F(B.MW_POCKET[2] - B.MW_POCKET[0])}×{F(B.MW_POCKET[3] - B.MW_POCKET[1])} 深 {F(B.MW_POCKET[4])} (顶面, 沿 y 剖)",
                zd=[(-B.MW_POCKET[4], 0.0, F(B.MW_POCKET[4]))])],
     notes=["散热片通槽 20×40 ×2 (零间隙): 控制板 1; 线圈驱动板 1 竖放 "
-           f"x{F(B.CD.SINK_X0)}..{F(B.CD.SINK_X1)} y{F(B.CD.SINK_Y0)}..{F(B.CD.SINK_Y1)}; 控制板背面让位 ×3 深 3 (K); 顶面平 (贴床)",
+           f"x{F(B.CD.SINK_X0)}..{F(B.CD.SINK_X1)} y{F(B.CD.SINK_Y0)}..{F(B.CD.SINK_Y1)}; 控制板背面让位 ×2 深 3 (K) + 下载排针背面焊脚通槽 {F(B.RELIEFS[2][1] - B.RELIEFS[2][0])}×{F(B.RELIEFS[2][3] - B.RELIEFS[2][2])} (11-17 晚 改通); 顶面平 (贴床)",
            f"线圈驱动板电容弧形槽 R{F(B.CD.CAP_D / 2 + B.CD.CAP_TROUGH_CLR)} 深 {F(B.CD.CAP_GROOVE)} x{F(B.CD.CAP_TROUGH[0])}..{F(B.CD.CAP_TROUGH[1])} "
            f"y{F(B.CD.CAP_TROUGH[2])}..{F(B.CD.CAP_TROUGH[3])}; 背面电容坑 {"深 " + F(-min(p[4] for p in B.CD.BCAP_PITS)) if B.CD.BCAP_PITS else "取消 (11-13, 板抬高)"}; 网格 M6 取消 {len(B.CD.GRID_REMOVE)} 个 (x62.5)",
            f"控制板平放顶面 Z0, 内长边离轴 {F(B.BOARD_IN)}, 往 +X 让 {F(B.BOARD_DX)}",
