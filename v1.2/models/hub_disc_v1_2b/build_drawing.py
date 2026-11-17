@@ -34,3 +34,9 @@ SP = dict(
 SP['out'] = HERE / 'hub_disc_v1_2b_drawing.pdf'
 out, png, sl = draw(SP)
 print('wrote', out, sl)
+# 11-17 用户: 成品放 v1.2/转子盘B/ (STL + 图纸)
+import shutil
+_B = HERE.parents[1] / '转子盘B'; _B.mkdir(exist_ok=True)
+for _f in (SP['stl'], SP['out']):
+    shutil.copy2(_f, _B / _f.name)
+print('  → 转子盘B/')
