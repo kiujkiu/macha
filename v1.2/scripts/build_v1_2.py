@@ -183,7 +183,7 @@ GATE_PTS = []
 #   (原 r3 rev d: (-46,17.8) (18.1,27.55) (±24.25,69.9); r4b: (-47.6,12.6) (-25,61.5) (43.5,53) (25,61.5))
 #   11-16 晚 用户: 孔相对底板自身对称, 放板四角附近, 矩形 90.1×49.6 以板中心 (−1.95, 37.6) 为心 (96 出 r4d 给最终坐标); 板框/STEP 仍 r4c
 #   (r4c 原: (-47.4, 60.0) (-24.6, 61.5) (43.5, 53.0) (24.6, 61.5)); (−47, 62.4) 在 r78.1, 尼龙柱六角对角外缘约 r81.3 < 罩内壁 r82
-BB_HOLES = [(-46.75, 13.05), (42.85, 13.05), (-46.75, 62.15), (42.85, 62.15)]   # r4e (96 31676a1a): H5 / H7 / H6 / H8 四角矩形 89.6×49.1, 四边内缩 4.45 (4.7 会压 WiFi/F1/L1)
+BB_HOLES = [(-46.75, 13.05), (42.85, 13.05), (-46.75, 56.05), (42.85, 56.05)]   # 11-17 r4i (96 D213R9): 上板边 66.6→60.5, H6/H8 62.15→56.05 (矩形 89.6×43.0); 原 r4e (96 31676a1a): H5 / H7 / H6 / H8 四角矩形 89.6×49.1, 四边内缩 4.45 (4.7 会压 WiFi/F1/L1)
 BB_INS_H = 0.0                                    # 11-16 晚 改一颗螺丝穿到底: 承载盘这 4 孔不再压铜螺母 (留名置 0)
 #   11-16 晚 用户再改 (承载盘减薄到 2.5, 盘底 RIM_BOT Z29.5): 一颗 M3 超薄头 (头 Φ7×1.5) 从承载盘底往上穿到底 ——
 #   承载盘 Φ3.4 通孔 + 盘底 Φ7.4 沉孔深 1.5 (Z29.5–31, 头支承 Z31) → 尼龙光孔垫柱 Φ6×3 (Z32–35) → 底板 1.6 (Z35–36.6) → 板顶 M3 尼龙螺母 (高 2.4, Z36.6–39.0)
@@ -543,6 +543,7 @@ _tz = gp_Trsf(); _tz.SetTranslation(gp_Vec(0, 0, 2.0))
 # 读 STEP (m2b 由同一 mesh 转的实体, 体积与 STL 差 <0.01%); STL 读进来只是壳, 紧固件干涉 (BRepAlgoAPI_Common) 算不出体积
 xt_clamp = xf(xf(one(XT_DIR / 'xt60_clamp_v1_2.step'), _tz), XT_T)
 xt_shim = xf(one(XT_DIR / 'xt60_shim_v1_2.step'), XT_T)
+xt_env = _TC(); _B.MakeCompound(xt_env); [_B.Add(xt_env, _s) for _s in (xt_clamp, xt_shim, xf(gbox(-8.3, XT_Y0, 2.0, 8.3, 11.95, 11.2), XT_T))]   # 11-17: 校核用实形 (压块+底垫+接头外包 16.6×23.9×9.2), 原外包盒 (到 r82.8 满高) 会误报安装法兰外裙; 用复合体 (fuse 网格转实体会丢件)
 assert all(math.hypot(a - c, b - d_) < 1e-6 for (a, b), (c, d_) in zip(sorted(XT_GHOLES), sorted(XT_GHOLES_DISC))), (XT_GHOLES, XT_GHOLES_DISC)
 LOG['outer'] = dict(n=len(OUT_SCREWS), skipped=OUT_SKIPPED)
 LOG['xt60'] = dict(ang=XT_ANG, holes=[(round(x, 2), round(y, 2)) for x, y in XT_GHOLES])
@@ -577,7 +578,7 @@ flange_disc = clean(_fd)
 _mf2 = mounting_flange                             # 11-12 外径回原 Φ170: 保留 V0.4 原外裙 r82.5–85 (已同步短到 z9.3 = 定子盘底); 原先 cut ann(82.8,86) 是错的, 还留 0.3 薄片
 for x, y in _V04_OUT: _mf2 = fuse(_mf2, cyl(x, y, CB7 + 0.4, FL_TOP, MF_TOP))  # 原 r77.5 Φ7 沉孔 + 孔补实 (板内)
 for x, y in LID_SCREWS: _mf2 = cut(_mf2, cyl(x, y, 3.2, 0, 30), cyl(x, y, CB7, MF_TOP - MF_CB, 40))   # 上盖 r79: Φ3.2 + 顶面 Φ7×1.5
-_mf2 = cut(_mf2, xf(gbox(-XT_HW - 0.5, XT_Y0 - 5, -1, XT_HW + 0.5, XT_Y1 + 0.5, XT_H + 0.5), XT_T))   # 11-13: 安装法兰外裙 r82.5–85 在 XT60 压块处让位 (Z≤13.5)
+# 11-17 用户: 安装法兰不再给 XT60 开缺口 (外裙整圈); 改由 XT60 压块 V1.2-h 在全局 Z8 以上削到接头尾 r85.8 (原 11-13 此处 cut 压块外形 +0.5, Z≤13.5)
 mounting_flange = clean(_mf2)
 seat = clean(s_); LOG['seat'] = dict(v=vol(seat), z_g=Z_G)          # 合并版 (下罩+外卡一体)
 # 分体版 (用户 11-11): 外卡三角区单独一个环, 玻璃先套内卡再从上套环; 环底 2x2 凸筋插下罩顶槽 (单边 0.1)

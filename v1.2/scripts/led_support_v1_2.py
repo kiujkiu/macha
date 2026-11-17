@@ -289,7 +289,7 @@ zt = B.Z_BB0 + B.BB_T
 _H_ENV = {'J5': 2.0, 'J6': 2.0, 'J8': 3.0, 'J10': 3.0, 'J9': 2.0, 'J11': 0.5, 'J12': 0.5, 'J13': 2.0, 'J14': 8.0, 'U1': 4.0, 'P1': 3.0, 'C13': 3.1, 'C79': 3.1}   # r4d: J8/J10/J9 改焊线焊盘 (焊点+线头约 3), J11/J12 测试点, C13/C79 聚合物 7343
 _bbp = {r: bb for r, fp, bb, h in V.baseboard_parts()[0]}
 ENV = {k: (*_bbp[k], h) for k, h in _H_ENV.items() if k in _bbp}
-ENV['CZ06 (DF40+板+件)'] = (-30.0, 18.6, 30.0, 53.6, B.CZ06_H)   # r4b 18.3–53.3; 11-17 r4g/r4h CZ06 整组 +0.3
+ENV['CZ06 (DF40+板+件)'] = (-30.0, 17.05, 30.0, 52.05, B.CZ06_H)   # 11-17 r4i (两口朝外) CZ06 17.05–52.05; r4h 18.6–53.6; r4b 18.3–53.3; 11-17 r4g/r4h CZ06 整组 +0.3
 env = {k: gbox(a, b_, zt, c, d, zt + h) for k, (a, b_, c, d, h) in ENV.items()}
 env['底面件 (r2 B.CrtYd × 限高)'] = VB['bb_parts']
 # 灯板 J3 (VH 立式, LED 面) + 插头: 板 A 在 +x (局部 y 3.77–26), 板 B 在 −x (−y); 随灯板平移

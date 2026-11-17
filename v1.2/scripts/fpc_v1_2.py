@@ -50,11 +50,11 @@ tr, comp, cog = L.tr, L.comp, L.cog
 BRIDGE_FLIP = os.environ.get('FPC_BRIDGE_FLIP', '1') == '1'
 # 11-17 用户: 底板 J5/J6 插口朝向方案 (同型座, 只改位置/朝向; 板框 r4f 和 CZ06 不动), 环境变量 FPC_BB_SEAT_MODE:
 #   same = r4f 现状 (两口都朝 −y); out = 两口朝外 (J6 −y 不变, J5 转 180° 口朝 +y 板外沿); in = 面对面朝内 (J6 转 180° 口朝 +y 朝 CZ06, J5 −y 不变)
-BB_SEAT_MODE = os.environ.get('FPC_BB_SEAT_MODE', 'in')   # 11-17 r4h 定稿 = in
+BB_SEAT_MODE = os.environ.get('FPC_BB_SEAT_MODE', 'out')   # 11-17 用户定两口朝外 (r4i); r4h = in
 assert BB_SEAT_MODE in ('same', 'out', 'in'), BB_SEAT_MODE
 OUT = B.V12 / 'models' / 'fpc_v1_2' / ('新朝向_桥板转180' if BRIDGE_FLIP else '')
 if BB_SEAT_MODE != 'same': OUT = B.V12 / 'models' / 'fpc_v1_2' / '底板座反向方案' / BB_SEAT_MODE
-if BB_SEAT_MODE == 'in' and BRIDGE_FLIP: OUT = B.V12 / 'models' / 'fpc_v1_2' / 'r4h_定稿'   # 11-17 默认 = r4h 定稿
+if BB_SEAT_MODE == 'out' and BRIDGE_FLIP: OUT = B.V12 / 'models' / 'fpc_v1_2' / 'r4i_定稿'   # 11-17 默认 = r4i 两口朝外
 
 # ---------------- 资料 ----------------
 BR_DIR = Path('/mnt/d/claude_workspace/pov3d/POV3D_V2桥_结构STEP与质量_2026-11-11')
@@ -78,7 +78,7 @@ BR_F = 1.6                                        # 桥板 F 面 (STEP z, 名义
 ZT = B.Z_BB0 + B.BB_T                             # 底板顶 36.6
 CZ06_TOP = ZT + B.CZ06_H                          # 43.2
 # 11-17 96 选项: J6 再往 +y 挪 (焊盘离板边 ≥ 铣边余量), CZ06 整组可跟着往 +y 挪 (环境变量, 默认 0)
-J6_DY_EXTRA = float(os.environ.get('FPC_J6_DY_EXTRA', '0.3'))   # r4h: J6 (150, 87.50) = in 基准 +0.3
+J6_DY_EXTRA = float(os.environ.get('FPC_J6_DY_EXTRA', '0'))   # 只 in 方案用 (r4h 时 +0.3)
 CZ06_DY = float(os.environ.get('FPC_CZ06_DY', '0'))   # r4h 的 +0.3 已写进 led_support ENV, 这里只放额外偏移
 CZ06_BOX = list(L.ENV['CZ06 (DF40+板+件)']); CZ06_BOX[1] += CZ06_DY; CZ06_BOX[3] += CZ06_DY   # (x0, y0, x1, y1, h)
 CZ06_ENV = gbox(CZ06_BOX[0], CZ06_BOX[1], ZT, CZ06_BOX[2], CZ06_BOX[3], ZT + CZ06_BOX[4])     # 保守包络 (整块)
@@ -87,7 +87,7 @@ CZ06_REAL = fuse(gbox(CZ06_BOX[0] + 2, CZ06_BOX[1] + 2, ZT, CZ06_BOX[2] - 2, CZ0
                  gbox(CZ06_BOX[0], CZ06_BOX[1], ZT + V.DF40_H, CZ06_BOX[2], CZ06_BOX[3], ZT + CZ06_BOX[4]))
 CZ06_Y1 = CZ06_BOX[3]                                # 53.3 (+CZ06_DY) CZ06 外沿
 # FPC 座 (XW0525512-702R-001, 70P 0.5, 翻盖; 高按底板需求表 "约 2" 取 2.0 偏保守, 桥板 STEP 占位是 1.2 — 都待规格书核)
-SEAT_H = float(os.environ.get("FPC_SEAT_H", "2.0"))   # 11-17 96: XW0525512-702R-001 实高 2.55 (LCSC C49392770), 默认仍 2.0 待改
+SEAT_H = float(os.environ.get("FPC_SEAT_H", "2.55"))   # 11-17 96: XW0525512-702R-001 实高 2.55 (LCSC C49392770)
 SLOT_W, SLOT_H, SLOT_Z, SLOT_D = 36.0, 0.5, 0.7, 5.0   # 插口: 宽 36 / 高 0.5 / 中心离 PCB 面 0.7 / 深 5 (FPC 插 4.0, 留 1.0)
 BR_SEAT = dict(xh=19.975, mouth=17.887, depth=6.55)    # 桥板 FPC1 Fab (STEP 坐标), 本体从口边往 −y
 # 11-16 晚 桥板窗口定 FPC 规格: 单层铜 (信号+GND 同层), 弯曲区总厚 ≤0.15 (PI+铜+覆盖膜), 只有两端补强/金手指区 0.3;
@@ -273,7 +273,7 @@ def _bb_seat(ref, rot=False, dy=0.0):
 #     ⇒ J6 本体 (Fab) 贴到板下沿 y8.6 (CrtYd 出板边 0.2), 口边 y16.2, U 弯最外 y18.275 (离 CZ06 包络 0.025)
 J6_DY_IN = 8.6 - 9.345                               # 转 180° 后 Fab 后沿 9.345 → 8.6
 seat_j6, J6 = _bb_seat('J6', rot=BB_SEAT_MODE == 'in', dy=(J6_DY_IN + J6_DY_EXTRA) if BB_SEAT_MODE == 'in' else 0.0)
-if CZ06_DY or J6_DY_EXTRA != 0.3: OUT = OUT.parent / f'{OUT.name}_J6{J6_DY_EXTRA:+g}_CZ06{CZ06_DY:+g}'
+if CZ06_DY or J6_DY_EXTRA: OUT = OUT.parent / f'{OUT.name}_J6{J6_DY_EXTRA:+g}_CZ06{CZ06_DY:+g}'
 J5_DY = float(os.environ.get('FPC_J5_DY', '0'))       # 11-17: 按 96 的口边口径 (r4g: CZ06 外沿 → J5 口 4.73 ⇒ 口 y58.33) 可把 J5 整体往 −y 让 (偏保守)
 seat_j5, J5 = _bb_seat('J5', rot=BB_SEAT_MODE == 'out', dy=J5_DY)
 # 底板交付 STEP 可用环境变量换版 (默认 = v2_boards 里的 BB_STEP); r4g = J6 掉头 + CZ06 上移 0.3
@@ -284,7 +284,7 @@ if _bbs:
 else:
     BB_STEP_USED = L.bb_step; BB_STEP_NAME = Path(str(V.BB_STEP)).stem
 if _bbs or J5_DY: OUT = OUT.parent / (OUT.name + (f'_{BB_STEP_NAME.split("_")[-1]}' if _bbs else '') + (f'_J5{J5_DY:+g}' if J5_DY else ''))
-if R_MIN_IN or SEAT_H != 2.0 or FPC_T != 0.15: OUT = OUT.parent / f'{OUT.name}_T{FPC_T:g}_Rmin{R_MIN_IN:g}_座高{SEAT_H:g}'   # 11-17 V1 双层排线核算, 不覆盖定稿
+if R_MIN_IN or SEAT_H != 2.55 or FPC_T != 0.15: OUT = OUT.parent / f'{OUT.name}_T{FPC_T:g}_Rmin{R_MIN_IN:g}_座高{SEAT_H:g}'   # 11-17 V1 双层排线核算, 不覆盖定稿
 
 
 # ---------------- FPC 中线 (YZ 面) ----------------
@@ -468,7 +468,7 @@ def fpc_len():
         out[nm] = dict(centerline_mm=round(mid, 1), insert_mm=(FPC_INS, FPC_INS), total_mm=round(p.L, 1), cut_mm=cut_len,
                        min_R_centerline=p.min_r(), min_R_inner=round(p.min_r() - FPC_T / 2, 3), segs=p.marks,
                        stiffener_mm=STF[nm], finger_mm=FINGER_L, t_bend=FPC_T, t_stiff=FPC_T_STF, bends=bends(p, STF[nm]),
-                       contact=CONTACT[nm], wiring='1↔1 直通' + (' (底板 J6 已做网络镜像 pin k ↔ 71−k)' if nm == 'B' else ''))
+                       contact=CONTACT[nm], wiring='直通 (导体 x 不变), 底板按物理 x 分网')
     return out
 
 
@@ -809,7 +809,9 @@ def drawing():
     # ---- 技术要求 ----
     bA, bB = L_['A']['bends'], L_['B']['bends']
     notes = ['技术要求 / 安装:',
-             '1. 两根都是 1<->1 直通同料号 (导体 1 在同一长边), 只是长度不同。底板 r4h: J5 (150,37.425) 180°, J6 (150,87.50) 0°, 两座都按 "座 pin k = 桥板 r11 FPC1 pin k" 分网, 不镜像。',
+             ('1. 两根同一种做法 (单层铜, 弯曲区 ≤0.15): 两端异面, 直通 (导体 x 不变, FPC 内不交叉), 只是长度不同; 底板 J5/J6 口都朝板外, 按物理 x (同一世界 x 互连) 分网。'
+              if BB_SEAT_MODE == 'out' else
+              '1. 两根都是 1<->1 直通同料号 (导体 1 在同一长边), 只是长度不同。底板 r4h: J5 (150,37.425) 180°, J6 (150,87.50) 0°, 两座都按 "座 pin k = 桥板 r11 FPC1 pin k" 分网, 不镜像。'),
              '   核对口径: 桥 A 世界 x = -(kx-132), 桥 B 世界 x = +(kx-132), 按物理 x 对脚 (例: 桥 A pin1 TCK 在 kx114.75 -> 世界 x+17.25)。',
              f"2. 接触面: A {L_['A']['contact']['kind']}, B {L_['B']['contact']['kind']} (按走线几何: 两座同型号 XW0525512, 判 PCB 在 FPC 哪一面; 座子上/下接触以规格书为准, 同/异面结论不变)。",
              f"3. 补强 PI 贴金手指背面: A 两端 {STF['A'][0]:g}/{STF['A'][1]:g}; B 桥板端 {STF['B'][0]:g}, J6 端 {STF['B'][1]:g} (= 插入深 4.0, 竖槽放不下 5.0 + 1 隙)。",

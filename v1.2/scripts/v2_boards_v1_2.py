@@ -16,8 +16,8 @@ from OCP.BRep import BRep_Builder
 from OCP.TopoDS import TopoDS_Compound
 from helpers import read_step
 
-BB_PCB = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/layout/r4h_pads/POV3D_V2_BaseBoard_r4h.kicad_pcb')   # 11-17 r4h (96 D213R8): J6 转 0° 掉头 (150,87.5), CZ06 +0.3, J5/J6 按桥 r11 逐脚分网;   # 11-16 晚 r4d (96 11234291): 板框同 r4c (角 r81.69), 四角矩形孔, J8/J10/J9 改焊盘, J11/J12 测试点, C13 换聚合物
-BB_STEP = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/review/结构交付/POV3D_V2_BaseBoard_r4h.step')   # 原点 = 转轴, z0 = 板底
+BB_PCB = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/layout/r4i_pads/POV3D_V2_BaseBoard_r4i.kicad_pcb')   # 11-17 r4h (96 D213R8): J6 转 0° 掉头 (150,87.5), CZ06 +0.3, J5/J6 按桥 r11 逐脚分网;   # 11-16 晚 r4d (96 11234291): 板框同 r4c (角 r81.69), 四角矩形孔, J8/J10/J9 改焊盘, J11/J12 测试点, C13 换聚合物
+BB_STEP = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/review/结构交付/POV3D_V2_BaseBoard_r4i.step')   # 原点 = 转轴, z0 = 板底
 # 板框 (世界坐标); _arc = 以转轴为心的圆弧 (r4c 五边形不用, 留着)
 def _arc(p0, p1, r=81.7, n=12):                       # 11-16 晚 改回 Φ170: r81.7 (罩内壁 r82, 罩内件 ≤ r81.7; Φ175 时曾 r84.2)
     a0, a1 = math.atan2(p0[1], p0[0]), math.atan2(p1[1], p1[0])
@@ -31,7 +31,7 @@ def _fillet_rect(x0, y0, x1, y1, r, n=8):
     for cx, cy, a0 in ((x1 - r, y0 + r, -90), (x1 - r, y1 - r, 0), (x0 + r, y1 - r, 90), (x0 + r, y0 + r, 180)):
         pts += [(cx + r * math.cos(math.radians(a0 + 90 * k / n)), cy + r * math.sin(math.radians(a0 + 90 * k / n))) for k in range(n + 1)]
     return pts
-BB_POLY = _fillet_rect(-51.2, 8.6, 47.3, 66.6, 6.0)   # 11-16 晚 r4e (96 31676a1a): 外接 x −51.2…47.3 y 8.6…66.6 四角 R6, 最远 r81.60 (r4c/r4d 左上斜切作废)
+BB_POLY = _fillet_rect(-51.2, 8.6, 47.3, 60.5, 6.0)   # 11-17 r4i: 上边 66.6→60.5 (J5 口朝外), 外接 98.5×51.9, 最远 r76.78; 原 11-16 晚 r4e (96 31676a1a): 外接 x −51.2…47.3 y 8.6…66.6 四角 R6, 最远 r81.60 (r4c/r4d 左上斜切作废)
 BB_R = 81.7                                          # 11-16 晚 改回 Φ170: 底板外接限 r81.7 (Φ175 时曾 r84.2; 原 r83)
 BB_C = (150.0, 100.0)                                # 转轴 (KiCad); r2: 世界 (x, y) = (kx − 150, 100 − ky), 已与 bbox_r2.json 核对
 # 限高 (板顶以上, mm); 没列的 = 1.2 (0402~0805 / SOT / QFN 一类)
