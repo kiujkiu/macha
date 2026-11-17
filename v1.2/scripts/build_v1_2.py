@@ -183,7 +183,7 @@ GATE_PTS = []
 #   (原 r3 rev d: (-46,17.8) (18.1,27.55) (±24.25,69.9); r4b: (-47.6,12.6) (-25,61.5) (43.5,53) (25,61.5))
 #   11-16 晚 用户: 孔相对底板自身对称, 放板四角附近, 矩形 90.1×49.6 以板中心 (−1.95, 37.6) 为心 (96 出 r4d 给最终坐标); 板框/STEP 仍 r4c
 #   (r4c 原: (-47.4, 60.0) (-24.6, 61.5) (43.5, 53.0) (24.6, 61.5)); (−47, 62.4) 在 r78.1, 尼龙柱六角对角外缘约 r81.3 < 罩内壁 r82
-BB_HOLES = [(-46.75, 13.05), (42.85, 13.05), (-46.75, 56.05), (42.85, 56.05)]   # 11-17 r4i (96 D213R9): 上板边 66.6→60.5, H6/H8 62.15→56.05 (矩形 89.6×43.0); 原 r4e (96 31676a1a): H5 / H7 / H6 / H8 四角矩形 89.6×49.1, 四边内缩 4.45 (4.7 会压 WiFi/F1/L1)
+BB_HOLES = [(-46.75, 13.05), (46.75, 13.05), (-46.75, 56.05), (46.75, 56.05)]   # 11-17 晚 r4j (96 8dbcae25): 右两孔 42.85 → 46.75, 关于 x=0 对称; 原 11-17 r4i (96 D213R9): 上板边 66.6→60.5, H6/H8 62.15→56.05 (矩形 89.6×43.0); 原 r4e (96 31676a1a): H5 / H7 / H6 / H8 四角矩形 89.6×49.1, 四边内缩 4.45 (4.7 会压 WiFi/F1/L1)
 BB_INS_H = 0.0                                    # 11-16 晚 改一颗螺丝穿到底: 承载盘这 4 孔不再压铜螺母 (留名置 0)
 #   11-16 晚 用户再改 (承载盘减薄到 2.5, 盘底 RIM_BOT Z29.5): 一颗 M3 超薄头 (头 Φ7×1.5) 从承载盘底往上穿到底 ——
 #   承载盘 Φ3.4 通孔 + 盘底 Φ7.4 沉孔深 1.5 (Z29.5–31, 头支承 Z31) → 尼龙光孔垫柱 Φ6×3 (Z32–35) → 底板 1.6 (Z35–36.6) → 板顶 M3 尼龙螺母 (高 2.4, Z36.6–39.0)
@@ -675,13 +675,18 @@ GC_LIP_R1 = GD_POCKET_R - 0.3                      # 凸缘外 r90.0 (玻璃窝 
 GC_Z0, GC_Z1 = GT_Z1, GT_Z1 + GC_T                 # 303.68 / 306.68 (顶板底 = 红件顶 = 硬限位)
 GC_N, GC_R, GC_ANG0, GC_HOLE = 8, (gi - SPIG_T + 0.5 + GT_RO) / 2, 22.5, 3.4   # r95.45
 GC_INS_D, GC_INS_H = 4.2, 4.2
-GC_SCREW_L, GC_HEAD_D, GC_HEAD_H = 6.0, 7.0, 1.5
+GC_HEAD_D, GC_HEAD_H = 7.0, 1.5                    # M3 超薄头 Φ7×1.5 (头在绿件顶面)
+GC_BEAR = GC_Z1                                    # 头支承 Z306.68
+GC_SCREW_L = 6.0                                   # M3×6: 尾 Z300.68, 啮合 3.0, 尾离玻璃罩端面 2.6 (M3×8 只剩 0.6, 不用)
+# 11-17 晚 用户: 铜螺母是「螺丝从对面穿通孔把螺母拉进来」装的 ⇒ 红件铜螺母孔底下打 Φ3.4 通孔到底面 (底面 Z298.08 = 坐玻璃罩端面那圈, 装玻璃前从下面够得着)
+GT_INS_THRU = 3.4
+GT_PULL_L = 6.0                                    # 拉装用螺丝: 从红件底面往上 M3×6 (过 1.4 + 进铜螺母 4.2, 尖出顶面 0.4), 用完拆掉
 GC_PTS = [(GC_R * math.cos(math.radians(GC_ANG0 + 45 * k)), GC_R * math.sin(math.radians(GC_ANG0 + 45 * k))) for k in range(GC_N)]
 assert GC_R - GC_INS_D / 2 >= GD_POCKET_R + 0.5 + 2.0 and GC_R + GC_INS_D / 2 <= GT_RO - 2.0, '铜螺母孔离红件桥两侧太近'
 _ins_floor = GT_Z1 - GC_INS_H - Z_GT               # 铜螺母底 → 玻璃罩端面
 assert _ins_floor >= 1.2, '铜螺母孔底离玻璃罩端面太薄'
-assert GC_Z1 - GC_SCREW_L >= GT_Z1 - GC_INS_H, '螺丝尖超出铜螺母'
-glass_top = clean(cut(revol(GT_RZ), *[cyl(x, y, GC_INS_D, GT_Z1 - GC_INS_H, GT_Z1 + 1) for x, y in GC_PTS]))
+assert GC_BEAR - GC_SCREW_L >= Z_GT + 2.0, '螺丝尖离玻璃罩端面太近'
+glass_top = clean(cut(revol(GT_RZ), *[fuse(cyl(x, y, GC_INS_D, GT_Z1 - GC_INS_H, GT_Z1 + 1), cyl(x, y, GT_INS_THRU, Z_GT - 1, GT_Z1)) for x, y in GC_PTS]))
 glass_top_clamp = clean(cut(revol([(GC_R0, GC_Z0 - GC_LIP), (GC_LIP_R1, GC_Z0 - GC_LIP), (GC_LIP_R1, GC_Z0), (go, GC_Z0), (go, GT_Z0), (go + GT_FOOT, GT_Z0),
                                    (SH_OUT, Z_GT - LIP_EDGE), (SH_OUT, GC_Z1 - GC_CH), (SH_OUT - GC_CH, GC_Z1), (GC_R0 + GC_IN_CH, GC_Z1), (GC_R0, GC_Z1 - GC_IN_CH)]),
                             *[cyl(x, y, GC_HOLE, GT_Z0 - 1, GC_Z1 + 1) for x, y in GC_PTS]))
@@ -715,7 +720,7 @@ LOG['glass_top'] = dict(v=vol(glass_top), z=(GT_Z0, GT_Z1), z_tube_top=Z_GT, con
                         hub_v=vol(glass_top_hub), hub_z=(round(_zt, 2), GD_Z1 + _fl_t), finger_L=round(GH_L, 2), finger_strain=round(GH_STRAIN, 4), bearing=GT_BEARING,
                         valid=(BRepCheck_Analyzer(glass_top).IsValid(), BRepCheck_Analyzer(glass_top_hub).IsValid(), BRepCheck_Analyzer(glass_top_clamp).IsValid()),
                         clamp_v=vol(glass_top_clamp), clamp_z=(GC_Z0, GC_Z1), ledge_z=GT_LEDGE_Z, gasket=(GK_T, GK_COMP), clamp_pts=[(round(x, 2), round(y, 2)) for x, y in GC_PTS],
-                        ins_floor_meat=round(_ins_floor, 2), screw_tip=GC_Z1 - GC_SCREW_L)
+                        ins_floor_meat=round(_ins_floor, 2), screw_tip=GC_BEAR - GC_SCREW_L, screw_engage=round(GT_Z1 - (GC_BEAR - GC_SCREW_L), 2))
 nuts = []
 seat_nuts = [cyl(x, y, SH_NUT_D, NUT_Z0, NUT_Z0 + NUT_T) for x, y in SH_M6]
 hang_nuts = [cyl(x, y, 6.35, FL_Z0 - 2.4, FL_Z0) for x, y in OUT_HANG]          # M3 螺母 (对角 6.35 x 2.4) 吊在定子盘底
