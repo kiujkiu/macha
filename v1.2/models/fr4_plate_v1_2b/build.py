@@ -1,8 +1,8 @@
 """
 ★ fr4_plate_v1_2b —— 转子盘B 玻纤加强板 (2026-11-17 用户定)
-  无铜 FR4 光板 Φ165 × 2.0, 垫在毂盘 hub_disc_v1_2b 底面 (夹在电机顶面与毂盘之间), 坐标 = 毂盘零件系 (盘心原点, 孔位一一对应)。
-  - 内圈 R30 ×8 + 外圈 R77.5 ×8 (@22.5°+45°k): M3 通孔 Φ3.2 + 底面 Φ7.2×1 平底沉孔; 螺丝从下往上穿玻纤板 + 毂盘, 终点承载盘 rim_ring_v1_2b 的铜螺母
-  - 电机 4 孔 (正方形对角 16, R8 @45°+90°k): M3 通孔 Φ3.2, 不开沉孔 (电机螺丝从毂盘顶面往下拧, 底面贴电机法兰)
+  无铜 FR4 光板 Φ165 × 3.0, 11-17 晚改: 毂盘取消, 本板直接压在电机顶面上, 上面是承载盘单件 (并入毂盘); 孔位 8/4 重对称, 绕 Z 转 90° 不变 (整机坐标 = 零件坐标)。
+  - 内圈 R34 ×8 + 外圈 R77.5 ×8 (@22.5°+45°k): M3 通孔 Φ3.2 + 底面 Φ7.2×1.5 平底沉孔; 螺丝从下往上穿玻纤板 + 承载盘: 12 颗进承载盘铜螺母, 4 颗再穿屏幕固定件上法兰螺母
+  - 电机 4 孔 (正方形对角 16, R8 @45°+90°k): M3 通孔 Φ3.2, 不开沉孔 (电机螺丝从承载盘顶面往下拧, 底面贴电机)
   - 中心: M5 通孔, 实际 Φ5.2 (电机轴头)
   - 厚度 2.0 (用户问够不够: 抗弯刚度 ∝ E·t³, 2 mm FR4 约为 3 mm 打印 PLA 底板 2 倍; 3 mm 重 +45 g, 收益不划算)
   输出: STL (底面 Z0, 沉孔朝下 = 装配姿态) + DXF (外形 + 全部通孔, 给板厂) + 图纸 (build_drawing.py)
@@ -13,13 +13,13 @@ import manifold3d as m3d
 import numpy as np, struct
 
 HERE = Path(__file__).resolve().parent
-OD, T = 165.0, 2.0   # 11-17: 175 → 170 → 165 (用户: = 毂盘 Φ165, 正好垫在毂盘下; 承载盘外唇 ID165/OD170 下沿齐毂盘底, 落在板外)
-M3_D, CB_D, CB_H = 3.2, 7.2, 1.0
+OD, T = 165.0, 3.0   # 11-17 晚: 厚 2 → 3 (用户: 毂盘并入承载盘, 玻纤板当承力底板); 11-17: 175 → 170 → 165 (用户: = 毂盘 Φ165, 正好垫在毂盘下; 承载盘外唇 ID165/OD170 下沿齐毂盘底, 落在板外)
+M3_D, CB_D, CB_H = 3.2, 7.2, 1.5   # 11-17 晚 用户: 沉孔深 1 → 1.5
 CENTER_D = 5.2
 ring = lambda r, n, a0: [(r * math.cos(math.radians(a0 + 360 / n * k)), r * math.sin(math.radians(a0 + 360 / n * k))) for k in range(n)]  # noqa: E731
-HOLES_IN = ring(30.0, 8, 22.5)        # 内圈 (= 毂盘 C 组)
-HOLES_OUT = ring(77.5, 8, 22.5)       # 外圈 (= 毂盘 D 组, V0.4 R77.5)
-HOLES_MOTOR = ring(8.0, 4, 45.0)      # 电机 (= 毂盘 A 组)
+HOLES_IN = ring(34.0, 8, 22.5)        # 内圈: 11-17 晚 R30 → R34 (电机 Φ55: 头沉孔 Φ7.2 内缘 r30.4, 离电机 2.9)
+HOLES_OUT = ring(77.5, 8, 22.5)       # 外圈 (V0.4 R77.5)
+HOLES_MOTOR = ring(8.0, 4, 45.0)      # 电机 (新电机 4×M3 对角 16)
 SEG = 64
 
 
@@ -65,7 +65,7 @@ def write_dxf(out):
 
 if __name__ == '__main__':
     part = build()
-    v = write_stl(part, HERE / 'fr4_plate_v1_2b.stl', 'POV3D fr4_plate_v1_2b D165x2 FR4')
+    v = write_stl(part, HERE / 'fr4_plate_v1_2b.stl', 'POV3D fr4_plate_v1_2b D165x3 FR4')
     write_dxf(HERE / 'fr4_plate_v1_2b.dxf')
     vol = part.volume()
     print(f'bbox Z {v[:, 2].min():.2f}..{v[:, 2].max():.2f}  体积 {vol:.1f} mm³  重量 ≈ {vol * 1.85e-3:.1f} g (FR4 1.85 g/cm³)  genus {part.genus()}')
