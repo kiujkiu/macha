@@ -195,7 +195,7 @@ SPECS.append(dict(
     code="flange_disc_v1_2", shape=B.flange_disc, short="定子盘 (无线供电下盖)", qty="1",
     title=f"定子盘 Φ165: V0.4 flange_disc 底板减 {F(B.FL_THIN)}, 中心孔 Φ{F(2 * B.FL_HOLE_R)}",
     orient="按 V0.4 flange_disc 原姿态",
-    phi=[2 * B.FL_HOLE_R, 2 * B.R_SCREW, 2 * 78.0, 165.0],
+    phi=[2 * B.FL_HOLE_R, 2 * B.CAV_R0, 2 * B.CAV_R1, 165.0],   # 11-17: 标内墙/外墙 (线圈内定位 / 铜螺母环), 孔圈 PCD 见孔表
     sec=dict(ang=22.5, zd=[(B.FL_Z0, B.FL_TOP)]),
     holes=[
         dict(tag="A", pts=B.FLANGE_SCREWS, spec="Φ3.2 通", where=ring_txt(B.FLANGE_SCREWS) + "  M3×20 到底盘铜螺母"),
@@ -204,7 +204,7 @@ SPECS.append(dict(
              det=dict(kind="ins", d=3.2, D=B.LID_INS_D, h=B.LID_INS_H, side="bot", z=(B.FL_Z0, B.FL_TOP), pt=B.LID_SCREWS[0], title="外圈 M3 铜螺母孔")),
     ],
     notes=[f"Z{F(B.FL_Z0)}→{F(B.FL_TOP)}; 线圈腔 r{F(B.CAV_R0)}–{F(B.CAV_R1)} 深 {F(B.FL_TOP - B.CAV_Z0)} (11-16 晚 用户 2.5 → 2.8), 腔底 Z{F(B.CAV_Z0)}, 底板 {F(B.CAV_Z0 - B.FL_Z0)}",
-           f"内墙 r31.7–{F(B.CAV_R0)} / 外墙 r{F(B.CAV_R1)}–82.5 都是 {F(B.CB7)} 宽 (= 安装法兰 Φ{F(B.CB7)} 沉孔), 螺丝居中",
+           f"内墙 r31.7–{F(B.CAV_R0)}: 外圆 Φ{F(2 * B.CAV_R0)} 套线圈内径 Φ{F(B.COIL_ID)} (11-17); 外墙 (铜螺母环) r{F(B.CAV_R1)}–82.5 宽 {F(82.5 - B.CAV_R1)} (11-17 用户 ≥10); 线圈外径需 ≤ Φ{F(2 * B.CAV_R1)}",
            "+X 处 XT60 压块让位缺口; 原 +X 线圈引线槽 (r40–61) 减薄后变通槽 (待定)",
            *(["底面控制板让位: 无 (11-16 晚: 2 颗电解实测高 6.1、3P 排针改弯排针, 都低于定子盘底 Z" + F(B.FL_Z0) + ")"] if not B.BRD_POCKETS else []),
            *(["底面控制板让位 (11-12 夜): " + "; ".join(f"x{F(p['bbox'][0] - B.BRD_POCKET_GAP)}..{F(p['bbox'][3] + B.BRD_POCKET_GAP)} y{F(p['bbox'][1] - B.BRD_POCKET_GAP)}..{F(p['bbox'][4] + B.BRD_POCKET_GAP)} 深 {F(p['depth'])}" for p in B.BRD_POCKETS)] if B.BRD_POCKETS else [])],
@@ -316,7 +316,7 @@ _ang_txt = lambda pts: "/".join(F(round(ang(p), 1)) for p in pts) + "°"        
 # 承载盘剖面层级 (几何实测): 内孔 = 最小同心圆柱, 盘底 = 内孔底; 下凸台 = 盘底以下、裙边以内的同心圆柱
 # 承载盘剖面层级: 盘底 B.RIM_BOT / 内孔 B.RIM_BORE_R / 下凸台 B.RIM_BUMP_R (凸台底 Z 实测)
 _R_BORE, _R_PZ0 = B.RIM_BORE_R, B.RIM_BOT
-_R_BUMP = (B.RIM_BUMP_R[0], B.RIM_BUMP_R[1], min(c[2] for c in cyl_at(B.rim, 2 * B.RIM_BUMP_R[0], centered=True)))
+# 11-17: 下凸台取消 (线圈内定位改到毂盘内环)
 _rl = [(x, y) for x, y in B.RIM_LOCK_PTS]                                       # r30 锁盘孔 (V1.0 原有)
 _R_LOCK = math.hypot(*_rl[0])
 _rl_cb = [(x, y, c) for x, y in _rl for c in cyls(B.rim) if 5 < c[0] < 12 and math.hypot(c[1] - x, c[2] - y) < 0.1]
@@ -331,9 +331,8 @@ SPECS.append(dict(
     orient="翻面: 顶面 (托盘面) 贴床, 裙边朝上 (out/打印STL 已是此姿态)",
     phi=[2 * B.RH_R, 2 * B.RIM_SKIRT[0], B.RIM_D],
     sec=dict(ang=0, r0=20.0, auto_dims=False,
-             zd=[(_R_PZ0, _rz1), (_R_BUMP[2], _R_PZ0), (B.RIM_SKIRT[2], _R_PZ0), (B.RIM_SKIRT[2], _rz1)],
-             rd=[(_R_BORE, _R_BUMP[0], f"{F(_R_BUMP[0] - _R_BORE)} mm (内孔 R{F(_R_BORE)} → 凸台 R{F(_R_BUMP[0])})"),
-                 (_R_BUMP[0], _R_BUMP[1], f"凸台宽 {F(_R_BUMP[1] - _R_BUMP[0])} mm (R{F(_R_BUMP[0])}–R{F(_R_BUMP[1])})"),
+             zd=[(_R_PZ0, _rz1), (B.RIM_SKIRT[2], _R_PZ0), (B.RIM_SKIRT[2], _rz1)],
+             rd=[(_R_BORE, B.RIM_SKIRT[0], f"盘底平 {F(B.RIM_SKIRT[0] - _R_BORE)} mm (内孔 R{F(_R_BORE)} → 裙边 R{F(B.RIM_SKIRT[0])})"),
                  (B.RIM_SKIRT[0], B.RIM_SKIRT[1], f"裙边 {F(B.RIM_SKIRT[1] - B.RIM_SKIRT[0])} mm (R{F(B.RIM_SKIRT[0])}–R{F(B.RIM_SKIRT[1])})")]),
     holes=[dict(tag="R", pts=B.RH_PTS, spec="Φ3.4 通 (8 孔全通孔, 无沉孔)",
                 where=ring_txt(B.RH_PTS) + f"  → 毂盘底 M3×4 铜螺母 Z{F(B.RH_INS[0])}–{F(B.RH_INS[1])}\n"
@@ -353,8 +352,8 @@ SPECS.append(dict(
            *([dict(tag="C", pts=[(c[0], c[1]) for c in _rc], spec="Φ4 通 (V1.0 原有, 现未用)", where=xy([(c[0], c[1]) for c in _rc]))] if _rc else []),
            dict(tag="A", pts=B.AC_HOLES, spec=f"Φ{F(B.AC_HOLE_D)} 通 (线圈 AC 引线)", where=xy(B.AC_HOLES) + "  进无线托盘底窗")],
     notes=[f"承载盘 Φ{F(B.RIM_D)}, 盘体 Z{F(_R_PZ0)}–{F(_rz1)} 厚 {F(_rz1 - _R_PZ0)}; 裙边 r{F(B.RIM_SKIRT[0])}–{F(B.RIM_SKIRT[1])} 到 Z{F(B.RIM_SKIRT[2])} (= 毂盘底), 毂盘 r{F(_HUB_R)} 嵌进去 (同定子嵌套)",
-           f"剖视竖向 (左→右): 盘厚 {F(_rz1 - _R_PZ0)} / 下凸台高 {F(_R_PZ0 - _R_BUMP[2])} / 裙边伸出盘底 {F(_R_PZ0 - B.RIM_SKIRT[2])} / 总高 {F(_rz1 - B.RIM_SKIRT[2])}",
-           f"内孔 R{F(_R_BORE)} 套毂盘凸台; 底面下凸台 R{F(_R_BUMP[0])}–{F(_R_BUMP[1])} 高 {F(_R_PZ0 - _R_BUMP[2])} 落进毂盘顶面环槽",
+           f"剖视竖向 (左→右): 盘厚 {F(_rz1 - _R_PZ0)} / 裙边伸出盘底 {F(_R_PZ0 - B.RIM_SKIRT[2])} / 总高 {F(_rz1 - B.RIM_SKIRT[2])}",
+           f"内孔 R{F(_R_BORE)} 套毂盘中心凸台定心; 11-17 原底面下凸台 R{F(B.RIM_BUMP_R[0])}–{F(B.RIM_BUMP_R[1])} 取消 (线圈 Φ{F(B.COIL_ID)} 改由毂盘内环定位), 盘底除 S/M 凸台外全平",
            f"外圈 8 孔 r{F(B.RH_R)} @22.5°+45°k 与定子外圈上下对齐; V1.0 原 R82.5 孔补实",
            f"罩底孔 S @" + "/".join(F(a) for a in B.SHR_ANG) + "° (避开底板与立板耳朵); 两端 T 脚 / 中间 T 件孔填实; C / X 孔为 V1.0 原有",
            f"装配: 底板螺丝头在承载盘底面, 所以先把底板装到承载盘上, 再把承载盘装到毂盘上 (毂盘在螺丝头下让位 Φ{F(B.HUB_BB_CLR_D)})"]))
@@ -363,7 +362,7 @@ SPECS.append(dict(
 _HZ0, _HZ1 = B.bbox(B.hub)[2], B.bbox(B.hub)[5]                                # Z21.5 / Z30.5
 _H_TOP = B.RIM_BOT                                                              # 两圈接触环顶 (= 承载盘底, 11-16 晚 加高)
 _H_BOSS = (B.RIM_BORE_R,)                                                       # 中心凸台 R25 (伸进承载盘内孔)
-_H_GROOVE = (B.HUB_RAISE[0][1], B.HUB_RAISE[1][0], min(c[2] for c in cyl_at(B.hub, 2 * B.HUB_RAISE[0][1], centered=True)))   # 环槽 R35–77.5, 槽底 Z 实测
+_H_GROOVE = (B.HUB_RAISE[0][1], B.HUB_RAISE[1][0], min(c[2] for c in cyl_at(B.hub, 2 * B.HUB_RAISE[0][1], centered=True)))   # 环槽 (线圈腔) R39.9–72.4 (11-17), 槽底 Z 实测
 _HUB_R = B.HUB_RAISE[1][1]
 # 外圈 8 孔 (B.RH_PTS, B.RH_INS) / 电机 4 孔 (B.ROTOR_R) / 盘心窝 (B.POCKET_*); r30 锁盘 + 方 4 孔 V1.0 原有 ⇒ 实测
 _h42 = [c for c in cyl_at(B.hub, 4.2) if abs(math.hypot(c[0], c[1]) - B.RH_R) > 0.5]
@@ -406,7 +405,8 @@ SPECS.append(dict(
     notes=[f"剖视竖向 (左→右): 槽底板 {F(_H_GROOVE[2] - _HZ0)} / 环槽深 {F(_H_TOP - _H_GROOVE[2])} / 中心凸台 {F(_HZ1 - _H_TOP)} / 盘厚 (外环、内环) {F(_H_TOP - _HZ0)} / 总高 {F(_HZ1 - _HZ0)}",
            f"外径 Φ{F(2 * _HUB_R)} (r{F(_HUB_R)}), 嵌进承载盘裙边 r{F(B.RIM_SKIRT[0])}–{F(B.RIM_SKIRT[1])}, Z{F(_HZ0)}–{F(_HZ1)}",
            f"底面平 Z{F(_HZ0)}; 顶面: 外环 R{F(_H_GROOVE[1])}–{F(_HUB_R)} 与内环 R{F(_H_BOSS[0])}–{F(_H_GROOVE[0])} 顶 Z{F(_H_TOP)} 托承载盘, "
-           f"环槽 R{F(_H_GROOVE[0])}–{F(_H_GROOVE[1])} 深 {F(_H_TOP - _H_GROOVE[2])} 收承载盘下凸台; 中心凸台 R{F(_H_BOSS[0])} 高 {F(_HZ1 - _H_TOP)} 穿承载盘内孔",
+           f"环槽 (线圈腔) R{F(_H_GROOVE[0])}–{F(_H_GROOVE[1])} 深 {F(_H_TOP - _H_GROOVE[2])};",
+           f"11-17: 内环外圆 Φ{F(2 * _H_GROOVE[0])} 套线圈内径 Φ{F(B.COIL_ID)}; 外环 (铜螺母环) 宽 {F(_HUB_R - _H_GROOVE[1])}; 线圈外径需 ≤ Φ{F(2 * _H_GROOVE[1])};  中心凸台 R{F(_H_BOSS[0])} 高 {F(_HZ1 - _H_TOP)} 穿承载盘内孔",
            f"外圈 8 孔 (R) 中 k={'/'.join(str(k) for k in B.RH_EAR_IDX)} 被立板耳朵压住, 用 M3×{F(L.FOOT_SCREW_L)}; k={'/'.join(str(k) for k in B.RH_STD_IDX)} 用 M3×{F(B.RH_L)} (头压承载盘顶)",
            "铜螺母 M3×4 全部从底面压入 (贴床面, 打印后再压); V1.0 原电机菱形 4 孔已补实",
            f"电机 E 组 4 颗从顶面沉孔往下拧进电机转子; 盘心窝 Φ{F(B.POCKET_D)}×{F(B.POCKET_H)} 让电机轴头"]))

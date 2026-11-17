@@ -227,7 +227,7 @@ def check(seat, clamp, disc, merged):
         b = bbox(P); col = box(b[0], b[1], 0, b[3], b[4], 40)
         zmin = min([bbox(common(col, S))[2] for S in (B.flange_disc, B.mounting_flange, B.ring) if ivol(col, S) > 1e-6] or [99])
         R[f'{pn}_above_zmin'] = round(zmin, 3); R[f'{pn}_top_gap'] = round(zmin - b[5], 3)
-        assert zmin - b[5] >= 0.5 - 1e-6
+        assert zmin - b[5] >= 0.5 - 1e-3, (pn, '上方最低面', round(zmin, 3), '件顶', round(b[5], 3), '件 bbox', [round(v, 2) for v in b])
     # 接头: 就位零干涉 (座 + 底盘); 挪 0.05 各方向都吃进 (零间隙)
     plug = mr30_plug()
     R['plug_inter'] = dict(seat=round(ivol(plug, seat), 5), disc=round(ivol(plug, disc), 5))

@@ -244,14 +244,19 @@ rim = clean(cut(rim, *[cyl(x, y, AC_HOLE_D, 20.0, 33.0) for x, y in AC_HOLES]))
 #              毂盘 r<25 Z21.5–30.5 (中心凸台伸进承载盘 Φ50 内孔), r25–35 / r77.5–82.4 顶 Z27 (与承载盘底贴合), r35–77.5 顶 Z24.5 (线圈腔)
 #   ⇒ 承载盘切 r25–82.5 Z27–29.5 环, 留下凸台 r35–40 (Z24.5–29.5 与盘体连成一体) 和裙边; 毂盘 r25–35 / r77.5–82.4 加高到 Z29.5
 #   螺丝叠层总高不变: r79 外圈 8 颗 (盘顶 Z32 → 毂盘底铜螺母 Z21.5–25.5) 和 r30 锁盘 8 颗 (V1.0 原有, 毂盘底 Φ4.2 铜螺母 Z21.5–26) 长度都不变
-RIM_BORE_R, RIM_BUMP_R = 25.0, (35.0, 40.0)        # 承载盘内孔 / 下凸台 (V1.0 STEP 原有)
-HUB_RAISE = [(25.0, 35.0), (77.5, 82.4)]           # 毂盘原 Z27 接触环 (实测)
+RIM_BORE_R, RIM_BUMP_R = 25.0, (35.0, 40.0)        # 承载盘内孔 / 下凸台 (V1.0 STEP 原有; 11-17 下凸台取消, 见下)
+# 11-17 用户: ① 无线线圈内径 80, 原定子内墙 Φ77.4 / 转子毂盘 Φ70 (Φ80 那圈长在承载盘底) 卡不住 ⇒ 两边线圈内定位都做到 Φ(80 − COIL_FIT) 实体
+#            ② 外圈铜螺母环太窄 (定子 7 宽, 转子 4.9 宽且 r79 Φ4.2 螺母孔切破环内壁 r77.5) ⇒ 外径不动, 环宽统一 NUT_RING_W = 10
+COIL_ID, COIL_FIT = 80.0, 0.2                      # 线圈内径 / 直径间隙 (打印外圆偏大, 松了再减)
+COIL_SEAT_R = (COIL_ID - COIL_FIT) / 2             # r39.9: 定子内墙外圆 = 转子毂盘内环外圆
+NUT_RING_W = 10.0                                  # 外圈铜螺母环宽 (定子 r72.5–82.5 / 转子 r72.4–82.4) ⇒ 线圈外径需 ≤ Φ144
+HUB_RAISE = [(25.0, COIL_SEAT_R), (82.4 - NUT_RING_W, 82.4)]   # 毂盘加高到 Z29.5 的两环 (原 (25,35)/(77.5,82.4); 11-17 内环扩到 r39.9 顶线圈, 外环内扩到 r72.4)
 RIM_LOCK_PTS = [(30.0 * math.cos(math.radians(22.5 + 45 * k)), 30.0 * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]   # r30 锁盘孔 (V1.0 原有, 承载盘 Φ3.2 / 毂盘 Φ3.2 + 底 Φ4.2 铜螺母)
 _ann = lambda r0, r1, z0, z1: cut(cyl(0, 0, 2 * r1, z0, z1), cyl(0, 0, 2 * r0, z0 - 1, z1 + 1))
 #   先切整环 r25–82.5 Z26–29.5 (含下凸台), 再把下凸台 r35–40 补回 Z25.5–30 (与剩下的凸台/盘体都重叠, 连成一体);
 #   直接切 "环减凸台" 时 r40 面与 V1.0 凸台面重合, OCC 布尔会静默失败 (只剩凸台)
-rim = clean(cut(rim, _ann(RIM_BORE_R - 1.0, RIM_SKIRT[0], 26.0, RIM_BOT)))   # 内径取 r24 (内孔里本来空): 与 r25 内孔面重合时同样静默失败
-rim = clean(fuse(rim, _ann(*RIM_BUMP_R, 25.5, RIM_BOT + 0.5)))
+rim = clean(cut(rim, _ann(RIM_BORE_R - 1.0, RIM_SKIRT[0], 24.0, RIM_BOT)))   # 内径取 r24 (内孔里本来空): 与 r25 内孔面重合时同样静默失败
+# 11-17: 下凸台 r35–40 (原 Z24.5) 整个切掉 (上面切到 Z24), 线圈内定位改由毂盘内环 r≤COIL_SEAT_R 实体承担; 承载盘定心靠内孔 Φ50 套毂盘中心凸台
 assert len(solids(rim)) == 1 and abs(bbox(rim)[5] - 32.0) < 0.01 and abs(bbox(rim)[2] - RIM_SKIRT[2]) < 0.01, ('承载盘减薄布尔出错', len(solids(rim)), bbox(rim))
 #   局部凸台: 罩底 4 (SHR_HOLES) + 无线托盘 3 (MOD_HOLES) 铜螺母孔下, 盘底往下长 Φ9 到 Z27.5 (局部厚 4.5), 铜螺母孔照旧 (SHR Z28–32 / MOD Z27.8–32)
 #   这 7 个凸台全落在毂盘加高环上 (SHR r79 / MOD (±11, −76.5) r77.3 在外环 r77.5–82.4, MOD (0, −31) 在内环 r25–35) ⇒ 毂盘在凸台下让位 Φ10 (只加高到原 Z27, 凸台底留 0.5)
@@ -263,12 +268,15 @@ rim = clean(fuse(rim, *[cut(cyl(x, y, RIM_BOSS_D, RIM_BOSS_Z0, RIM_BOT + 0.5), c
 #   毂盘加高: 两环 Z27 → Z29.5; 让位 = 7 个凸台 Φ10 + 底板头 Φ8.4 (r75.5 / r77.8 两孔在外环上, 头底 Z29.5 不压毂盘); 重开 r79 外圈 Φ3.4 和 r30 锁盘 Φ3.2
 HUB_BB_CLR_D = 8.4
 #   内环内径取 r24.5 (伸进毂盘中心凸台 0.5, 免与 Φ50 面重合); 孔先在加高环上开好再并 (毂盘上同轴同径重切会切坏实体); 并后留十来个零面积碎面, 实体有效
-_raise = fuse(*[cut(cyl(0, 0, 2 * r1, 27.0, RIM_BOT), cyl(0, 0, 2 * (r0 - 0.5 if r0 < 30 else r0), 26.0, 30.0)) for r0, r1 in HUB_RAISE])
+# 11-17: 加高环底从 Z27 改 Z24 (新扩的 r35–39.9 / r72.4–77.5 原是线圈腔, 腔底 Z24.5) ⇒ 两圈铜螺母孔 (r79 Z21.5–25.5 / r30 Z21.5–26) 要在环上一并让开;
+#   (21, −70) 线圈 AC 引线孔 r73.1 落到外环上 ⇒ 外环开 Φ3.4 引线缺口 (承载盘孔正下方), 线从腔里直上
+_raise = fuse(*[cut(cyl(0, 0, 2 * r1, 24.0, RIM_BOT), cyl(0, 0, 2 * (r0 - 0.5 if r0 < 30 else r0), 23.0, 30.0)) for r0, r1 in HUB_RAISE])
 _raise = cut(_raise, *[cyl(x, y, HUB_BOSS_CLR_D, 26.0, 30.0) for (x, y), _ in _boss_pts], *[cyl(x, y, HUB_BB_CLR_D, 26.0, 30.0) for x, y in BB_HOLES],
-             *[cyl(x, y, 3.4, 20.0, 30.0) for x, y in RH_PTS], *[cyl(x, y, 3.2, 20.0, 30.0) for x, y in RIM_LOCK_PTS])
-_hub_v0 = vol(hub)
+             *[fuse(cyl(x, y, 3.4, 20.0, 30.0), cyl(x, y, 4.2, 20.0, RH_INS[1])) for x, y in RH_PTS], *[fuse(cyl(x, y, 3.2, 20.0, 30.0), cyl(x, y, 4.2, 20.0, 26.0)) for x, y in RIM_LOCK_PTS],
+             *[cyl(x, y, AC_HOLE_D + 0.4, 20.0, 30.0) for x, y in AC_HOLES])
+_hub_v0 = vol(hub); _raise_new = vol(cut(_raise, hub))   # 11-17: 环底 Z24 与原实体有重叠, 按净增量校核
 hub = clean(fuse(hub, _raise))
-assert vol(hub) - _hub_v0 > 0.8 * vol(_raise), ('毂盘加高布尔静默失败', vol(hub) - _hub_v0, vol(_raise))
+assert vol(hub) - _hub_v0 > 0.95 * _raise_new, ('毂盘加高布尔静默失败', vol(hub) - _hub_v0, _raise_new)
 assert len(solids(rim)) == 1 and len(solids(hub)) == 1 and abs(bbox(hub)[5] - 30.5) < 0.01, ('承载盘凸台 / 毂盘加高布尔出错', len(solids(rim)), len(solids(hub)), bbox(hub))
 LOG['rim_thin'] = dict(bot=RIM_BOT, hub_raise=HUB_RAISE, boss=(RIM_BOSS_D, RIM_BOSS_Z0), n_boss=len(_boss_pts), rim_v=vol(rim), hub_v=vol(hub),
                        rim_valid=BRepCheck_Analyzer(rim).IsValid(), hub_valid=BRepCheck_Analyzer(hub).IsValid(), rim_solids=len(solids(rim)), hub_solids=len(solids(hub)))
@@ -550,8 +558,8 @@ LOG['xt60'] = dict(ang=XT_ANG, holes=[(round(x, 2), round(y, 2)) for x, y in XT_
 _fd = flange_disc                                  # 用户 11-12: 定子盘外径改回原尺寸 (不再扩 Φ181)
 _fd = cut(_fd, xf(gbox(-XT_HW - 0.5, XT_Y0 - 5, -1, XT_HW + 0.5, XT_Y1 + 0.5, XT_H + 0.5), XT_T))   # XT60 压块处让位 (11-13 压块内移: 切到 r82.3, 只切 Z≤13.5)
 # 用户 11-12: 外圈 r78 8 孔保留 (原 V0.4 定子盘/安装法兰上下盖互锁螺丝), 不再补实
-CAV_R0 = 31.7 + CB7                                # 线圈腔内壁 r40 → r38.7 (内墙 r31.7–38.7)
-CAV_R1 = 82.5 - CB7                                # 线圈腔外壁 r72.6 → r75.5 (外墙 r75.5–82.5)
+CAV_R0 = COIL_SEAT_R                               # 11-17 用户: 线圈内径 80 ⇒ 内墙外圆 r38.7 → r39.9 (内墙 r31.7–39.9)
+CAV_R1 = 82.5 - NUT_RING_W                         # 11-17 用户: 外圈铜螺母环 7 宽 → 10 宽 ⇒ 腔外壁 r75.5 → r72.5 (外墙 r72.5–82.5)
 CAV_Z0 = FL_TOP - 2.8                              # 11-16 晚 用户: 线圈腔深 2.5 → 2.8 ⇒ 腔底 Z10.7 (底板 2.2)
 LID_R = 82.5 - CB7 / 2                             # 用户 11-12: 上下盖孔居中到外墙 r79 (原 V0.4 r77.5, 曾误开 r78)
 LID_SCREWS = [(LID_R * math.cos(math.radians(22.5 + 45 * k)), LID_R * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]   # 外圈 r79 8 孔 (上下盖互锁)
