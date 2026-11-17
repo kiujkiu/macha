@@ -16,8 +16,8 @@ from OCP.BRep import BRep_Builder
 from OCP.TopoDS import TopoDS_Compound
 from helpers import read_step
 
-BB_PCB = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/layout/r4f_pads/POV3D_V2_BaseBoard_r4f.kicad_pcb')   # 11-16 晚 r4d (96 11234291): 板框同 r4c (角 r81.69), 四角矩形孔, J8/J10/J9 改焊盘, J11/J12 测试点, C13 换聚合物
-BB_STEP = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/review/结构交付/POV3D_V2_BaseBoard_r4f.step')   # 原点 = 转轴, z0 = 板底
+BB_PCB = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/layout/r4h_pads/POV3D_V2_BaseBoard_r4h.kicad_pcb')   # 11-17 r4h (96 D213R8): J6 转 0° 掉头 (150,87.5), CZ06 +0.3, J5/J6 按桥 r11 逐脚分网;   # 11-16 晚 r4d (96 11234291): 板框同 r4c (角 r81.69), 四角矩形孔, J8/J10/J9 改焊盘, J11/J12 测试点, C13 换聚合物
+BB_STEP = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/review/结构交付/POV3D_V2_BaseBoard_r4h.step')   # 原点 = 转轴, z0 = 板底
 # 板框 (世界坐标); _arc = 以转轴为心的圆弧 (r4c 五边形不用, 留着)
 def _arc(p0, p1, r=81.7, n=12):                       # 11-16 晚 改回 Φ170: r81.7 (罩内壁 r82, 罩内件 ≤ r81.7; Φ175 时曾 r84.2)
     a0, a1 = math.atan2(p0[1], p0[0]), math.atan2(p1[1], p1[0])
