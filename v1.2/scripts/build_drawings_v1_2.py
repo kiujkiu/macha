@@ -712,7 +712,36 @@ if any("_v1_2b" in a for a in sys.argv[1:]):
                    f"锚孔 = 原耳朵孔位 (R{F(RB.R_OUT)} {'/'.join(F(round(ang(p), 1)) for p in anc)}°); 罩子锁点 r{F(RB.SHR_LOCK_R)} (罩子随后改)",
                    "装配: 桌上 玻纤板 + 承载盘 + 本件 用锚孔螺丝一起锁; 屏幕最后装"])
     SPECS += [_hold_spec("a"), _hold_spec("b")]
-    _FOLDER_B = {"rim_ring_v1_2b": "转子盘B", "screen_holder_v1_2b_a": "转子盘B", "screen_holder_v1_2b_b": "转子盘B"}
+    if any("rotor_shroud_b" in a for a in sys.argv[1:]):
+        with _cl.redirect_stdout(_io.StringIO()):
+            import rotor_shroud_b_v1_2 as RSB
+
+        def _shrb_spec(k):
+            sy = 1 if k == "a" else -1
+            sh = RSB.shr_a if k == "a" else RSB.shr_b
+            side = "+y" if sy > 0 else "−y"
+            mp = [RSB.pol(RSB.HOLE_R, a) for a in RSB.MNT_A if (RSB.pol(RSB.HOLE_R, a)[1] > RSB.SPLIT_Y) == (sy > 0)]
+            wp = [RSB.pol(RSB.RS.W_R, a) for a in RSB.RS.W_A if (RSB.pol(RSB.RS.W_R, a)[1] > RSB.SPLIT_Y) == (sy > 0)]
+            a0 = [a for a in RSB.MNT_A if (RSB.pol(RSB.HOLE_R, a)[1] > RSB.SPLIT_Y) == (sy > 0)][0]
+            return dict(
+                code=f"rotor_shroud_b_{k}_v1_2b", shape=sh, stl_asm=True, date="2026-11-17", qty="1", material="PETG (建议) / PLA",
+                short=f"转子罩 {side} 半 (含顶盖, 转子盘B)",
+                title=f"转子盘B 转子罩 {side} 半: 罩壁 R{F(RSB.R0)}–{F(RSB.R1)} Z{F(RSB.Z0)}–{F(RSB.Z1)} + 配重唇 + 顶盖 一体; 沿灯板线分 2 片",
+                subtitle=f"罩底 {len(mp)} 个凸台坐屏幕固定件顶 Z{F(RSB.BOSS_Z0)}–{F(RSB.BOSS_Z1)}, M3×{F(RSB.MNT_L)} 从上往下进固定件铜螺母; 罩壁平底坐承载盘顶 Z{F(RSB.Z0)}",
+                orient=f"倒放: 罩顶 (Z{F(RSB.Z1)}) 整面贴床, 凸台斜撑 45° 免支撑",
+                sec=dict(ang=a0, r0=60.0, auto_dims=False,
+                         zd=[(RSB.Z0, RSB.BOSS_Z0), (RSB.BOSS_Z0, RSB.BOSS_Z1), (RSB.RS.LIP_Z0, RSB.RS.LID_Z0), (RSB.RS.LID_Z0, RSB.Z1), (RSB.Z0, RSB.Z1)],
+                         rd=[(RSB.R0, RSB.R1, f"罩壁 {F(RSB.R1 - RSB.R0)}"), (RSB.RS.BOSS_RI, RSB.R0, f"凸台 R{F(RSB.RS.BOSS_RI)}–R{F(RSB.R0)}")]),
+                holes=[dict(tag="M", pts=mp, spec=f"凸台 Φ3.4 通 Z{F(RSB.BOSS_Z0)}–{F(RSB.BOSS_Z1)} + 上方 Φ{F(RSB.RS.ACC_D)} 起子孔穿到罩顶",
+                            where=ring_txt(mp) + f"  M3×{F(RSB.MNT_L)} 进屏幕固定件 M3×4 铜螺母 (尾 Z{F(RSB.BOSS_Z1 - RSB.MNT_L)})"),
+                       dict(tag="W", pts=wp, spec=f"配重孔 Φ3.4 + Φ{F(RSB.RS.W_CB_D)} 沉孔 (从罩顶穿顶盖到唇 Z{F(RSB.RS.W_BEAR)})",
+                            where=f"r{F(RSB.RS.W_R)} ×{len(wp)}  M3×{F(RSB.RS.W_L)} 从罩顶插, 唇下挂 M3 螺母配重 (最多 {RSB.RS.W_NUT_MAX} 颗)")],
+                notes=[f"各层高度: 罩壁底 Z{F(RSB.Z0)} (坐承载盘) / 凸台 Z{F(RSB.BOSS_Z0)}–{F(RSB.BOSS_Z1)} (坐固定件带顶) / 配重唇 Z{F(RSB.RS.LIP_Z0)}–{F(RSB.RS.LID_Z0)} / 顶盖 Z{F(RSB.RS.LID_Z0)}–{F(RSB.Z1)}",
+                       f"两端竖缝 y{F(RSB.RS.SLOT_Y0)}…{F(RSB.RS.SLOT_Y1)} (天线板) 就是两半之间的缝; 原 x=0 分缝凸耳/切向螺丝、顶盖螺丝都取消",
+                       "顶盖内边退让灯板 / 桥板槽 / 天线板缺口同 V1.2 顶盖",
+                       f"装配: 屏幕装好后, 两半从 ±y 两侧合上, 各 {len(mp)} 颗 M3×{F(RSB.MNT_L)} 顺起子孔拧到固定件"])
+        SPECS += [_shrb_spec("a"), _shrb_spec("b")]
+    _FOLDER_B = {"rim_ring_v1_2b": "转子盘B", "screen_holder_v1_2b_a": "转子盘B", "screen_holder_v1_2b_b": "转子盘B", "rotor_shroud_b_a_v1_2b": "转子盘B", "rotor_shroud_b_b_v1_2b": "转子盘B"}
 else:
     _FOLDER_B = {}
 _D1116 = {"led_post_a_v1_2", "led_post_b_v1_2", "led_bar_v1_2", "led_top_v1_2", "led_comb_v1_2", "rotor_shroud_a_v1_2", "rotor_shroud_b_v1_2",
