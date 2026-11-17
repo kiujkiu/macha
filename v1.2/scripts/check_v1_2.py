@@ -24,7 +24,7 @@ def pts(shape,dens=8.0,defl=0.05):
         e.Next()
     return np.vstack(out)
 fl=flange_disc; mf=mounting_flange
-S={**({'cd_clamp':CD.clamp} if CD.HAS_MC else {}),**({'cd_capclamp':CD.cap_clamp} if CD.HAS_CC else {}),'cd_pcb':CD.pcb,'cd_mos':CD.mos,'cd_cap':CD.cap,'cd_sink2':CD.sink2,'board':board,'heatsink':heatsink,'disc':disc,'ring':ring,'flange_disc':fl,'mounting_flange':mf,'motor':motor,'hub':hub,'rim':rim,'seat':seat,'tube':tube,'xt60':xt_env,'shroud_split':shroud_split,'shroud_lo':shroud_lo,'shroud_hi':shroud_hi,'clamp_ring':clamp_ring,'key_bracket':key_bracket,'key_board':key_board,'glass_top':glass_top,'glass_disc':glass_disc,'glass_top_hub':glass_top_hub}
+S={**({'cd_clamp':CD.clamp} if CD.HAS_MC else {}),**({'cd_capclamp':CD.cap_clamp} if CD.HAS_CC else {}),'cd_pcb':CD.pcb,'cd_mos':CD.mos,'cd_cap':CD.cap,'cd_sink2':CD.sink2,'board':board,'heatsink':heatsink,'disc':disc,'ring':ring,'flange_disc':fl,'mounting_flange':mf,'motor':motor,'hub':hub,'rim':rim,'seat':seat,'tube':tube,'xt60':xt_env,'shroud_split':shroud_split,'shroud_lo':shroud_lo,'shroud_hi':shroud_hi,'clamp_ring':clamp_ring,'key_bracket':key_bracket,'key_board':key_board,'glass_top':glass_top,'glass_disc':glass_disc,'glass_top_hub':glass_top_hub,'glass_top_clamp':glass_top_clamp,'gk_top':glass_gasket_top,'gk_bot':glass_gasket_bot}
 for i,p in enumerate(posts): S[f'post{i}']=p
 # 11-16 新转子布局: 灯板支撑 5 件 + Φ8 轴/688, 转子罩两半, 无线托盘 + 模块占位, 底板 r4b (交付 STEP) + 两块灯板
 # 11-16 晚 偏心 + 耳朵脚: 中间 T 件 led_mid_t 取消; 顶盖两片不同件 (rotor_lid_v1_2 +y / rotor_lid_b_v1_2 −y); 底盘加 MR30 座 + 电机线夹 (motor_wire_v1_2)
@@ -47,7 +47,7 @@ PAIRS=[('board',x) for x in ('ring','flange_disc','mounting_flange','motor','sea
  [(c,x) for c in _MC+_CC+('cd_cap','cd_sink2','cd_pcb','cd_mos') for x in ('flange_disc','mounting_flange','ring','board','seat','xt60','shroud_split')]+[('cd_sink2','disc'),('cd_cap','disc'),('cd_pcb','disc')]+[(c,'disc') for c in _MC+_CC]+\
  [(c,x) for c in _MC for x in ('cd_pcb','cd_mos','cd_sink2','cd_cap')]+[(c,x) for c in _CC for x in ('cd_cap','cd_pcb','cd_sink2')+_MC]+[('cd_cap','cd_pcb'),('cd_mos','cd_sink2')]+\
  [('key_bracket',x) for x in ('disc','seat','shroud_split','key_board','ring','flange_disc','mounting_flange','rim')]+[('key_board',x) for x in ('disc','seat','shroud_split','ring','flange_disc','mounting_flange','rim')]+\
- [('glass_top',x) for x in ('tube','glass_disc','glass_top_hub')]+[('glass_top_hub','glass_disc')]+\
+ [('glass_top',x) for x in ('tube','glass_disc','glass_top_hub')]+[('glass_top_hub','glass_disc')]+[('glass_top_clamp',x) for x in ('glass_top','glass_disc','glass_top_hub','tube','gk_top')]+[(g,x) for g in ('gk_top','gk_bot') for x in ('glass_disc','glass_top','glass_top_hub')]+\
  [(a,x) for a in ('led_post_a','led_post_b') for x in ('rim','hub','led_a','led_b','bb_r2','rotor_shroud_a','rotor_shroud_b','rotor_lid_a','rotor_lid_b','wireless_holder','wireless_module','shroud_lo','shroud_hi','tube','bridge_a','bridge_b')]+[('led_bar',x) for x in ('led_a','led_b','led_post_a','led_post_b','bridge_a','bridge_b','rim')]+\
  [('led_top',x) for x in ('led_a','led_b','led_comb','rod','glass_top_hub','glass_top')]+[('led_comb',x) for x in ('led_a','led_b','rod','glass_top_hub','glass_top')]+\
  [('rod',x) for x in ('glass_top_hub','glass_top','brg688')]+[('brg688','glass_top_hub')]+\
