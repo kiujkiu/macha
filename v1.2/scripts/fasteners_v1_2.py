@@ -100,23 +100,23 @@ def screw(group, i, x, y, bear, L, up, d=3.0, engage=None, **kw):
 
 
 # 1 电机 4×M3 盘底沉孔往上, 拧电机底面螺纹 (螺纹深度待电机规格书)
-L_MOTOR = 8.0
+L_MOTOR = 10.0                                     # 11-18 玻纤板底座: 支承 Z-6 (原 -4) ⇒ 盘底往上 M3 全部 +2, 尖不变
 for i, (x, y) in enumerate(B.MOTOR_HOLES):
-    screw("M3x8 电机", i, x, y, CB_BEAR, L_MOTOR, True, engage=("电机底螺纹", B.MOTOR_Z0, None))
+    screw(f"M3x{L_MOTOR:g} 电机", i, x, y, CB_BEAR, L_MOTOR, True, engage=("电机底螺纹", B.MOTOR_Z0, None))
 # 2 线圈环四角 4×M3 盘底往上 + 法兰螺母压四角顶 (11-12 夜: 角厚 4.5 ⇒ Z4.5..8.2); 尾端 Z8.0 < 法兰盘底 Z8.5
-L_RING = 12.0
+L_RING = 14.0
 for i, (x, y) in enumerate(B.RING_M3):
-    screw("M3x12 线圈环角", i, x, y, CB_BEAR, L_RING, True, engage=("法兰螺母", B.RING_CORNER_T, B.RING_CORNER_T + NUT_T))
+    screw(f"M3x{L_RING:g} 线圈环角", i, x, y, CB_BEAR, L_RING, True, engage=("法兰螺母", B.RING_CORNER_T, B.RING_CORNER_T + NUT_T))
     add(f"M3 法兰螺母 线圈环角 #{i}", flange_nut(x, y, B.RING_CORNER_T), "#707070")
 # 3 下罩三角块 4×M3 盘底往上 + 法兰螺母压三角块顶 (Z5..8.7)
-L_SH = 14.0
+L_SH = 16.0
 for i, (x, y) in enumerate(B.SH_M6):
-    screw("M3x14 下罩", i, x, y, CB_BEAR, L_SH, True, engage=("法兰螺母", B.TRI_T, B.TRI_T + NUT_T))
+    screw(f"M3x{L_SH:g} 下罩", i, x, y, CB_BEAR, L_SH, True, engage=("法兰螺母", B.TRI_T, B.TRI_T + NUT_T))
     add(f"M3 法兰螺母 下罩 #{i}", flange_nut(x, y, B.TRI_T), "#707070")
 # 4 中央 8×M3 安装法兰顶沉孔往下, 拧底盘底面铜螺母 (M3×4 齐底面 Z-6..-2)
-L_C = 20.0
+L_C = 22.0                                         # 11-18: 底盘底 Z-7.5 (原 -6) ⇒ 20→22, 尖齐底面
 for i, (x, y) in enumerate(B.FLANGE_SCREWS):
-    screw("M3x20 中央", i, x, y, MF_BEAR, L_C, False, engage=("铜螺母", ZB, ZB + INS_L_DISC))
+    screw(f"M3x{L_C:g} 中央", i, x, y, MF_BEAR, L_C, False, engage=("铜螺母", ZB, ZB + INS_L_DISC))
     add(f"铜螺母 M3x4 底盘 G #{i}", insert(x, y, ZB, INS_L_DISC), "#B8860B")
 # 5 外圈 8×M3 安装法兰顶沉孔往下, 拧法兰盘底面铜螺母 (11-12 夜: M3×4 齐法兰盘底 Z8.5..12.5); M3×6 尾端 Z8.5 齐底面, 啮合 4
 L_LID = 6.0
@@ -124,19 +124,19 @@ for i, (x, y) in enumerate(B.LID_SCREWS):
     screw("M3x6 上下盖", i, x, y, MF_BEAR, L_LID, False, engage=("铜螺母", B.FL_Z0, B.FL_Z0 + INS_L_FL))
     add(f"铜螺母 M3x4 法兰盘 B #{i}", insert(x, y, B.FL_Z0, INS_L_FL), "#B8860B")
 # 6 控制板 4×M3 (用户 11-13): 盘底 Φ7×2 沉孔往上, 穿底盘 + 板, M3 法兰螺母坐板顶 (原板顶往下进底盘 H 铜螺母)
-L_BD = 10.0                                        # 支承 Z-4, 尖 Z6; 螺母 Z1.6..5.3 ⇒ 吃满 3.7, 露 0.7
+L_BD = 12.0                                        # 支承 Z-4, 尖 Z6; 螺母 Z1.6..5.3 ⇒ 吃满 3.7, 露 0.7
 for i, (bx, by) in enumerate(B.BHOLES):
     p = gp_Pnt(bx, by, 0).Transformed(B.BT)
-    screw("M3x10 控制板", i, p.X(), p.Y(), CB_BEAR, L_BD, True, engage=("法兰螺母", BOARD_TOP, BOARD_TOP + NUT_T))
+    screw(f"M3x{L_BD:g} 控制板", i, p.X(), p.Y(), CB_BEAR, L_BD, True, engage=("法兰螺母", BOARD_TOP, BOARD_TOP + NUT_T))
     add(f"M3 法兰螺母 控制板 #{i}", flange_nut(p.X(), p.Y(), BOARD_TOP), "#707070")
 # 7 XT60 2×M3 (用户 11-12 晚, 原 M6×20 + M6 螺母): 盘底 Φ7×2 沉孔往上, 穿底盘+底垫+压块 (叠高 13),
 #   11-12 晚 (二): 压块顶螺母座取消, M3 法兰螺母直接坐压块顶 Z13..16.7, 尖 Z16 ⇒ 啮合 3.0; 下罩 Φ8.2 井到 Z17.5
 #   11-13 晚 (V1.2-g): 底盘已打印, XT60 孔仍是 M6 Φ6.4 + 底面 Φ13×3 (沉孔顶 Z−3) ⇒ M3 大垫片 Φ9×0.8 顶在沉孔顶 (Z−3.8..−3), 头支承 Z−3.8, M3×20 尖 Z16.2 ⇒ 啮合 3.2
-L_XT = 20.0
+L_XT = 22.0
 XT_NUT_Z0 = B.XT_H                                 # 13 (螺母座取消, 原 XT_H - XT_NUT_SEAT_H = 12)
 XT_BEAR = ZB + B.M3_CB_H                          # −4 (新底盘 XT60 孔改标准 M3 Φ7×2 沉孔, 无垫片; 已打印 11-12 底盘另加 Φ9×0.8 大垫片, 见 BOM 6b)
 for i, (x, y) in enumerate(B.XT_GHOLES_DISC):
-    screw("M3x20 XT60", i, x, y, XT_BEAR, L_XT, True, engage=("法兰螺母", XT_NUT_Z0, XT_NUT_Z0 + NUT_T))
+    screw(f"M3x{L_XT:g} XT60", i, x, y, XT_BEAR, L_XT, True, engage=("法兰螺母", XT_NUT_Z0, XT_NUT_Z0 + NUT_T))
     add(f"M3 法兰螺母 XT60 #{i}", flange_nut(x, y, XT_NUT_Z0), "#707070")
 
 # 8 线圈驱动板 MOS 压块 / 电容卡件各 2×M3 (用户 11-12 夜): 盘底 Φ7×2 沉孔往上, 穿底盘 + 件 (Φ3.4 通)
@@ -452,7 +452,7 @@ grp = {}
 for n, sh, c in F:
     grp.setdefault((n.split(" #")[0], c), []).append(sh)
 FAST = [(k, comp(v), c, 0.05) for (k, c), v in grp.items()]
-P_ = [('底盘 Φ220×6', B.disc, '#8A8F98', 0.05), ('线圈环', B.ring, '#E0A030', 0.05), ('电机 Φ55×21.5 (占位)', B.motor, '#333333', 0.05),
+P_ = [('打印底盘 Φ220×4.5', B.disc_print, '#8A8F98', 0.05), ('玻纤板 FR4 Φ220×3', B.fr4, '#C8D86A', 0.05), ('线圈环', B.ring, '#E0A030', 0.05), ('电机 Φ55×21.5 (占位)', B.motor, '#333333', 0.05),
       ('电机控制板', BOARD_LITE, '#2E7D32', 0.08), ('散热片 40×20×6', B.heatsink, '#C0392B', 0.05),
       ('法兰盘 flange_disc_v1_2', B.flange_disc, '#D9A441', 0.05), ('安装法兰 mounting_flange_v1_2', B.mounting_flange, '#B5895A', 0.05),
       ('转子毂盘 hub_disc_v1_2', B.hub, '#4F86C6', 0.05), (f'承载盘 rim_ring Φ{B.RIM_D:g}', B.rim, '#6AA84F', 0.05),

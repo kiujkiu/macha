@@ -56,7 +56,7 @@ M = V12 / 'models'
 parts = [('底座 glass_shroud_lower_v1_2', M / 'glass_shroud_lower_v1_2/glass_shroud_lower_v1_2.step', '#E8C99A'),
          ('玻璃座 glass_shroud_upper_v1_2', M / 'glass_shroud_upper_v1_2/glass_shroud_upper_v1_2.step', '#A9CCE3'),
          ('外卡环 glass_clamp_ring_v1_2', M / 'glass_clamp_ring_v1_2/glass_clamp_ring_v1_2.step', '#CFD8DC'),
-         ('底盘 base_disc', M / 'base_disc_v1_2/base_disc_v1_2.step', '#E0E0E0')]
+         ('打印底盘 base_disc_gf', M / 'base_disc_v1_2_gf/base_disc_v1_2_gf.step', '#E0E0E0'), ('玻纤板 base_fr4', M / 'base_fr4_v1_2/base_fr4_v1_2.step', '#C8D86A')]
 secs = [(n, section(load(p), ANG), c) for n, p, c in parts if p.exists()]
 
 def draw_hw(ax, sgn):

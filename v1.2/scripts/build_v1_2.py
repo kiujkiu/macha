@@ -54,7 +54,11 @@ STATOR_R = 46 / 2; ROTOR_R = 16 / 2   # 对角/2
 POCKET_D, POCKET_H = 6.2, 3.5          # 毂盘中心窝 (原 Φ6.2x2.2)
 RIM_D = 170.0                          # 承载盘外唇: 11-16 晚 用户改回 Φ170 (同晚曾改 Φ175; 11-14 改回 V0.4 Φ170; V1.0 原 180, V1.2 曾 178)
 SCR_ECC = -4.36                        # 11-16 晚 用户: 整组灯板沿 y 平移 (同 V0.4/V1.0 偏心), 板 A MIP LED 顶面落在转轴 y=0; 各脚本都读 B.SCR_ECC
-DISC_D, DISC_T = 220.0, 6.0
+DISC_D = 220.0
+# 用户 11-18: 底座 = 3 mm 玻纤板 (FR4, 顶 Z0) + 打印底盘 4.5 (Z-7.5..-3), 上面所有件 Z 不变。
+#   建模时仍按一整块 Z-7.5..0 的 disc 造 (底面沉孔/铜螺母孔相对底面, 顶面槽相对 Z0), 最后拆成 disc_print + fr4。
+FR4_T, PRINT_T = 3.0, 4.5
+DISC_T = FR4_T + PRINT_T                # 7.5 (原一体底盘 6)
 M6_D, CB_D, CB_H = 6.4, 13.0, 3.0
 COLLAR_M6 = [(sx * 37.5, sy * 37.5) for sx in (1, -1) for sy in (1, -1)]
 POSTS = [(87.5, 37.5), (-37.5, 87.5), (-87.5, -37.5), (37.5, -87.5)]   # V0.4 柱位 R95.197
@@ -367,7 +371,7 @@ def _inkeep(x, y):
     _kc.Perform(gp_Pnt(x, y, 0), 1e-4); return _kc.State() != TopAbs_OUT
 FIXED = COLLAR_M6                                  # 用户 11-12: 下罩 4 孔改 M3 (SH_M6 位置不变, 单独开 M3 孔)
 MOTOR_HOLES = [(sx * STATOR_R * s45, sy * STATOR_R * s45) for sx in (1, -1) for sy in (1, -1)]
-M3_D, M3_CB_D, M3_CB_H = 3.2, 7.0, 2.0           # 内六角 M3 头 Φ5.5x3; 盘底往上装沉孔 用户 11-12: Φ6.5×3.5 → Φ7×2
+M3_D, M3_CB_D, M3_CB_H = 3.2, 7.0, 1.5           # 内六角 M3 头 Φ5.5x3; 盘底往上装沉孔 用户 11-12: Φ6.5×3.5 → Φ7×2; 11-18 玻纤板方案: Φ7×1.5 (超薄头 1.5 齐底面) ⇒ 支承 Z-6, 盘底往上的 M3 全部 +2, 尖位置不变
 INS_HOLE_D, INS_HOLE_H = 4.2, 4.2               # 用户 11-12 夜: 全部 M3 铜螺母孔统一 Φ4.2×4.2 (统一装 M3×4 铜螺母, 底面齐平)
 def _loc(X, Y):      # 全局 -> 板本地
     p = gp_Pnt(X, Y, BOARD_Z).Transformed(BT.Inverted()); return p.X(), p.Y()
@@ -379,7 +383,7 @@ import coil_drv_geom
 CD = coil_drv_geom.make(sys.modules[__name__])
 # 4a'' 按键板 + 支架 (用户 11-13 (二) L 形 / (三) 前面平板): +Y 侧下罩墙里竖放, 几何在 key_bracket_v1_2.py (不 import 本文件); 脚 2×M3×12 从盘底往上, 法兰螺母坐脚顶
 import key_bracket_v1_2
-KEY = key_bracket_v1_2.make_key_bracket(dict(SH_OUT=DISC_D / 2, DISC_T=DISC_T, M3_CB_H=2.0, M3_D=3.2))
+KEY = key_bracket_v1_2.make_key_bracket(dict(SH_OUT=DISC_D / 2, DISC_T=DISC_T, M3_CB_H=M3_CB_H, M3_D=3.2, FOOT_SCREW_L=14.0))   # 11-18: 底座 7.5 ⇒ 脚螺丝 12→14
 key_bracket, key_board = KEY['bracket'], KEY['board']
 KEY_M3 = KEY['disc_m3']                                     # [(±27, 95)] 支架脚孔
 for x, y in GRID:                                   # 原洞洞板 M6 网格: 盘内放得下的全开
@@ -442,7 +446,28 @@ MW_POCKET = (-67.15, -6.5, -54.85, 0.4, 0.25)     # x0, y0, x1, y1, 深
 for x, y in MW_M3:
     d = cut(d, cyl(x, y, MW_HOLE_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
 d = cut(d, BRepPrimAPI_MakeBox(gp_Pnt(MW_POCKET[0], MW_POCKET[1], -MW_POCKET[4]), gp_Pnt(MW_POCKET[2], MW_POCKET[3], 1)).Shape())
-disc = clean(d); LOG['disc'] = dict(v=vol(disc))
+disc = clean(d); LOG['disc'] = dict(v=vol(disc))      # 整块 (校核用, 等于 disc_print + fr4 外包)
+# 11-18 拆件: 打印底盘 = disc ∩ Z-7.5..-3; 玻纤板 = disc 在 Z-0.1 的截面面 拉 Z-3..0 (顶面槽全部变通孔, 底面沉孔/铜螺母孔不进玻纤板)
+disc_print = clean(op(BRepAlgoAPI_Common, disc, cyl(0, 0, DISC_D + 2, -DISC_T - 1, -FR4_T)))
+def _fr4_face():
+    from OCP.TopExp import TopExp_Explorer
+    from OCP.TopAbs import TopAbs_FACE
+    from OCP.TopoDS import TopoDS
+    from OCP.BRepAdaptor import BRepAdaptor_Surface
+    from OCP.GeomAbs import GeomAbs_Plane
+    th = op(BRepAlgoAPI_Common, disc, cyl(0, 0, DISC_D + 2, -0.2, -0.1)); fc = []
+    ex = TopExp_Explorer(th, TopAbs_FACE)
+    while ex.More():
+        f = TopoDS.Face(ex.Current()); sf = BRepAdaptor_Surface(f)
+        if sf.GetType() == GeomAbs_Plane and abs(sf.Plane().Location().Z() + 0.2) < 1e-6: fc.append(f)
+        ex.Next()
+    assert len(fc) == 1, len(fc)
+    t = gp_Trsf(); t.SetTranslation(gp_Vec(0, 0, -FR4_T + 0.2))
+    return TopoDS.Face(BRepBuilderAPI_Transform(fc[0], t, True).Shape())
+FR4_FACE = _fr4_face()                                  # 板底面 Z-3 (DXF 用)
+from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism
+fr4 = clean(BRepPrimAPI_MakePrism(FR4_FACE, gp_Vec(0, 0, FR4_T)).Shape())
+LOG['disc_split'] = dict(print=vol(disc_print), fr4=vol(fr4))
 LOG['coil_drv'] = dict(xpc=CD.XPC, xb=CD.XB, has_mc=CD.HAS_MC, has_cc=CD.HAS_CC, merge_err=CD.MERGE_ERR, mc_holes=[(round(x, 2), round(y, 2)) for x, y in CD.MC_HOLES],
                        cc_holes=[(round(x, 2), round(y, 2)) for x, y in CD.CC_HOLES], pcb_z=(CD.PCB_Z0, CD.PCB_Z1), mos_y=(CD.MOS_Y_LEAD, CD.MOS_Y_TIP), bcap_pits=CD.BCAP_PITS,
                        cap=(CD.CAP_CX, CD.CAP_Y0, CD.CAP_Y1, CD.CAP_ZC, CD.CAP_GROOVE), sink=(CD.SINK_X0, CD.SINK_Y0, CD.SINK_X1, CD.SINK_Y1))
@@ -548,12 +573,12 @@ s_ = cut(s_, KEY['pocket'], *KEY['skin_holes'])
 KEY_OPEN_X = KEY['params']['RIB_X1'] + KEY['params']['CLR']                       # ±22.9
 KEY_OPEN_Y1 = KEY['board_screws'][0]['nut_y']                                    # 板背面 y
 s_ = cut(s_, gbox(-KEY_OPEN_X, SPIG_IN - 5, -1, KEY_OPEN_X, KEY_OPEN_Y1, Z_RIM_TOP + 0.01))
+_kp = KEY['pocket_bbox']                          # 用户 11-18: 开口两侧 (x ±22.9..±腔边 32.3) 腔底 y89.7 与内墙 r86.8 之间的两块三角楔去掉 ⇒ 这段内墙也打通到腔底
+s_ = cut(s_, *[gbox(a, 70.0, -1, b, _kp[2] + 0.01, Z_RIM_TOP + 0.01) for a, b in ((_kp[0], -KEY_OPEN_X + 0.01), (KEY_OPEN_X - 0.01, _kp[1]))])
 LOG['key'] = dict(m3=[(round(x, 2), round(y, 2)) for x, y in KEY_M3], skin=KEY['skin'], flap={k: KEY['flap'][k] for k in ('F_top', 'F_bot', 't_top')}, pocket_bbox=KEY['pocket_bbox'], open=(KEY_OPEN_X, KEY_OPEN_Y1), bracket_vol=KEY['bracket_vol'],
                   holes=[(round(x, 2), round(z, 2), dd) for x, z, dd in KEY['holes']])
 def _stl(f):
     from OCP.StlAPI import StlAPI_Reader
-_kp = KEY['pocket_bbox']                          # 用户 11-18: 开口两侧 (x ±22.9..±腔边 32.3) 腔底 y89.7 与内墙 r86.8 之间的两块三角楔去掉 ⇒ 这段内墙也打通到腔底
-s_ = cut(s_, *[gbox(a, 70.0, -1, b, _kp[2] + 0.01, Z_RIM_TOP + 0.01) for a, b in ((_kp[0], -KEY_OPEN_X + 0.01), (KEY_OPEN_X - 0.01, _kp[1]))])
     from OCP.TopoDS import TopoDS_Shape
     sh = TopoDS_Shape(); StlAPI_Reader().Read(sh, str(f)); return sh
 _tz = gp_Trsf(); _tz.SetTranslation(gp_Vec(0, 0, 2.0))

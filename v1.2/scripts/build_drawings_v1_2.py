@@ -118,54 +118,50 @@ SPECS = []
 COMMON = dict(date=DATE, proj="V1.2")
 ORIG = "原点 = 轴心, Z = 装配高度 (底盘顶面 Z0); 图示为装配姿态。"
 
-# ---------------- base_disc_v1_2 ----------------
+# ---------------- base_disc_v1_2_gf (11-18 玻纤板方案) ----------------
+FS_L = dict(MOTOR=10.0, RING=14.0, SH=16.0, C=22.0, BD=12.0, XT=22.0)   # 同 fasteners_v1_2.py L_* (改一处两处都改)
 BH = [gp_Pnt(x, y, 0).Transformed(B.BT) for x, y in B.BHOLES]
 BH = [(p.X(), p.Y()) for p in BH]
 _rl = B.RELIEFS[0]
 _rp = gp_Pnt((_rl[0] + _rl[1]) / 2, (_rl[2] + _rl[3]) / 2, 0).Transformed(B.BT)
 grid_np = [p for p in B.EXTRA if p not in B.POSTS]
-ZD = (-B.DISC_T, 0.0)
+ZD = (-B.DISC_T, -B.FR4_T)
 cb6 = f"Φ{F(B.M6_D)} 通 + 底面 Φ{F(B.CB_D)}×{F(B.CB_H)} 沉孔"
 cb3 = f"Φ{F(B.M3_D)} 通 + 底面 Φ{F(B.M3_CB_D)}×{F(B.M3_CB_H)} 沉孔"
 ins = f"Φ3.2 通 + 底面 Φ{F(B.INS_HOLE_D)}×{F(B.INS_HOLE_H)} 铜螺母孔 (M3×4 铜螺母齐底面)"
 SPECS.append(dict(
-    code="base_disc_v1_2", shape=B.disc, short=f"底盘 Φ{F(B.DISC_D)}×{F(B.DISC_T)}", qty="1",
-    title=f"打印底盘 Φ{F(B.DISC_D)}×{F(B.DISC_T)} (合并电机控制板托板 + 散热片槽)",
-    subtitle="沉孔 / 铜螺母孔全部开在底面 (Z-6); 顶面 Z0 = 装配基准 (电机/控制板/线圈环/下罩都坐在上面)",
-    orient="顶面 (Z0) 贴床",
+    code="base_disc_v1_2_gf", shape=B.disc_print, short=f"打印底盘 Φ{F(B.DISC_D)}×{F(B.PRINT_T)}", qty="1",
+    title=f"打印底盘 Φ{F(B.DISC_D)}×{F(B.PRINT_T)} (玻纤板方案, 上压 FR4 {F(B.FR4_T)} 厚 base_fr4_v1_2)",
+    subtitle=f"Z{F(-B.DISC_T)}..{F(-B.FR4_T)}; 顶面平 (贴玻纤板底), 沉孔 / 铜螺母孔全部开在底面; 顶面槽 (电容/让位/盘心/护套坑) 都移到玻纤板上做通孔",
+    orient="顶面 (贴玻纤板那面) 贴床",
     phi=[24, 2 * B.R_SCREW, 2 * B.STATOR_R, (2 * B.RING_M3_XY, f"{F(2 * B.RING_M3_XY)} (方)"), 2 * B.SH_R, B.DISC_D],
-    det_h=38.0,                                   # 11-16: 孔表长, 详图行高压到 38 免压标题栏
-    sec=dict(ang=45, auto_r=False, zd=[(-B.DISC_T, 0.0)], rd=[(0, B.STATOR_R), (0, math.hypot(B.RING_M3_XY, B.RING_M3_XY)), (0, B.SH_R)]),
+    det_h=38.0,
+    sec=dict(ang=45, auto_r=False, zd=[ZD], rd=[(0, B.STATOR_R), (0, math.hypot(B.RING_M3_XY, B.RING_M3_XY)), (0, B.SH_R)]),
     holes=[
-        dict(tag="A", pts=B.POSTS, spec=cb6 + " (外圈固定孔)", where="R95.2 ×4 " + xy(B.POSTS) + "  锁台面/扩展用; 其余网格 M6 孔 11-18 已删",
+        dict(tag="A", pts=B.POSTS, spec=cb6 + " (外圈固定孔)", where="R95.2 ×4 " + xy(B.POSTS) + "  锁台面/扩展用",
              det=dict(kind="cb", d=B.M6_D, D=B.CB_D, h=B.CB_H, side="bot", z=ZD, pt=B.POSTS[0], title="M6 沉孔")),
     ] + ([dict(tag="B", pts=grid_np, spec=cb6 + "  同详图 A", where=f"原 M6 网格 节距 25")] if grid_np else []) + [
-        dict(tag="C", pts=B.XT_GHOLES_DISC, spec=cb3 + "  同详图 D (XT60 压块 V1.2-g; 11-12 已打印件为 M6 孔, 需加 Φ9 垫片)", where=xy(B.XT_GHOLES_DISC) + "  M3×20 往上, 法兰螺母坐压块顶", lab_off=(-2.4, 2.4)),
-        dict(tag="D", pts=B.MOTOR_HOLES, spec=cb3 + " (电机)", where=f"对角 {F(2 * B.STATOR_R)}  M3×8 (待电机螺孔深度确认)",
-             det=dict(kind="cb", d=B.M3_D, D=B.M3_CB_D, h=B.M3_CB_H, side="bot", z=ZD, pt=B.MOTOR_HOLES[0], title="M3 沉孔 (C/D/E/F 同)")),
-        dict(tag="E", pts=B.RING_M3, spec=cb3 + "  同详图 D (线圈环四角)", where=f"(±{F(B.RING_M3_XY)}, ±{F(B.RING_M3_XY)})  M3×12, 法兰螺母压四角顶"),
-        dict(tag="F", pts=B.SH_M6, spec=cb3 + "  同详图 D (下罩)", where=ring_txt(B.SH_M6) + "  M3×14, 法兰螺母压三角块顶"),
-        dict(tag="G", pts=B.FLANGE_SCREWS, spec=ins + " (线圈环/定子盘)", where=ring_txt(B.FLANGE_SCREWS) + "  M3×20",
-             det=dict(kind="ins", d=3.2, D=B.INS_HOLE_D, h=B.INS_HOLE_H, side="bot", z=ZD, pt=B.FLANGE_SCREWS[0], title="M3 铜螺母孔 (G/H 同)")),
-        dict(tag="H", pts=BH, spec=cb3 + "  同详图 D (控制板, 11-13 改从下往上)", where=xy(BH) + "  M3×10 往上, 法兰螺母坐板顶"),
+        dict(tag="C", pts=B.XT_GHOLES_DISC, spec=cb3 + "  同详图 D (XT60 压块)", where=xy(B.XT_GHOLES_DISC) + f"  M3×{F(FS_L['XT'])} 往上, 法兰螺母坐压块顶", lab_off=(-2.4, 2.4)),
+        dict(tag="D", pts=B.MOTOR_HOLES, spec=cb3 + " (电机)", where=f"对角 {F(2 * B.STATOR_R)}  M3×{F(FS_L['MOTOR'])} (待电机螺孔深度确认)",
+             det=dict(kind="cb", d=B.M3_D, D=B.M3_CB_D, h=B.M3_CB_H, side="bot", z=ZD, pt=B.MOTOR_HOLES[0], title="M3 沉孔 (C/D/E/F 同, 超薄头齐底面)")),
+        dict(tag="E", pts=B.RING_M3, spec=cb3 + "  同详图 D (线圈环四角)", where=f"(±{F(B.RING_M3_XY)}, ±{F(B.RING_M3_XY)})  M3×{F(FS_L['RING'])}, 法兰螺母压四角顶"),
+        dict(tag="F", pts=B.SH_M6, spec=cb3 + "  同详图 D (下罩)", where=ring_txt(B.SH_M6) + f"  M3×{F(FS_L['SH'])}, 法兰螺母压三角块顶"),
+        dict(tag="G", pts=B.FLANGE_SCREWS, spec=ins + " (线圈环/定子盘)", where=ring_txt(B.FLANGE_SCREWS) + f"  M3×{F(FS_L['C'])} 从上往下",
+             det=dict(kind="ins", d=3.2, D=B.INS_HOLE_D, h=B.INS_HOLE_H, side="bot", z=ZD, pt=B.FLANGE_SCREWS[0], title="M3 铜螺母孔 (G)")),
+        dict(tag="H", pts=BH, spec=cb3 + "  同详图 D (控制板)", where=xy(BH) + f"  M3×{F(FS_L['BD'])} 往上, 法兰螺母坐板顶"),
         *([] if not B.CD.ALL_HOLES else [
         dict(tag="L", pts=B.CD.ALL_HOLES, spec=cb3 + "  同详图 D (线圈驱动板: MOS 压块 2 + 电容卡件 2)",
-             where=xy(B.CD.ALL_HOLES, 2) + f"  M3×10/×12 往上, 进件顶热压 M3×4 铜螺母")]),
-        dict(tag="W", pts=B.MW_M3, spec=cb3 + "  同详图 D (11-16 晚: MR30 座 2 + 电机线夹 2)",
-             where=xy(B.MW_M3, 2) + "  MR30 座 M3×12 / 线夹 M3×10 往上, 进件顶热压 M3×4 铜螺母"),
+             where=xy(B.CD.ALL_HOLES, 2) + f"  MOS M3×{F(B.CD.MC_SCREW_L)} / 电容 M3×{F(B.CD.CC_SCREW_L)} 往上, 进件顶热压 M3×4 铜螺母")]),
+        dict(tag="W", pts=B.MW_M3, spec=cb3 + "  同详图 D (MR30 座 2 + 电机线夹 2)",
+             where=xy(B.MW_M3, 2) + f"  MR30 座 M3×14 / 线夹 M3×12 往上, 进件顶热压 M3×4 铜螺母"),
+        dict(tag="K", pts=B.KEY_M3, spec=cb3 + "  同详图 D (按键支架脚)", where=xy(B.KEY_M3) + f"  M3×{F(B.KEY['params']['FOOT_SCREW_L'])} 往上, 法兰螺母坐脚顶"),
     ],
-    dets=[dict(tag="J", kind="blind", D=12.0, h=3.0, side="top", z=ZD, pt=(0.0, 0.0), ang=0.0, W=9.0, title="盘心 Φ12×3 盲窝 (顶面)"),
-          dict(tag="K", kind="free", z=ZD, pt=(_rp.X(), _rp.Y()), ang=0.0, W=6.0, title="控制板背面让位槽 ×2 深 3 (顶面) + 下载排针通槽",
-               zd=[(-3.0, 0.0, "3")]),
-          dict(tag="P", kind="free", z=ZD, pt=((B.MW_POCKET[0] + B.MW_POCKET[2]) / 2, (B.MW_POCKET[1] + B.MW_POCKET[3]) / 2), ang=90.0, W=6.0,
-               title=f"MR30 护套坑 {F(B.MW_POCKET[2] - B.MW_POCKET[0])}×{F(B.MW_POCKET[3] - B.MW_POCKET[1])} 深 {F(B.MW_POCKET[4])} (顶面, 沿 y 剖)",
-               zd=[(-B.MW_POCKET[4], 0.0, F(B.MW_POCKET[4]))])],
-    notes=["散热片通槽 20×40 ×2 (零间隙): 控制板 1; 线圈驱动板 1 竖放 "
-           f"x{F(B.CD.SINK_X0)}..{F(B.CD.SINK_X1)} y{F(B.CD.SINK_Y0)}..{F(B.CD.SINK_Y1)}; 控制板背面让位 ×2 深 3 (K) + 下载排针背面焊脚通槽 {F(B.RELIEFS[2][1] - B.RELIEFS[2][0])}×{F(B.RELIEFS[2][3] - B.RELIEFS[2][2])} (11-17 晚 改通); 顶面平 (贴床)",
-           f"线圈驱动板电容弧形槽 R{F(B.CD.CAP_D / 2 + B.CD.CAP_TROUGH_CLR)} 深 {F(B.CD.CAP_GROOVE)} x{F(B.CD.CAP_TROUGH[0])}..{F(B.CD.CAP_TROUGH[1])} "
-           f"y{F(B.CD.CAP_TROUGH[2])}..{F(B.CD.CAP_TROUGH[3])}; 背面电容坑 {"深 " + F(-min(p[4] for p in B.CD.BCAP_PITS)) if B.CD.BCAP_PITS else "取消 (11-13, 板抬高)"}; 网格 M6 取消 {len(B.CD.GRID_REMOVE)} 个 (x62.5)",
-           f"控制板平放顶面 Z0, 内长边离轴 {F(B.BOARD_IN)}, 往 +X 让 {F(B.BOARD_DX)}",
-           f"11-16 晚 重打: −x 侧 MR30 座 + 电机线夹 4×M3 沉孔 (W) + 顶面护套坑 x{F(B.MW_POCKET[0])}..{F(B.MW_POCKET[2])} y{F(B.MW_POCKET[1])}..{F(B.MW_POCKET[3])} 深 {F(B.MW_POCKET[4])} (P)"],
+    date="2026-11-18",
+    notes=[f"11-18 玻纤板方案: 底座 = 本件 {F(B.PRINT_T)} + FR4 {F(B.FR4_T)} (板顶 Z0, 上面所有件 Z 不变)",
+           f"盘底往上的 M3 沉孔 Φ7×{F(B.M3_CB_H)} (超薄头齐底面), 支承 Z{F(-B.DISC_T + B.M3_CB_H)}: 螺丝比原一体底盘各 +2, 尖位置不变",
+           f"通槽: 散热片 20×40 ×2 (控制板 1; 线圈驱动板 x{F(B.CD.SINK_X0)}..{F(B.CD.SINK_X1)} y{F(B.CD.SINK_Y0)}..{F(B.CD.SINK_Y1)}) + 下载排针背面焊脚通槽 {F(B.RELIEFS[2][1] - B.RELIEFS[2][0])}×{F(B.RELIEFS[2][3] - B.RELIEFS[2][2])}",
+           "原顶面 3 深的槽 (盘心 Φ12 / 控制板背面让位 / 电容弧形槽 / MR30 护套坑) 全在玻纤板层里, 本件顶面平",
+           "旧一体底盘 base_disc_v1_2 (Φ220×6) 图纸/模型冻结在 models/base_disc_v1_2/, 不再更新"],
 ))
 
 # ---------------- coil_ring_v1_2 ----------------

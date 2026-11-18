@@ -167,7 +167,7 @@ def disc_cuts():
 
 MW_TOP = [SEAT_H] * len(MR_INS) + [CL_H] * len(CL_INS)
 SCREW_L = [screw_len(t) for t in MW_TOP]           # MR30 座 M3×12 / 线夹 M3×10
-assert SCREW_L == [12.0, 12.0, 10.0, 10.0], SCREW_L
+assert SCREW_L == [14.0, 14.0, 12.0, 12.0], SCREW_L   # 11-18 玻纤板底座 (支承 Z-6): 原 12/10 各 +2
 def screws():
     sc = [cyl(x, y, 3.0, BEAR_Z, t) for (x, y), t in zip(MW_M3, MW_TOP)] + [cyl(x, y, 5.5, BEAR_Z - 3.0, BEAR_Z) for x, y in MW_M3]
     ins = [cyl(x, y, INS_D, t - INS_H, t) for (x, y), t in zip(MW_M3, MW_TOP)]

@@ -35,7 +35,7 @@ _ENV_KEEP = [k for k in L.env if not k.startswith(('底面件', 'J3 插头', '24
 _mb, _mt = V.led_mip(B)
 LED_BASE = L.comp(list(L.pair(_mb))); LED_TOP = L.comp(list(L.pair(_mt)))   # 11-16 晚 偏心: 随灯板一起 pair() (含 Y_LED 和 ECC)
 PARTS = [  # (名, 形状, 颜色, 3MF 弦差)
-    ('底盘 base_disc_v1_2', B.disc, '#8A8F98', 0.05), ('线圈环 coil_ring_v1_2', B.ring, '#E0A030', 0.05), ('电机 Φ55×21.5 (占位)', B.motor, '#333333', 0.05),
+    ('打印底盘 base_disc_v1_2_gf', B.disc_print, '#8A8F98', 0.05), ('玻纤板 base_fr4_v1_2', B.fr4, '#C8D86A', 0.05), ('线圈环 coil_ring_v1_2', B.ring, '#E0A030', 0.05), ('电机 Φ55×21.5 (占位)', B.motor, '#333333', 0.05),
     ('电机控制板', board, '#2E7D32', 0.08), ('散热片 40×20×6', B.heatsink, '#C0392B', 0.05),
     *([('MOS 压块 mos_clamp_v1_2', CD.clamp, '#E69138', 0.05)] if CD.HAS_MC else []), *([('电容卡件 cap_clamp_v1_2', CD.cap_clamp, '#B45F06', 0.05)] if CD.HAS_CC else []),
     ('线圈驱动板', CD.pcb, '#38761D', 0.05), ('线圈驱动 MOS', CD.mos, '#222222', 0.05), ('线圈驱动 电解电容', CD.cap, '#1155CC', 0.05), ('线圈驱动 散热片', CD.sink2, '#C0392B', 0.05),

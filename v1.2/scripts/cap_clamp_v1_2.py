@@ -121,7 +121,7 @@ DEFAULTS = dict(
     INSERT_ENGAGE_MIN=3.0, INSERT_WALL=1.0,       # 螺丝进铜螺母 ≥3; Φ4.2 孔 ↔ 半圆槽 ≥1
     # 紧固件 (同 fasteners_v1_2)
     M3_D=3.2, M3_CB_D=7.0, M3_CB_H=2.0,          # 底盘: Φ3.2 通 + 底面 Φ7×2 沉孔
-    SCREW_LENS=(8.0, 10.0, 12.0, 14.0, 20.0),    # BOM 已有 M3 长度 (10 = MOS 压块 mos-b 新增)
+    SCREW_LENS=(8.0, 10.0, 12.0, 14.0, 16.0, 20.0, 22.0),   # 11-18 玻纤板底座: 支承 Z-6 ⇒ 各 +2, 补 16/22;    # BOM 已有 M3 长度 (10 = MOS 压块 mos-b 新增)
     HEAD_D=7.0, HEAD_H=1.5, SHANK_D=3.0,
     NUT_FL_D=7.6, NUT_FL_H=1.0, NUT_AF=5.9, NUT_T=3.7,
     # 合并时的禁区 (底盘上已有的孔/沉孔): [(x, y, r)], 要求本件 Φ7 沉孔与之壁厚 ≥ KEEPOUT_WALL

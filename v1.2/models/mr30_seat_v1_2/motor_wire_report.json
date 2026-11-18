@@ -27,8 +27,8 @@
   "n": 1
  },
  "disc_valid": true,
- "disc_min_t": 5.75,
- "cb_web_min": 3.6,
+ "disc_min_t": 7.25,
+ "cb_web_min": 30.92,
  "inter": {
   "seat/disc": 0.0,
   "seat/flange_disc": 0.0,
@@ -135,7 +135,7 @@
   "clamp/xt_shim": 104.474,
   "clamp/glass_seat": 10.857,
   "clamp/shroud_lo": 10.857,
-  "clamp/clamp_ring": 51.098,
+  "clamp/clamp_ring": 51.253,
   "clamp/post0": 132.231,
   "clamp/post1": 133.605,
   "clamp/post2": 54.822,

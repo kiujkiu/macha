@@ -2,7 +2,7 @@
 V1.2 快速出单件 (甲级小改动用, 11-17 晚): 几何只建 1 遍, 只写点名件的 STL/STEP + 出它的图; 不写 3MF / 整机 / 其它件。
 原来 build → export → drawings 三个脚本各 import 一遍 build_v1_2 (整套几何建 3 遍), 这里合成 1 个进程。
 
-    cd v1.2/scripts && ../../.venv/bin/python quick_v1_2.py base_disc_v1_2 [其它件 ...] [--no-draw]
+    cd v1.2/scripts && ../../.venv/bin/python quick_v1_2.py base_disc_v1_2_gf [其它件 ...] [--no-draw]
     ../../.venv/bin/python quick_v1_2.py --list          # 看支持哪些件
 
 什么时候不能用 (按 feedback 分级): 动了孔位 / Z 高 / 被多件读的常量 (乙/丙级) 仍要跑 check 或全流程;
@@ -16,7 +16,7 @@ sys.path.insert(0, str(HERE))
 
 # 1) build_v1_2 里直接有形体的件: 代号 → (build_v1_2 变量名, out/ 下的旧名或 None, out 打印姿态翻面?)
 B_PARTS = {
-    'base_disc_v1_2': ('disc', 'base_disc_D220x6_v1_2', False),
+    'base_disc_v1_2_gf': ('disc_print', 'base_disc_D220x4p5_v1_2_gf', False),   # 11-18 玻纤板方案 (旧 base_disc_v1_2 一体 6 厚冻结)
     'coil_ring_v1_2': ('ring', None, False),
     'flange_disc_v1_2': ('flange_disc', None, False),
     'mounting_flange_v1_2': ('mounting_flange', None, False),
@@ -38,6 +38,7 @@ S_PARTS = {
     'wireless_holder_v1_2': 'wireless_holder_v1_2.py',
     'mr30_seat_v1_2': 'motor_wire_v1_2.py', 'motor_wire_clamp_v1_2': 'motor_wire_v1_2.py',
     'rim_ring_v1_2b': 'rotor_b_v1_2.py',
+    'base_fr4_v1_2': 'fr4_base_v1_2.py',
     'mos_clamp_v1_2': 'mos_clamp_v1_2.py', 'cap_clamp_v1_2': 'cap_clamp_v1_2.py',
     'key_bracket_v1_2': 'key_bracket_v1_2.py', 'key_cap_v1_2': 'key_cap_v1_2.py', 'light_pipe_v1_2': 'light_pipe_v1_2.py',
 }
