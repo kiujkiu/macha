@@ -82,7 +82,7 @@ T_TOP = 2.95                                       # 顶板 (旧件 3): 座顶 =
 SEAT_H = Z_SH1 + T_TOP                             # 8.0
 REAR_T = 2.5                                       # 后墙 (旧件堵头 3)
 MR_XC = -61.0
-SEAT_HX = 14.0                                     # 座 x 半宽 (28)
+SEAT_HX = 16.0                                     # 座 x 半宽 (32; 11-18 用户: 铜螺母压进去撑变形 ⇒ 28→32, 孔外移 1, 内壁 1.75→2.75 / 外壁 1.9→2.9)
 Y_R = -9.0                                         # 后墙外面
 Y_CAPI = Y_R + REAR_T                              # −6.5 护套尾面
 Y_STEP = Y_CAPI + SHEATH_L                         #  0.4 护套/本体台阶
@@ -90,7 +90,9 @@ Y_OPEN = Y_STEP + BODY_L                           #  8.9 开口面
 MW_WIRE_D = 3.0                                    # 电机线 (用户 11-16 实测) 零余量
 SLOT_HW = MR_PITCH + MW_WIRE_D / 2                 # 5.0 合并出线口半宽 (10×3)
 SLOT_TOP = PIN_Z + MW_WIRE_D / 2                   # 3.9
-MR_INS = [(MR_XC - 10.0, (Y_R + Y_OPEN) / 2), (MR_XC + 10.0, (Y_R + Y_OPEN) / 2)]
+MR_INS_DX = 11.0                                   # 11-18: 10→11
+MR_INS = [(MR_XC - MR_INS_DX, (Y_R + Y_OPEN) / 2), (MR_XC + MR_INS_DX, (Y_R + Y_OPEN) / 2)]
+assert MR_INS_DX - INS_D / 2 - SHEATH_W / 2 >= 2.5 and SEAT_HX - MR_INS_DX - INS_D / 2 >= 2.5, '铜螺母孔壁 < 2.5'
 MR_POCKET = (MR_XC - SHEATH_W / 2, Y_CAPI, MR_XC + SHEATH_W / 2, Y_STEP, POCKET_D)   # x0, y0, x1, y1, 深
 
 assert SEAT_H <= TOP_MAX + 1e-9, (SEAT_H, TOP_MAX)
@@ -130,12 +132,12 @@ CL_CLR = 0.3                                       # 用户 11-16: 线夹只理�
 CL_CH_HW = CL_PITCH + CL_WIRE_D / 2 + CL_CLR       # 4.8 桥洞半宽 (9.6)
 CL_CH_H = CL_WIRE_D + CL_CLR                       # 3.3 桥洞高
 CL_H = 6.0                                         # 件顶 = M3×10 尖 (铜螺母顶齐件顶)
-CL_INS_DY = 8.5                                    # 铜螺母孔心离线束中心 (y)
+CL_INS_DY = 9.5                                    # 铜螺母孔心离线束中心 (y); 11-18 用户: 铜螺母撑变形 ⇒ 8.5→9.5 (到线槽肉 1.6→2.6)
 CL_INS = [(CL_XC, CL_YC + CL_INS_DY), (CL_XC, CL_YC - CL_INS_DY)]   # +y 侧 / −y 侧
-EAR_H = INS_D / 2 + 1.5                            # 3.6 孔到 y 端面
+EAR_H = INS_D / 2 + 3.0                            # 5.1 孔到 y 端面 (11-18: 端壁 1.5→3.0)
 CL_Y0, CL_Y1 = CL_YC - CL_INS_DY - EAR_H, CL_YC + CL_INS_DY + EAR_H   # −74.1 .. −49.9 (24.2)
 assert CL_H <= TOP_MAX and CL_H - CL_CH_H >= 2.0
-assert CL_INS_DY - INS_D / 2 - CL_CH_HW >= 1.2, '铜螺母孔到线槽肉 < 1.2'
+assert CL_INS_DY - INS_D / 2 - CL_CH_HW >= 2.5, '铜螺母孔到线槽肉 < 2.5'
 for gx, gy in [(-37.5, -62.5), (-12.5, -62.5)]:
     assert (gx, gy) in B.GRID                       # 网格坐标作定位参考 (11-18 起这几个 M6 孔已删, 只校间隙)
     assert abs(gx - CL_XC) - B.M6_D / 2 - CL_HX >= 1.0, '线夹压到 M6 孔'
@@ -269,7 +271,7 @@ def export(seat, clamp):
     for name, P, col, extra in (('mr30_seat_v1_2', seat, '#F1C232', [('MR30-M 公头 (示意)', mr30_plug(), '#FFD700')] +
                                  [(f'电机线 Φ3 #{k}', ycyl(MR_XC + k * MR_PITCH, PIN_Z, MW_WIRE_D, Y_R - 10, Y_CAPI), '#222222') for k in (-1, 0, 1)]),
                                 ('motor_wire_clamp_v1_2', clamp, '#E69138', [(f'电机线 Φ3 #{i}', w, '#222222') for i, w in enumerate(clamp_wires())])):
-        d = B.V12 / 'models' / name; d.mkdir(parents=True, exist_ok=True)
+        d = B.V12 / 'models' / 'mr30_seat_v1_2'; d.mkdir(parents=True, exist_ok=True)   # 11-18 用户: 线夹文件也放 MR30 文件夹
         pp = print_pose(P)
         write_doc([(name, pp, col, None, False)], d / f'{name}.step', name)
         BRepMesh_IncrementalMesh(pp, 0.02, False, 0.2, True)

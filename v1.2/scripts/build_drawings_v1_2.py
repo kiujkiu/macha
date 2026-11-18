@@ -741,14 +741,16 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
     _FOLDER_B = {"rim_ring_v1_2b": "转子盘B", "screen_holder_v1_2b_a": "转子盘B", "screen_holder_v1_2b_b": "转子盘B", "rotor_shroud_b_a_v1_2b": "转子盘B", "rotor_shroud_b_b_v1_2b": "转子盘B"}
 else:
     _FOLDER_B = {}
+_DIR = {"motor_wire_clamp_v1_2": "mr30_seat_v1_2"}   # 11-18 用户: 线夹文件放 MR30 文件夹 (models/<目录>/)
 _D1116 = {"led_post_a_v1_2", "led_post_b_v1_2", "led_bar_v1_2", "led_top_v1_2", "led_comb_v1_2", "rotor_shroud_a_v1_2", "rotor_shroud_b_v1_2",
           "rotor_lid_v1_2", "rotor_lid_b_v1_2", "wireless_holder_v1_2", "rim_ring_v1_2_D170", "hub_disc_v1_2", "base_disc_v1_2", "mr30_seat_v1_2", "motor_wire_clamp_v1_2"}
 for sp in SPECS:
     if sp["code"] in _D1116:
         sp.setdefault("date", "2026-11-16")      # 11-16 新转子布局 / 11-16 晚 偏心 + 耳朵脚
     sp.update({k: v for k, v in COMMON.items() if k not in sp})
-    sp["stl"] = M / sp["code"] / f"{sp['code']}.stl"
-    sp["src"] = f"v1.2/models/{sp['code']}/{sp['code']}.stl"
+    _dir = _DIR.get(sp["code"], sp["code"])
+    sp["stl"] = M / _dir / f"{sp['code']}.stl"
+    sp["src"] = f"v1.2/models/{_dir}/{sp['code']}.stl"
     if sp.get("stl_asm"):                        # models/ 下的 STL 是打印姿态 ⇒ 俯视用装配坐标 STL (出图时现写到 out/dwg_stl/)
         sp["stl"] = V12 / "out" / "dwg_stl" / f"{sp['code']}.stl"
         sp["src"] = f"v1.2/out/dwg_stl/{sp['code']}.stl (装配坐标; 打印件 models/{sp['code']}/)"
@@ -771,7 +773,7 @@ if __name__ == "__main__":
             sp["stl"].parent.mkdir(parents=True, exist_ok=True)
             BRepMesh_IncrementalMesh(sp["shape"], 0.02, False, 0.2, True)
             _w = StlAPI_Writer(); _w.ASCIIMode = False; _w.Write(sp["shape"], str(sp["stl"]))
-        sp["out"] = M / sp["code"] / f"{sp['code']}_drawing.pdf"
+        sp["out"] = M / _DIR.get(sp["code"], sp["code"]) / f"{sp['code']}_drawing.pdf"
         sp["out"].parent.mkdir(parents=True, exist_ok=True)
         try:
             out, png, sl = draw(sp)

@@ -73,6 +73,9 @@ while wx.More():
 # 3 STEP
 from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
 w = STEPControl_Writer(); w.Transfer(fr4, STEPControl_AsIs); w.Write(str(OUT / 'base_fr4_v1_2.step'))
+from OCP.BRepMesh import BRepMesh_IncrementalMesh
+from OCP.StlAPI import StlAPI_Writer
+BRepMesh_IncrementalMesh(fr4, 0.02, False, 0.2, True); _w = StlAPI_Writer(); _w.ASCIIMode = False; _w.Write(fr4, str(OUT / 'base_fr4_v1_2.stl'))
 
 # 4 DXF (板顶面视图, 1:1 mm; 外形层 OUTLINE, 孔/槽层 CUT)
 doc = ezdxf.new('R2010', setup=True); doc.units = ezdxf.units.MM; msp = doc.modelspace()
