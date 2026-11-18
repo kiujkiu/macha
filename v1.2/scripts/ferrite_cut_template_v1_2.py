@@ -127,4 +127,23 @@ for sh in range(2):
         txt(CX, CY + 6, "蓝虚线 = 修掉的部分", 7, 'C', GRY)
 
 out = "/mnt/d/claude_workspace/macha/pov3d/v1.2/定子盘/隔磁片/隔磁片铺满模板_两张片_18块_A4_1比1.pdf"
-pdf.output(out); print(out)
+try:
+    pdf.output(out); print(out)
+except PermissionError:
+    print("被占用, 跳过", out)
+
+# ---- 紧凑版: 一张 A4 放两张片 (第 1、2 张上下排), 只留切线 + 比例尺
+pdf = FPDF('P', 'mm', 'A4'); pdf.set_auto_page_break(False); pdf.add_page()
+pdf.add_font('hei', '', '/mnt/c/Windows/Fonts/simhei.ttf')
+txt(105, 10, "隔磁片铺满模板 两张片合一页 (1:1, 打印选「实际大小/100%」)", 10, 'C')
+for sh, y in ((0, 16), (1, 16 + SHEET + 14)):
+    draw_sheet(sh, 22, y)
+    txt(22, y - 2, f"第 {sh+1} 张片 (100×100)", 8)
+yb = 16 + 2 * SHEET + 14 + 6
+txt(22, yb, "红实线 = 切线; 蓝虚线 = 修弧 R40.3 / R72.1; 同号「n半」对拼; 1→18 顺序贴, 短边朝圆心", 7, 'L', GRY)
+pdf.set_draw_color(*BLK); pdf.set_line_width(0.3); pdf.line(22, yb + 6, 72, yb + 6)
+for q in range(0, 51, 10):
+    pdf.line(22 + q, yb + 4.5, 22 + q, yb + 7.5); txt(22 + q, yb + 10.5, str(q), 6, 'C')
+txt(78, yb + 7, "← 应量出 50.0 mm", 7.5)
+out2 = "/mnt/d/claude_workspace/macha/pov3d/v1.2/定子盘/隔磁片/隔磁片铺满模板_两张片合一页_A4_1比1.pdf"
+pdf.output(out2); print(out2)
