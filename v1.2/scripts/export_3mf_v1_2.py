@@ -29,6 +29,15 @@ ROT=[('灯板支撑 +x led_post_a_v1_2',LS.post_a,'#F1C232',0.03),('灯板支撑
      ('转子罩 A rotor_shroud_a_v1_2',RS.shr_a,'#6FA8DC',0.05),('转子罩 B rotor_shroud_b_v1_2 (与 A 不同件)',RS.shr_b,'#93C47D',0.05),
      ('转子罩顶盖 +y rotor_lid_v1_2',RS.lid_a,'#CFE2F3',0.05),('转子罩顶盖 −y rotor_lid_b_v1_2',RS.lid_b,'#A4C2F4',0.05),
      ('无线模块托盘 wireless_holder_v1_2',WH.H,'#F1C232',0.03)]
+# 11-18 整机换成转子盘B (build_v1_2.ROTOR_B): 毂盘+承载盘 → 玻纤板+承载盘单件; 立板 → 屏幕固定件; 罩子 4 件 → 2 片
+if ROTOR_B:
+    with _cl.redirect_stdout(_io.StringIO()):
+        import rotor_shroud_b_v1_2 as RSB
+    RB = RSB.RB
+    EXT = EXT[:2] + [('玻纤板 fr4_plate_v1_2b Φ165×3 (无铜 FR4, 板厂件)',RB.fr4,'#C9B458',0.05),('承载盘 rim_ring_v1_2b (转子盘B, 并入毂盘)',RB.rim,'#6AA84F',0.05)]
+    ROT = [('屏幕固定件 +x screen_holder_v1_2b_a',RB.hold_a,'#F1C232',0.03),('屏幕固定件 −x screen_holder_v1_2b_b',RB.hold_b,'#E69138',0.03),
+           *[r for r in ROT if not r[0].startswith(('灯板支撑','转子罩'))],
+           ('转子罩 +y 半 rotor_shroud_b_a_v1_2b (含顶盖)',RSB.shr_a,'#6FA8DC',0.05),('转子罩 −y 半 rotor_shroud_b_b_v1_2b (含顶盖)',RSB.shr_b,'#93C47D',0.05)]
 GTOP=[('玻璃上 glass_top_v1_2',glass_top,'#7FB3D5',0.05),('圆环玻璃 OD180×ID20×10 (外购)',glass_disc,'#AED6F1',0.1),('中心堵头 glass_top_hub_v1_2',glass_top_hub,'#2E86C1',0.02),('玻璃压圈 glass_top_clamp_v1_2',glass_top_clamp,'#1B4F72',0.05),('硅胶垫 上 OD180×ID171×1 (外购, 压后 0.8)',glass_gasket_top,'#E5E7E9',0.05),('硅胶垫 下 OD180×ID171×1 (外购, 压后 0.8)',glass_gasket_bot,'#E5E7E9',0.05)]
 write3mf(f'{A}_底盘+线圈环+电机+控制板.3mf',P_)
 write3mf(f'{A}_含法兰+转子盘.3mf',P_+EXT)
@@ -36,7 +45,7 @@ write3mf(f'{A}_含法兰+转子盘+玻璃罩定位环.3mf',P_+EXT+[('玻璃下 (
 write3mf(f'{A}_玻璃罩版整机_合并.3mf',P_+EXT+ROT+[('玻璃下 (下罩+定位环) glass_shroud_v1_2',seat,'#7FB3D5',0.05),('玻璃罩 OD200x5 H245',tube,'#D6EAF8',0.1),*GTOP,('XT60 压块',xt_clamp,'#F1C232',0.05),('XT60 底垫',xt_shim,'#E69138',0.05)])
 write3mf(f'{A}_玻璃罩版整机_分体外卡环.3mf',P_+EXT+ROT+[('玻璃下-底座 glass_shroud_lower_v1_2',shroud_lo,'#7FB3D5',0.05),('玻璃下-玻璃座 glass_shroud_upper_v1_2',shroud_hi,'#5DADE2',0.05),('外卡环 glass_clamp_ring_v1_2',clamp_ring,'#2E86C1',0.05),('玻璃罩 OD200x5 H245',tube,'#D6EAF8',0.1),*GTOP,('XT60 压块',xt_clamp,'#F1C232',0.05),('XT60 底垫',xt_shim,'#E69138',0.05)])
 for n,sh in (('base_disc_v1_2',disc),('coil_ring_v1_2',ring),('flange_disc_v1_2',flange_disc),('mounting_flange_v1_2',mounting_flange),('glass_shroud_v1_2',seat),('glass_shroud_lower_v1_2',shroud_lo),('glass_shroud_upper_v1_2',shroud_hi),('glass_clamp_ring_v1_2',clamp_ring),('glass_top_v1_2',glass_top),('glass_top_hub_v1_2',glass_top_hub),('glass_top_clamp_v1_2',glass_top_clamp),
-             ('led_bar_v1_2',LS.bar_s),('led_comb_v1_2',LS.comb_s),('rotor_shroud_a_v1_2',RS.shr_a),('rotor_shroud_b_v1_2',RS.shr_b),('rotor_lid_v1_2',RS.lid_a),('rotor_lid_b_v1_2',RS.lid_b),('wireless_holder_v1_2',WH.H)):
+             ('led_bar_v1_2',LS.bar_s),('led_comb_v1_2',LS.comb_s),*([] if ROTOR_B else [('rotor_shroud_a_v1_2',RS.shr_a),('rotor_shroud_b_v1_2',RS.shr_b),('rotor_lid_v1_2',RS.lid_a),('rotor_lid_b_v1_2',RS.lid_b)]),('wireless_holder_v1_2',WH.H)):
     d = V12 / 'models' / n; d.mkdir(parents=True, exist_ok=True)
     BRepMesh_IncrementalMesh(sh,0.02,False,0.2,True); w=StlAPI_Writer(); w.ASCIIMode=False; w.Write(sh,str(d / f'{n}.stl'))
     if n == 'wireless_holder_v1_2':   # 它的 STEP 由 wireless_holder_v1_2.py 写 (含模块占位/螺丝/铜螺母/引脚, led_support/rotor_shroud 干涉校核要读), 不覆盖
@@ -48,17 +57,24 @@ print('ok')
 from OCP.gp import gp_Trsf, gp_Vec, gp_Ax1, gp_Pnt, gp_Dir
 RIM_NAME = 'rim_ring_v1_2_D170'
 _fx = gp_Trsf(); _fx.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), math.pi)
-for n, sh, flip in (('base_disc_D220x6_v1_2', disc, False), ('hub_disc_v1_2', hub, False), (RIM_NAME, rim, True)):
+_ROT_OUT = ((('rim_ring_v1_2b', RB.rim, True),) if ROTOR_B else (('hub_disc_v1_2', hub, False), (RIM_NAME, rim, True)))
+for n, sh, flip in (('base_disc_D220x6_v1_2', disc, False), *_ROT_OUT):
     write_doc([(n, sh, '#8A8F98', None, False)], OUT / '零件' / f'{n}.step', n)
     t = xf(sh, _fx) if flip else sh
     _tt = gp_Trsf(); _tt.SetTranslation(gp_Vec(0, 0, -bbox(t)[2])); t = xf(t, _tt)
     BRepMesh_IncrementalMesh(t, 0.02, False, 0.2, True); w = StlAPI_Writer(); w.ASCIIMode = False; w.Write(t, str(OUT / '打印STL' / f'{n}.stl'))
-# 承载盘装配坐标 STL (出图用, models/<名>/ 同其它件)
+# 承载盘装配坐标 STL (出图用, models/<名>/ 同其它件)  —— 转子盘B 的 models/ 由 rotor_b_v1_2.py 写
 _d = V12 / 'models' / RIM_NAME; _d.mkdir(parents=True, exist_ok=True)
 BRepMesh_IncrementalMesh(rim, 0.02, False, 0.2, True); w = StlAPI_Writer(); w.ASCIIMode = False; w.Write(rim, str(_d / f'{RIM_NAME}.stl'))
 write_doc([(RIM_NAME, rim, '#6AA84F', None, False)], _d / f'{RIM_NAME}.step', RIM_NAME)
-# 作废文件: 中间 T 件 led_mid_t (11-16 晚 取消); 曾试过的 rim_ring_v1_2_D175 (11-16 晚 改回 Φ170)
 import shutil
+# 11-18 转子盘B 进整机: out/ 里旧转子 (毂盘/承载盘 D170/立板/罩子 4 件) 的打印 STL 挪进 out/打印STL/作废_转子盘A/ (不删, 防误打)
+if ROTOR_B:
+    _old = OUT / '打印STL' / '作废_转子盘A'; _old.mkdir(exist_ok=True)
+    for _n in ('hub_disc_v1_2', RIM_NAME, 'led_post_a_v1_2', 'led_post_b_v1_2', 'rotor_shroud_a_v1_2', 'rotor_shroud_b_v1_2', 'rotor_lid_v1_2', 'rotor_lid_b_v1_2'):
+        for _f in (OUT / '打印STL' / f'{_n}.stl', OUT / '零件' / f'{_n}.step'):
+            if _f.exists(): shutil.move(str(_f), str(_old / _f.name)); print('作废挪走', _f.name)
+# 作废文件: 中间 T 件 led_mid_t (11-16 晚 取消); 曾试过的 rim_ring_v1_2_D175 (11-16 晚 改回 Φ170)
 for f in [OUT / '零件' / 'rim_ring_v1_2_D175.step', OUT / '打印STL' / 'rim_ring_v1_2_D175.stl', V12 / '转子盘' / 'rim_ring_v1_2_D175.step', V12 / '转子盘' / 'rim_ring_v1_2_D175.stl',
           OUT / '打印STL' / 'led_mid_t_v1_2.stl']:
     if f.exists(): f.unlink(); print('删除', f)
@@ -67,6 +83,16 @@ for _dd in ('led_mid_t_v1_2', 'rim_ring_v1_2_D175'):
 # 11-16 晚 用户: 定子盘 2 件 / 转子盘 2 件 各放一个文件夹 (每次导出都覆盖成最新)
 _GROUPS = {'定子盘': [('flange_disc_v1_2', V12 / 'models' / 'flange_disc_v1_2'), ('mounting_flange_v1_2', V12 / 'models' / 'mounting_flange_v1_2')],
            '转子盘': [(RIM_NAME, None), ('hub_disc_v1_2', None)]}
+if ROTOR_B:   # 转子盘/ 文件夹 (旧转子) 不再覆盖; 转子盘B/ 由 rotor_b / rotor_shroud_b (STL=打印姿态, STEP=装配) 和出图同步
+    _GROUPS.pop('转子盘')
+    gd = V12 / '转子盘B'; gd.mkdir(exist_ok=True)
+    for n in ('rim_ring_v1_2b', 'screen_holder_v1_2b_a', 'screen_holder_v1_2b_b', 'rotor_shroud_b_a_v1_2b', 'rotor_shroud_b_b_v1_2b'):
+        d = V12 / 'models' / n
+        for f, dst in ((d / f'{n}_print.stl', gd / f'{n}.stl'), (d / f'{n}.step', gd / f'{n}.step'), (d / f'{n}_drawing.pdf', gd / f'{n}_drawing.pdf')):
+            if f.exists():
+                try: shutil.copy2(f, dst)
+                except PermissionError: shutil.copy2(f, dst.with_name(f'{dst.stem}.NEW{dst.suffix}')); print('  被占用, 另存', dst.stem + '.NEW')
+    if (V12 / 'models' / 'rim_ring_v1_2b' / 'rotor_b_asm.step').exists(): shutil.copy2(V12 / 'models' / 'rim_ring_v1_2b' / 'rotor_b_asm.step', gd / 'rotor_b_asm.step')
 for g, items in _GROUPS.items():
     gd = V12 / g; gd.mkdir(exist_ok=True)
     for n, d in items:

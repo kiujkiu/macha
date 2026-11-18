@@ -652,7 +652,7 @@ SPECS.append(dict(
            f"走线: 出线口 → (30, −45) → 往下到 y≈−62 → 沿 x 穿本件 → (−40, −60) → (−64, −40) → MR30 座 −y 端",
            f"离两 M6 孔边各 {F(min(abs(gx - MW.CL_XC) for gx in (-37.5, -12.5)) - B.M6_D / 2 - MW.CL_HX)}"]))
 # ---------------- 转子盘B 承载盘单件 rim_ring_v1_2b (rotor_b_v1_2.py; 11-17 夜) —— 只在点名出图时 import (rotor_b 要建整套转子件, 慢) ----------------
-if any("_v1_2b" in a for a in sys.argv[1:]):
+if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1):   # 11-18 整机换成转子盘B 后全量出图也带上
     import io as _io, contextlib as _cl
     with _cl.redirect_stdout(_io.StringIO()):
         import rotor_b_v1_2 as RB
@@ -760,10 +760,14 @@ for sp in SPECS:
 
 _FOLDER = {"rim_ring_v1_2_D170": "转子盘", "hub_disc_v1_2": "转子盘", "flange_disc_v1_2": "定子盘", "mounting_flange_v1_2": "定子盘", **_FOLDER_B}
 
+# 11-18 整机换成转子盘B: 全量出图时不再重出旧转子件 (图纸文件保留, 点名仍可出)
+_SUPERSEDED = {"hub_disc_v1_2", "rim_ring_v1_2_D170", "led_post_a_v1_2", "led_post_b_v1_2", "rotor_shroud_a_v1_2", "rotor_shroud_b_v1_2", "rotor_lid_v1_2", "rotor_lid_b_v1_2"} if B.ROTOR_B else set()
 if __name__ == "__main__":
     only = set(sys.argv[1:])
     for sp in SPECS:
         if only and sp["code"] not in only:
+            continue
+        if not only and sp["code"] in _SUPERSEDED:
             continue
         if sp.get("stl_asm"):
             from OCP.BRepMesh import BRepMesh_IncrementalMesh

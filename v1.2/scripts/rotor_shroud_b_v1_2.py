@@ -80,23 +80,28 @@ def half(k):
 
 shr_a, shr_b = half('a'), half('b')
 
-rep = dict(vol=dict(a=round(vol(shr_a), 1), b=round(vol(shr_b), 1)), mass_g=dict(a=round(vol(shr_a) * 1.24e-3, 1), b=round(vol(shr_b) * 1.24e-3, 1)),
-           valid=dict(a=BRepCheck_Analyzer(shr_a).IsValid(), b=BRepCheck_Analyzer(shr_b).IsValid()), solids=dict(a=len(solids(shr_a)), b=len(solids(shr_b))),
-           boss=dict(z=(BOSS_Z0, BOSS_Z1), hole_r=HOLE_R, ang=MNT_A, screw=f'M3×{MNT_L:g}'))
-others = dict(承载盘B=RB.rim, 固定件A=RB.hold_a, 固定件B=RB.hold_b, 底板=RB.VB['baseboard'], 底板器件=RB.VB['bb_parts'], CZ06=RB.VB['cz06'],
-              灯板=RB.VB['led'], 夹条=LS.bar_s, 顶部件=LS.top, 无线托盘=RB.WH.H, FPC_A=RB._fpc['fpc_a_v1_2'], FPC_B=RB._fpc['fpc_b_v1_2'],
-              桥板A=RB._fpc['bridge_a_v1_2'], 桥板B=RB._fpc['bridge_b_v1_2'], FPC座=RB._fpc['bb_fpc_seats_v1_2'])
-inter = {}
-for n1, s1 in (('罩A(+y)', shr_a), ('罩B(-y)', shr_b)):
-    for n2, s2 in others.items():
-        v = common_v(s1, s2)
-        if v > 1e-3: inter[f'{n1} × {n2}'] = round(v, 3)
-v = common_v(shr_a, shr_b)
-if v > 1e-3: inter['罩A × 罩B'] = round(v, 3)
-rep['interference_mm3'] = inter
-print(json.dumps(rep, ensure_ascii=False, indent=1))
+def report():
+    _fpc = RB.load_fpc()
+    rep = dict(vol=dict(a=round(vol(shr_a), 1), b=round(vol(shr_b), 1)), mass_g=dict(a=round(vol(shr_a) * 1.24e-3, 1), b=round(vol(shr_b) * 1.24e-3, 1)),
+               valid=dict(a=BRepCheck_Analyzer(shr_a).IsValid(), b=BRepCheck_Analyzer(shr_b).IsValid()), solids=dict(a=len(solids(shr_a)), b=len(solids(shr_b))),
+               boss=dict(z=(BOSS_Z0, BOSS_Z1), hole_r=HOLE_R, ang=MNT_A, screw=f'M3×{MNT_L:g}'))
+    others = dict(承载盘B=RB.rim, 固定件A=RB.hold_a, 固定件B=RB.hold_b, 底板=RB.VB['baseboard'], 底板器件=RB.VB['bb_parts'], CZ06=RB.VB['cz06'],
+                  灯板=RB.VB['led'], 夹条=LS.bar_s, 顶部件=LS.top, 无线托盘=RB.WH.H, FPC_A=_fpc['fpc_a_v1_2'], FPC_B=_fpc['fpc_b_v1_2'],
+                  桥板A=_fpc['bridge_a_v1_2'], 桥板B=_fpc['bridge_b_v1_2'], FPC座=_fpc['bb_fpc_seats_v1_2'])
+    inter = {}
+    for n1, s1 in (('罩A(+y)', shr_a), ('罩B(-y)', shr_b)):
+        for n2, s2 in others.items():
+            v = common_v(s1, s2)
+            if v > 1e-3: inter[f'{n1} × {n2}'] = round(v, 3)
+    v = common_v(shr_a, shr_b)
+    if v > 1e-3: inter['罩A × 罩B'] = round(v, 3)
+    rep['interference_mm3'] = inter
+    print(json.dumps(rep, ensure_ascii=False, indent=1))
+    return rep
+
 
 if __name__ == '__main__':
+    rep = report()
     for name, sh, col in (('rotor_shroud_b_a_v1_2b', shr_a, '#6FA8DC'), ('rotor_shroud_b_b_v1_2b', shr_b, '#93C47D')):
         d = B.V12 / 'models' / name; d.mkdir(parents=True, exist_ok=True)
         write_doc([(name, sh, col, None, False)], d / f'{name}.step', name)

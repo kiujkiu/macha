@@ -1,6 +1,7 @@
 import time,numpy as np
 T0=time.time()
 from build_v1_2 import *
+import io as _io, contextlib as _cl
 from scipy.spatial import cKDTree
 from OCP.TopExp import TopExp_Explorer
 from OCP.TopAbs import TopAbs_FACE
@@ -35,6 +36,15 @@ S.update({'led_post_a':LS.post_a,'led_post_b':LS.post_b,'led_bar':LS.bar_s,'led_
           'led_a':LS.led_a,'led_b':LS.led_b,'bb_r2':LS.bb_step,'rotor_shroud_a':RS.shr_a,'rotor_shroud_b':RS.shr_b,'rotor_lid_a':RS.lid_a,'rotor_lid_b':RS.lid_b,'bridge_a':F.bridge_a,'bridge_b':F.bridge_b,'fpc_a':F.fpc_a,'fpc_b':F.fpc_b,'seat_j5':F.seat_j5,'seat_j6':F.seat_j6,
           'wireless_holder':WH.H,'wireless_module':WH.module,'mr30_seat':MW.mr30_seat(),'motor_wire_clamp':MW.wire_clamp(),'ant_a':LS.ant_a,'ant_b':LS.ant_b})
 for i,(x,y) in enumerate(SH_M6): S[f'seat_nut{i}']=cyl(x,y,SH_NUT_D,NUT_Z0,NUT_Z0+3.7)   # 11-12 夜: M3 法兰螺母实高 3.7 (build 里 seat_nuts 仍按 2.4)
+# 11-18 整机换成转子盘B (ROTOR_B): 旧件名 → 新件名, 配对表自动改写; 再补转子盘B 自己的配对
+RMAP={}
+if ROTOR_B:
+    with _cl.redirect_stdout(_io.StringIO()):
+        import rotor_shroud_b_v1_2 as RSB
+    RB=RSB.RB
+    for k in ('hub','rim','led_post_a','led_post_b','rotor_shroud_a','rotor_shroud_b','rotor_lid_a','rotor_lid_b'): S.pop(k)
+    S.update({'fr4':RB.fr4,'rim_b':RB.rim,'holder_a':RB.hold_a,'holder_b':RB.hold_b,'shroud_b_a':RSB.shr_a,'shroud_b_b':RSB.shr_b,'coil':RB.coil})
+    RMAP={'hub':'fr4','rim':'rim_b','led_post_a':'holder_a','led_post_b':'holder_b','rotor_shroud_a':'shroud_b_a','rotor_shroud_b':'shroud_b_b','rotor_lid_a':'shroud_b_a','rotor_lid_b':'shroud_b_b'}
 P={k:pts(v) for k,v in S.items()}; print('sampled',f'{time.time()-T0:.0f}s',flush=True)
 K={k:cKDTree(v) for k,v in P.items()}
 def md(a,b): d,_=K[b].query(P[a],k=1,distance_upper_bound=20); return float(d.min())
@@ -58,6 +68,19 @@ PAIRS=[('board',x) for x in ('ring','flange_disc','mounting_flange','motor','sea
  [(a,x) for a in ('fpc_a','fpc_b','seat_j5','seat_j6') for x in ('led_a','led_b','bb_r2','hub','rim','led_bar','rotor_lid_a','rotor_lid_b','bridge_a','bridge_b','led_post_a','led_post_b')]+[('fpc_a','fpc_b')]+\
  [(a,x) for a in ('rotor_shroud_a','rotor_shroud_b') for x in ('ant_a','ant_b','led_post_a','led_post_b')]+\
  [(a,x) for a in ('mr30_seat','motor_wire_clamp') for x in ('disc','ring','flange_disc','mounting_flange','motor','board','seat','shroud_split','xt60','cd_pcb','cd_cap','cd_mos','cd_sink2','key_bracket','heatsink')+_MC+_CC]+[('mr30_seat','motor_wire_clamp')]   # 11-13 按键板+支架 / 玻璃上; 11-16 新件 (led_top × rod = Φ8 轴压进 Φ7.85 孔, 过盈预期)
+if ROTOR_B:
+    _seen=set(); _np=[]
+    for x,y in PAIRS+[('hub','rim')]:      # 旧表里 hub/rim 没有互配对 (贴面), 新的 fr4/rim_b 要查
+        x,y=RMAP.get(x,x),RMAP.get(y,y)
+        if x==y or frozenset((x,y)) in _seen: continue
+        _seen.add(frozenset((x,y))); _np.append((x,y))
+    for x,y in [('coil',z) for z in ('fr4','rim_b','ring','flange_disc','mounting_flange','motor')]+[(h,'fr4') for h in ('holder_a','holder_b')]+\
+               [('fr4',z) for z in ('flange_disc','mounting_flange','ring','motor','wireless_module','bb_r2')]+[('rim_b',z) for z in ('motor','wireless_module','seat_j5','seat_j6','led_bar')]+[('shroud_b_a','shroud_b_b')]+\
+               [(h,z) for h in ('holder_a','holder_b') for z in ('led_bar','led_top','ant_a','ant_b','fpc_a','fpc_b','seat_j5','seat_j6')]:
+        if frozenset((x,y)) in _seen: continue
+        _seen.add(frozenset((x,y))); _np.append((x,y))
+    PAIRS=_np
+    print(f'转子盘B: 配对 {len(PAIRS)} 组',flush=True)
 for a,b in PAIRS:
     d=md(a,b); flag=''
     if d<0.3:

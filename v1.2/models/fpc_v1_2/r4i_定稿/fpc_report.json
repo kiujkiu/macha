@@ -2,7 +2,7 @@
  "interf": {
   "fpc_a × bridge_a": 6.0487,
   "fpc_b × bridge_b": 6.0487,
-  "_checked": "8 新件 × 34 对象 + 新件互查; 只列非 0 (FPC 插入段在座子插口里, 本体留缝不碰)"
+  "_checked": "8 新件 × 32 对象 + 新件互查; 只列非 0 (FPC 插入段在座子插口里, 本体留缝不碰)"
  },
  "axk_mate": {
   "bridge_a AXK × led_a": 489.176,
@@ -20,8 +20,8 @@
   "fpc_a × cz06_real": 0.1,
   "fpc_a × led_a": 4.902,
   "fpc_a × led_b": 10.736,
-  "fpc_a × hub": 3.128,
-  "fpc_a × rim": 5.15,
+  "fpc_a × fr4": 9.128,
+  "fpc_a × rim_b": 1.792,
   "fpc_a × bar": 6.289,
   "fpc_b × seat_a": 17.286,
   "fpc_b × seat_b": 0.1,
@@ -33,8 +33,8 @@
   "fpc_b × cz06_real": 4.634,
   "fpc_b × led_a": 6.25,
   "fpc_b × led_b": 5.15,
-  "fpc_b × hub": 0.1,
-  "fpc_b × rim": 2.284,
+  "fpc_b × fr4": 6.1,
+  "fpc_b × rim_b": 0.6,
   "fpc_b × bar": 6.25,
   "bridge_a × lid_a": 0.457,
   "bridge_b × lid_b": 0.457,
@@ -753,50 +753,50 @@
  "balance": {
   "old_12g_block": {
    "U_gmm": [
-    -85.2,
-    -2170.0
+    -0.7,
+    -2111.4
    ],
-   "U_abs": 2171.7,
-   "cw_g_r83": 26.16,
-   "cw_ang_deg": 87.8,
-   "z_eff": 95.1,
+   "U_abs": 2111.4,
+   "cw_g_r83": 25.44,
+   "cw_ang_deg": 90.0,
+   "z_eff": 95.6,
    "two_plane": {
-    "lo_g_r83": 19.81,
-    "lo_ang": 87.0,
-    "hi_g_r40": 13.2,
-    "hi_ang": 90.2
+    "lo_g_r83": 19.19,
+    "lo_ang": 90.0,
+    "hi_g_r40": 12.96,
+    "hi_ang": 90.0
    }
   },
   "new_11g_real": {
    "U_gmm": [
-    -85.2,
-    -2161.2
+    -0.7,
+    -2102.6
    ],
-   "U_abs": 2162.9,
-   "cw_g_r83": 26.06,
-   "cw_ang_deg": 87.7,
-   "z_eff": 95.2,
+   "U_abs": 2102.6,
+   "cw_g_r83": 25.33,
+   "cw_ang_deg": 90.0,
+   "z_eff": 95.8,
    "two_plane": {
-    "lo_g_r83": 19.71,
-    "lo_ang": 86.9,
-    "hi_g_r40": 13.19,
-    "hi_ang": 90.2
+    "lo_g_r83": 19.09,
+    "lo_ang": 90.0,
+    "hi_g_r40": 12.95,
+    "hi_ang": 90.0
    }
   },
   "new_plus_fpc": {
    "U_gmm": [
-    -85.2,
-    -2129.1
+    -0.7,
+    -2070.5
    ],
-   "U_abs": 2130.9,
-   "cw_g_r83": 25.67,
-   "cw_ang_deg": 87.7,
-   "z_eff": 96.0,
+   "U_abs": 2070.5,
+   "cw_g_r83": 24.95,
+   "cw_ang_deg": 90.0,
+   "z_eff": 96.5,
    "two_plane": {
-    "lo_g_r83": 19.33,
-    "lo_ang": 86.9,
-    "hi_g_r40": 13.19,
-    "hi_ang": 90.2
+    "lo_g_r83": 18.71,
+    "lo_ang": 90.0,
+    "hi_g_r40": 12.95,
+    "hi_ang": 90.0
    }
   },
   "bridge": {

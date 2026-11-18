@@ -11,6 +11,7 @@
       r73–81.7, ±44° (绕 ±x), Z32–37 (厚 5, 顶 = 灯板下沿); 锚孔 = 原耳朵孔 22.5°/337.5° (+x) / 157.5°/202.5° (−x) 在 R77.5;
       带上罩子锁点 M3 热熔铜螺母 Φ4.2×4 @ r77 ±40° / ±140° (罩子 4 个耳朵改坐到带顶 Z37)
 螺丝 (全部在桌上装好再上电机):
+  - 固定件 → 夹条 2×M3×8 自攻 (同 V1.2 立板): 头在固定件底面 Φ6×3 沉孔里 ⇒ 先把固定件和夹条拧好, 再整组放上承载盘 (11-18 补挖: 弧形带原把这孔填实了)
   - 16 颗从玻纤板底往上 (头埋玻纤板 Φ7.2×1.5 沉孔): 内圈 R34 ×8 + 外圈 67.5/112.5/247.5/292.5° ×4 → 承载盘顶面 M3×4 铜螺母;
     外圈 22.5/157.5/202.5/337.5° ×4 → 穿承载盘 + 固定件, 固定件顶面 M3 法兰螺母
   - 电机 4×M3×10 从承载盘顶面 Φ7×5 沉孔往下 (头顶 Z30), 穿玻纤板进电机 4.5
@@ -113,39 +114,48 @@ def holder(sx):
     s = fuse(p, band)
     pts = [(x, y) for x, y in ANCHOR_PTS if x * sx > 0]
     lk = [(x, y) for x, y in SHR_LOCK_PTS if x * sx > 0]
+    xb = sx * LS.BAR_SCR_X[0]                                    # 11-18: 弧形带 r73–81.7 盖住了立板 → 夹条竖螺丝 (x±73, y=ECC) ⇒ 重挖 Φ3.4 通 + 底面 Φ6×3 沉孔 (同 LS.post)
     s = cut(s, *[cyl(x, y, 3.4, LS.RIM_TOP - 1, H_Z1 + 1) for x, y in pts],
-            *[cyl(x, y, INS_D, H_Z1 - INS_H, H_Z1 + 1) for x, y in lk])
+            *[cyl(x, y, INS_D, H_Z1 - INS_H, H_Z1 + 1) for x, y in lk],
+            cyl(xb, LS.BAR_SCR_Y, 3.4, LS.RIM_TOP - 1, LS.Z0 + 1), cyl(xb, LS.BAR_SCR_Y, 6.0, LS.RIM_TOP - 1, LS.BAR_SCR_BEAR))
     return clean(s), pts, lk
 
 hold_a, ANC_A, LK_A = holder(+1)
 hold_b, ANC_B, LK_B = holder(-1)
 
-# ---------------- 校核 ----------------
-rep = dict(z=dict(fr4=(Z_F0, Z_F1), cavity=(Z_F1, Z_T0), tray=(Z_T0, Z_TOP), holder=(LS.RIM_TOP, H_Z1)),
-           vol=dict(fr4=round(vol(fr4), 1), rim=round(vol(rim), 1), hold_a=round(vol(hold_a), 1), hold_b=round(vol(hold_b), 1)),
-           mass_g=dict(fr4=round(vol(fr4) * 1.85e-3, 1), rim_PLA=round(vol(rim) * 1.24e-3, 1), hold_PLA=round(vol(hold_a) * 1.24e-3, 1)),
-           valid=dict(rim=BRepCheck_Analyzer(rim).IsValid(), fr4=BRepCheck_Analyzer(fr4).IsValid(), hold_a=BRepCheck_Analyzer(hold_a).IsValid(),
-                      hold_b=BRepCheck_Analyzer(hold_b).IsValid()),
-           solids=dict(rim=len(solids(rim)), hold_a=len(solids(hold_a)), hold_b=len(solids(hold_b))))
+# ---------------- 校核 (11-18: 挪进 report(), import 时不跑; 整机切转子盘B 后各脚本都要 import 本模块) ----------------
 coil = cut(ann(COIL_R0 + 0.1, COIL_R1 - 0.1, Z_F1, Z_F1 + 2.7), *[cyl(x, y, 4.0, Z_F1 - 1, Z_T0) for x, y in B.AC_HOLES])
 VB = LS.VB
-from helpers import read_step
-_fpc = {n: read_step(B.V12 / 'models' / 'fpc_v1_2' / 'r4i_定稿' / f'{n}.step') for n in ('fpc_a_v1_2', 'fpc_b_v1_2', 'bridge_a_v1_2', 'bridge_b_v1_2', 'bb_fpc_seats_v1_2')}
-others = dict(底板=VB['baseboard'], 底板器件=VB['bb_parts'], CZ06=VB['cz06'], 灯板=VB['led'], 夹条=LS.bar_s, 顶部件=LS.top,
-              无线托盘=WH.H, 罩子A=RS.shr_a, 罩子B=RS.shr_b, FPC_A=_fpc['fpc_a_v1_2'], FPC_B=_fpc['fpc_b_v1_2'], 桥板A=_fpc['bridge_a_v1_2'], 桥板B=_fpc['bridge_b_v1_2'], FPC座=_fpc['bb_fpc_seats_v1_2'], 电机=B.motor, 定子盘=B.flange_disc, 安装法兰=B.mounting_flange, 线圈环=B.ring)
-mine = dict(玻纤板=fr4, 承载盘=rim, 固定件A=hold_a, 固定件B=hold_b, 线圈=coil)
-inter = {}
-for n1, s1 in mine.items():
-    for n2, s2 in list(others.items()) + [(k, v) for k, v in mine.items() if k > n1]:
-        if n2 == n1: continue
-        v = common_v(s1, s2)
-        if v > 1e-3: inter[f'{n1} × {n2}'] = round(v, 3)
-rep['interference_mm3'] = inter
-# 底板角 / 垫柱 离固定件带子
-rep['board_vs_band_min_gap'] = None
-# 罩子锁点: 原 V1.2 罩底凸台 (B.SHR_HOLES r79) 在带子上 ⇒ 罩子要改 (耳朵抬到 Z37, 孔挪 r77)
-rep['shroud_todo'] = '罩子 4 个底凸台 (Z32–36) 与固定件带子重叠 ⇒ 改 2 片并把凸台底抬到 Z37, 孔挪到 r77 (下一步)'
-print(json.dumps(rep, ensure_ascii=False, indent=1))
+_FPC_CACHE = {}
+def load_fpc():
+    from helpers import read_step
+    if not _FPC_CACHE:
+        _FPC_CACHE.update({n: read_step(B.V12 / 'models' / 'fpc_v1_2' / 'r4i_定稿' / f'{n}.step') for n in ('fpc_a_v1_2', 'fpc_b_v1_2', 'bridge_a_v1_2', 'bridge_b_v1_2', 'bb_fpc_seats_v1_2')})
+    return _FPC_CACHE
+
+def report():
+    _fpc = load_fpc()
+    rep = dict(z=dict(fr4=(Z_F0, Z_F1), cavity=(Z_F1, Z_T0), tray=(Z_T0, Z_TOP), holder=(LS.RIM_TOP, H_Z1)),
+               vol=dict(fr4=round(vol(fr4), 1), rim=round(vol(rim), 1), hold_a=round(vol(hold_a), 1), hold_b=round(vol(hold_b), 1)),
+               mass_g=dict(fr4=round(vol(fr4) * 1.85e-3, 1), rim_PLA=round(vol(rim) * 1.24e-3, 1), hold_PLA=round(vol(hold_a) * 1.24e-3, 1)),
+               valid=dict(rim=BRepCheck_Analyzer(rim).IsValid(), fr4=BRepCheck_Analyzer(fr4).IsValid(), hold_a=BRepCheck_Analyzer(hold_a).IsValid(),
+                          hold_b=BRepCheck_Analyzer(hold_b).IsValid()),
+               solids=dict(rim=len(solids(rim)), hold_a=len(solids(hold_a)), hold_b=len(solids(hold_b))))
+    others = dict(底板=VB['baseboard'], 底板器件=VB['bb_parts'], CZ06=VB['cz06'], 灯板=VB['led'], 夹条=LS.bar_s, 顶部件=LS.top,
+                  无线托盘=WH.H, FPC_A=_fpc['fpc_a_v1_2'], FPC_B=_fpc['fpc_b_v1_2'], 桥板A=_fpc['bridge_a_v1_2'], 桥板B=_fpc['bridge_b_v1_2'], FPC座=_fpc['bb_fpc_seats_v1_2'], 电机=B.motor, 定子盘=B.flange_disc, 安装法兰=B.mounting_flange, 线圈环=B.ring)
+    mine = dict(玻纤板=fr4, 承载盘=rim, 固定件A=hold_a, 固定件B=hold_b, 线圈=coil)
+    inter = {}
+    for n1, s1 in mine.items():
+        for n2, s2 in list(others.items()) + [(k, v) for k, v in mine.items() if k > n1]:
+            if n2 == n1: continue
+            v = common_v(s1, s2)
+            if v > 1e-3: inter[f'{n1} × {n2}'] = round(v, 3)
+    rep['interference_mm3'] = inter
+    # 罩子 (rotor_shroud_b_v1_2, 2 片) 的干涉在它自己的 report() 和整机 check_v1_2 里查 (这里 import 不了, 它反过来 import 本模块)
+    print(json.dumps(rep, ensure_ascii=False, indent=1))
+
+    return rep
+
 
 # ---------------- 输出 ----------------
 OUTD = {}
@@ -160,6 +170,7 @@ def out(name, sh, flip=False, color='#8A8F98'):
     BRepMesh_IncrementalMesh(t, 0.02, False, 0.2, True); w = StlAPI_Writer(); w.ASCIIMode = False; w.Write(t, str(d / f'{name}_print.stl'))
     OUTD[name] = str(d)
 if __name__ == '__main__':
+    rep = report()
     out('rim_ring_v1_2b', rim, flip=True, color='#6AA84F')               # 打印: 托盘顶面朝下, 线圈腔/外环朝上 (免支撑)
     out('screen_holder_v1_2b_a', hold_a, color='#F1C232')
     out('screen_holder_v1_2b_b', hold_b, color='#E69138')

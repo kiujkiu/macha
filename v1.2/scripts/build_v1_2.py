@@ -20,6 +20,10 @@ SRC = V12 / 'src'                      # 依赖的 V1.0/V0.4/V1.1 源 STEP (已�
 C10 = O10 = SRC
 OLDPARTS = os.environ.get('OLDPARTS')  # 可选: 全套旧件目录, 不设就只出 V1.2 件
 OUT = V12 / 'out'; (OUT / '零件').mkdir(parents=True, exist_ok=True); (OUT / '打印STL').mkdir(exist_ok=True)
+# 11-18 用户「开工, 整机换成转子盘B」: 整机装配/校核/紧固件/出图默认用转子盘B (rotor_b_v1_2: 玻纤板 + 承载盘单件 + 屏幕固定件 ×2,
+#   rotor_shroud_b_v1_2: 罩子 2 片); 旧转子 (hub_disc + rim_ring_D170 + 立板 led_post + 罩子 4 件) 仍在本文件里建, 只是不再进整机。
+#   环境变量 V12_ROTOR=A 切回旧转子 (对比用)。
+ROTOR_B = os.environ.get('V12_ROTOR', 'B').upper() != 'A'
 
 def vol(s):
     g = GProp_GProps(); BRepGProp.VolumeProperties_s(s, g); return g.Mass()

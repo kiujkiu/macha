@@ -515,9 +515,20 @@ def balance(br_g, com_a, com_b, extra=()):
     def add(g, c):
         nonlocal Ux, Uy, Mx, My
         Ux += g * c[0]; Uy += g * c[1]; Mx += g * c[0] * c[2]; My += g * c[1] * c[2]
-    for s in L.SUP.values():
-        m, c = cog(s); add(m * RHO, c)
-    for _, s in L.foot_scr + L.bar_scr + L.h1 + L.comb_scr:
+    if B.ROTOR_B:   # 11-18 转子盘B: 立板 → 屏幕固定件 (耳朵螺丝没了); 另把承载盘 / 玻纤板 / 罩子 2 片也算进来 (罩子沿 y=ECC 分, 两半不等重)
+        with contextlib.redirect_stdout(io.StringIO()):
+            import rotor_shroud_b_v1_2 as RSB
+        RB = RSB.RB
+        sup = [s for k, s in L.SUP.items() if k not in ('post_a', 'post_b')] + [RB.hold_a, RB.hold_b, RB.rim, RSB.shr_a, RSB.shr_b]
+        for s in sup:
+            m, c = cog(s); add(m * RHO, c)
+        m, c = cog(RB.fr4); add(m * 1.85e-3, c)
+        scr = L.bar_scr + L.h1 + L.comb_scr
+    else:
+        for s in L.SUP.values():
+            m, c = cog(s); add(m * RHO, c)
+        scr = L.foot_scr + L.bar_scr + L.h1 + L.comb_scr
+    for _, s in scr:
         m, c = cog(s); add(m * RHO_ST, c)
     from OCP.TopExp import TopExp_Explorer
     from OCP.TopAbs import TopAbs_SOLID
@@ -554,6 +565,15 @@ def report():
     OBJ = dict(led_a=L.led_a, led_b=L.led_b, mip_env=mip, bar=L.bar_s, post_a=L.post_a, post_b=L.post_b, ant_a=L.ant_a, ant_b=L.ant_b,
                bb_step=BB_STEP_USED, bb_pcb=L.VB['baseboard'], hub=B.hub, rim=B.rim, wireless_holder=L.wl, top=L.top,
                shroud_a=RS.shr_a, shroud_b=RS.shr_b, lid_a=RS.lid_a, lid_b=RS.lid_b, **{f'env {k}': v for k, v in env.items()})
+    RIM_, HUB_, LID_A, LID_B = B.rim, B.hub, RS.lid_a, RS.lid_b
+    if B.ROTOR_B:   # 11-18 整机换成转子盘B: hub → 玻纤板, rim → 承载盘单件, 立板 → 屏幕固定件, 罩子/顶盖 → 罩子 2 片 (含顶盖)
+        import io as _io, contextlib as _cl
+        with _cl.redirect_stdout(_io.StringIO()):
+            import rotor_shroud_b_v1_2 as RSB
+        RB = RSB.RB
+        RIM_, HUB_, LID_A, LID_B = RB.rim, RB.fr4, RSB.shr_a, RSB.shr_b
+        for k in ('post_a', 'post_b', 'hub', 'rim', 'shroud_a', 'shroud_b', 'lid_a', 'lid_b'): OBJ.pop(k)
+        OBJ.update(holder_a=RB.hold_a, holder_b=RB.hold_b, fr4=RB.fr4, rim_b=RB.rim, shroud_b_a=RSB.shr_a, shroud_b_b=RSB.shr_b)
     NEW = dict(fpc_a=fpc_a, fpc_b=fpc_b, tape_a=tape_a, tape_b=tape_b, seat_j5=seat_j5, seat_j6=seat_j6,
                bridge_a=br_rest_a, bridge_b=br_rest_b)
     rep = dict(interf={}, axk_mate={}, gap={})
@@ -584,9 +604,9 @@ def report():
     G['fpc_a × fpc_b'] = dist(fpc_a, fpc_b)
     for nm, f in (('fpc_a', fpc_a), ('fpc_b', fpc_b)):
         for b, s in (('seat_a', seat_a), ('seat_b', seat_b), ('bridge_a', br_rest_a), ('bb_pcb', L.VB['baseboard']), ('seat_j6', seat_j6), ('seat_j5', seat_j5),
-                     ('cz06', CZ06_ENV), ('cz06_real', CZ06_REAL), ('led_a', L.led_a), ('led_b', L.led_b), ('hub', B.hub), ('rim', B.rim), ('bar', L.bar_s)):
+                     ('cz06', CZ06_ENV), ('cz06_real', CZ06_REAL), ('led_a', L.led_a), ('led_b', L.led_b), ('hub' if not B.ROTOR_B else 'fr4', HUB_), ('rim' if not B.ROTOR_B else 'rim_b', RIM_), ('bar', L.bar_s)):
             G[f'{nm} × {b}'] = dist(f, s)
-    G['bridge_a × lid_a'] = dist(bridge_a, RS.lid_a); G['bridge_b × lid_b'] = dist(bridge_b, RS.lid_b)
+    G['bridge_a × lid_a'] = dist(bridge_a, LID_A); G['bridge_b × lid_b'] = dist(bridge_b, LID_B)   # 转子盘B: lid = 罩子半片 (含顶盖)
     G['bridge_a × bar'] = dist(br_rest_a, L.bar_s)
     rep['fpc'] = fpc_len()
     rep['tape'] = tape_check()
@@ -683,6 +703,13 @@ def export():
              ('底板 FPC 座 J5/J6 (Fab 外形)', comp([seat_j5, seat_j6]), '#555555', 0.03),
              ('FPC A (桥A→J5)', fpc_a, '#E67E22', 0.02), ('FPC B (桥B→J6)', fpc_b, '#D35400', 0.02), ('双面胶 ×2', comp([tape_a, tape_b]), '#F4D03F', 0.02),
              ('灯板夹条 led_bar', L.bar_s, '#8E7CC3', 0.03), ('立板 +x led_post_a', L.post_a, '#F1C232', 0.03), ('立板 -x led_post_b', L.post_b, '#E69138', 0.03)]
+    if B.ROTOR_B:   # 11-18 转子盘B
+        import io as _io, contextlib as _cl
+        with _cl.redirect_stdout(_io.StringIO()):
+            import rotor_b_v1_2 as RB
+        parts = [('玻纤板 fr4_plate_v1_2b', RB.fr4, '#C9B458', 0.05), ('承载盘 rim_ring_v1_2b', RB.rim, '#6AA84F', 0.05)] + \
+                [p for p in parts if not p[0].startswith(('转子毂盘', '承载盘', '立板'))] + \
+                [('屏幕固定件 +x screen_holder_v1_2b_a', RB.hold_a, '#F1C232', 0.03), ('屏幕固定件 −x screen_holder_v1_2b_b', RB.hold_b, '#E69138', 0.03)]
     write3mf(str(B.V12 / ('assembly_v1_2_FPC走线.3mf' if BRIDGE_FLIP else 'assembly_v1_2_FPC走线_旧朝向.3mf')), parts)
 
 
@@ -809,9 +836,10 @@ def drawing():
     # ---- 技术要求 ----
     bA, bB = L_['A']['bends'], L_['B']['bends']
     notes = ['技术要求 / 安装:',
-             ('1. 两根同一种做法 (单层铜, 弯曲区 ≤0.15): 两端异面, 直通 (导体 x 不变, FPC 内不交叉), 只是长度不同; 底板 J5/J6 口都朝板外, 按物理 x (同一世界 x 互连) 分网。'
-              if BB_SEAT_MODE == 'out' else
-              '1. 两根都是 1<->1 直通同料号 (导体 1 在同一长边), 只是长度不同。底板 r4h: J5 (150,37.425) 180°, J6 (150,87.50) 0°, 两座都按 "座 pin k = 桥板 r11 FPC1 pin k" 分网, 不镜像。'),
+             ('1. 两根同一种做法: 导体直通, 世界 x 不变 (FPC 内不交叉, 弯都绕 x 轴), 只是长度不同; '
+              + '底板 J5 座 k 脚 ↔ 桥 A FPC1 第 %s 脚, J6 座 k 脚 ↔ 桥 B FPC1 第 %s 脚 (按模型 1 脚世界 x 自动判: 桥A 脚1 x%+.2f / J5 脚1 x%+.2f, 桥B 脚1 x%+.2f / J6 脚1 x%+.2f)。'
+              % ('k' if PIN1_BR['a_world_x'] == J5['pin1_x'] else '71−k', 'k' if PIN1_BR['b_world_x'] == J6['pin1_x'] else '71−k',
+                 PIN1_BR['a_world_x'], J5['pin1_x'], PIN1_BR['b_world_x'], J6['pin1_x'])),   # 11-18 底板窗口要求: 删 r4h 旧文字「座 pin k = 桥板 pin k, 不镜像」
              '   核对口径: 桥 A 世界 x = -(kx-132), 桥 B 世界 x = +(kx-132), 按物理 x 对脚 (例: 桥 A pin1 TCK 在 kx114.75 -> 世界 x+17.25)。',
              f"2. 接触面: A {L_['A']['contact']['kind']}, B {L_['B']['contact']['kind']} (按走线几何: 两座同型号 XW0525512, 判 PCB 在 FPC 哪一面; 座子上/下接触以规格书为准, 同/异面结论不变)。",
              f"3. 补强 PI 贴金手指背面: A 两端 {STF['A'][0]:g}/{STF['A'][1]:g}; B 桥板端 {STF['B'][0]:g}, J6 端 {STF['B'][1]:g} (= 插入深 4.0, 竖槽放不下 5.0 + 1 隙)。",

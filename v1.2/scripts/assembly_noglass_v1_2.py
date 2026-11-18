@@ -53,6 +53,22 @@ PARTS = [  # (名, 形状, 颜色, 3MF 弦差)
     ('转子罩 a rotor_shroud_a_v1_2', RS.shr_a, '#A4C2F4', 0.05), ('转子罩 b rotor_shroud_b_v1_2', RS.shr_b, '#B6D7A8', 0.05), ('转子罩顶盖 +y rotor_lid_v1_2', RS.lid_a, '#CFE2F3', 0.05), ('转子罩顶盖 −y rotor_lid_b_v1_2', RS.lid_b, '#D9EAD3', 0.05),
     ('无线托盘 wireless_holder_v1_2', WH.H, '#FFD966', 0.03), ('无线供电模块 30.5×49×15 (占位)', WH.module, '#3D85C6', 0.05),
 ]
+# 11-18 整机换成转子盘B (B.ROTOR_B): 毂盘+承载盘 → 玻纤板+承载盘单件; 立板 → 屏幕固定件; 罩子 4 件 → 2 片
+POST_N = ('灯板支撑 +x T 脚 led_post_a', '灯板支撑 -x T 脚 led_post_b'); SHR_N = ('转子罩 a rotor_shroud_a_v1_2', '转子罩 b rotor_shroud_b_v1_2')
+if B.ROTOR_B:
+    import io as _io, contextlib as _cl
+    with _cl.redirect_stdout(_io.StringIO()):
+        import rotor_shroud_b_v1_2 as RSB
+    RB = RSB.RB
+    POST_N = ('屏幕固定件 +x screen_holder_v1_2b_a', '屏幕固定件 -x screen_holder_v1_2b_b'); SHR_N = ('转子罩 +y 半 rotor_shroud_b_a_v1_2b', '转子罩 -y 半 rotor_shroud_b_b_v1_2b')
+    _new = {'转子毂盘': [('玻纤板 fr4_plate_v1_2b Φ165×3', RB.fr4, '#C9B458', 0.05)], '承载盘 rim_ring': [('承载盘 rim_ring_v1_2b (转子盘B)', RB.rim, '#6AA84F', 0.05)],
+            '灯板支撑 +x': [(POST_N[0], RB.hold_a, '#F1C232', 0.03)], '灯板支撑 -x': [(POST_N[1], RB.hold_b, '#E69138', 0.03)],
+            '转子罩 a ': [(SHR_N[0], RSB.shr_a, '#A4C2F4', 0.05)], '转子罩 b ': [(SHR_N[1], RSB.shr_b, '#B6D7A8', 0.05)], '转子罩顶盖': []}
+    _P = []
+    for p_ in PARTS:
+        k = next((k for k in _new if p_[0].startswith(k)), None)
+        _P += [p_] if k is None else _new[k]
+    PARTS = _P
 OUT3 = B.V12 / 'assembly_v1_2_不装玻璃_整机+V2板.3mf'
 write3mf(str(OUT3), PARTS)
 # 11-16 晚 用户: 另出一个不带玻璃托 (玻璃下底座 / 玻璃座 / 外卡环) 的整机 3MF (玻璃本来就不装)
@@ -144,8 +160,8 @@ _LED2 = L.comp([L.led_a, L.led_b])
 D_BB, D_CZ = _dist(_LED2, L.bb_step), _dist(_LED2, VB['cz06'])
 D_WH = _dist(_LED2, L.comp([WH.H, WH.module]))
 _M = dict((n, P) for n, P, _ in MESH)
-R_LED = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in ('灯板 A (+y)', '灯板 B (-y)', '灯板支撑 +x T 脚 led_post_a', '灯板支撑 -x T 脚 led_post_b', '天线 18.5×37.7 软板 ×2'))
-R_SHR = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in ('转子罩 a rotor_shroud_a_v1_2', '转子罩 b rotor_shroud_b_v1_2'))
+R_LED = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in ('灯板 A (+y)', '灯板 B (-y)', *POST_N, '天线 18.5×37.7 软板 ×2'))
+R_SHR = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in SHR_N)
 assert R_SHR < B.SPIG_IN - 1.0 and R_LED < RS.R1 - 0.1 and D_BB > 0.5 and D_CZ > 0.5 and D_WH > 0.5, (R_SHR, R_LED, D_BB, D_CZ, D_WH)
 print('clearance', D_BB, D_CZ, D_WH, R_LED, R_SHR)
 from matplotlib.patches import Patch
@@ -156,8 +172,13 @@ note = [f'玻璃罩 OD{B.GL_OD:g}×{B.GL_T:g}×{B.GL_H:g} / 玻璃上 / 圆环�
         f'转子罩 a/b (r{RS.R0:g}–{RS.R1:g}, Z{RS.Z0:g}–{RS.Z1:g}, 同一件转 180°): 罩底 4×M3×{RS.MNT_L:g} 进毂盘底铜螺母, 分缝 4×M3×{RS.SEAM_L:g} + 螺母, 配重唇 {len(RS.W_A)} 孔 M3×{RS.W_L:g} 按需',
         f'无线托盘 (-y 侧) 3×M3×8 进承载盘铜螺母, 模块 30.5×49×15 Z{WH.MZ0:g}–{WH.MZ1:g}; 底板器件按 F.CrtYd × 限高做方块 (交付 STEP 无 3D 的件), 不是实物',
         f'实测: 灯板-底板 r3 最近 {D_BB:.2f}, 灯板-CZ06 {D_CZ:.2f}, 灯板-无线托盘/模块 {D_WH:.2f}; 灯板/立板/天线最大半径 {R_LED:.2f} (天线板外角, 在罩壁 ±x 缝 |y|≤{RS.SLOT_Y:g} 里; 罩外圆 r{RS.R1:g}, 余 {RS.R1 - R_LED:.2f}); 转子罩外 r{R_SHR:.2f} (玻璃下内面 r{B.SPIG_IN:g}, 余 {B.SPIG_IN - R_SHR:.2f})']
+if B.ROTOR_B:
+    note[2] = (f'灯板背靠背 (F 面 y=±{L.GAP_HALF:g}); 偏心 SCR_ECC {B.SCR_ECC:g}; 转子盘B: 玻纤板 Φ165×3 + 承载盘单件 (并入毂盘, 线圈腔深 {RB.CAV_H:g}); '
+               f'两端屏幕固定件 (弧带 r{RB.H_R0:g}–{RB.H_R1:g} Z{RB.LS.RIM_TOP:g}–{RB.H_Z1:g}) 锚 4×M3 从玻纤板底穿上来 + 法兰螺母; 夹条 / 顶部件 / 梳齿同前')
+    note[3] = (f'转子罩 2 片 (沿灯板线 y{RSB.SPLIT_Y:g} 分, 各带顶盖; r{RSB.R0:g}–{RSB.R1:g}, Z{RSB.Z0:g}–{RSB.Z1:g}): 凸台坐固定件带顶, '
+               f'4×M3×{RSB.MNT_L:g} 进固定件铜螺母; 配重唇 {len(RS.W_A)} 孔 M3×{RS.W_L:g} 从罩顶插, 按需')
 fig.text(0.03, 0.025, '\n'.join('· ' + s for s in note), fontsize=8, va='bottom')
-fig.text(0.98, 0.012, f'v1.2/scripts/assembly_noglass_v1_2.py  2026-11-16', fontsize=7, ha='right', color='#666')
+fig.text(0.98, 0.012, f'v1.2/scripts/assembly_noglass_v1_2.py  2026-11-18 (转子盘B)' if B.ROTOR_B else 'v1.2/scripts/assembly_noglass_v1_2.py  2026-11-16', fontsize=7, ha='right', color='#666')
 OUT2 = B.V12 / 'assembly_v1_2_不装玻璃_装配图'
 fig.savefig(f'{OUT2}.pdf'); fig.savefig(f'{OUT2}.png', dpi=110)
 print('wrote', OUT3, f'{OUT2}.pdf')
