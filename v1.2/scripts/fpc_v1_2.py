@@ -55,6 +55,8 @@ assert BB_SEAT_MODE in ('same', 'out', 'in'), BB_SEAT_MODE
 OUT = B.V12 / 'models' / 'fpc_v1_2' / ('新朝向_桥板转180' if BRIDGE_FLIP else '')
 if BB_SEAT_MODE != 'same': OUT = B.V12 / 'models' / 'fpc_v1_2' / '底板座反向方案' / BB_SEAT_MODE
 if BB_SEAT_MODE == 'out' and BRIDGE_FLIP: OUT = B.V12 / 'models' / 'fpc_v1_2' / 'r4i_定稿'   # 11-17 默认 = r4i 两口朝外
+FPC_TRIAL = os.environ.get('FPC_OUT_DIR')                    # 11-18: 试算 (如双层厚度/弯半径) 输出到别处, 不覆盖定稿目录, 也不写整机 FPC走线 3MF
+if FPC_TRIAL: OUT = Path(FPC_TRIAL)
 
 # ---------------- 资料 ----------------
 BR_DIR = Path('/mnt/d/claude_workspace/pov3d/POV3D_V2桥_结构STEP与质量_2026-11-11')
@@ -710,7 +712,7 @@ def export():
         parts = [('玻纤板 fr4_plate_v1_2b', RB.fr4, '#C9B458', 0.05), ('承载盘 rim_ring_v1_2b', RB.rim, '#6AA84F', 0.05)] + \
                 [p for p in parts if not p[0].startswith(('转子毂盘', '承载盘', '立板'))] + \
                 [('屏幕固定件 +x screen_holder_v1_2b_a', RB.hold_a, '#F1C232', 0.03), ('屏幕固定件 −x screen_holder_v1_2b_b', RB.hold_b, '#E69138', 0.03)]
-    write3mf(str(B.V12 / ('assembly_v1_2_FPC走线.3mf' if BRIDGE_FLIP else 'assembly_v1_2_FPC走线_旧朝向.3mf')), parts)
+    if not FPC_TRIAL: write3mf(str(B.V12 / ('assembly_v1_2_FPC走线.3mf' if BRIDGE_FLIP else 'assembly_v1_2_FPC走线_旧朝向.3mf')), parts)
 
 
 def _sample(p, n=24):
@@ -861,7 +863,11 @@ def drawing():
     T(PW / 2, PH / 2, '草稿 - 待桥板 8 层 STEP 复核 (U52)' if BRIDGE_FLIP else '草稿 - 旧桥板朝向 (作废待重算)', 46, ha='center', va='center', color='red', alpha=0.18, rotation=20)
     T(PW - 15, PH - 14, '草稿', 16, ha='right', color='red')
     out = OUT / 'FPC_规格图_v1_2'
-    fig.savefig(f'{out}.pdf'); fig.savefig(f'{out}.png', dpi=130); plt.close(fig)
+    try:
+        fig.savefig(f'{out}.pdf')
+    except PermissionError:                      # 11-18: PDF 被阅读器占用 ⇒ 另存 .NEW.pdf, 不中断
+        fig.savefig(f'{out}.NEW.pdf'); print('  !! 被占用, 另存', f'{out}.NEW.pdf')
+    fig.savefig(f'{out}.png', dpi=130); plt.close(fig)
     return out
 
 
@@ -969,7 +975,11 @@ def combo():
     for i, t in enumerate(notes):
         T(300, 140 - 6 * i, t, 5.8)
     out = OUT / '组合图_桥板FPC_v1_2'
-    fig.savefig(f'{out}.pdf'); fig.savefig(f'{out}.png', dpi=130); plt.close(fig)
+    try:
+        fig.savefig(f'{out}.pdf')
+    except PermissionError:                      # 11-18: PDF 被阅读器占用 ⇒ 另存 .NEW.pdf, 不中断
+        fig.savefig(f'{out}.NEW.pdf'); print('  !! 被占用, 另存', f'{out}.NEW.pdf')
+    fig.savefig(f'{out}.png', dpi=130); plt.close(fig)
     return out
 
 
