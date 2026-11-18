@@ -647,6 +647,21 @@ SPECS.append(dict(
     notes=[f"线束中心 y{F(MW.CL_YC)}, 3 线 Φ3 贴在一起; 洞单边 +{F(MW.CL_CLR)}; 洞顶到件顶 {F(MW.CL_H - MW.CL_CH_H)}",
            f"走线: 出线口 → (30, −45) → 往下到 y≈−62 → 沿 x 穿本件 → (−40, −60) → (−64, −40) → MR30 座 −y 端",
            f"11-18 加宽: 孔离线束中心 ±{F(MW.CL_INS_DY)} (孔到线槽肉 {F(MW.CL_INS_DY - MW.INS_D / 2 - MW.CL_CH_HW)}), 端壁 {F(MW.EAR_H - MW.INS_D / 2)}"]))
+# 11-18 用户: MR30 座 / 线夹两版 —— 上面两张 = 玻纤板版 (整机); _old = 配旧一体底盘 Φ220×6 (原孔位, 旧沉孔 Φ7×2 支承 Z-4)
+for _base, _shape, _pts, _L in (("mr30_seat_v1_2", MW.mr30_seat(MW.MR_INS_DX_OLD), MW.mr_ins(MW.MR_INS_DX_OLD), 12.0),
+                                ("motor_wire_clamp_v1_2", MW.wire_clamp(MW.CL_INS_DY_OLD), MW.cl_ins(MW.CL_INS_DY_OLD), 10.0)):
+    _src = next(q for q in SPECS if q["code"] == _base)
+    _h = dict(_src["holes"][0]); _h["pts"] = _pts
+    _h["where"] = xy(_pts) + f"  M3×{F(_L)} 超薄头从旧一体底盘底面 Φ7×2 沉孔往上 (头支承 Z-4), 尖 = 件顶, 啮合 4"
+    if "det" in _h: _h["det"] = dict(_h["det"], pt=_pts[0])
+    _y0, _y1 = MW.cl_span(MW.CL_INS_DY_OLD)
+    _ttl = _src["title"].replace(f"×{F(MW.CL_Y1 - MW.CL_Y0)}×", f"×{F(_y1 - _y0)}×") if "clamp" in _base else _src["title"]
+    SPECS.append(dict(_src, code=_base + "_old", shape=_shape, holes=[_h], short=_src["short"] + " (旧底盘版)", title=_ttl,
+                      subtitle="_old 版: 配旧一体底盘 Φ220×6 (不带玻纤板), 原孔位; " + _src["subtitle"].split("; ", 1)[-1], date="2026-11-18",
+                      notes=["_old 版: 配不带玻纤板的旧一体底盘 base_disc_v1_2 (Φ220×6), 孔位 = 原位; 玻纤板版孔各外移 1 (另一张图)"]
+                            + [n for n in _src["notes"] if not n.startswith("11-18 加宽")]
+                            + ([f"11-18 加宽 (孔不动): 孔离线束中心 ±{F(MW.CL_INS_DY_OLD)} (孔到线槽肉 {F(MW.CL_INS_DY_OLD - MW.INS_D / 2 - MW.CL_CH_HW)}), 端壁 {F(MW.EAR_H - MW.INS_D / 2)}"] if "clamp" in _base else
+                               [f"11-18 加宽 (孔不动): 座宽 {F(2 * MW.SEAT_HX)}, 孔 ±{F(MW.MR_INS_DX_OLD)}: 外壁 {F(MW.SEAT_HX - MW.MR_INS_DX_OLD - MW.INS_D / 2)} / 到护套槽 {F(MW.MR_INS_DX_OLD - MW.INS_D / 2 - MW.SHEATH_W / 2)}"])))
 # ---------------- 转子盘B 承载盘单件 rim_ring_v1_2b (rotor_b_v1_2.py; 11-17 夜) —— 只在点名出图时 import (rotor_b 要建整套转子件, 慢) ----------------
 if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1):   # 11-18 整机换成转子盘B 后全量出图也带上
     import io as _io, contextlib as _cl
@@ -741,7 +756,7 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
     _FOLDER_B = {"rim_ring_v1_2b": "转子盘B", "screen_holder_v1_2b_a": "转子盘B", "screen_holder_v1_2b_b": "转子盘B", "rotor_shroud_b_a_v1_2b": "转子盘B", "rotor_shroud_b_b_v1_2b": "转子盘B"}
 else:
     _FOLDER_B = {}
-_DIR = {"motor_wire_clamp_v1_2": "mr30_seat_v1_2"}   # 11-18 用户: 线夹文件放 MR30 文件夹 (models/<目录>/)
+_DIR = {"motor_wire_clamp_v1_2": "mr30_seat_v1_2", "mr30_seat_v1_2_old": "mr30_seat_v1_2", "motor_wire_clamp_v1_2_old": "mr30_seat_v1_2"}   # 11-18 用户: 线夹文件放 MR30 文件夹 (models/<目录>/)
 _D1116 = {"led_post_a_v1_2", "led_post_b_v1_2", "led_bar_v1_2", "led_top_v1_2", "led_comb_v1_2", "rotor_shroud_a_v1_2", "rotor_shroud_b_v1_2",
           "rotor_lid_v1_2", "rotor_lid_b_v1_2", "wireless_holder_v1_2", "rim_ring_v1_2_D170", "hub_disc_v1_2", "base_disc_v1_2", "mr30_seat_v1_2", "motor_wire_clamp_v1_2"}
 for sp in SPECS:

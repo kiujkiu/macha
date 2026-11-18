@@ -91,9 +91,11 @@ Y_OPEN = Y_STEP + BODY_L                           #  8.9 开口面
 MW_WIRE_D = 3.0                                    # 电机线 (用户 11-16 实测) 零余量
 SLOT_HW = MR_PITCH + MW_WIRE_D / 2                 # 5.0 合并出线口半宽 (10×3)
 SLOT_TOP = PIN_Z + MW_WIRE_D / 2                   # 3.9
-MR_INS_DX = 10.0                                   # 11-18 用户: 孔位不改 (曾改 11 已撤回)
-MR_INS = [(MR_XC - MR_INS_DX, (Y_R + Y_OPEN) / 2), (MR_XC + MR_INS_DX, (Y_R + Y_OPEN) / 2)]
-assert SEAT_HX - MR_INS_DX - INS_D / 2 >= 2.5, '铜螺母孔外壁 < 2.5'
+# 11-18 用户: 两版 —— 玻纤板版 (整机默认, 孔外移 1, 内壁 2.75) / _old 版 (配旧一体底盘 Φ220×6, 原孔 ±10, 内壁 1.75); 都加宽 32 + 底片
+MR_INS_DX, MR_INS_DX_OLD = 11.0, 10.0
+def mr_ins(dx=MR_INS_DX): return [(MR_XC - dx, (Y_R + Y_OPEN) / 2), (MR_XC + dx, (Y_R + Y_OPEN) / 2)]
+MR_INS = mr_ins()
+assert MR_INS_DX - INS_D / 2 - SHEATH_W / 2 >= 2.5 and SEAT_HX - MR_INS_DX - INS_D / 2 >= 2.5, '铜螺母孔壁 < 2.5'
 MR_POCKET = None                                   # 11-18: 座子加底片, 底盘/玻纤板护套坑取消
 
 assert SEAT_H <= TOP_MAX + 1e-9, (SEAT_H, TOP_MAX)
@@ -104,7 +106,7 @@ for gx, gy in [(-62.5, 12.5), (-62.5, -12.5)]:
 U_RIB_OLD = MR_PITCH - MW_WIRE_D                   # 0.5 ⇒ 分开做 3 个 Φ3 U 口打不出, 合并
 assert U_RIB_OLD < 0.8
 
-def mr30_seat():
+def mr30_seat(dx=MR_INS_DX):
     s = box(MR_XC - SEAT_HX, Y_R, 0, MR_XC + SEAT_HX, Y_OPEN, SEAT_H)
     s = cut(s, box(MR_XC - BODY_W / 2, Y_STEP, Z_BD0, MR_XC + BODY_W / 2, Y_OPEN + 1, Z_BD1))     # 本体段槽 11.8, 底片 1.45 (11-18)
     s = cut(s, box(MR_XC - SHEATH_W / 2, Y_CAPI, Z_SH0, MR_XC + SHEATH_W / 2, Y_STEP, Z_SH1))    # 护套段槽 12.3, 底片 1.2 (11-18)
@@ -113,7 +115,7 @@ def mr30_seat():
              box(MR_XC - MR_PITCH, ys[0], PIN_Z - 0.01, MR_XC + MR_PITCH, ys[1], SLOT_TOP),
              *[ycyl(MR_XC + k * MR_PITCH, PIN_Z, MW_WIRE_D, *ys) for k in (-1, 1)])
     s = cut(s, w)
-    for x, y in MR_INS:
+    for x, y in mr_ins(dx):
         s = cut(s, cyl(x, y, PASS_D, -1, SEAT_H + 1), cyl(x, y, INS_D, SEAT_H - INS_H, SEAT_H + 1))
     return clean(s)
 
@@ -133,10 +135,12 @@ CL_CLR = 0.3                                       # 用户 11-16: 线夹只理�
 CL_CH_HW = CL_PITCH + CL_WIRE_D / 2 + CL_CLR       # 4.8 桥洞半宽 (9.6)
 CL_CH_H = CL_WIRE_D + CL_CLR                       # 3.3 桥洞高
 CL_H = 6.0                                         # 件顶 = M3×10 尖 (铜螺母顶齐件顶)
-CL_INS_DY = 8.5                                    # 铜螺母孔心离线束中心 (y); 11-18 用户: 孔位不改 (曾改 9.5 已撤回), 只加端壁
-CL_INS = [(CL_XC, CL_YC + CL_INS_DY), (CL_XC, CL_YC - CL_INS_DY)]   # +y 侧 / −y 侧
+CL_INS_DY, CL_INS_DY_OLD = 9.5, 8.5                # 铜螺母孔心离线束中心 (y); 11-18 两版: 玻纤板版 9.5 (到线槽肉 2.6) / _old 版 8.5 (原孔, 1.6)
+def cl_ins(dy=CL_INS_DY): return [(CL_XC, CL_YC + dy), (CL_XC, CL_YC - dy)]   # +y 侧 / −y 侧
+CL_INS = cl_ins()
 EAR_H = INS_D / 2 + 3.0                            # 5.1 孔到 y 端面 (11-18: 端壁 1.5→3.0)
-CL_Y0, CL_Y1 = CL_YC - CL_INS_DY - EAR_H, CL_YC + CL_INS_DY + EAR_H   # −74.1 .. −49.9 (24.2)
+def cl_span(dy=CL_INS_DY): return CL_YC - dy - EAR_H, CL_YC + dy + EAR_H
+CL_Y0, CL_Y1 = cl_span()                           # 玻纤板版 −76.6 .. −47.4 (29.2); _old −75.6 .. −48.4 (27.2)
 assert CL_H <= TOP_MAX and CL_H - CL_CH_H >= 2.0
 assert CL_INS_DY - INS_D / 2 - CL_CH_HW >= 1.2, '铜螺母孔到线槽肉 < 1.2'
 for gx, gy in [(-37.5, -62.5), (-12.5, -62.5)]:
@@ -148,10 +152,11 @@ def xcyl(y, z, d, x0, x1):                         # 沿 x 的圆柱
     s = xf(cyl(0, 0, d, 0, x1 - x0), t)            # 绕 Y 转 +90°: +Z → +X
     tt = gp_Trsf(); tt.SetTranslation(gp_Vec(x0, y, z)); return xf(s, tt)
 
-def wire_clamp():                                  # 桥形压条: 底面一个 9.6×3.3 通洞 (沿 x), 两端各一颗 M3
-    s = box(CL_XC - CL_HX, CL_Y0, 0, CL_XC + CL_HX, CL_Y1, CL_H)
+def wire_clamp(dy=CL_INS_DY):                      # 桥形压条: 底面一个 9.6×3.3 通洞 (沿 x), 两端各一颗 M3
+    y0, y1 = cl_span(dy)
+    s = box(CL_XC - CL_HX, y0, 0, CL_XC + CL_HX, y1, CL_H)
     s = cut(s, box(CL_XC - CL_HX - 1, CL_YC - CL_CH_HW, -1, CL_XC + CL_HX + 1, CL_YC + CL_CH_HW, CL_CH_H))
-    for x, y in CL_INS:
+    for x, y in cl_ins(dy):
         s = cut(s, cyl(x, y, PASS_D, -1, CL_H + 1), cyl(x, y, INS_D, CL_H - INS_H, CL_H + 1))
     return clean(s)
 
@@ -280,6 +285,13 @@ def export(seat, clamp):
         items += [(f'M3×{SCREW_L[i]:g} 内六角', fuse(sc[i], sc[len(MW_M3) + i]), '#888888', None, False) for i in idx]
         items += [('M3×4 铜螺母', ins[i], '#B8860B', None, False) for i in idx]
         write_doc(items, d / f'{name}_asm.step', name + '_asm')
+    # _old 版 (配旧一体底盘 Φ220×6, 原孔位; 旧底盘沉孔 Φ7×2 支承 Z-4 ⇒ MR30 座 M3×12 / 线夹 M3×10): 只出打印件 STEP/STL
+    d = B.V12 / 'models' / 'mr30_seat_v1_2'
+    for name, P, col in (('mr30_seat_v1_2_old', mr30_seat(MR_INS_DX_OLD), '#F1C232'), ('motor_wire_clamp_v1_2_old', wire_clamp(CL_INS_DY_OLD), '#E69138')):
+        pp = print_pose(P)
+        write_doc([(name, pp, col, None, False)], d / f'{name}.step', name)
+        BRepMesh_IncrementalMesh(pp, 0.02, False, 0.2, True)
+        w = StlAPI_Writer(); w.ASCIIMode = False; assert w.Write(pp, str(d / f'{name}.stl'))
 
 if __name__ == '__main__':
     seat, clamp, disc, merged = build()
