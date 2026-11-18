@@ -30,7 +30,7 @@ Z_G = 53.08; Z_VIEW0 = 73.08; SPLIT_Z = 32.0
 JN_R, ANG = 99.5, 22.5   # 11-17 晚 同 build_v1_2
 JN_D, JN_CB = 4.5, 8.8; JN_L, JN_HH = 50.0, 1.8
 JN_BEAR = Z_G - float(num('JN_BEAR').split('-')[1]); JN_TIP = JN_BEAR - JN_L
-JN_NUT_FD, JN_NUT_H = 9.8, 4.3; JN_NUT_Z1 = 0.3 + JN_NUT_H
+JN_NUT_FD, JN_NUT_H = 9.8, 4.3; JN_NUT_Z1 = 2.3 + JN_NUT_H   # 11-18 窝深 6.6 (同 build_v1_2)
 
 def load(p):
     r = STEPControl_Reader(); r.ReadFile(str(p)); r.TransferRoots(); return r.OneShape()
@@ -124,7 +124,7 @@ txt = f'''紧固件 (按用户实物):
    头顶 Z{JN_BEAR + JN_HH:.2f}, 玻璃端面下 {Z_G - JN_BEAR - JN_HH:.1f}
  · 底座: Φ{JN_D:g} 通, 底面圆窝 Φ{JN_NUT_FD:g} 深 {JN_NUT_Z1:g}
    螺母法兰朝上压入 (紧配不掉, 锯齿压窝顶止转)
-   螺母 Z0.3..{JN_NUT_Z1:g}
+   螺母 Z{JN_NUT_Z1 - JN_NUT_H:g}..{JN_NUT_Z1:g}
  · 尾 Z{JN_TIP:.2f}, 啮合 {JN_NUT_Z1 - JN_TIP:.2f}
 
 装配顺序:
