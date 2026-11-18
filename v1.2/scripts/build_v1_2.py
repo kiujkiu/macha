@@ -351,7 +351,7 @@ XT_RF = 109.7                                      # 用户 11-13 (更正): 只�
 XT_HOLE_RC = 100.0                                 # 用户 11-13 晚: 底盘已按 b0a79b0 (11-12) 打印, XT60 孔留在 x100.0 (r100.78) 不动 ⇒ 压块/底垫孔在局部系外移 2.8 (V1.2-g)
 _rc = XT_HOLE_RC                                    # (8878ee8 曾改 XT_RF − 11.95 − 0.55 = 97.2, 已撤回)
 XT_GHOLES_DISC = [(_rc * _c - xx * _s, _rc * _s + xx * _c) for xx in (12.5, -12.5)]   # 与 4c XT_GHOLES 相同 (下面 assert)
-# 4b 底盘: 剩下的 M6 网格位 (节距 25, ±12.5..±87.5, 同原金属网格板) 全做通孔+沉孔
+# 4b 底盘: M6 网格位 (节距 25, ±12.5..±87.5, 同原金属网格板); 11-18 起只留外圈 4 个 (POSTS), 见 GRID_DROP
 SEAT_M6 = [(62.5, 62.5), (-62.5, 62.5), (-62.5, -62.5), (62.5, -62.5)]   # = V1.1 定位环原孔位 (板放正后 4 个都让得开)
 SEAT_ANG = [math.degrees(math.atan2(y, x)) for x, y in SEAT_M6]
 BOARD_KEEP = bl(20 - 8, 10 - 8, 100 + 8, 50 + 8, -10, 10)          # 板外框外扩 8 (= 沉孔半径 6.5 + 壁 1.5)
@@ -394,7 +394,9 @@ for x, y in GRID:                                   # 原洞洞板 M6 网格: �
     if any(math.hypot(x - a, y - b) < CB_D / 2 + 7.0 / 2 + 1.0 for a, b in KEY_M3): why.append('按键支架 M3')
     (SKIP if why else EXTRA).append(((x, y), why) if why else (x, y))
 assert all(p in EXTRA for p in POSTS), ('立柱孔被挡', [q for q in SKIP if q[0] in POSTS])
-LOG['disc_holes'] = dict(collar=len(COLLAR_M6), grid=len(EXTRA), skipped=SKIP)
+GRID_DROP = [p for p in EXTRA if p not in POSTS]          # 用户 11-18: 网格 M6 孔没实际用途 → 只留外圈 4 个 (= POSTS R95.2, 当锁台面/扩展孔), 其余 22 个删掉
+EXTRA = [p for p in EXTRA if p in POSTS]
+LOG['disc_holes'] = dict(collar=len(COLLAR_M6), grid=len(EXTRA), dropped=GRID_DROP, skipped=SKIP)
 d = cyl(0, 0, DISC_D, -DISC_T, 0)
 for x, y in FIXED + EXTRA:
     d = cut(d, cyl(x, y, M6_D, -DISC_T - 1, 1), cyl(x, y, CB_D, -DISC_T - 1, -DISC_T + CB_H))

@@ -96,7 +96,7 @@ MR_POCKET = (MR_XC - SHEATH_W / 2, Y_CAPI, MR_XC + SHEATH_W / 2, Y_STEP, POCKET_
 assert SEAT_H <= TOP_MAX + 1e-9, (SEAT_H, TOP_MAX)
 assert B.DISC_T - POCKET_D >= 2.0
 for gx, gy in [(-62.5, 12.5), (-62.5, -12.5)]:
-    assert (gx, gy) in B.EXTRA
+    assert (gx, gy) in B.GRID                       # 网格坐标作定位参考 (11-18 起这几个 M6 孔已删, 只校间隙)
     assert gy - B.M6_D / 2 >= Y_OPEN + 0.3 - 1e-9 if gy > 0 else gy + B.M6_D / 2 <= Y_R - 0.3 + 1e-9, 'MR30 座压到 M6 孔'
 U_RIB_OLD = MR_PITCH - MW_WIRE_D                   # 0.5 ⇒ 分开做 3 个 Φ3 U 口打不出, 合并
 assert U_RIB_OLD < 0.8
@@ -137,7 +137,7 @@ CL_Y0, CL_Y1 = CL_YC - CL_INS_DY - EAR_H, CL_YC + CL_INS_DY + EAR_H   # −74.1 
 assert CL_H <= TOP_MAX and CL_H - CL_CH_H >= 2.0
 assert CL_INS_DY - INS_D / 2 - CL_CH_HW >= 1.2, '铜螺母孔到线槽肉 < 1.2'
 for gx, gy in [(-37.5, -62.5), (-12.5, -62.5)]:
-    assert (gx, gy) in B.EXTRA
+    assert (gx, gy) in B.GRID                       # 网格坐标作定位参考 (11-18 起这几个 M6 孔已删, 只校间隙)
     assert abs(gx - CL_XC) - B.M6_D / 2 - CL_HX >= 1.0, '线夹压到 M6 孔'
 
 def xcyl(y, z, d, x0, x1):                         # 沿 x 的圆柱
