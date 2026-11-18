@@ -132,7 +132,7 @@ ins = f"Φ3.2 通 + 底面 Φ{F(B.INS_HOLE_D)}×{F(B.INS_HOLE_H)} 铜螺母孔 (
 SPECS.append(dict(
     code="base_disc_v1_2_gf", shape=B.disc_print, short=f"打印底盘 Φ{F(B.DISC_D)}×{F(B.PRINT_T)}", qty="1",
     title=f"打印底盘 Φ{F(B.DISC_D)}×{F(B.PRINT_T)} (玻纤板方案, 上压 FR4 {F(B.FR4_T)} 厚 base_fr4_v1_2)",
-    subtitle=f"Z{F(-B.DISC_T)}..{F(-B.FR4_T)}; 顶面平 (贴玻纤板底), 沉孔 / 铜螺母孔全部开在底面; 顶面槽 (电容/让位/盘心/护套坑) 都移到玻纤板上做通孔",
+    subtitle=f"Z{F(-B.DISC_T)}..{F(-B.FR4_T)}; 顶面平 (贴玻纤板底), 沉孔 / 铜螺母孔全部开在底面; 顶面槽 (电容/让位/盘心) 都移到玻纤板上做通孔",
     orient="顶面 (贴玻纤板那面) 贴床",
     phi=[24, 2 * B.R_SCREW, 2 * B.STATOR_R, (2 * B.RING_M3_XY, f"{F(2 * B.RING_M3_XY)} (方)"), 2 * B.SH_R, B.DISC_D],
     det_h=38.0,
@@ -160,7 +160,7 @@ SPECS.append(dict(
     notes=[f"11-18 玻纤板方案: 底座 = 本件 {F(B.PRINT_T)} + FR4 {F(B.FR4_T)} (板顶 Z0, 上面所有件 Z 不变)",
            f"盘底往上的 M3 沉孔 Φ7×{F(B.M3_CB_H)} (超薄头齐底面), 支承 Z{F(-B.DISC_T + B.M3_CB_H)}: 螺丝比原一体底盘各 +2, 尖位置不变",
            f"通槽: 散热片 20×40 ×2 (控制板 1; 线圈驱动板 x{F(B.CD.SINK_X0)}..{F(B.CD.SINK_X1)} y{F(B.CD.SINK_Y0)}..{F(B.CD.SINK_Y1)}) + 下载排针背面焊脚通槽 {F(B.RELIEFS[2][1] - B.RELIEFS[2][0])}×{F(B.RELIEFS[2][3] - B.RELIEFS[2][2])}",
-           "原顶面 3 深的槽 (盘心 Φ12 / 控制板背面让位 / 电容弧形槽 / MR30 护套坑) 全在玻纤板层里, 本件顶面平",
+           "原顶面 3 深的槽 (盘心 Φ12 / 控制板背面让位 / 电容弧形槽) 全在玻纤板层里, 本件顶面平",
            "旧一体底盘 base_disc_v1_2 (Φ220×6) 图纸/模型冻结在 models/base_disc_v1_2/, 不再更新"],
 ))
 
@@ -624,29 +624,29 @@ _mr = MW.MR_INS; _cl_ = MW.CL_INS
 SPECS.append(dict(
     code="mr30_seat_v1_2", shape=MW.mr30_seat(), stl_asm=True, short="MR30 座 (电机线接头)", qty="1", material="PETG (建议) / PLA",
     title=f"MR30 座: {F(2 * MW.SEAT_HX)}×{F(MW.Y_OPEN - MW.Y_R)}×{F(MW.SEAT_H)} 坐底盘顶, 夹 MR30-M 公头 (护套 −y 接电机线, 开口 +y 插母头)",
-    subtitle=f"底盘 −x 侧 x{F(MW.MR_XC - MW.SEAT_HX)}…{F(MW.MR_XC + MW.SEAT_HX)} y{F(MW.Y_R)}…{F(MW.Y_OPEN)}, 夹在网格 M6 孔 (−62.5, ±12.5) 之间; 顶 Z{F(MW.SEAT_H)} = 定子盘底 − 0.5",
-    orient="顶面贴床 (槽口朝上), 免支撑",
+    subtitle=f"坐玻纤板顶 Z0, −x 侧 x{F(MW.MR_XC - MW.SEAT_HX)}…{F(MW.MR_XC + MW.SEAT_HX)} y{F(MW.Y_R)}…{F(MW.Y_OPEN)}; 顶 Z{F(MW.SEAT_H)} = 定子盘底 − 0.5",
+    orient=f"顶面贴床 (槽口朝上), 底片在最上层跨 {F(MW.SHEATH_W)} 架桥, 免支撑", date="2026-11-18",
     sec=dict(ang=180, r0=44.0, r1=78.0, zd=[(0, MW.SEAT_H, F(MW.SEAT_H))]),
     holes=[dict(tag="N", pts=_mr, spec=f"Φ{F(MW.PASS_D)} 通 + 顶面 Φ{F(MW.INS_D)}×{F(MW.INS_H)} 热压 M3×4 铜螺母 (顶齐件顶)",
-                where=xy(_mr) + f"  M3×{F(MW.SCREW_L[0])} 内六角从底盘底面 Φ7×2 沉孔往上 (头支承 Z{F(MW.BEAR_Z)}), 尖 Z{F(MW.SEAT_H)} 啮合 4",
+                where=xy(_mr) + f"  M3×{F(MW.SCREW_L[0])} 超薄头从打印底盘底面 Φ{F(B.M3_CB_D)}×{F(B.M3_CB_H)} 沉孔往上 (头支承 Z{F(MW.BEAR_Z)}), 尖 Z{F(MW.SEAT_H)} 啮合 4",
                 det=dict(kind="ins", d=MW.PASS_D, D=MW.INS_D, h=MW.INS_H, side="top", z=(0, MW.SEAT_H), pt=_mr[0], ang=90, title="铜螺母孔 N (沿 y 剖)"))],
-    notes=[f"槽: 本体段 {F(MW.BODY_W)} 宽 × 顶 Z{F(MW.Z_BD1)} / 护套段 {F(MW.SHEATH_W)} 宽 × 顶 Z{F(MW.Z_SH1)}, 零间隙; 槽底开通 (底盘顶面 + 护套坑当槽底)",
-           f"底盘顶面护套坑 {F(MW.SHEATH_W)}×{F(MW.SHEATH_L)} 深 {F(MW.POCKET_D)} (build_v1_2 MW_POCKET): 护套坐坑底, 本体底面落底盘顶 Z0",
+    notes=[f"槽: 本体段 {F(MW.BODY_W)} 宽 Z{F(MW.Z_BD0)}..{F(MW.Z_BD1)} / 护套段 {F(MW.SHEATH_W)} 宽 Z{F(MW.Z_SH0)}..{F(MW.Z_SH1)}, 零间隙",
+           f"11-18 加底片: 护套段 {F(MW.FLOOR_T)} / 本体段 {F(MW.Z_BD0)} (台阶 0.25 = 护套比本体单边大), 顶板 {F(MW.T_TOP)}; 座顶 Z{F(MW.SEAT_H)} (定子盘底 − 0.5)",
            f"后墙 {F(MW.REAR_T)} 厚, 出线口 {F(2 * MW.SLOT_HW)}×3 长圆 (3×Φ3 电机线并排, 线心 Z{F(MW.PIN_Z)})",
-           "插母头: 护套尾面顶后墙; 拔母头: 护套台肩顶槽台阶 + 坑前壁 (motor_wire_report.json)",
+           "插母头: 护套尾面顶后墙; 拔母头: 护套台肩顶槽台阶 (两侧 + 顶 + 底片台阶 0.25)",
            "⚠ 待用户确认: 公头朝向 / 母头外形 / 线径 Φ3"]))
 SPECS.append(dict(
     code="motor_wire_clamp_v1_2", shape=MW.wire_clamp(), stl_asm=True, short="电机线束线夹", qty="1", material="PETG (建议) / PLA",
     title=f"电机线束线夹: 桥形压条 {F(2 * MW.CL_HX)}×{F(MW.CL_Y1 - MW.CL_Y0)}×{F(MW.CL_H)}, 底面通洞 {F(2 * MW.CL_CH_HW)}×{F(MW.CL_CH_H)} 沿 x (3×Φ3 线, 能滑动)",
-    subtitle=f"底盘 x{F(MW.CL_XC - MW.CL_HX)}…{F(MW.CL_XC + MW.CL_HX)} y{F(MW.CL_Y0)}…{F(MW.CL_Y1)}, 在 M6 孔 (−37.5 / −12.5, −62.5) 之间; 只理线限位, 不卡紧",
-    orient="顶面贴床 (线槽朝上), 免支撑",
+    subtitle=f"坐玻纤板顶 Z0, x{F(MW.CL_XC - MW.CL_HX)}…{F(MW.CL_XC + MW.CL_HX)} y{F(MW.CL_Y0)}…{F(MW.CL_Y1)}; 只理线限位, 不卡紧",
+    orient="顶面贴床 (线槽朝上), 免支撑", date="2026-11-18",
     sec=dict(ang=math.degrees(math.atan2(MW.CL_YC, MW.CL_XC)) % 360, r0=50.0, r1=82.0, zd=[(0, MW.CL_H, F(MW.CL_H)), (0, MW.CL_CH_H, F(MW.CL_CH_H))]),
     holes=[dict(tag="N", pts=_cl_, spec=f"Φ{F(MW.PASS_D)} 通 + 顶面 Φ{F(MW.INS_D)}×{F(MW.INS_H)} 热压 M3×4 铜螺母 (顶齐件顶)",
-                where=xy(_cl_) + f"  M3×{F(MW.SCREW_L[2])} 内六角从底盘底面 Φ7×2 沉孔往上 (头支承 Z{F(MW.BEAR_Z)}), 尖 Z{F(MW.CL_H)} 啮合 4",
+                where=xy(_cl_) + f"  M3×{F(MW.SCREW_L[2])} 超薄头从打印底盘底面 Φ{F(B.M3_CB_D)}×{F(B.M3_CB_H)} 沉孔往上 (头支承 Z{F(MW.BEAR_Z)}), 尖 Z{F(MW.CL_H)} 啮合 4",
                 det=dict(kind="ins", d=MW.PASS_D, D=MW.INS_D, h=MW.INS_H, side="top", z=(0, MW.CL_H), pt=_cl_[0], ang=0, title="铜螺母孔 N (沿 x 剖)"))],
     notes=[f"线束中心 y{F(MW.CL_YC)}, 3 线 Φ3 贴在一起; 洞单边 +{F(MW.CL_CLR)}; 洞顶到件顶 {F(MW.CL_H - MW.CL_CH_H)}",
            f"走线: 出线口 → (30, −45) → 往下到 y≈−62 → 沿 x 穿本件 → (−40, −60) → (−64, −40) → MR30 座 −y 端",
-           f"离两 M6 孔边各 {F(min(abs(gx - MW.CL_XC) for gx in (-37.5, -12.5)) - B.M6_D / 2 - MW.CL_HX)}"]))
+           f"11-18 加宽: 孔离线束中心 ±{F(MW.CL_INS_DY)} (孔到线槽肉 {F(MW.CL_INS_DY - MW.INS_D / 2 - MW.CL_CH_HW)}), 端壁 {F(MW.EAR_H - MW.INS_D / 2)}"]))
 # ---------------- 转子盘B 承载盘单件 rim_ring_v1_2b (rotor_b_v1_2.py; 11-17 夜) —— 只在点名出图时 import (rotor_b 要建整套转子件, 慢) ----------------
 if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1):   # 11-18 整机换成转子盘B 后全量出图也带上
     import io as _io, contextlib as _cl

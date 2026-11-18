@@ -73,16 +73,17 @@ BODY_W, BODY_H, BODY_L = 11.8, 4.8, 8.5            # 本体 (开口侧)
 MR_L = SHEATH_L + BODY_L                           # 15.4
 BODY_LIFT = (SHEATH_H - BODY_H) / 2                # 0.25
 POCKET_D = BODY_LIFT                               # 底盘护套坑深 0.25 ⇒ 本体底面 = 底盘顶 Z0
-Z_SH0 = -POCKET_D                                  # 护套底 −0.25
+FLOOR_T = 1.2                                      # 11-18 用户: 座子加底片 1.2 (原底开, 护套坐底盘坑; 玻纤板方案后坑成了 FR4 通孔 S1, 护套悬空)
+Z_SH0 = FLOOR_T                                    # 护套底 1.2 (原 −0.25); 本体底 1.45 (本体段底片 1.45 = 原底盘坑台阶)
 Z_SH1 = Z_SH0 + SHEATH_H                           # 护套顶 5.05
 Z_BD0, Z_BD1 = Z_SH0 + BODY_LIFT, Z_SH0 + BODY_LIFT + BODY_H   # 本体 0 .. 4.8
 PIN_Z = Z_SH0 + SHEATH_H / 2                       # 针轴 2.4
 MR_PITCH = 3.5
-T_TOP = 2.95                                       # 顶板 (旧件 3): 座顶 = 8.0 = 定子盘底 − 0.5 = M3×12 尖
+T_TOP = 1.5                                        # 顶板 (11-18: 2.95→1.5, 让给底片 1.2 + 原坑 0.25): 座顶 = 8.0 = 定子盘底 − 0.5 = M3×14 尖
 SEAT_H = Z_SH1 + T_TOP                             # 8.0
 REAR_T = 2.5                                       # 后墙 (旧件堵头 3)
 MR_XC = -61.0
-SEAT_HX = 16.0                                     # 座 x 半宽 (32; 11-18 用户: 铜螺母压进去撑变形 ⇒ 28→32, 孔外移 1, 内壁 1.75→2.75 / 外壁 1.9→2.9)
+SEAT_HX = 16.0                                     # 座 x 半宽 (32; 11-18 用户: 铜螺母压进去撑变形 ⇒ 28→32 只加宽, 孔位不动: 外壁 1.9→3.9, 内壁 (到护套槽) 仍 1.75)
 Y_R = -9.0                                         # 后墙外面
 Y_CAPI = Y_R + REAR_T                              # −6.5 护套尾面
 Y_STEP = Y_CAPI + SHEATH_L                         #  0.4 护套/本体台阶
@@ -90,10 +91,10 @@ Y_OPEN = Y_STEP + BODY_L                           #  8.9 开口面
 MW_WIRE_D = 3.0                                    # 电机线 (用户 11-16 实测) 零余量
 SLOT_HW = MR_PITCH + MW_WIRE_D / 2                 # 5.0 合并出线口半宽 (10×3)
 SLOT_TOP = PIN_Z + MW_WIRE_D / 2                   # 3.9
-MR_INS_DX = 11.0                                   # 11-18: 10→11
+MR_INS_DX = 10.0                                   # 11-18 用户: 孔位不改 (曾改 11 已撤回)
 MR_INS = [(MR_XC - MR_INS_DX, (Y_R + Y_OPEN) / 2), (MR_XC + MR_INS_DX, (Y_R + Y_OPEN) / 2)]
-assert MR_INS_DX - INS_D / 2 - SHEATH_W / 2 >= 2.5 and SEAT_HX - MR_INS_DX - INS_D / 2 >= 2.5, '铜螺母孔壁 < 2.5'
-MR_POCKET = (MR_XC - SHEATH_W / 2, Y_CAPI, MR_XC + SHEATH_W / 2, Y_STEP, POCKET_D)   # x0, y0, x1, y1, 深
+assert SEAT_HX - MR_INS_DX - INS_D / 2 >= 2.5, '铜螺母孔外壁 < 2.5'
+MR_POCKET = None                                   # 11-18: 座子加底片, 底盘/玻纤板护套坑取消
 
 assert SEAT_H <= TOP_MAX + 1e-9, (SEAT_H, TOP_MAX)
 assert B.DISC_T - POCKET_D >= 2.0
@@ -105,10 +106,10 @@ assert U_RIB_OLD < 0.8
 
 def mr30_seat():
     s = box(MR_XC - SEAT_HX, Y_R, 0, MR_XC + SEAT_HX, Y_OPEN, SEAT_H)
-    s = cut(s, box(MR_XC - BODY_W / 2, Y_STEP, -1, MR_XC + BODY_W / 2, Y_OPEN + 1, Z_BD1))        # 本体段槽 11.8 × 顶 4.8
-    s = cut(s, box(MR_XC - SHEATH_W / 2, Y_CAPI, -1, MR_XC + SHEATH_W / 2, Y_STEP, Z_SH1))       # 护套段槽 12.3 × 顶 5.05
+    s = cut(s, box(MR_XC - BODY_W / 2, Y_STEP, Z_BD0, MR_XC + BODY_W / 2, Y_OPEN + 1, Z_BD1))     # 本体段槽 11.8, 底片 1.45 (11-18)
+    s = cut(s, box(MR_XC - SHEATH_W / 2, Y_CAPI, Z_SH0, MR_XC + SHEATH_W / 2, Y_STEP, Z_SH1))    # 护套段槽 12.3, 底片 1.2 (11-18)
     ys = (Y_R - 1, Y_CAPI + 0.01)                                                                 # 后墙出线口: 10×3 长圆 + 直边到底
-    w = fuse(box(MR_XC - SLOT_HW, ys[0], -1, MR_XC + SLOT_HW, ys[1], PIN_Z),
+    w = fuse(box(MR_XC - SLOT_HW, ys[0], Z_SH0, MR_XC + SLOT_HW, ys[1], PIN_Z),                 # 11-18: 直边开到底片顶 (原开到底)
              box(MR_XC - MR_PITCH, ys[0], PIN_Z - 0.01, MR_XC + MR_PITCH, ys[1], SLOT_TOP),
              *[ycyl(MR_XC + k * MR_PITCH, PIN_Z, MW_WIRE_D, *ys) for k in (-1, 1)])
     s = cut(s, w)
@@ -132,12 +133,12 @@ CL_CLR = 0.3                                       # 用户 11-16: 线夹只理�
 CL_CH_HW = CL_PITCH + CL_WIRE_D / 2 + CL_CLR       # 4.8 桥洞半宽 (9.6)
 CL_CH_H = CL_WIRE_D + CL_CLR                       # 3.3 桥洞高
 CL_H = 6.0                                         # 件顶 = M3×10 尖 (铜螺母顶齐件顶)
-CL_INS_DY = 9.5                                    # 铜螺母孔心离线束中心 (y); 11-18 用户: 铜螺母撑变形 ⇒ 8.5→9.5 (到线槽肉 1.6→2.6)
+CL_INS_DY = 8.5                                    # 铜螺母孔心离线束中心 (y); 11-18 用户: 孔位不改 (曾改 9.5 已撤回), 只加端壁
 CL_INS = [(CL_XC, CL_YC + CL_INS_DY), (CL_XC, CL_YC - CL_INS_DY)]   # +y 侧 / −y 侧
 EAR_H = INS_D / 2 + 3.0                            # 5.1 孔到 y 端面 (11-18: 端壁 1.5→3.0)
 CL_Y0, CL_Y1 = CL_YC - CL_INS_DY - EAR_H, CL_YC + CL_INS_DY + EAR_H   # −74.1 .. −49.9 (24.2)
 assert CL_H <= TOP_MAX and CL_H - CL_CH_H >= 2.0
-assert CL_INS_DY - INS_D / 2 - CL_CH_HW >= 2.5, '铜螺母孔到线槽肉 < 2.5'
+assert CL_INS_DY - INS_D / 2 - CL_CH_HW >= 1.2, '铜螺母孔到线槽肉 < 1.2'
 for gx, gy in [(-37.5, -62.5), (-12.5, -62.5)]:
     assert (gx, gy) in B.GRID                       # 网格坐标作定位参考 (11-18 起这几个 M6 孔已删, 只校间隙)
     assert abs(gx - CL_XC) - B.M6_D / 2 - CL_HX >= 1.0, '线夹压到 M6 孔'
@@ -163,8 +164,6 @@ def disc_cuts():
     out = []
     for x, y in MW_M3:
         out += [cyl(x, y, M3_HOLE_D, -B.DISC_T - 1, 1), cyl(x, y, CB_D, -B.DISC_T - 1, -B.DISC_T + CB_H)]
-    x0, y0, x1, y1, dd = MR_POCKET
-    out.append(box(x0, y0, -dd, x1, y1, 1))
     return out
 
 MW_TOP = [SEAT_H] * len(MR_INS) + [CL_H] * len(CL_INS)
@@ -179,7 +178,7 @@ def build():
     seat, clamp = mr30_seat(), wire_clamp()
     if hasattr(B, 'MW_M3'):                         # 已并进 build_v1_2
         assert all(math.hypot(a - c, b - d) < 1e-9 for (a, b), (c, d) in zip(B.MW_M3, MW_M3)), (B.MW_M3, MW_M3)
-        assert all(abs(a - b) < 1e-9 for a, b in zip(B.MW_POCKET, MR_POCKET)), (B.MW_POCKET, MR_POCKET)
+        assert B.MW_POCKET is None and MR_POCKET is None
         assert abs(B.MW_HOLE_D - M3_HOLE_D) < 1e-9
         disc, disc0, merged = B.disc, None, True
     else:

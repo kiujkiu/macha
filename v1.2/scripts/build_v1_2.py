@@ -440,12 +440,11 @@ assert all(math.hypot(x, y) + M3_CB_D / 2 <= DISC_D / 2 - 1.0 for x, y in KEY_M3
 d = cut(d, *CD.disc_cut_list)                                                              # 线圈驱动板: 散热片通槽 + 3×M3 沉孔 + 电容弧形槽 + 背面电容坑
 # 用户 11-16: 电机线 MR30 座 (−x 侧, M6 孔 (−62.5,±12.5) 之间) + 束线夹 (M6 孔 (−37.5/−12.5, −62.5) 之间), 件在 motor_wire_v1_2.py (该脚本 assert 与这里一致)
 #   4×M3 Φ3.4 通 + 底面 Φ7×2 沉孔 (M3×12 / M3×10 往上进件顶铜螺母); MR30 护套坑 12.3×6.9 深 0.25 (本体底面落底盘顶 Z0)
-MW_M3 = [(-72.0, -0.05), (-50.0, -0.05), (-23.5, -52.5), (-23.5, -71.5)]   # 11-18: MR30 座 / 线夹加宽, 铜螺母孔各外移 1
+MW_M3 = [(-71.0, -0.05), (-51.0, -0.05), (-23.5, -53.5), (-23.5, -70.5)]   # 11-18 用户: MR30 座 / 线夹只加宽, 孔位不改
 MW_HOLE_D = 3.4
-MW_POCKET = (-67.15, -6.5, -54.85, 0.4, 0.25)     # x0, y0, x1, y1, 深
+MW_POCKET = None                                  # 11-18 用户: MR30 座加底片后护套坑取消 (原 (-67.15, -6.5, -54.85, 0.4, 0.25), 玻纤板上成 S1 通孔)
 for x, y in MW_M3:
     d = cut(d, cyl(x, y, MW_HOLE_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
-d = cut(d, BRepPrimAPI_MakeBox(gp_Pnt(MW_POCKET[0], MW_POCKET[1], -MW_POCKET[4]), gp_Pnt(MW_POCKET[2], MW_POCKET[3], 1)).Shape())
 disc = clean(d); LOG['disc'] = dict(v=vol(disc))      # 整块 (校核用, 等于 disc_print + fr4 外包)
 # 11-18 拆件: 打印底盘 = disc ∩ Z-7.5..-3; 玻纤板 = disc 在 Z-0.1 的截面面 拉 Z-3..0 (顶面槽全部变通孔, 底面沉孔/铜螺母孔不进玻纤板)
 disc_print = clean(op(BRepAlgoAPI_Common, disc, cyl(0, 0, DISC_D + 2, -DISC_T - 1, -FR4_T)))

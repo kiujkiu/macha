@@ -1,5 +1,5 @@
 """V1.2 底座玻纤板 base_fr4_v1_2 (用户 11-18): 打印底盘顶上加 3 mm FR4, 板顶 = 装配 Z0, 板 Z-3..0。
-孔形 = 底盘 (build_v1_2.disc) 在 Z-0.1 的截面: 所有通孔 + 原顶面槽 (电容槽/控制板背面让位/电机中央 Φ12/MR30 护套坑 …) 全部做成通孔;
+孔形 = 底盘 (build_v1_2.disc) 在 Z-0.1 的截面: 所有通孔 + 原顶面槽 (电容槽/控制板背面让位/电机中央 Φ12 …) 全部做成通孔;
 底面沉孔 / 铜螺母孔不进玻纤板。输出 models/base_fr4_v1_2/: STEP + DXF (板厂) + 图纸 PDF/PNG。
 
     cd v1.2/scripts && ../../.venv/bin/python fr4_base_v1_2.py
@@ -148,8 +148,8 @@ L += ['', f'异形开口 {len(slots)} 个 (外包框 x0..x1, y0..y1; 精确形�
 for k, (x0, y0, x1, y1) in enumerate(slots):
     L.append(f'  S{k + 1}  {slot_name(x0, y0, x1, y1)}:  x {x0:.2f}..{x1:.2f}  y {y0:.2f}..{y1:.2f}  ({x1 - x0:.2f}×{y1 - y0:.2f})')
 L += ['', '说明:', '  · 孔形取自打印底盘 Z-0.1 截面: 原底盘顶面 3 深的槽 (电容弧形槽 / 控制板背面让位 /',
-      '    电机中央 Φ12 / MR30 护套坑) 在玻纤板上都做成通孔; 底面沉孔与铜螺母孔只在打印底盘上',
-      '  · 由下往上的 M3 螺丝全部 +1.5 (打印底盘 4.5 + 玻纤板 3 = 7.5, 原 6)',
+      '    电机中央 Φ12) 在玻纤板上都做成通孔; 底面沉孔与铜螺母孔只在打印底盘上',
+      '  · 由下往上的 M3 螺丝全部 +2 (底座 4.5+3=7.5, 原 6; 盘底沉孔 Φ7×1.5 超薄头齐底面), 尖位置不变',
       f'  · 体积 {VOL / 1000:.1f} cm3']
 tx.text(0, 1, '\n'.join(L), va='top', fontproperties=FP, fontsize=8.2, linespacing=1.45)
 fig.savefig(OUT / 'base_fr4_v1_2_drawing.pdf'); fig.savefig(OUT / 'base_fr4_v1_2_drawing_preview.png', dpi=110)
