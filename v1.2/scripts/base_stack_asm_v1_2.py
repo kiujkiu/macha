@@ -68,7 +68,7 @@ def render(ax, items, az, el):
     P = np.concatenate(allP); C = np.concatenate(allC); D = np.concatenate(allD)
     o = np.argsort(D)
     uv = np.stack([P[o] @ u, P[o] @ v], axis=-1)
-    ax.add_collection(PolyCollection(uv, facecolors=C[o], edgecolors='none', antialiased=False))
+    ax.add_collection(PolyCollection(uv, facecolors=C[o], edgecolors='none', antialiased=False, rasterized=True))
     ax.set_aspect('equal'); ax.axis('off'); ax.autoscale_view()
 
 EXPLODE = {'P': -60.0, 'G': -30.0, 'S': -95.0, 'N': 0.0, 'U': 0.0}
@@ -95,6 +95,6 @@ L += ['', '不在本图: 定子盘 / 安装法兰 (坐线圈环上, 第二层);'
 tx.text(0, 1, '\n'.join(L), va='top', fontsize=9, linespacing=1.5)
 from pathlib import Path
 V12 = Path(__file__).resolve().parent.parent
-fig.savefig(V12 / 'assembly_v1_2_底座一级件_组合图.pdf'); fig.savefig(V12 / 'assembly_v1_2_底座一级件_组合图.png', dpi=110)
+fig.savefig(V12 / 'assembly_v1_2_底座一级件_组合图.pdf', dpi=200); fig.savefig(V12 / 'assembly_v1_2_底座一级件_组合图.png', dpi=110)
 write3mf(str(V12 / 'assembly_v1_2_底座一级件.3mf'), [(n, s, c, 0.05) for n, s, c, _ in PARTS])
 print('件', sum(1 for p in PARTS if p[3] == 'U'), '螺丝', len(UP), SCREW_TXT)
