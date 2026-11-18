@@ -548,6 +548,8 @@ LOG['key'] = dict(m3=[(round(x, 2), round(y, 2)) for x, y in KEY_M3], skin=KEY['
                   holes=[(round(x, 2), round(z, 2), dd) for x, z, dd in KEY['holes']])
 def _stl(f):
     from OCP.StlAPI import StlAPI_Reader
+_kp = KEY['pocket_bbox']                          # 用户 11-18: 开口两侧 (x ±22.9..±腔边 32.3) 腔底 y89.7 与内墙 r86.8 之间的两块三角楔去掉 ⇒ 这段内墙也打通到腔底
+s_ = cut(s_, *[gbox(a, 70.0, -1, b, _kp[2] + 0.01, Z_RIM_TOP + 0.01) for a, b in ((_kp[0], -KEY_OPEN_X + 0.01), (KEY_OPEN_X - 0.01, _kp[1]))])
     from OCP.TopoDS import TopoDS_Shape
     sh = TopoDS_Shape(); StlAPI_Reader().Read(sh, str(f)); return sh
 _tz = gp_Trsf(); _tz.SetTranslation(gp_Vec(0, 0, 2.0))
