@@ -261,22 +261,22 @@ SPECS.append(dict(
     code="glass_shroud_upper_v1_2", shape=B.shroud_hi, short="玻璃下 玻璃座 (分体)", qty="1",
     title=f"玻璃下 玻璃座: Z{F(B.SPLIT_Z)}→{F(B.Z_G)} 墙 + 内卡到 Z{F(B.Z_VIEW0)}, {B.JN_N}× M4 沉孔", orient="底面 (止口槽面) 贴床",
     phi=[2 * B.SPIG_IN, 2 * B.gi, 2 * B.JN_R, 2 * B.TG_R0, 2 * B.SH_OUT],
-    sec=dict(ang=B.JN_ANG0, r0=86.0, zd=[(B.SPLIT_Z, B.Z_G), (B.Z_G, B.Z_G + B.IN_DEPTH), (B.SPLIT_Z, B.SPLIT_Z + B.RG_H + B.RG_CLR), (B.Z_G - B.TG_H - B.TG_CLR, B.Z_G)],
-             rd=[(B.gi - B.SPIG_T, B.gi), (B.SPIG_IN, B.SH_OUT), (B.RG_R0 - B.RG_CLR, B.RG_R0 + B.RG_W + B.RG_CLR)]),
+    sec=dict(ang=B.JN_ANG0, r0=86.0, zd=[(B.SPLIT_Z, B.Z_G), (B.Z_G, B.Z_G + B.IN_DEPTH), (B.SPLIT_Z, B.SPLIT_Z + B.RG_H + B.RG_CLR), (B.Z_G, B.Z_G + B.TG_H)],
+             rd=[(B.gi - B.SPIG_T, B.gi), (B.SPIG_IN, B.SH_OUT), (B.RG_R0 - B.RG_CLR, B.RG_R0 + B.RG_W + B.RG_CLR), (B.TG_R0, B.TG_R0 + B.TG_W)]),
     holes=[dict(tag="J", pts=B.JN_PTS, spec=f"Φ{F(B.JN_D)} 通 + 顶面 Φ{F(B.JN_CB)} 沉孔深 {F(B.Z_G - B.JN_BEAR)}", where=ring_txt(B.JN_PTS) + f"  M4×{F(B.JN_L)} 超薄头 穿通到底座底面法兰螺母",
                 det=dict(kind="cb", d=B.JN_D, D=B.JN_CB, h=B.Z_G - B.JN_BEAR, side="top", z=(B.SPLIT_Z, B.Z_G), pt=B.JN_PTS[0], title="M4 沉孔 J"))],
     notes=[gl_notes[0], f"内卡 r{F(B.gi - B.SPIG_T)}–{F(B.gi)} 深 {F(B.IN_DEPTH)} (顶 Z{F(B.Z_VIEW0)} = 可视下边界)",
-           f"底面止口槽 r{F(B.RG_R0 - B.RG_CLR)}–{F(B.RG_R0 + B.RG_W + B.RG_CLR)} 深 {F(B.RG_H + B.RG_CLR)}; 顶面外卡环槽 r{F(B.TG_R0 - B.TG_CLR)}–{F(B.TG_R0 + B.TG_W + B.TG_CLR)} 深 {F(B.TG_H + B.TG_CLR)}",
+           f"底面止口槽 r{F(B.RG_R0 - B.RG_CLR)}–{F(B.RG_R0 + B.RG_W + B.RG_CLR)} 深 {F(B.RG_H + B.RG_CLR)}; 顶面凸筋 r{F(B.TG_R0)}–{F(B.TG_R0 + B.TG_W)} 高 {F(B.TG_H)} 插外卡环底槽 (11-17 晚 凸筋由外卡环移到本件)",
            f"螺丝头顶 Z{F(B.JN_BEAR + B.JN_HH)}, 玻璃端面 + 外卡环盖住; 拆: 外卡环 → 玻璃 → {B.JN_N} 螺丝 → 玻璃座"]))
 SPECS.append(dict(
     code="glass_clamp_ring_v1_2", shape=B.clamp_ring, short="外卡环 (分体)", qty="1",
-    title=f"外卡环: r{F(B.go)}–{F(B.SH_OUT)} 斜顶 + 底凸筋 {F(B.TG_W)}×{F(B.TG_H)}", orient="凸筋朝上, 斜顶朝下需支撑 (或按切片软件)",
-    phi=[2 * B.go, 2 * B.TG_R0, 2 * (B.TG_R0 + B.TG_W), 2 * B.SH_OUT],
-    sec=dict(ang=0, r0=96.0, zd=[(B.Z_G - B.TG_H, B.Z_G), (B.Z_G, B.Z_G + B.OUT_DEPTH), (B.Z_G, B.Z_G + B.LIP_EDGE, f"{F(B.LIP_EDGE)} (外缘直边)")],
-             rd=[(B.go, B.SH_OUT), (B.TG_R0, B.TG_R0 + B.TG_W)]),
+    title=f"外卡环: r{F(B.go)}–{F(B.SH_OUT)} 斜顶 + 底面槽 {F(B.TG_W + 2 * B.TG_CLR)}×{F(B.TG_H + B.TG_CLR)}", orient="底面 (槽面) 贴床, 斜顶朝上",
+    phi=[2 * B.go, 2 * (B.TG_R0 - B.TG_CLR), 2 * (B.TG_R0 + B.TG_W + B.TG_CLR), 2 * B.SH_OUT],
+    sec=dict(ang=0, r0=96.0, zd=[(B.Z_G, B.Z_G + B.TG_H + B.TG_CLR), (B.Z_G, B.Z_G + B.OUT_DEPTH), (B.Z_G, B.Z_G + B.LIP_EDGE, f"{F(B.LIP_EDGE)} (外缘直边)")],
+             rd=[(B.go, B.SH_OUT), (B.TG_R0 - B.TG_CLR, B.TG_R0 + B.TG_W + B.TG_CLR)]),
     holes=[],
     notes=[f"内面 r{F(B.go)} 贴玻璃外壁 (单边间隙 {F(B.GL_CLR)})",
-           f"底凸筋 r{F(B.TG_R0)}–{F(B.TG_R0 + B.TG_W)} 高 {F(B.TG_H)} 插下罩顶槽", "装配: 玻璃先套内卡, 再从上套环"]))
+           f"底面槽 r{F(B.TG_R0 - B.TG_CLR)}–{F(B.TG_R0 + B.TG_W + B.TG_CLR)} 深 {F(B.TG_H + B.TG_CLR)} 套玻璃座顶面凸筋 (单边 {F(B.TG_CLR)}; 11-17 晚 凸筋由本件移到玻璃座)", "装配: 玻璃先套内卡, 再从上套环"]))
 
 # ---------------- 玻璃上 (顶盖) 两件 (11-13) ----------------
 SPECS.append(dict(
@@ -287,7 +287,8 @@ SPECS.append(dict(
     phi=[2 * B.GT_LEDGE_R, 2 * B.GD_POCKET_R, 2 * B.gi, 2 * B.GC_R, 2 * B.GT_RO],
     sec=dict(ang=0, r0=80.0, zd=[(B.GT_Z0, B.Z_GT), (B.Z_GT, B.GT_Z1), (B.GT_LEDGE_Z, B.GT_Z1)],
              rd=[(B._gin, B.gi), (B.gi, B.GT_RO), (B.GT_LEDGE_R, B.GD_POCKET_R)]),
-    holes=[dict(tag="N", pts=B.GC_PTS, spec=f"顶面 Φ{F(B.GC_INS_D)}×{F(B.GC_INS_H)} 盲孔 压 M3×4 铜螺母 (顶齐件顶)", where=ring_txt(B.GC_PTS) + f"  在玻璃罩壁正上方; 孔底离玻璃罩端面 {B.LOG['glass_top']['ins_floor_meat']}, 热压别压过头")],
+    holes=[dict(tag="N", pts=B.GC_PTS, spec=f"Φ{F(B.GT_INS_THRU)} 通 + 顶面 Φ{F(B.GC_INS_D)}×{F(B.GC_INS_H)} 铜螺母孔 (M3×4, 顶齐件顶)", where=ring_txt(B.GC_PTS) + f"  在玻璃罩壁正上方; 拉装: M3×{F(B.GT_PULL_L)} 从底面 (Z{F(B.Z_GT)}) 往上穿通孔拧进铜螺母拉入, 用完拆",
+                det=dict(kind="cb", d=B.GT_INS_THRU, D=B.GC_INS_D, h=B.GC_INS_H, side="top", z=(B.Z_GT, B.GT_Z1), pt=B.GC_PTS[0], title="铜螺母孔 N"))],
     notes=[f"玻璃罩 OD{F(B.GL_OD)}×{F(B.GL_T)} 内壁贴内卡 r{F(B.gi)} (单边 {F(B.GL_CLR)}), 端面顶住本件 Z{F(B.Z_GT)}; 外面 r{F(B.GT_RO)} 套进绿件 (单边 0.1)",
            f"圆环玻璃窝 r{F(B.GD_POCKET_R)} (单边 {F(B.GD_CLR)}) 深 {F(B.GT_Z1 - B.GT_LEDGE_Z)} = 下垫 {F(B.GK_H)} + 玻璃 {F(B.GD_T)} + 上垫 {F(B.GK_H)} + 绿件凸缘 {F(B.GC_LIP)}; 口倒角 0.5; 托台 r{F(B.GT_LEDGE_R)}–{F(B.GD_POCKET_R)}",
            f"本件顶面 = 绿件硬限位, 垫子压缩固定 {B.GK_COMP * 100:.0f}%"]))
@@ -299,7 +300,7 @@ SPECS.append(dict(
     phi=[2 * B.GC_R0, 2 * B.GC_LIP_R1, 2 * B.GC_R, 2 * B.go, 2 * B.SH_OUT],
     sec=dict(ang=0, r0=80.0, zd=[(B.GC_Z0 - B.GC_LIP, B.GC_Z0), (B.GC_Z0, B.GC_Z1), (B.GT_Z0, B.GC_Z0), (B.Z_GT - B.LIP_EDGE, B.Z_GT)],
              rd=[(B.GC_R0, B.GC_LIP_R1), (B.go, B.SH_OUT)]),
-    holes=[dict(tag="C", pts=B.GC_PTS, spec=f"Φ{F(B.GC_HOLE)} 通", where=ring_txt(B.GC_PTS) + f"  M3×{F(B.GC_SCREW_L)} 超薄头 (Φ{F(B.GC_HEAD_D)}×{F(B.GC_HEAD_H)}) 头在顶面, 进内件铜螺母, 啮合 {F(B.GC_Z0 - (B.GC_Z1 - B.GC_SCREW_L))}")],
+    holes=[dict(tag="C", pts=B.GC_PTS, spec=f"Φ{F(B.GC_HOLE)} 通", where=ring_txt(B.GC_PTS) + f"  M3×{F(B.GC_SCREW_L)} 超薄头 (Φ{F(B.GC_HEAD_D)}×{F(B.GC_HEAD_H)}) 头在顶面, 进内件铜螺母, 啮合 {F(B.GC_Z0 - (B.GC_BEAR - B.GC_SCREW_L))}")],
     notes=[f"外卡内面 r{F(B.go)} 贴玻璃罩外壁 (单边 {F(B.GL_CLR)}); 斜面 (r{F(B.go + B.GT_FOOT)}, Z{F(B.GT_Z0)}) → (r{F(B.SH_OUT)}, Z{F(B.Z_GT - B.LIP_EDGE)}), 外缘直边 {F(B.LIP_EDGE)}",
            f"配 2 片硅胶/TPU 环垫 OD{F(B.GD_OD)}×ID{F(2 * B.GT_LEDGE_R)}×{F(B.GK_T)} (玻璃上下各 1, 同半径, 玻璃只受压不受弯)",
            "装配: 内件压铜螺母 → 下垫 → 圆环玻璃 → 堵头 → 上垫 → 内件套玻璃罩上端 → 本件从上套下 → 8 颗对角拧到贴死内件顶面 (不用控扭矩)",

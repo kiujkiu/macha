@@ -27,7 +27,7 @@ src = (V12 / 'scripts' / 'build_v1_2.py').read_text(encoding='utf-8')
 def num(name):
     m = re.search(rf'^{name}\s*=\s*([^#\n]+)', src, re.M); return m.group(1).strip()
 Z_G = 53.08; Z_VIEW0 = 73.08; SPLIT_Z = 32.0
-JN_R, ANG = 98.5, 22.5
+JN_R, ANG = 99.5, 22.5   # 11-17 晚 同 build_v1_2
 JN_D, JN_CB = 4.5, 8.8; JN_L, JN_HH = 50.0, 1.8
 JN_BEAR = Z_G - float(num('JN_BEAR').split('-')[1]); JN_TIP = JN_BEAR - JN_L
 JN_NUT_FD, JN_NUT_H = 9.8, 4.3; JN_NUT_Z1 = 0.3 + JN_NUT_H

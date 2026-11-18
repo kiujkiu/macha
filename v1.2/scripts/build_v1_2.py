@@ -302,7 +302,7 @@ def board_trsf():
 BT = board_trsf()
 from OCP.BRep import BRep_Builder as _BB
 from OCP.TopoDS import TopoDS_Compound as _TC
-_raw = one(BOARD_F); _B = _BB(); _bc = _TC(); _B.MakeCompound(_bc); _drop = 0
+from helpers import read_step_cached as _rsc; _raw = _rsc(BOARD_F); _B = _BB(); _bc = _TC(); _B.MakeCompound(_bc); _drop = 0
 NOPOP = [(20.1, 28.4, 24.7, 41.0), (94.0, 99.5, 28.9, 41.0)]       # XT60 / MR30 (V1.0 同, 板系 +20/+10)
 CAP_H_MEAS, _CAP_FIX = 6.1, []
 HDR_H_RA, _HDR_FIX = 2.54, []
@@ -562,7 +562,7 @@ _fd = cut(_fd, xf(gbox(-XT_HW - 0.5, XT_Y0 - 5, -1, XT_HW + 0.5, XT_Y1 + 0.5, XT
 CAV_R0 = COIL_SEAT_R                               # 11-17 用户: 线圈内径 80 ⇒ 内墙外圆 r38.7 → r39.9 (内墙 r31.7–39.9)
 CAV_R1 = 82.5 - NUT_RING_W                         # 11-17 用户: 外圈铜螺母环 7 宽 → 10 宽 ⇒ 腔外壁 r75.5 → r72.5 (外墙 r72.5–82.5)
 CAV_Z0 = FL_TOP - 2.8                              # 11-16 晚 用户: 线圈腔深 2.5 → 2.8 ⇒ 腔底 Z10.7 (底板 2.2)
-LID_R = 82.5 - CB7 / 2                             # 用户 11-12: 上下盖孔居中到外墙 r79 (原 V0.4 r77.5, 曾误开 r78)
+LID_R = (CAV_R1 + 82.5) / 2                       # 11-17 晚 用户: 居中到外墙 (螺母环 10 宽 r72.5–82.5) ⇒ r77.5 (原 82.5−CB7/2 = r79 是 7 宽墙时的居中; 现与转子盘B R77.5 对齐, 现行转子 RH_R 仍 79)
 LID_SCREWS = [(LID_R * math.cos(math.radians(22.5 + 45 * k)), LID_R * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]   # 外圈 r79 8 孔 (上下盖互锁)
 LID_INS_D, LID_INS_H = INS_HOLE_D, INS_HOLE_H      # 原 Φ2.5 攻牙孔 → 铜螺母从定子盘底面压; 11-12 夜: Φ4.2×4.2 (M3×4 铜螺母), 外墙 5 厚顶留 0.8, 螺丝 M3×6 (尾端齐底面 8.5)
 _V04_OUT = [(77.5 * math.cos(math.radians(22.5 + 45 * k)), 77.5 * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]   # V0.4 原外圈孔
@@ -586,22 +586,24 @@ LOG['board_pockets'] = BRD_POCKETS
 flange_disc = clean(_fd)
 _mf2 = mounting_flange                             # 11-12 外径回原 Φ170: 保留 V0.4 原外裙 r82.5–85 (已同步短到 z9.3 = 定子盘底); 原先 cut ann(82.8,86) 是错的, 还留 0.3 薄片
 for x, y in _V04_OUT: _mf2 = fuse(_mf2, cyl(x, y, CB7 + 0.4, FL_TOP, MF_TOP))  # 原 r77.5 Φ7 沉孔 + 孔补实 (板内)
+_mf2 = clean(_mf2)                                 # 11-17 晚: LID_R 改 r77.5 与原孔同轴, 不先 clean 直接挖会布尔失败 (体积 0)
 for x, y in LID_SCREWS: _mf2 = cut(_mf2, cyl(x, y, 3.2, 0, 30), cyl(x, y, CB7, MF_TOP - MF_CB, 40))   # 上盖 r79: Φ3.2 + 顶面 Φ7×1.5
 # 11-17 用户: 安装法兰不再给 XT60 开缺口 (外裙整圈); 改由 XT60 压块 V1.2-h 在全局 Z8 以上削到接头尾 r85.8 (原 11-13 此处 cut 压块外形 +0.5, Z≤13.5)
 mounting_flange = clean(_mf2)
 seat = clean(s_); LOG['seat'] = dict(v=vol(seat), z_g=Z_G)          # 合并版 (下罩+外卡一体)
 # 分体版 (用户 11-11): 外卡三角区单独一个环, 玻璃先套内卡再从上套环; 环底 2x2 凸筋插下罩顶槽 (单边 0.1)
-TG_R0, TG_W, TG_H, TG_CLR = 104.0, 2.0, 2.0, 0.1
+TG_R0, TG_W, TG_H, TG_CLR = 105.0, 2.0, 2.0, 0.1   # 11-17 晚 用户: 凸筋改到玻璃座 (upper) 顶面, 外卡环底开槽; r104 → 105 让开外移后的 J 沉孔 (外缘 r103.9, 隔 1.1)
 _lip = ann(go, SH_OUT + 1, Z_G, Z_G + OUT_DEPTH + 1)
-clamp_ring = clean(fuse(op(BRepAlgoAPI_Common, seat, _lip), ann(TG_R0, TG_R0 + TG_W, Z_G - TG_H, Z_G + 0.5)))
-shroud_split = clean(cut(seat, _lip, ann(TG_R0 - TG_CLR, TG_R0 + TG_W + TG_CLR, Z_G - TG_H - TG_CLR, Z_G + 1)))
+clamp_ring = clean(cut(op(BRepAlgoAPI_Common, seat, _lip), ann(TG_R0 - TG_CLR, TG_R0 + TG_W + TG_CLR, Z_G - 1, Z_G + TG_H + TG_CLR)))   # 底面槽
+shroud_split = clean(fuse(cut(seat, _lip), ann(TG_R0, TG_R0 + TG_W, Z_G - 0.5, Z_G + TG_H)))                                      # 顶面凸筋
 LOG['split'] = dict(ring=vol(clamp_ring), shroud=vol(shroud_split))
 # 用户 11-14: 分体下罩太高, 做错要全部重来 ⇒ 在承载盘顶 Z32 横切成上下两段, 8×M3 锁 (上段沉孔往下; (二) 改穿通到下段底面法兰螺母)。
 #   Z32 以下 = 原 32 高下罩 (三角块/筋/按键舌片 Z≤30/XT60 井/按键腔顶 Z23.3 都在下面), 以后改可视高度只重打上段。
 #   对中: 下段顶面凸筋 r104–106 高 2 插上段底槽 (单边 0.1, 同外卡环); 螺丝 r98.5 @22.5°+45k (避开 +X XT60 / +Y 按键),
 #   沉孔 Φ7 开在上段顶面 (玻璃座) 被玻璃端面 + 外卡环盖住; 拆: 外卡环 → 玻璃 → 8 螺丝 → 上段, 不用翻整机。
 SPLIT_Z = Z_RIM_TOP                                # 32.0
-JN_N, JN_R, JN_ANG0 = 8, 98.5, 22.5               # 沉孔 Φ8.8 r94.1–102.9: 下切内卡根 0.7 (只在 Z_G 下 2), 离外卡环槽 (r103.8) 0.9
+JN_N, JN_R, JN_ANG0 = 8, 99.5, 22.5               # 11-17 晚 用户: r98.5 沉孔内缘 r94.1 啃内卡根 0.7 ⇒ 外挪 1 (内缘 r95.1, 离内卡 0.3)
+#   (旧 r98.5: 沉孔 Φ8.8 r94.1–102.9 下切内卡根 0.7, 离外卡环槽 r103.8 0.9)
 # 用户 11-14 (二): 要真夹持 ⇒ 螺丝穿通上下两段。11-16 用户买到实物 (图): M4×50 超薄头 (头 Φ8.5×1.8, 2.5 六角) + M4 法兰螺母 (法兰 Φ9.7, 对边 6.9, 厚 4.3)
 #   玻璃座顶面 Φ8.8 沉孔深 2.1 (头顶在玻璃底下 0.3); 底座底面圆窝 Φ9.8 深 4.6, 法兰螺母法兰朝上压入 (11-16 用户)
 JN_D, JN_CB = 4.5, 8.8                             # M4 通孔 / 沉孔 (头 Φ8.5)
@@ -615,7 +617,7 @@ JN_NUT_AF = None
 JN_NUT_D = JN_NUT_FD                               # 只用于校核
 JN_PTS = [(JN_R * math.cos(math.radians(JN_ANG0 + 45 * k)), JN_R * math.sin(math.radians(JN_ANG0 + 45 * k))) for k in range(JN_N)]
 RG_R0, RG_W, RG_H, RG_CLR = 104.0, 2.0, 2.0, 0.1   # 两段止口凸筋 (在下段顶)
-assert JN_R - JN_CB / 2 >= gi - 0.75 and JN_R + JN_CB / 2 <= TG_R0 - TG_CLR - 0.85, '沉孔碰内卡或外卡环槽'   # 11-16 Φ8.8: 下切内卡根 0.7, 离槽 0.9
+assert JN_R - JN_CB / 2 >= gi + 0.3 and JN_R + JN_CB / 2 <= TG_R0 - 1.0, '沉孔碰内卡或顶面凸筋'   # 11-16 Φ8.8: 下切内卡根 0.7, 离槽 0.9
 assert JN_R - JN_NUT_D / 2 >= SPIG_IN + 2 and JN_R + JN_NUT_D / 2 <= SH_OUT - 2, '螺母孔离墙面太近'
 assert JN_R + JN_D / 2 <= RG_R0 - RG_CLR - 1.5, '通孔碰止口凸筋'
 assert JN_BEAR + JN_HH <= Z_G - 0.3, '头顶碰玻璃'

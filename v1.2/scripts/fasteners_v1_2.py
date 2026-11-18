@@ -181,9 +181,9 @@ for i, (x, y) in enumerate(B.JN_PTS):
     screw("M4x50 超薄头 玻璃下底座+玻璃座", i, x, y, B.JN_BEAR, B.JN_L, False, d=4.0, hd=8.5, hh=B.JN_HH, engage=("M4 法兰螺母", B.JN_NUT_Z1 - B.JN_NUT_H, B.JN_NUT_Z1))
     _z0 = B.JN_NUT_Z1 - B.JN_NUT_H                 # 11-16 用户: 法兰朝上 (六角 6.9 在下, 法兰 Φ9.7×1.2 顶窝顶)
     add(f"M4 法兰螺母 玻璃下底座底 #{i}", cut(fuse(hexprism(x, y, 6.9, _z0, B.JN_NUT_Z1 - 1.2), cyl(x, y, 9.7, B.JN_NUT_Z1 - 1.2, B.JN_NUT_Z1)), cyl(x, y, 4.0, -1, 10)), "#707070")
-# 7b 玻璃上 压圈 (11-17): 8×M3×6 超薄头 (头 Φ7×1.5 在压圈顶面) 穿压圈 Φ3.4 → 玻璃上环顶面 M3×4 铜螺母 (Φ4.2×4.2, 顶齐环顶)
+# 7b 玻璃上 外件 (11-17): 8×M3×6 超薄头 (头 Φ7×1.5 在顶面) 穿压圈 Φ3.4 → 玻璃上环顶面 M3×4 铜螺母 (Φ4.2×4.2, 顶齐环顶)
 for i, (x, y) in enumerate(B.GC_PTS):
-    screw(f"M3x{B.GC_SCREW_L:g} 超薄头 玻璃压圈", i, x, y, B.GC_Z1, B.GC_SCREW_L, False, hd=B.GC_HEAD_D, hh=B.GC_HEAD_H, engage=("铜螺母", B.GC_Z0 - B.GC_INS_H, B.GC_Z0))
+    screw(f"M3x{B.GC_SCREW_L:g} 超薄头 玻璃压圈", i, x, y, B.GC_BEAR, B.GC_SCREW_L, False, hd=B.GC_HEAD_D, hh=B.GC_HEAD_H, engage=("铜螺母", B.GC_Z0 - B.GC_INS_H, B.GC_Z0))
     add(f"铜螺母 M3x4 玻璃上环 #{i}", cut(cyl(x, y, INS_D - 0.02, B.GC_Z0 - B.GC_INS_H, B.GC_Z0), cyl(x, y, 3.0, 0, 400)), "#B8860B")
 
 # 11 V2 灯板支撑 (11-16 晚 偏心 SCR_ECC + 耳朵脚, led_support_v1_2): 中间 T 件取消;

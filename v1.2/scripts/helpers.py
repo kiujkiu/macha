@@ -36,6 +36,21 @@ def read_step(p):
     for i in range(q.Length()): B.Add(C,st.GetShape_s(q.Value(i+1)))
     return C
 
+def read_step_cached(p, cache_dir=None):
+    """读大 STEP 并缓存成 OCC 二进制 (.bin): 文件大小+mtime 不变就直接读缓存 (控制板 STEP 9 s → <1 s); 只要几何, 不带颜色/名字。"""
+    from OCP.BinTools import BinTools
+    from OCP.TopoDS import TopoDS_Shape
+    p = Path(p); st = p.stat()
+    cd = Path(cache_dir) if cache_dir else Path(__file__).resolve().parent.parent / 'out' / 'cache'
+    cd.mkdir(parents=True, exist_ok=True)
+    f = cd / f'{p.stem}_{st.st_size}_{int(st.st_mtime)}.bin'
+    if f.exists():
+        sh = TopoDS_Shape(); BinTools.Read_s(sh, str(f)); return sh
+    sh = read_step(p)
+    for old in cd.glob(f'{p.stem}_*.bin'): old.unlink()
+    BinTools.Write_s(sh, str(f) + '.tmp'); os.replace(str(f) + '.tmp', f)
+    return sh
+
 def bbox(sh):
     b=Bnd_Box(); BRepBndLib.Add_s(sh,b,False); p,q=b.CornerMin(),b.CornerMax(); return (p.X(),p.Y(),p.Z(),q.X(),q.Y(),q.Z())
 
