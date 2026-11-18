@@ -68,6 +68,13 @@ BR_PCB_OLD = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_GW5A_Bridge_
 # r11 P0 (FPC1 朝内): 只动 FPC1 (转 180°, 中心不变), 其余同 pcb_v1; 它的 STEP (P0_FPC朝内.step) 只有板 + U52, 原点 = KiCad 原点 ⇒ 器件仍取 11-11 结构简版 STEP, FPC1 座按 r11 封装建
 BR_R11 = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_GW5A_Bridge_V2.0/layout/r11/P0')
 BR_PCB = BR_R11 / 'ProPrj_ICN2260转接板_V2_2026-11-10.kicad_pcb' if BRIDGE_FLIP else BR_PCB_OLD
+# 11-19 W 版 (6 层横向加宽) 试算开关, 默认关 = 行为不变:
+#   FPC_BRIDGE_W=<W_*.step> (KiCad 原点导出: STEP (x, y) = (kx, −ky)), FPC_BRIDGE_W_PCB=<final_*.kicad_pcb>,
+#   FPC_BRIDGE_W_DROP=件号,... (从 STEP 里去掉, 例如用 flash STEP 近似 noflash), FPC_OSC1_H=OSC1 高 (STEP 无模型, 默认 1.2 保守)。
+#   W STEP 没有 J1/J2/OSC1/U53/FPC1 模型: J1/J2 借 11-11 简版 STEP (位置未变), OSC1/U53 按 W PCB 封装 Fab/CrtYd 建盒, FPC1 照旧按 Fab 建座。
+BR_W = os.environ.get('FPC_BRIDGE_W')
+if BR_W:
+    BR_PCB = Path(os.environ['FPC_BRIDGE_W_PCB'])
 LED_PCB = Path('/mnt/d/claude_workspace/_led_v020_1113/src/LED_V0.2.0/LED_V0.2.0.kicad_pcb')   # 灯板 V0.2.0 (11-13, 同 MIP json 出处); 板心 KiCad (175, 62)
 LED_C = (175.0, 62.0)
 BR_ORG = (132.0, 118.0)                           # kicad-cli --user-origin 132x118mm ⇒ STEP (x, y) = (kx − 132, 118 − ky)
@@ -161,6 +168,35 @@ def bbc(s):
 # ---------------- 桥板: 读 STEP, 用 AXK 对齐灯板 ----------------
 _br_parts = read_named(BR_STEP)
 _br_parts = [('桥板 PCB' if n.startswith('=>') else n, s) for n, s in _br_parts]
+if BR_W:
+    def _w_parts():
+        t = gp_Trsf(); t.SetTranslation(gp_Vec(-BR_ORG[0], BR_ORG[1], 0))          # (kx, −ky) → (kx − 132, 118 − ky)
+        drop = set(x for x in os.environ.get('FPC_BRIDGE_W_DROP', '').split(',') if x)
+        out = []
+        for n, s_ in read_named(BR_W):
+            if n in drop: continue
+            s_ = xf(s_, t); b = bbox(s_)
+            if b[3] - b[0] < 50 and not (-40 < (b[0] + b[3]) / 2 < 40 and -20 < (b[1] + b[4]) / 2 < 20): continue   # 板外游离件 (KiCad 原点处)
+            out.append(('桥板 PCB' if n.startswith('=>') else n, s_))
+        assert sum(n == '桥板 PCB' for n, _ in out) == 1, [n for n, _ in out if n == '桥板 PCB']
+        out += [(n, s_) for n, s_ in _br_parts if n in ('J1', 'J2')]
+        pf = Path(BR_PCB).read_text(encoding='utf-8')
+        def fp(ref):
+            m = pf.find(f'(property "Reference" "{ref}"')
+            if m < 0: return None
+            b_ = pf[pf.rfind('\n\t(footprint', 0, m):pf.find('\n\t)', m)]
+            at = re.search(r'\n\t\t\(at ([-\d.]+) ([-\d.]+)(?: ([-\d.]+))?\)', b_).groups()
+            return float(at[0]), float(at[1]), float(at[2] or 0), re.search(r'\(layer "([^"]+)"', b_).group(1)
+        brd = bbox(out[[n for n, _ in out].index('桥板 PCB')][1])
+        for ref, hx, hy, h in (('OSC1', 1.6, 1.25, float(os.environ.get('FPC_OSC1_H', '1.2'))), ('U53', 4.825, 2.865, 2.16)):
+            if ref in drop or fp(ref) is None: continue
+            kx, ky, ang, lay = fp(ref)
+            if round(ang) % 180: hx, hy = hy, hx
+            cx, cy = kx - BR_ORG[0], BR_ORG[1] - ky
+            z0, z1 = (brd[5], brd[5] + h) if lay.startswith('F') else (-0.085 - h, -0.085)
+            out.append((ref, gbox(cx - hx, cy - hy, z0, cx + hx, cy + hy, z1)))
+        return out, brd[5]
+    _br_parts, BR_F = _w_parts()
 _br_axk = {n: s for n, s in _br_parts if n in ('J1', 'J2')}
 _led_axk = {n: s for n, s in read_named(V.LED_STEP) if n in ('J1', 'J2')}
 # 灯板 STEP (x, y) → 世界 (x, Z = Z0 + LED_HALF_H + y); 桥板 STEP (x, y) → (x, ZC − y) ⇒ 每对 ZC = Z0 + LED_HALF_H + y灯 + y桥, x 残差 = x桥 − x灯
@@ -197,9 +233,10 @@ def pairw(s_loc):
 
 _t = T_BR()
 # r11: FPC1 (132,104.4) 转 0° ⇒ Fab 本体 KiCad y 102.137…108.687, 固定脚在 ky107.225 (板内侧) ⇒ 口边 ky108.687 朝板内 (朝 BGA); STEP y = 118 − ky
-BR_MOUTH = (BR_ORG[1] - (104.4 + 4.287)) if BRIDGE_FLIP else BR_SEAT['mouth']   # 新: 9.313 (口朝 STEP −y) / 旧: 17.887 (口朝 +y)
+BR_MOUTH = (BR_ORG[1] - (kicad_pad(BR_PCB, 'FPC1', '71')[1] + 1.462)) if BRIDGE_FLIP else BR_SEAT['mouth']   # 口边 = 固定脚 71 + 1.462 (P0: 107.225 → 108.687; W: 106.6 → 108.062)   # 新: 9.313 (口朝 STEP −y) / 旧: 17.887 (口朝 +y)
 _seat_step = seat_box(BR_SEAT['xh'], BR_MOUTH, BR_SEAT['depth'], 1 if BRIDGE_FLIP else -1, BR_F)
-if BRIDGE_FLIP: assert abs(kicad_pad(BR_PCB, 'FPC1', '71')[1] - 107.225) < 0.01 and abs(kicad_pad(BR_PCB, 'FPC1', '1')[1] - 101.575) < 0.01
+if BRIDGE_FLIP and not BR_W: assert abs(kicad_pad(BR_PCB, 'FPC1', '71')[1] - 107.225) < 0.01 and abs(kicad_pad(BR_PCB, 'FPC1', '1')[1] - 101.575) < 0.01
+if BRIDGE_FLIP and BR_W: assert abs(kicad_pad(BR_PCB, 'FPC1', '71')[1] - kicad_pad(BR_PCB, 'FPC1', '1')[1] - 5.65) < 0.01
 BR_LOC = [(n, xf(s, _t)) for n, s in _br_parts if n != 'FPC1'] + [('FPC1 座 (XW0525512 按 Fab, 高 2.0)', xf(_seat_step, _t))]
 _br_loc = comp([s for _, s in BR_LOC])
 _axk_loc = comp([xf(s, _t) for s in _br_axk.values()])
