@@ -38,6 +38,7 @@ S_PARTS = {
     'wireless_holder_v1_2': 'wireless_holder_v1_2.py',
     'mr30_seat_v1_2': 'motor_wire_v1_2.py', 'motor_wire_clamp_v1_2': 'motor_wire_v1_2.py',
     'mr30_seat_v1_2_old': 'motor_wire_v1_2.py', 'motor_wire_clamp_v1_2_old': 'motor_wire_v1_2.py',   # 11-18 旧一体底盘版
+    'mr30_floor_v1_2': 'motor_wire_v1_2.py', 'mr30_floor_v1_2_old': 'motor_wire_v1_2.py',   # 11-18 MR30 座下片 (拆 2 件)
     'rim_ring_v1_2b': 'rotor_b_v1_2.py',
     'base_fr4_v1_2': 'fr4_base_v1_2.py',
     'mos_clamp_v1_2': 'mos_clamp_v1_2.py', 'cap_clamp_v1_2': 'cap_clamp_v1_2.py',

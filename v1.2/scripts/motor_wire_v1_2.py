@@ -119,6 +119,17 @@ def mr30_seat(dx=MR_INS_DX):
         s = cut(s, cyl(x, y, PASS_D, -1, SEAT_H + 1), cyl(x, y, INS_D, SEAT_H - INS_H, SEAT_H + 1))
     return clean(s)
 
+# 11-18 用户: 带底片后公头装不进 (封闭套) ⇒ 拆 2 件: 下片 Z0..1.2 (+ 本体段垫条 0.25 → Z1.45) / 上件 Z1.2..8 (门形罩, 顶面贴床免架桥)
+#   装: 下片 → 放公头 → 扣上件; 2×M3 盘底往上穿下片进上件铜螺母 (长度不变)
+def _pad():
+    return box(MR_XC - BODY_W / 2, Y_STEP, FLOOR_T - 0.01, MR_XC + BODY_W / 2, Y_OPEN, Z_BD0)
+def mr30_split(dx=MR_INS_DX):
+    s = mr30_seat(dx)
+    cutz = box(MR_XC - SEAT_HX - 1, Y_R - 1, -1, MR_XC + SEAT_HX + 1, Y_OPEN + 1, FLOOR_T)
+    lower = clean(fuse(common(s, cutz), common(s, _pad())))
+    upper = clean(cut(s, cutz, _pad()))
+    return upper, lower
+
 def mr30_plug(dx=0.0, dy=0.0, dz=0.0):                # 公头示意 (矩形盒)
     return fuse(box(MR_XC - SHEATH_W / 2 + dx, Y_CAPI + dy, Z_SH0 + dz, MR_XC + SHEATH_W / 2 + dx, Y_STEP + dy, Z_SH1 + dz),
                 box(MR_XC - BODY_W / 2 + dx, Y_STEP + dy, Z_BD0 + dz, MR_XC + BODY_W / 2 + dx, Y_OPEN + dy, Z_BD1 + dz))
@@ -272,7 +283,8 @@ def print_pose(s):                                   # 绕 X 翻 180°, 顶面�
 
 def export(seat, clamp):
     sc, ins = screws()
-    for name, P, col, extra in (('mr30_seat_v1_2', seat, '#F1C232', [('MR30-M 公头 (示意)', mr30_plug(), '#FFD700')] +
+    _up, _lo = mr30_split()
+    for name, P, col, extra in (('mr30_seat_v1_2', _up, '#F1C232', [('MR30 座下片 mr30_floor_v1_2', _lo, '#E6B800'), ('MR30-M 公头 (示意)', mr30_plug(), '#FFD700')] +
                                  [(f'电机线 Φ3 #{k}', ycyl(MR_XC + k * MR_PITCH, PIN_Z, MW_WIRE_D, Y_R - 10, Y_CAPI), '#222222') for k in (-1, 0, 1)]),
                                 ('motor_wire_clamp_v1_2', clamp, '#E69138', [(f'电机线 Φ3 #{i}', w, '#222222') for i, w in enumerate(clamp_wires())])):
         d = B.V12 / 'models' / 'mr30_seat_v1_2'; d.mkdir(parents=True, exist_ok=True)   # 11-18 用户: 线夹文件也放 MR30 文件夹
@@ -286,9 +298,16 @@ def export(seat, clamp):
         items += [('M3×4 铜螺母', ins[i], '#B8860B', None, False) for i in idx]
         write_doc(items, d / f'{name}_asm.step', name + '_asm')
     # _old 版 (配旧一体底盘 Φ220×6, 原孔位; 旧底盘沉孔 Φ7×2 支承 Z-4 ⇒ MR30 座 M3×12 / 线夹 M3×10): 只出打印件 STEP/STL
+    # 11-18 MR30 座拆 2 件: mr30_seat_* = 上件 (翻面, 顶面贴床), mr30_floor_* = 下片 (原姿态平放)
     d = B.V12 / 'models' / 'mr30_seat_v1_2'
-    for name, P, col in (('mr30_seat_v1_2_old', mr30_seat(MR_INS_DX_OLD), '#F1C232'), ('motor_wire_clamp_v1_2_old', wire_clamp(CL_INS_DY_OLD), '#E69138')):
-        pp = print_pose(P)
+    up_n, lo_n = mr30_split(); up_o, lo_o = mr30_split(MR_INS_DX_OLD)
+    for name, P, col, flip in (('mr30_seat_v1_2', up_n, '#F1C232', True), ('mr30_floor_v1_2', lo_n, '#E6B800', False),
+                               ('mr30_seat_v1_2_old', up_o, '#F1C232', True), ('mr30_floor_v1_2_old', lo_o, '#E6B800', False),
+                               ('motor_wire_clamp_v1_2_old', wire_clamp(CL_INS_DY_OLD), '#E69138', True)):
+        if flip:
+            pp = print_pose(P)
+        else:
+            b_ = bbox(P); tt = gp_Trsf(); tt.SetTranslation(gp_Vec(-(b_[0] + b_[3]) / 2, -(b_[1] + b_[4]) / 2, -b_[2])); pp = xf(P, tt)
         write_doc([(name, pp, col, None, False)], d / f'{name}.step', name)
         BRepMesh_IncrementalMesh(pp, 0.02, False, 0.2, True)
         w = StlAPI_Writer(); w.ASCIIMode = False; assert w.Write(pp, str(d / f'{name}.stl'))

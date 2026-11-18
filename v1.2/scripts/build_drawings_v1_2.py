@@ -622,7 +622,7 @@ with _cl.redirect_stdout(_io.StringIO()):
     import motor_wire_v1_2 as MW  # noqa: E402
 _mr = MW.MR_INS; _cl_ = MW.CL_INS
 SPECS.append(dict(
-    code="mr30_seat_v1_2", shape=MW.mr30_seat(), stl_asm=True, short="MR30 座 (电机线接头)", qty="1", material="PETG (建议) / PLA",
+    code="mr30_seat_v1_2", shape=MW.mr30_split()[0], stl_asm=True, short="MR30 座上件 (电机线接头)", qty="1", material="PETG (建议) / PLA",
     title=f"MR30 座: {F(2 * MW.SEAT_HX)}×{F(MW.Y_OPEN - MW.Y_R)}×{F(MW.SEAT_H)} 坐底盘顶, 夹 MR30-M 公头 (护套 −y 接电机线, 开口 +y 插母头)",
     subtitle=f"坐玻纤板顶 Z0, −x 侧 x{F(MW.MR_XC - MW.SEAT_HX)}…{F(MW.MR_XC + MW.SEAT_HX)} y{F(MW.Y_R)}…{F(MW.Y_OPEN)}; 顶 Z{F(MW.SEAT_H)} = 定子盘底 − 0.5",
     orient=f"顶面贴床 (槽口朝上), 底片在最上层跨 {F(MW.SHEATH_W)} 架桥, 免支撑", date="2026-11-18",
@@ -631,7 +631,7 @@ SPECS.append(dict(
                 where=xy(_mr) + f"  M3×{F(MW.SCREW_L[0])} 超薄头从打印底盘底面 Φ{F(B.M3_CB_D)}×{F(B.M3_CB_H)} 沉孔往上 (头支承 Z{F(MW.BEAR_Z)}), 尖 Z{F(MW.SEAT_H)} 啮合 4",
                 det=dict(kind="ins", d=MW.PASS_D, D=MW.INS_D, h=MW.INS_H, side="top", z=(0, MW.SEAT_H), pt=_mr[0], ang=90, title="铜螺母孔 N (沿 y 剖)"))],
     notes=[f"槽: 本体段 {F(MW.BODY_W)} 宽 Z{F(MW.Z_BD0)}..{F(MW.Z_BD1)} / 护套段 {F(MW.SHEATH_W)} 宽 Z{F(MW.Z_SH0)}..{F(MW.Z_SH1)}, 零间隙",
-           f"11-18 加底片: 护套段 {F(MW.FLOOR_T)} / 本体段 {F(MW.Z_BD0)} (台阶 0.25 = 护套比本体单边大), 顶板 {F(MW.T_TOP)}; 座顶 Z{F(MW.SEAT_H)} (定子盘底 − 0.5)",
+           f"11-18 拆 2 件: 本件 = 上件 Z{F(MW.FLOOR_T)}..{F(MW.SEAT_H)} (顶板 {F(MW.T_TOP)}); 底片另出 mr30_floor (护套段 {F(MW.FLOOR_T)} / 本体段 {F(MW.Z_BD0)}); 装: 下片 → 公头 → 扣本件 → 2×M3",
            f"后墙 {F(MW.REAR_T)} 厚, 出线口 {F(2 * MW.SLOT_HW)}×3 长圆 (3×Φ3 电机线并排, 线心 Z{F(MW.PIN_Z)})",
            "插母头: 护套尾面顶后墙; 拔母头: 护套台肩顶槽台阶 (两侧 + 顶 + 底片台阶 0.25)",
            "⚠ 待用户确认: 公头朝向 / 母头外形 / 线径 Φ3"]))
@@ -648,7 +648,7 @@ SPECS.append(dict(
            f"走线: 出线口 → (30, −45) → 往下到 y≈−62 → 沿 x 穿本件 → (−40, −60) → (−64, −40) → MR30 座 −y 端",
            f"11-18 加宽: 孔离线束中心 ±{F(MW.CL_INS_DY)} (孔到线槽肉 {F(MW.CL_INS_DY - MW.INS_D / 2 - MW.CL_CH_HW)}), 端壁 {F(MW.EAR_H - MW.INS_D / 2)}"]))
 # 11-18 用户: MR30 座 / 线夹两版 —— 上面两张 = 玻纤板版 (整机); _old = 配旧一体底盘 Φ220×6 (原孔位, 旧沉孔 Φ7×2 支承 Z-4)
-for _base, _shape, _pts, _L in (("mr30_seat_v1_2", MW.mr30_seat(MW.MR_INS_DX_OLD), MW.mr_ins(MW.MR_INS_DX_OLD), 12.0),
+for _base, _shape, _pts, _L in (("mr30_seat_v1_2", MW.mr30_split(MW.MR_INS_DX_OLD)[0], MW.mr_ins(MW.MR_INS_DX_OLD), 12.0),
                                 ("motor_wire_clamp_v1_2", MW.wire_clamp(MW.CL_INS_DY_OLD), MW.cl_ins(MW.CL_INS_DY_OLD), 10.0)):
     _src = next(q for q in SPECS if q["code"] == _base)
     _h = dict(_src["holes"][0]); _h["pts"] = _pts
@@ -662,6 +662,18 @@ for _base, _shape, _pts, _L in (("mr30_seat_v1_2", MW.mr30_seat(MW.MR_INS_DX_OLD
                             + [n for n in _src["notes"] if not n.startswith("11-18 加宽")]
                             + ([f"11-18 加宽 (孔不动): 孔离线束中心 ±{F(MW.CL_INS_DY_OLD)} (孔到线槽肉 {F(MW.CL_INS_DY_OLD - MW.INS_D / 2 - MW.CL_CH_HW)}), 端壁 {F(MW.EAR_H - MW.INS_D / 2)}"] if "clamp" in _base else
                                [f"11-18 加宽 (孔不动): 座宽 {F(2 * MW.SEAT_HX)}, 孔 ±{F(MW.MR_INS_DX_OLD)}: 外壁 {F(MW.SEAT_HX - MW.MR_INS_DX_OLD - MW.INS_D / 2)} / 到护套槽 {F(MW.MR_INS_DX_OLD - MW.INS_D / 2 - MW.SHEATH_W / 2)}"])))
+# 11-18 用户: MR30 座拆 2 件 (带底片后公头装不进) ⇒ 下片单独出图 (玻纤板版 / _old 版)
+for _code, _dx, _L, _base_txt in (("mr30_floor_v1_2", MW.MR_INS_DX, MW.SCREW_L[0], "玻纤板版"), ("mr30_floor_v1_2_old", MW.MR_INS_DX_OLD, 12.0, "_old 版 (配旧一体底盘 Φ220×6)")):
+    _lo = MW.mr30_split(_dx)[1]; _p = MW.mr_ins(_dx)
+    SPECS.append(dict(
+        code=_code, shape=_lo, stl_asm=True, short="MR30 座下片", qty="1", material="PETG (建议) / PLA", date="2026-11-18",
+        title=f"MR30 座下片: {F(2 * MW.SEAT_HX)}×{F(MW.Y_OPEN - MW.Y_R)}×{F(MW.FLOOR_T)} + 本体段垫条 {F(MW.BODY_W)}×{F(MW.BODY_L)}×{F(MW.Z_BD0 - MW.FLOOR_T)}",
+        subtitle=f"{_base_txt}; 压在 MR30 公头下面, 上件 mr30_seat 扣在上面 (Z{F(MW.FLOOR_T)} 分开)",
+        orient="底面贴床 (垫条朝上)",
+        sec=dict(ang=180, r0=44.0, r1=78.0, zd=[(0, MW.Z_BD0, F(MW.Z_BD0))]),
+        holes=[dict(tag="N", pts=_p, spec=f"Φ{F(MW.PASS_D)} 通", where=xy(_p) + f"  M3×{F(_L)} 从底盘底面往上穿过本件, 拧进上件铜螺母")],
+        notes=[f"护套段底片 {F(MW.FLOOR_T)}; 本体段垫条高 {F(MW.Z_BD0 - MW.FLOOR_T)} (护套比本体单边大 0.25, 保证插头平放)",
+               "装配: 下片放底盘上 → 放 MR30 公头 (护套朝 −y) → 扣上件 → 2×M3 从盘底往上拧紧"]))
 # ---------------- 转子盘B 承载盘单件 rim_ring_v1_2b (rotor_b_v1_2.py; 11-17 夜) —— 只在点名出图时 import (rotor_b 要建整套转子件, 慢) ----------------
 if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1):   # 11-18 整机换成转子盘B 后全量出图也带上
     import io as _io, contextlib as _cl
@@ -756,7 +768,7 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
     _FOLDER_B = {"rim_ring_v1_2b": "转子盘B", "screen_holder_v1_2b_a": "转子盘B", "screen_holder_v1_2b_b": "转子盘B", "rotor_shroud_b_a_v1_2b": "转子盘B", "rotor_shroud_b_b_v1_2b": "转子盘B"}
 else:
     _FOLDER_B = {}
-_DIR = {"motor_wire_clamp_v1_2": "mr30_seat_v1_2", "mr30_seat_v1_2_old": "mr30_seat_v1_2", "motor_wire_clamp_v1_2_old": "mr30_seat_v1_2"}   # 11-18 用户: 线夹文件放 MR30 文件夹 (models/<目录>/)
+_DIR = {"motor_wire_clamp_v1_2": "mr30_seat_v1_2", "mr30_seat_v1_2_old": "mr30_seat_v1_2", "motor_wire_clamp_v1_2_old": "mr30_seat_v1_2", "mr30_floor_v1_2": "mr30_seat_v1_2", "mr30_floor_v1_2_old": "mr30_seat_v1_2"}   # 11-18 用户: 线夹文件放 MR30 文件夹 (models/<目录>/)
 _D1116 = {"led_post_a_v1_2", "led_post_b_v1_2", "led_bar_v1_2", "led_top_v1_2", "led_comb_v1_2", "rotor_shroud_a_v1_2", "rotor_shroud_b_v1_2",
           "rotor_lid_v1_2", "rotor_lid_b_v1_2", "wireless_holder_v1_2", "rim_ring_v1_2_D170", "hub_disc_v1_2", "base_disc_v1_2", "mr30_seat_v1_2", "motor_wire_clamp_v1_2"}
 for sp in SPECS:
