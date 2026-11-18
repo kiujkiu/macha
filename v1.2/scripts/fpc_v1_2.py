@@ -250,6 +250,12 @@ def _fp_at(pcb, ref):
     raise KeyError(ref)
 
 
+# 11-18 底板座子按规格书 (D:/claude_workspace/pov3d/pcb/projects/POV3D_V2_BaseBoard/review/datasheet/XW0525512-702R-001_温达_规格书.pdf):
+#   本体深 5.70 / 含焊脚尾 6.55 / 高 2.55 / 70P 本体宽 DIM A 39.95; 焊脚与插口在本体两对边 (SECTION A-A 扁平线从右进, 焊脚 ③ 在左);
+#   焊盘图: 信号焊盘 0.30×1.30, 「0.50Ref」= 焊盘外端 → 焊脚尾尖 ⇒ 尾尖离焊盘中心 0.15 (往插口方向), 本体焊脚侧边离焊盘中心 0.70, 插口边离焊盘中心 0.70 + 5.70 = 6.40
+#   (校验: 信号焊盘内端 → 固定焊盘近端 = 3.900 与原厂封装吻合)。环境变量 FPC_SEAT_CRTYD=1 回到按外形框建。
+XW_DS = os.environ.get('FPC_SEAT_CRTYD', '0') != '1'
+XW_PAD2MOUTH, XW_BODY_D, XW_BODY_W = 6.40, 5.70, 39.95
 def _bb_seat(ref, rot=False, dy=0.0):
     """rot = 绕封装原点 (KiCad at) 转 180° (口 −y → +y, 脚 1 x 反号); dy = 世界 y 平移"""
     x0, y0, x1, y1 = _bbp[ref]                      # CrtYd; Fab = CrtYd 内缩 0.2
@@ -264,6 +270,10 @@ def _bb_seat(ref, rot=False, dy=0.0):
         mouth, face, rot, dy = y1 - 0.2, 1, False, 0.0
     else:
         assert sig_y > mouth + 3, (ref, sig_y, mouth)   # r4f 现状: 信号脚在 +y 侧 ⇒ 插口朝 −y
+    if XW_DS:   # 11-18: 按温达 XW0525512-702R-001 规格书建座子 (不读封装外形框; 立创/自画外形框都不是按规格书画的)
+        mouth, depth, xh = sig_y + face * XW_PAD2MOUTH, XW_BODY_D, XW_BODY_W / 2
+        _kf = V._w(*kicad_pad(V.BB_PCB, ref, '71'))[1]          # 固定焊盘 (71/72) 在插口一侧 (规格书焊盘图 + 剖面)
+        assert (_kf - sig_y) * face > 0, (ref, '插口方向与固定焊盘不在同侧', sig_y, _kf, face)
     if rot: mouth, face, px, sig_y = 2 * oy - mouth, 1, -kc[0], 2 * oy - sig_y
     mouth += dy; sig_y += dy
     back = mouth - face * depth
