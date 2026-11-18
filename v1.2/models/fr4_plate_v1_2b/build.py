@@ -4,7 +4,7 @@
   - 内圈 R34 ×8 + 外圈 R77.5 ×8 (@22.5°+45°k): M3 通孔 Φ3.2 + 底面 Φ7.2×1.5 平底沉孔; 螺丝从下往上穿玻纤板 + 承载盘: 12 颗进承载盘铜螺母, 4 颗再穿屏幕固定件上法兰螺母
   - 电机 4 孔 (正方形对角 16, R8 @45°+90°k): M3 通孔 Φ3.2, 不开沉孔 (电机螺丝从承载盘顶面往下拧, 底面贴电机)
   - 中心: M5 通孔, 实际 Φ5.2 (电机轴头)
-  - 厚度 2.0 (用户问够不够: 抗弯刚度 ∝ E·t³, 2 mm FR4 约为 3 mm 打印 PLA 底板 2 倍; 3 mm 重 +45 g, 收益不划算)
+  - 厚度 3.0 (11-17 晚由 2.0 改; 毂盘并入承载盘后本板当承力底板)
   输出: STL (底面 Z0, 沉孔朝下 = 装配姿态) + DXF (外形 + 全部通孔, 给板厂) + 图纸 (build_drawing.py)
 """
 import math
@@ -48,18 +48,56 @@ def write_stl(part, out, name):
 
 
 def write_dxf(out):
+    """板厂 DXF: OUTLINE 外形 / HOLES 通孔 (只这两层参与加工) + CB_BOTTOM 沉孔示意 + CENTER 中心线 + DIM 尺寸 + NOTE 备注。"""
     import ezdxf
     doc = ezdxf.new('R2000', setup=True); doc.units = ezdxf.units.MM
-    doc.layers.add('OUTLINE', color=7); doc.layers.add('HOLES', color=1); doc.layers.add('CB_BOTTOM', color=3); doc.layers.add('NOTE', color=2)
+    for n, c in (('OUTLINE', 7), ('HOLES', 1), ('CB_BOTTOM', 3), ('CENTER', 4), ('DIM', 5), ('NOTE', 2)):
+        doc.layers.add(n, color=c)
+    doc.layers.get('CENTER').dxf.linetype = 'CENTER'
     msp = doc.modelspace()
-    msp.add_circle((0, 0), OD / 2, dxfattribs={'layer': 'OUTLINE'})
+    R = OD / 2
+    msp.add_circle((0, 0), R, dxfattribs={'layer': 'OUTLINE'})
     for x, y in HOLES_IN + HOLES_OUT + HOLES_MOTOR:
         msp.add_circle((x, y), M3_D / 2, dxfattribs={'layer': 'HOLES'})
     msp.add_circle((0, 0), CENTER_D / 2, dxfattribs={'layer': 'HOLES'})
-    for x, y in HOLES_IN + HOLES_OUT:                       # 沉孔只作标示 (板厂按图纸/备注做底面控深)
+    for x, y in HOLES_IN + HOLES_OUT:
         msp.add_circle((x, y), CB_D / 2, dxfattribs={'layer': 'CB_BOTTOM'})
-    msp.add_text('FR4 no copper, T=2.0; CB_BOTTOM: 16x D7.2 depth 1.0 from bottom side', height=3,
-                 dxfattribs={'layer': 'NOTE'}).set_placement((-OD / 2, -OD / 2 - 8))
+    # 中心线 + 孔位分布圆
+    ca = {'layer': 'CENTER'}
+    msp.add_line((-R - 5, 0), (R + 5, 0), dxfattribs=ca); msp.add_line((0, -R - 5), (0, R + 5), dxfattribs=ca)
+    for r in (34.0, 77.5, 8.0):
+        msp.add_circle((0, 0), r, dxfattribs=ca)
+    for x, y in HOLES_IN + HOLES_OUT:
+        a = math.atan2(y, x); r = math.hypot(x, y)
+        msp.add_line(((r - 6) * math.cos(a), (r - 6) * math.sin(a)), ((r + 6) * math.cos(a), (r + 6) * math.sin(a)), dxfattribs=ca)
+    # 尺寸
+    da = {'layer': 'DIM'}; ov = dict(dimtxt=3.0, dimasz=2.5, dimdec=1, dimtzin=8)
+    def diam(r, ang, txt=None, xo=None):
+        a = math.radians(ang)
+        d = msp.add_diameter_dim(center=(0, 0), radius=r, angle=ang, dimstyle='EZ_RADIUS', override=ov, text=txt or '<>', dxfattribs=da)
+        d.render()
+    diam(R, 60, '%%c165')
+    diam(77.5, 112.5, '%%c155 (8-%%c3.2)')
+    diam(34.0, 202.5, '%%c68 (8-%%c3.2)')
+    # 电机孔方阵 & 角度
+    msp.add_linear_dim(base=(0, -14), p1=HOLES_MOTOR[2], p2=HOLES_MOTOR[3], text='11.31', dimstyle='EZDXF', override=ov, dxfattribs=da).render()
+    msp.add_angular_dim_cra(center=(0, 0), radius=55, start_angle=0, end_angle=22.5, distance=0, dimstyle='EZDXF', override=ov, dxfattribs=da).render()
+    msp.add_angular_dim_cra(center=(0, 0), radius=62, start_angle=22.5, end_angle=67.5, distance=0, dimstyle='EZDXF', override=ov, dxfattribs=da).render()
+    na = {'layer': 'NOTE'}
+    def note(t, x, y, h=3.0):
+        msp.add_text(t, height=h, dxfattribs=na).set_placement((x, y))
+    hx, hy = HOLES_OUT[0]; note(f'16-%%c{M3_D:g} THRU, %%c{CB_D:g} DEPTH {CB_H:g} FROM BOTTOM', hx + 5, hy + 8, 2.5)
+    note(f'4-%%c{M3_D:g} THRU (MOTOR, SQ 11.31, DIAG 16)', -60, -22, 2.5)
+    note(f'%%c{CENTER_D:g} THRU', 4, -4, 2.5)
+    y0 = -R - 14
+    for i, t in enumerate([
+        'fr4_plate_v1_2b  POV3D V1.2 ROTOR-B GLASS-FIBER BASE PLATE  QTY 1',
+        f'MATERIAL: FR4, NO COPPER, T={T:g} +/-0.1    UNIT: mm    ORIGIN = PLATE CENTER (VIEW FROM TOP)',
+        'LAYERS: OUTLINE = board outline, HOLES = drilled thru holes (machine these two only)',
+        f'        CB_BOTTOM = 16x %%c{CB_D:g} flat counterbore depth {CB_H:g} on BOTTOM side (controlled depth)',
+        'HOLES: inner 8 @ R34, outer 8 @ R77.5, both 22.5+45k deg; motor 4 @ R8, 45+90k deg; center %%c5.2',
+    ]):
+        note(t, -R, y0 - i * 5.5, 3.0)
     doc.saveas(out)
 
 
