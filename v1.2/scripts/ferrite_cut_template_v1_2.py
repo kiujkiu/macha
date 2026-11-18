@@ -30,7 +30,10 @@ def poly(pts, dashed=False):
     if dashed: pdf.set_dash_pattern()
 
 PER = 5                                              # 每条: 从块 m 轴线切到块 m+5 轴线 (两端各半块)
-STRIP_SPANS = [(m, min(m + PER, N)) for m in range(0, N, PER)]   # 块 N ≡ 块 0 (环首尾)
+STRIP_SPANS = [(m, m + PER) for m in range(0, 30, PER)]   # 两张片 6 条排满 (用户 11-18): m=1..18 一圈, 其余备用
+def label(m):                                    # 0半 + 30半 对拼成 备12
+    if 1 <= m <= N: return str(m)
+    return "备12" if m in (0, 30) else f"备{m - N}"
 n_strips = len(STRIP_SPANS)
 for m0, m1 in STRIP_SPANS: assert (m1 - m0) * P <= SHEET - 1
 X_OFF = (SHEET - PER * P) / 2
@@ -62,10 +65,9 @@ def draw_sheet(sh, X0, Y0):
                     if u0 - 1e-6 <= u <= u1 + 1e-6: pts.append((u, yt + dy if up else yb - dy))
                 pdf.set_draw_color(*BLU); pdf.set_line_width(0.3); poly(pts, True)
                 pdf.set_draw_color(*RED); pdf.set_line_width(0.3)
-            no = m % N + 1
             half = m in (m0, m1)
             lx = c + (0 if not half else (L / 5 if m == m0 else -L / 5))
-            txt(lx, yt + H * (0.55 if up else 0.50), f"{no}" + ("半" if half else ""), 6.5 if half else 8, 'C', RED)
+            txt(lx, yt + H * (0.55 if up else 0.50), label(m) + ("半" if half else ""), 6.5 if half else 8, 'C', RED)
             if not half: txt(c, yt + (2.4 if up else H - 1.0), "内", 5, 'C', RED)
         txt(X0 - 1.5, yt + 4, f"条{s+1}", 6.5, 'R', GRY)
 
@@ -84,6 +86,7 @@ def side(RX, yy, sh):
              "  3 同号「n半」两个半块沿竖边对拼",
              f"  4 沿蓝虚线修内弧 R{R_IN} / 外弧 R{R_OUT}",
              "  5 按 1→18 顺序贴, 短边朝圆心, 挨紧",
+             "  备1–备12: 多出的 12 块备用 (同尺寸)",
              "",
              f"铺满 r{R_IN}–{R_OUT} (离两墙各 0.4), 无缝",
              f"一张片 10000 mm2 < 腔环 {math.pi*(R_OUT**2-R_IN**2):.0f} mm2",
@@ -127,10 +130,12 @@ for sh in range(2):
         txt(CX, CY + 6, "蓝虚线 = 修掉的部分", 7, 'C', GRY)
 
 out = "/mnt/d/claude_workspace/macha/pov3d/v1.2/定子盘/隔磁片/隔磁片铺满模板_两张片_18块_A4_1比1.pdf"
-try:
-    pdf.output(out); print(out)
-except PermissionError:
-    print("被占用, 跳过", out)
+def save(pdf, out):
+    try:
+        pdf.output(out); print(out)
+    except PermissionError:
+        alt = out.replace(".pdf", ".NEW.pdf"); pdf.output(alt); print("原文件被占用, 写到", alt)
+save(pdf, out)
 
 # ---- 紧凑版: 一张 A4 放两张片 (第 1、2 张上下排), 只留切线 + 比例尺
 pdf = FPDF('P', 'mm', 'A4'); pdf.set_auto_page_break(False); pdf.add_page()
@@ -140,10 +145,10 @@ for sh, y in ((0, 16), (1, 16 + SHEET + 14)):
     draw_sheet(sh, 22, y)
     txt(22, y - 2, f"第 {sh+1} 张片 (100×100)", 8)
 yb = 16 + 2 * SHEET + 14 + 6
-txt(22, yb, "红实线 = 切线; 蓝虚线 = 修弧 R40.3 / R72.1; 同号「n半」对拼; 1→18 顺序贴, 短边朝圆心", 7, 'L', GRY)
+txt(22, yb, "红实线 = 切线; 蓝虚线 = 修弧 R40.3 / R72.1; 同号「n半」对拼; 1→18 贴一圈, 备1–12 备用", 7, 'L', GRY)
 pdf.set_draw_color(*BLK); pdf.set_line_width(0.3); pdf.line(22, yb + 6, 72, yb + 6)
 for q in range(0, 51, 10):
     pdf.line(22 + q, yb + 4.5, 22 + q, yb + 7.5); txt(22 + q, yb + 10.5, str(q), 6, 'C')
 txt(78, yb + 7, "← 应量出 50.0 mm", 7.5)
 out2 = "/mnt/d/claude_workspace/macha/pov3d/v1.2/定子盘/隔磁片/隔磁片铺满模板_两张片合一页_A4_1比1.pdf"
-pdf.output(out2); print(out2)
+save(pdf, out2)
