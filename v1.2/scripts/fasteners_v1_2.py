@@ -201,7 +201,7 @@ for i, sx in enumerate((1, -1)):
     add(f"M3x4 铜螺母 灯板顶帽 #{i}", insert(sx * L.COMB_FIX_X, L.ECC, L.Z1, L.CAP_T), "#B8860B")
 BB_NUT_Z0 = L.RIM_TOP + B.BB_STANDOFF + B.BB_T                 # 板顶 Z36.6
 # 转子盘B: 承载盘底面 Φ7.4×1.5 让位沉孔在托盘底 (头支承 Z28.8, 头不进线圈腔) ⇒ 到板顶螺母顶 Z39 要 10.2 ⇒ M3×12 (尖 Z40.8 出螺母 1.8); 原转子 M3×8 头支承 Z31
-_BBZ, _BBL = ((B.Z_RIM_TOP - 4.7 + 1.5), 12.0) if B.ROTOR_B else (B.BB_SCREW_HEAD_Z, B.BB_SCREW_L)
+_BBZ, _BBL = ((B.Z_RIM_TOP - 3.2 + 1.5), 10.0) if B.ROTOR_B else (B.BB_SCREW_HEAD_Z, B.BB_SCREW_L)
 for i, (x, y) in enumerate(B.BB_HOLES):
     add(f"尼龙光孔垫柱 Φ6×3 底板 #{i}", cut(cyl(x, y, 6.0, L.RIM_TOP, L.RIM_TOP + B.BB_STANDOFF), cyl(x, y, 3.2, 0, 60)), "#EEEEEE")
     screw(f"M3x{_BBL:g} 超薄头 底板", i, x, y, _BBZ, _BBL, True, engage=("尼龙螺母", BB_NUT_Z0, BB_NUT_Z0 + B.BB_NUT_H))
@@ -275,22 +275,22 @@ if B.ROTOR_B:
     RB = RSB.RB
     _FB = RB.Z_F0 + 1.5
     for i, (x, y) in enumerate(RB.IN_PTS + RB.OUT_NUT_PTS):
-        screw("M3x8 超薄头 玻纤板→承载盘", i, x, y, _FB, 8.0, True, engage=("铜螺母", RB.Z_TOP - RB.INS_H, RB.Z_TOP))
-        add(f"M3x4 铜螺母 承载盘B #{i}", insert(x, y, RB.Z_TOP - RB.INS_H, RB.INS_H), "#B8860B")
+        screw("M3x7 超薄头 玻纤板→承载盘", i, x, y, _FB, 7.0, True, engage=("铜螺母", RB.Z_TOP - RB.INS_H, RB.Z_TOP))
+        add(f"M3x3 铜螺母 承载盘B #{i}", insert(x, y, RB.Z_TOP - RB.INS_H, RB.INS_H), "#B8860B")
     for i, (x, y) in enumerate(RB.ANCHOR_PTS):
         screw("M3x18 超薄头 玻纤板→固定件锚孔", i, x, y, _FB, 18.0, True, engage=("M3 法兰螺母", RB.H_Z1, RB.H_Z1 + NUT_T))
         add(f"M3 法兰螺母 固定件带顶 #{i}", flange_nut(x, y, RB.H_Z1), "#707070")
     for i, (x, y) in enumerate(RB.MOT_PTS):
         screw("M3x10 内六角 承载盘→电机", i, x, y, RB.Z_TOP - RB.MOT_CB_H, 10.0, False, hd=5.5, hh=3.0, engage=("电机顶螺纹", B.MOTOR_Z0, B.ROTOR_TOP))
     for i, (x, y) in enumerate(RB.SHR_LOCK_PTS):
-        screw(f"M3x{RSB.MNT_L:g} 内六角 转子罩B→固定件", i, x, y, RSB.BOSS_Z1, RSB.MNT_L, False, hd=5.5, hh=3.0, engage=("铜螺母", RB.H_Z1 - RB.INS_H, RB.H_Z1))
-        add(f"M3x4 铜螺母 固定件 罩子锁点 #{i}", insert(x, y, RB.H_Z1 - RB.INS_H, RB.INS_H), "#B8860B")
+        screw(f"M3x{RSB.MNT_L:g} 内六角 转子罩B→固定件", i, x, y, RSB.BOSS_Z1, RSB.MNT_L, False, hd=5.5, hh=3.0, engage=("铜螺母", RB.H_Z1 - RB.H_INS_H, RB.H_Z1))
+        add(f"M3x4 铜螺母 固定件 罩子锁点 #{i}", insert(x, y, RB.H_Z1 - RB.H_INS_H, RB.H_INS_H), "#B8860B")
 
 # 13 无线供电模块托盘 (11-16, wireless_holder_v1_2): 3×M3×8 内六角 (Φ6 沉孔底 Z36 支承) 进承载盘 M3×4 铜螺母 (Z28..32, Φ4.18 画)
 import wireless_holder_v1_2 as WH
 for i, (x, y) in enumerate(B.MOD_HOLES):
-    screw("M3x8 内六角 无线托盘", i, x, y, WH.CB_Z, 8.0, False, hd=5.5, hh=3.0, engage=("铜螺母", WH.RIM_TOP - 4.0, WH.RIM_TOP))
-    add(f"M3x4 铜螺母 承载盘 无线托盘 #{i}", cut(cyl(x, y, INS_D - 0.02, WH.RIM_TOP - 4.0, WH.RIM_TOP), cyl(x, y, 3.0, 0, 50)), "#B8860B")
+    screw("M3x8 内六角 无线托盘", i, x, y, WH.CB_Z, 8.0, False, hd=5.5, hh=3.0, engage=("铜螺母", WH.RIM_TOP - (3.0 if B.ROTOR_B else 4.0), WH.RIM_TOP))
+    add(f"M3x{3 if B.ROTOR_B else 4} 铜螺母 承载盘 无线托盘 #{i}", cut(cyl(x, y, INS_D - 0.02, WH.RIM_TOP - (3.0 if B.ROTOR_B else 4.0), WH.RIM_TOP), cyl(x, y, 3.0, 0, 50)), "#B8860B")
 
 # 14 底盘 MR30 座 + 电机线束线夹 (11-16 晚, motor_wire_v1_2): 各 2×M3 从底盘底面 Φ7×2 沉孔往上 (头支承 Z-4), 进件顶热压 M3×4 铜螺母 (顶齐件顶)
 #    MR30 座 M3×12 (件顶 Z8.0) / 线夹 M3×10 (件顶 Z6.0), 尖 = 件顶, 啮合 4

@@ -53,7 +53,7 @@ BORE_D = 59.0                          # 电机座内孔 (原 55), 径向余 2
 STATOR_R = 46 / 2; ROTOR_R = 16 / 2   # 对角/2
 POCKET_D, POCKET_H = 6.2, 3.5          # 毂盘中心窝 (原 Φ6.2x2.2)
 RIM_D = 170.0                          # 承载盘外唇: 11-16 晚 用户改回 Φ170 (同晚曾改 Φ175; 11-14 改回 V0.4 Φ170; V1.0 原 180, V1.2 曾 178)
-SCR_ECC = -4.36                        # 11-16 晚 用户: 整组灯板沿 y 平移 (同 V0.4/V1.0 偏心), 板 A MIP LED 顶面落在转轴 y=0; 各脚本都读 B.SCR_ECC
+SCR_ECC = -4.69                        # 11-18 夜 用户: 灯板间距 5 / 板厚 1.6 ⇒ −(2.5+1.6+MIP 0.59) = −4.69 (原 −4.36 = 间隙 4.6 / 板 1.468); 11-16 晚 用户: 整组灯板沿 y 平移 (同 V0.4/V1.0 偏心), 板 A MIP LED 顶面落在转轴 y=0; 各脚本都读 B.SCR_ECC
 DISC_D = 220.0
 # 用户 11-18: 底座 = 3 mm 玻纤板 (FR4, 顶 Z0) + 打印底盘 4.5 (Z-7.5..-3), 上面所有件 Z 不变。
 #   建模时仍按一整块 Z-7.5..0 的 disc 造 (底面沉孔/铜螺母孔相对底面, 顶面槽相对 Z0), 最后拆成 disc_print + fr4。
@@ -475,6 +475,8 @@ LOG['coil_drv'] = dict(xpc=CD.XPC, xb=CD.XB, has_mc=CD.HAS_MC, has_cc=CD.HAS_CC,
 def ann(r0, r1, z0, z1): return cut(cyl(0, 0, 2 * r1, z0, z1), cyl(0, 0, 2 * r0, z0 - 1, z1 + 1))
 GL_OD, GL_T, GL_H = 200.0, 5.0, 245.0
 Z_RIM_TOP = round(bbox(rim)[5], 2)                 # 承载盘顶 32.0
+Z_SHR_REF = Z_RIM_TOP                              # 11-18: 玻璃罩 (底圈/玻璃座分缝, 按键开口顶) 仍按原盘顶 Z32 定, 不随转子盘B 减薄动
+if ROTOR_B: Z_RIM_TOP = ROTOR_TOP + 3.0 + 2.8 + 3.2   # 11-18 用户: 转子盘B 承载盘总厚 9 = 外唇/玻纤板 3 + 线圈腔 2.8 + 托盘 3.2 ⇒ 盘顶 Z30.5 (原 32)
 SH_OUT = DISC_D / 2                                # 用户草图 11-11: 外面与底盘外缘齐平 r110
 SPIG_T = 4.0                                       # 用户 11-11 嫌内卡薄: 2.8 → 4.0, 往里加 (内卡 r90.8–94.8, 离承载盘外缘 1.8)
 GL_CLR = 0.2                                       # 玻璃单边间隙
@@ -484,7 +486,7 @@ IN_DEPTH, OUT_DEPTH = 20.0, 10.0                   # 内卡 20, 外卡贴玻璃�
 #   玻璃下加高, 内卡顶 (不透光部分的最高点) = LED 下沿 − VIEW_MARGIN
 BB_STANDOFF, BB_T, CZ06_H, CZ06_CLR = 3.0, 1.6, 6.6, 2.0   # 转接板垫柱 (让插件脚) / 板厚 / CZ06 堆高 / CZ06 顶 → 灯板下沿
 Z_BB0 = Z_RIM_TOP + BB_STANDOFF                    # 转接板底 35.0
-SCREEN_GAP = 5.0                                   # 用户 11-16: 灯板几乎贴盘, 下沿离承载盘顶 5 (要过 FPC/线); 转接板移到 +y 侧 (原 13.2 = 垫3+板1.6+CZ06 6.6+留2)
+SCREEN_GAP = 7.0 if ROTOR_B else 5.0               # 11-18 用户「led屏幕抬高2mm」(取消承载盘 FPC B 让位槽, FPC 最低点离盘顶 0.6); 用户 11-16: 灯板几乎贴盘, 下沿离承载盘顶 5 (要过 FPC/线); 转接板移到 +y 侧 (原 13.2 = 垫3+板1.6+CZ06 6.6+留2)
 LED_BOARD_H = 208.0                                # 灯板高 (板框 163.76 × 208.01)
 LED_LOW_OFF = 37.88                                # 灯板下沿 → 最下一行 LED 像素下沿 (行心 38.66 − 节距 1.5626/2)
 Z_SCR0 = Z_RIM_TOP + SCREEN_GAP                    # 灯板下沿 37.0 (原 45.2)
@@ -571,9 +573,9 @@ s_ = cut(s_, KEY['pocket'], *KEY['skin_holes'])
 # 用户 11-14: 板后面 (内侧) 不要留塑料 ⇒ 板背面到墙内面这段墙整块打通 (x ±筋外 +0.3, 竖直到 Z32 顶面, 下段顶开口由上段盖住; 支架照旧)
 KEY_OPEN_X = KEY['params']['RIB_X1'] + KEY['params']['CLR']                       # ±22.9
 KEY_OPEN_Y1 = KEY['board_screws'][0]['nut_y']                                    # 板背面 y
-s_ = cut(s_, gbox(-KEY_OPEN_X, SPIG_IN - 5, -1, KEY_OPEN_X, KEY_OPEN_Y1, Z_RIM_TOP + 0.01))
+s_ = cut(s_, gbox(-KEY_OPEN_X, SPIG_IN - 5, -1, KEY_OPEN_X, KEY_OPEN_Y1, Z_SHR_REF + 0.01))
 _kp = KEY['pocket_bbox']                          # 用户 11-18: 开口两侧 (x ±22.9..±腔边 32.3) 腔底 y89.7 与内墙 r86.8 之间的两块三角楔去掉 ⇒ 这段内墙也打通到腔底
-s_ = cut(s_, *[gbox(a, 70.0, -1, b, _kp[2] + 0.01, Z_RIM_TOP + 0.01) for a, b in ((_kp[0], -KEY_OPEN_X + 0.01), (KEY_OPEN_X - 0.01, _kp[1]))])
+s_ = cut(s_, *[gbox(a, 70.0, -1, b, _kp[2] + 0.01, Z_SHR_REF + 0.01) for a, b in ((_kp[0], -KEY_OPEN_X + 0.01), (KEY_OPEN_X - 0.01, _kp[1]))])
 LOG['key'] = dict(m3=[(round(x, 2), round(y, 2)) for x, y in KEY_M3], skin=KEY['skin'], flap={k: KEY['flap'][k] for k in ('F_top', 'F_bot', 't_top')}, pocket_bbox=KEY['pocket_bbox'], open=(KEY_OPEN_X, KEY_OPEN_Y1), bracket_vol=KEY['bracket_vol'],
                   holes=[(round(x, 2), round(z, 2), dd) for x, z, dd in KEY['holes']])
 def _stl(f):
@@ -633,7 +635,7 @@ LOG['split'] = dict(ring=vol(clamp_ring), shroud=vol(shroud_split))
 #   Z32 以下 = 原 32 高下罩 (三角块/筋/按键舌片 Z≤30/XT60 井/按键腔顶 Z23.3 都在下面), 以后改可视高度只重打上段。
 #   对中: 下段顶面凸筋 r104–106 高 2 插上段底槽 (单边 0.1, 同外卡环); 螺丝 r98.5 @22.5°+45k (避开 +X XT60 / +Y 按键),
 #   沉孔 Φ7 开在上段顶面 (玻璃座) 被玻璃端面 + 外卡环盖住; 拆: 外卡环 → 玻璃 → 8 螺丝 → 上段, 不用翻整机。
-SPLIT_Z = Z_RIM_TOP                                # 32.0
+SPLIT_Z = Z_SHR_REF                                # 32.0
 JN_N, JN_R, JN_ANG0 = 8, 99.5, 22.5               # 11-17 晚 用户: r98.5 沉孔内缘 r94.1 啃内卡根 0.7 ⇒ 外挪 1 (内缘 r95.1, 离内卡 0.3)
 #   (旧 r98.5: 沉孔 Φ8.8 r94.1–102.9 下切内卡根 0.7, 离外卡环槽 r103.8 0.9)
 # 用户 11-14 (二): 要真夹持 ⇒ 螺丝穿通上下两段。11-16 用户买到实物 (图): M4×50 超薄头 (头 Φ8.5×1.8, 2.5 六角) + M4 法兰螺母 (法兰 Φ9.7, 对边 6.9, 厚 4.3)

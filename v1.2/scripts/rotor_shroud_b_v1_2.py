@@ -24,14 +24,28 @@ cyl, cut, fuse, clean, gbox, vol, bbox, xf, rotz, solids = B.cyl, B.cut, B.fuse,
 common, common_v, sector, pol, prism_xz = RB.common, RB.common_v, RS.sector, RS.pol, RS.prism_xz
 Z0, Z1, R0, R1 = RS.Z0, RS.Z1, RS.R0, RS.R1
 BOSS_Z0 = RB.H_Z1                     # 37.0 凸台底 = 固定件带顶
-BOSS_T = RS.BOSS_Z1 - RS.Z0           # 4 (同原凸台厚)
+BOSS_T = 4.0                          # 4 (同原凸台厚; 11-18 盘顶改 30.5 后旧 RS.BOSS_Z1 - RS.Z0 不再是 4, 写死)
 BOSS_Z1 = BOSS_Z0 + BOSS_T            # 41.0 螺丝头支承
 GUS_Z1 = BOSS_Z1 + (R0 - RS.BOSS_RI)  # 45° 斜撑贴壁顶
 HOLE_R = RB.SHR_LOCK_R                # 77
 MNT_A = list(RB.SHR_LOCK_ANG)         # 40/140/220/320
 MNT_L = 8.0                           # M3×8: 支承 Z41 → 尾 Z33 (固定件铜螺母 Z33–37 吃满 4)
-assert abs(BOSS_Z1 - MNT_L - (RB.H_Z1 - RB.INS_H)) < 1e-6
-SPLIT_Y = RS.ECC                      # 分界: 灯板中面 y −4.36 (两端竖缝 y −14.46…+5.74 内)
+assert abs(BOSS_Z1 - MNT_L - (RB.H_Z1 - RB.H_INS_H)) < 1e-6
+SPLIT_Y = RS.ECC                      # 分界: 灯板中面 y = SCR_ECC (11-18 夜 −4.69, 原 −4.36; 两端竖缝内)
+# 11-18 夜 用户: 底板上边 R85 圆弧伸出罩壁 r82–85 ⇒ +y 半罩底开缺口 = 底板板框外扩 BB_NOTCH_CLR, 从罩底到板顶 + BB_NOTCH_CLR (伸出的板被玻璃座挡住, 外面看不到)
+BB_NOTCH_CLR = 0.5
+BB_NOTCH_Z1 = B.Z_BB0 + B.BB_T + BB_NOTCH_CLR   # 37.1
+
+
+def bb_notch():
+    from shapely.geometry import Polygon as _P
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakePolygon, BRepBuilderAPI_MakeFace
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism
+    poly = _P(RB.V.BB_POLY).buffer(BB_NOTCH_CLR, join_style=2)
+    pg = BRepBuilderAPI_MakePolygon()
+    for x, y in list(poly.exterior.coords)[:-1]: pg.Add(gp_Pnt(x, y, Z0 - 1))
+    pg.Close()
+    return BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(pg.Wire()).Face(), gp_Vec(0, 0, BB_NOTCH_Z1 - (Z0 - 1))).Shape()
 
 
 def ring_body_b():
@@ -69,6 +83,7 @@ def half(k):
     y0, y1 = (SPLIT_Y, 100) if sy > 0 else (-100, SPLIT_Y)
     s = common(ring, gbox(-100, y0, Z0 - 1, 100, y1, Z1 + 1))
     s = fuse(s, lid_plain(k))
+    if sy > 0: s = cut(s, bb_notch())  # 底板 R85 缺口
     for a in RS.W_A:                  # 配重孔上方顶盖开孔 (配重螺丝从罩顶插)
         x, y = pol(RS.W_R, a)
         if (y > SPLIT_Y) == (sy > 0): s = cut(s, cyl(x, y, RS.W_CB_D, RS.W_BEAR, Z1 + 1))

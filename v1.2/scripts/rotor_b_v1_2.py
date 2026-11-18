@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """转子盘B (2026-11-17 晚 用户定, 第一版): 玻纤底板 3 mm + 承载盘单件 (并入毂盘) + 屏幕固定件 ×2。
     cd v1.2/scripts && ../../.venv/bin/python rotor_b_v1_2.py
-世界坐标同 build_v1_2 (电机顶 Z21.5 = 原毂盘底, 承载盘顶 Z32 不变 ⇒ 承载盘以上所有件 (底板/灯板/罩子/托盘) 高度都不动)。
+世界坐标同 build_v1_2 (电机顶 Z21.5 = 原毂盘底)。11-18 用户: 承载盘总厚 9 = 外唇 3 + 线圈腔 2.8 + 托盘 3.2 ⇒ 盘顶 Z30.5 (原 32, 承载盘以上件随 B.Z_RIM_TOP 下来 1.5);
+灯板下沿离盘顶 5 → 7 (屏幕相对抬 2, 绝对 Z37 → 37.5), FPC B 让位槽取消; 承载盘铜螺母改 M3×3。
 叠层 (下→上):
   玻纤板 fr4_plate_v1_2b  Φ165 × 3, Z21.5–24.5, 无铜 FR4 (models/fr4_plate_v1_2b/build.py 出板厂文件; 这里只按同参数建装配体)
   承载盘 rim_ring_v1_2b   V0.4 rim_ring 外形 (Φ170) + 并入毂盘:
@@ -15,7 +16,7 @@
   - 16 颗从玻纤板底往上 (头埋玻纤板 Φ7.2×1.5 沉孔): 内圈 R34 ×8 + 外圈 67.5/112.5/247.5/292.5° ×4 → 承载盘顶面 M3×4 铜螺母;
     外圈 22.5/157.5/202.5/337.5° ×4 → 穿承载盘 + 固定件, 固定件顶面 M3 法兰螺母
   - 电机 4×M3×10 从承载盘顶面 Φ7×5 沉孔往下 (头顶 Z30), 穿玻纤板进电机 4.5
-  - 托盘顶面中间开 FPC B 让位槽 37×22.5 深 2 (到 Z30): FPC B 过转轴时最低 Z30.6
+  - (11-18 取消) 托盘顶面 FPC B 让位槽 37×22.5 深 2
   - 底板 r4j 4 孔: 承载盘底面 Φ7.4×1.5 沉孔 (头埋进托盘, 不进线圈腔) 往上
 """
 import io, contextlib, json, math
@@ -48,8 +49,8 @@ FR4_T, FR4_OD = 3.0, 165.0
 Z_F1 = Z_F0 + FR4_T                    # 24.5 玻纤板顶 = 承载盘底 (中心/外环)
 CAV_H = 2.8                            # 线圈腔深 (线圈 2.7, 用户 11-17 定 2.8, 同定子)
 Z_T0 = Z_F1 + CAV_H                    # 27.3 托盘底 (腔顶)
-Z_TOP = B.Z_RIM_TOP                    # 32.0 承载盘顶 (不变)
-assert abs(Z_TOP - 32.0) < 1e-6
+Z_TOP = B.Z_RIM_TOP                    # 30.5 承载盘顶 (11-18 用户: 总厚 9 = 3 + 2.8 + 3.2, 托盘 3.2; 原 32 托盘 4.7)
+assert abs(Z_TOP - (Z_T0 + 3.2)) < 1e-6
 COIL_R0 = B.COIL_SEAT_R                # 39.9 线圈内定位 (ID80, 间隙 0.2)
 COIL_R1 = 72.5                         # 线圈腔外壁 = 外环内径 (外环宽 10 到 r82.5, 用户 ≥1 cm)
 RIM_R = 85.0                           # Φ170
@@ -61,7 +62,8 @@ NUT_OUT_ANG = (67.5, 112.5, 247.5, 292.5)
 ANCHOR_PTS = [pol(R_OUT, a) for a in ANCHOR_ANG]
 OUT_NUT_PTS = [pol(R_OUT, a) for a in NUT_OUT_ANG]
 MOT_PTS = [pol(R_MOT, 45 + 90 * k) for k in range(4)]
-INS_D, INS_H = B.INS_HOLE_D, 4.0                  # M3×4 铜螺母 Φ4.2 × 4.0 (孔底留料)
+INS_D, INS_H = B.INS_HOLE_D, 3.0                  # 11-18 用户: 热熔螺母改 M3×3 (盘减薄), 孔 Φ4.2 × 3.0 (原 M3×4)
+H_INS_H = 4.0                                     # 屏幕固定件带顶罩子锁点铜螺母仍 M3×4 (只承载盘改 M3×3)
 CENTER_D, CENTER_H = 5.2, 3.5                     # 用户 11-17: M5 真实 5.2, 深 3.5 (有无玻纤板都能用)
 BB_CB_D, BB_CB_H = 7.4, 1.5                       # 底板螺丝 薄头 Φ7×1.5 埋进托盘
 SHR_LOCK_R = 77.0                                 # 罩子锁点半径 (原 79: 带外缘 81.7, 铜螺母孔壁太薄 ⇒ 内移 2)
@@ -69,9 +71,9 @@ SHR_LOCK_ANG = (40.0, 140.0, 220.0, 320.0)        # 角度同 V1.2 (B.SHR_ANG)
 SHR_LOCK_PTS = [pol(SHR_LOCK_R, a) for a in SHR_LOCK_ANG]
 H_R0, H_R1, H_SPAN = 73.0, LS.R_CLIP, 44.0        # 固定件弧形带
 H_Z1 = LS.Z0                                      # 37.0 = 灯板下沿 = 横杆顶
-MOT_CB_H = 5.0                                    # 电机螺丝顶面 Φ7 沉孔深 (原 4): 头 Φ5.5×3 顶到 Z30, 低于 FPC B 让位槽底
-# FPC B 从桥板 B 下沿过转轴到底板 J6, 实测最低 Z30.6 (x±17.75, y −14.26…6.74), 比盘顶 Z32 低 ⇒ 托盘顶面开让位槽 (V1.2 原承载盘中心是 Φ50 通孔, 自然让开)
-FPC_POCKET = (-18.5, -15.0, 18.5, 7.5, 30.0)      # x0, y0, x1, y1, 槽底 Z (FPC 下留 0.6)
+MOT_CB_H = Z_TOP - 27.0                           # 3.5: 电机螺丝头支承仍 Z27 (M3×10 进电机 4.5 不变), 头顶 Z30 低于盘顶 0.5
+# FPC B 从桥板 B 下沿过转轴到底板 J6, 原实测最低 Z30.6 (x±17.75, y −14.26…6.74), 比盘顶 Z32 低 ⇒ 原托盘顶面开让位槽; 11-18 改灯板抬 2 (FPC 最低 Z31.1, 盘顶 30.5) (V1.2 原承载盘中心是 Φ50 通孔, 自然让开)
+FPC_POCKET = None                                  # 11-18 用户「不需要, 取消吧」: 取消让位槽 (原 (-18.5, -15.0, 18.5, 7.5, 30.0) x0,y0,x1,y1,槽底Z); 电机沉孔深 5 保留 (螺丝不变)
 
 # ---------------- 玻纤板 (装配体, 与 models/fr4_plate_v1_2b/build.py 同参数) ----------------
 fr4 = cyl(0, 0, FR4_OD, Z_F0, Z_F1)
@@ -89,15 +91,15 @@ cuts = []
 for x, y in MOT_PTS:                                                # 电机 4 孔: Φ3.2 通 + 顶面 Φ7×4 沉孔
     cuts += [cyl(x, y, 3.2, Z_F0 - 1, Z_TOP + 1), cyl(x, y, 7.0, Z_TOP - MOT_CB_H, Z_TOP + 1)]
 cuts.append(cyl(0, 0, CENTER_D, Z_F1 - 1, Z_F1 + CENTER_H))        # 中心窝 Φ5.2×3.5 (底面)
-cuts.append(gbox(FPC_POCKET[0], FPC_POCKET[1], FPC_POCKET[4], FPC_POCKET[2], FPC_POCKET[3], Z_TOP + 1))   # FPC B 让位槽
+if FPC_POCKET: cuts.append(gbox(FPC_POCKET[0], FPC_POCKET[1], FPC_POCKET[4], FPC_POCKET[2], FPC_POCKET[3], Z_TOP + 1))   # FPC B 让位槽
 for x, y in IN_PTS + OUT_NUT_PTS:                                   # 12 颗从下往上进铜螺母: Φ3.2 通 + 顶面 Φ4.2×4
     cuts += [cyl(x, y, 3.2, Z_F0 - 1, Z_TOP + 1), cyl(x, y, INS_D, Z_TOP - INS_H, Z_TOP + 1)]
 for x, y in ANCHOR_PTS:                                             # 4 颗穿到固定件: Φ3.4 通
     cuts.append(cyl(x, y, 3.4, Z_F0 - 1, Z_TOP + 1))
 for x, y in B.BB_HOLES:                                             # 底板 r4j 4 孔: Φ3.4 通 + 底面 Φ7.4 让位到 Z_T0+1.5 (头埋托盘)
     cuts += [cyl(x, y, 3.4, Z_F0 - 1, Z_TOP + 1), cyl(x, y, BB_CB_D, Z_F1 - 0.1, Z_T0 + BB_CB_H)]
-for x, y in B.MOD_HOLES:                                            # 无线托盘 3 孔: 顶面 Φ4.2×4.2 铜螺母 (同 V1.2)
-    cuts.append(cyl(x, y, INS_D, Z_TOP - 4.2, Z_TOP + 1))
+for x, y in B.MOD_HOLES:                                            # 无线托盘 3 孔: 顶面 Φ4.2×3 铜螺母 (11-18 M3×3) + 下面 Φ3.2 让螺丝尖 (M3×8 尖 Z_TOP−4)
+    cuts += [cyl(x, y, INS_D, Z_TOP - INS_H, Z_TOP + 1), cyl(x, y, 3.2, Z_TOP - 5.0, Z_TOP)]
 for x, y in B.AC_HOLES:                                             # 线圈 AC 引线 Φ3 通 + 外环处 Φ3.4 缺口
     cuts += [cyl(x, y, B.AC_HOLE_D, Z_F0 - 1, Z_TOP + 1), cyl(x, y, B.AC_HOLE_D + 0.4, Z_F1 - 0.1, Z_T0 + 0.01)]
 rim = clean(cut(rim, *cuts))
@@ -116,7 +118,7 @@ def holder(sx):
     lk = [(x, y) for x, y in SHR_LOCK_PTS if x * sx > 0]
     xb = sx * LS.BAR_SCR_X[0]                                    # 11-18: 弧形带 r73–81.7 盖住了立板 → 夹条竖螺丝 (x±73, y=ECC) ⇒ 重挖 Φ3.4 通 + 底面 Φ6×3 沉孔 (同 LS.post)
     s = cut(s, *[cyl(x, y, 3.4, LS.RIM_TOP - 1, H_Z1 + 1) for x, y in pts],
-            *[cyl(x, y, INS_D, H_Z1 - INS_H, H_Z1 + 1) for x, y in lk],
+            *[cyl(x, y, INS_D, H_Z1 - H_INS_H, H_Z1 + 1) for x, y in lk],
             cyl(xb, LS.BAR_SCR_Y, 3.4, LS.RIM_TOP - 1, LS.Z0 + 1), cyl(xb, LS.BAR_SCR_Y, 6.0, LS.RIM_TOP - 1, LS.BAR_SCR_BEAR))
     return clean(s), pts, lk
 

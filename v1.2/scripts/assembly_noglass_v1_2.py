@@ -162,7 +162,7 @@ D_WH = _dist(_LED2, L.comp([WH.H, WH.module]))
 _M = dict((n, P) for n, P, _ in MESH)
 R_LED = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in ('灯板 A (+y)', '灯板 B (-y)', *POST_N, '天线 18.5×37.7 软板 ×2'))
 R_SHR = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in SHR_N)
-assert R_SHR < B.SPIG_IN - 1.0 and R_LED < RS.R1 - 0.1 and D_BB > 0.5 and D_CZ > 0.5 and D_WH > 0.5, (R_SHR, R_LED, D_BB, D_CZ, D_WH)
+assert R_SHR < B.SPIG_IN - 1.0 and R_LED < RS.R1 - 0.1 + 1e-6 and D_BB > 0.5 and D_CZ > 0.5 and D_WH > 0.5, (R_SHR, R_LED, D_BB, D_CZ, D_WH)
 print('clearance', D_BB, D_CZ, D_WH, R_LED, R_SHR)
 from matplotlib.patches import Patch
 fig.legend(handles=[Patch(fc=c, label=n) for n, _, c in MESH], loc='upper left', bbox_to_anchor=(0.745, 0.46), fontsize=7, ncol=2, frameon=False, columnspacing=0.8, handlelength=1.2)
