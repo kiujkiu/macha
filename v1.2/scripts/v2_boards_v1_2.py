@@ -31,8 +31,17 @@ def _fillet_rect(x0, y0, x1, y1, r, n=8):
     for cx, cy, a0 in ((x1 - r, y0 + r, -90), (x1 - r, y1 - r, 0), (x0 + r, y1 - r, 90), (x0 + r, y0 + r, 180)):
         pts += [(cx + r * math.cos(math.radians(a0 + 90 * k / n)), cy + r * math.sin(math.radians(a0 + 90 * k / n))) for k in range(n + 1)]
     return pts
-BB_POLY = _fillet_rect(-51.2, 8.6, 51.2, 60.5, 6.0)   # 11-17 晚 r4j: 右边 47.3 → 51.2 (对称); 11-17 r4i: 上边 66.6→60.5 (J5 口朝外), 外接 98.5×51.9, 最远 r76.78; 原 11-16 晚 r4e (96 31676a1a): 外接 x −51.2…47.3 y 8.6…66.6 四角 R6, 最远 r81.60 (r4c/r4d 左上斜切作废)
-BB_R = 81.7                                          # 11-16 晚 改回 Φ170: 底板外接限 r81.7 (Φ175 时曾 r84.2; 原 r83)
+def _arc_top_board(x=51.2, y0=8.6, R=85.0, r=6.0, n=8, na=96):
+    """下边 y0 + 两下角 R r, 左右边 x=±x, 上边 = 以转轴为心 R 圆弧 (与侧边尖角相交); 逆时针, 第一点在下边"""
+    yc = math.sqrt(R * R - x * x); a0 = math.atan2(yc, x)
+    pts = [(x - r + r * math.cos(math.radians(-90 + 90 * k / n)), y0 + r + r * math.sin(math.radians(-90 + 90 * k / n))) for k in range(n + 1)]
+    pts += [(R * math.cos(a0 + (math.pi - 2 * a0) * k / na), R * math.sin(a0 + (math.pi - 2 * a0) * k / na)) for k in range(na + 1)]
+    pts += [(-x + r + r * math.cos(math.radians(180 + 90 * k / n)), y0 + r + r * math.sin(math.radians(180 + 90 * k / n))) for k in range(n + 1)]
+    return pts
+BB_ARC_R = 85.0                                      # 11-18 夜 用户: 底板上边改 R85 圆弧 (= 承载盘外缘齐平, 离玻璃座内壁 r90.8 余 5.8), 伸出转子罩的部分罩子开缺口, 外面被玻璃座挡住
+BB_POLY = _arc_top_board(R=BB_ARC_R)                  # 外接 102.4×76.4, 弧-侧边交点 (±51.2, 67.85), 面积 ≈7248; 原 r4j 矩形见下行
+BB_POLY_R4J = _fillet_rect(-51.2, 8.6, 51.2, 60.5, 6.0)   # 11-17 晚 r4j: 右边 47.3 → 51.2 (对称); 11-17 r4i: 上边 66.6→60.5 (J5 口朝外), 外接 98.5×51.9, 最远 r76.78; 原 11-16 晚 r4e (96 31676a1a): 外接 x −51.2…47.3 y 8.6…66.6 四角 R6, 最远 r81.60 (r4c/r4d 左上斜切作废)
+BB_R = BB_ARC_R + 0.01                               # 11-18 夜: 板框裁切圆跟 R85 圆弧; 原 81.7: 11-16 晚 改回 Φ170: 底板外接限 r81.7 (Φ175 时曾 r84.2; 原 r83)
 BB_C = (150.0, 100.0)                                # 转轴 (KiCad); r2: 世界 (x, y) = (kx − 150, 100 − ky), 已与 bbox_r2.json 核对
 # 限高 (板顶以上, mm); 没列的 = 1.2 (0402~0805 / SOT / QFN 一类)
 H_BY_FP = {
