@@ -422,8 +422,10 @@ d = cut(d, cyl(0, 0, 12.0, -3.0, 1))                                            
 for x, y in RING_M3:                                                                      # 线圈环四角 4×M3x10: 盘底沉孔, 穿四角 (5 厚) 通孔顶面上螺母
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
 assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in RING_M3 for a, b in FIXED + EXTRA), '线圈环 M3 沉孔离 M6 沉孔太近'
-for x, y in FLANGE_SCREWS:                                                                 # 线圈环/法兰 8×M3: 铜螺母从盘底压
-    d = cut(d, cyl(x, y, 3.2, -DISC_T - 1, 1), cyl(x, y, INS_HOLE_D, -DISC_T - 1, -DISC_T + INS_HOLE_H))
+G_NUT_D, G_NUT_H = 8.0, 3.7                    # 11-19 用户「底板最下边8个热熔螺母换成法兰螺母吧也」(同承载盘内圈 d5747d2): 底面 Φ8×3.7 沉孔放 M3 法兰螺母 (法兰朝下齐底面), 原 Φ4.2×4.2 铜螺母孔作废
+assert G_NUT_H <= PRINT_T - 0.5                     # 沉孔只在打印底盘里 (Z-7.5..-3.8), 不进玻纤板
+for x, y in FLANGE_SCREWS:                                                                 # 线圈环/法兰 8×M3 (从安装法兰顶往下): 盘底沉孔里法兰螺母
+    d = cut(d, cyl(x, y, 3.2, -DISC_T - 1, 1), cyl(x, y, G_NUT_D, -DISC_T - 1, -DISC_T + G_NUT_H))
 for x, y in SH_M6:                                                                         # 下罩 4×M3x10: 盘底沉孔往上, 螺母压三角块顶
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
 assert all(math.hypot(x - a, y - b) >= CB_D + 1.0 for x, y in XT_GHOLES_DISC for a, b in FIXED + EXTRA), 'XT60 孔与网格孔沉孔重叠'

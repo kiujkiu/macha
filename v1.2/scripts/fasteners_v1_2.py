@@ -113,11 +113,11 @@ L_SH = 16.0
 for i, (x, y) in enumerate(B.SH_M6):
     screw(f"M3x{L_SH:g} 下罩", i, x, y, CB_BEAR, L_SH, True, engage=("法兰螺母", B.TRI_T, B.TRI_T + NUT_T))
     add(f"M3 法兰螺母 下罩 #{i}", flange_nut(x, y, B.TRI_T), "#707070")
-# 4 中央 8×M3 安装法兰顶沉孔往下, 拧底盘底面铜螺母 (M3×4 齐底面 Z-6..-2)
+# 4 中央 8×M3 安装法兰顶沉孔往下, 拧底盘底面 Φ8×3.7 沉孔里的 M3 法兰螺母 (11-19, 原 M3×4 铜螺母; 法兰朝下齐底面 Z-7.5..-3.8)
 L_C = 22.0                                         # 11-18: 底盘底 Z-7.5 (原 -6) ⇒ 20→22, 尖齐底面
 for i, (x, y) in enumerate(B.FLANGE_SCREWS):
-    screw(f"M3x{L_C:g} 中央", i, x, y, MF_BEAR, L_C, False, engage=("铜螺母", ZB, ZB + INS_L_DISC))
-    add(f"铜螺母 M3x4 底盘 G #{i}", insert(x, y, ZB, INS_L_DISC), "#B8860B")
+    screw(f"M3x{L_C:g} 中央", i, x, y, MF_BEAR, L_C, False, engage=("M3 法兰螺母", ZB, ZB + NUT_T))
+    add(f"M3 法兰螺母 底盘底 G #{i}", flange_nut(x, y, ZB), "#707070")
 # 5 外圈 8×M3 安装法兰顶沉孔往下, 拧法兰盘底面铜螺母 (11-12 夜: M3×4 齐法兰盘底 Z8.5..12.5); M3×6 尾端 Z8.5 齐底面, 啮合 4
 L_LID = 6.0
 for i, (x, y) in enumerate(B.LID_SCREWS):
