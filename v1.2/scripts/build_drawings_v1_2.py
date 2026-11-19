@@ -146,8 +146,8 @@ SPECS.append(dict(
              det=dict(kind="cb", d=B.M3_D, D=B.M3_CB_D, h=B.M3_CB_H, side="bot", z=ZD, pt=B.MOTOR_HOLES[0], title="M3 沉孔 (C/D/E/F 同, 超薄头齐底面)")),
         dict(tag="E", pts=B.RING_M3, spec=cb3 + "  同详图 D (线圈环四角)", where=f"(±{F(B.RING_M3_XY)}, ±{F(B.RING_M3_XY)})  M3×{F(FS_L['RING'])}, 法兰螺母压四角顶"),
         dict(tag="F", pts=B.SH_M6, spec=cb3 + "  同详图 D (下罩)", where=ring_txt(B.SH_M6) + f"  M3×{F(FS_L['SH'])}, 法兰螺母压三角块顶"),
-        dict(tag="G", pts=B.FLANGE_SCREWS, spec=ins + " (线圈环/定子盘)", where=ring_txt(B.FLANGE_SCREWS) + f"  M3×{F(FS_L['C'])} 从上往下",
-             det=dict(kind="ins", d=3.2, D=B.INS_HOLE_D, h=B.INS_HOLE_H, side="bot", z=ZD, pt=B.FLANGE_SCREWS[0], title="M3 铜螺母孔 (G)")),
+        dict(tag="G", pts=B.FLANGE_SCREWS, spec=f"Φ3.2 通 + 底面 Φ{F(B.G_NUT_D)}×{F(B.G_NUT_H)} 沉孔 (M3 法兰螺母, 法兰朝下齐底面) (线圈环/定子盘)", where=ring_txt(B.FLANGE_SCREWS) + f"  M3×{F(FS_L['C'])} 从上往下",
+             det=dict(kind="cb", d=3.2, D=B.G_NUT_D, h=B.G_NUT_H, side="bot", z=ZD, pt=B.FLANGE_SCREWS[0], title=f"法兰螺母沉孔 G (Φ{F(B.G_NUT_D)}×{F(B.G_NUT_H)})")),
         dict(tag="H", pts=BH, spec=cb3 + "  同详图 D (控制板)", where=xy(BH) + f"  M3×{F(FS_L['BD'])} 往上, 法兰螺母坐板顶"),
         *([] if not B.CD.ALL_HOLES else [
         dict(tag="L", pts=B.CD.ALL_HOLES, spec=cb3 + "  同详图 D (线圈驱动板: MOS 压块 2 + 电容卡件 2)",
@@ -600,7 +600,7 @@ _wh_ey = WH.EXIT_Y[1]
 SPECS.append(dict(
     code="wireless_holder_v1_2", shape=WH.HA, stl_asm=True, short="无线模块夹块 wireless_clamp_v1_2", qty="2 (同一件, 转 180° 装两侧)", material="PETG (建议) / PLA", date="2026-11-19",
     title=f"无线供电模块夹块 (倒 L, 两件对称) {F(WH.XO - WH.XI)}×{F(WH.BY1 - WH.BY0)}×{F(WH.TOP_Z - WH.RIM_TOP)}: 立柱 {F(WH.COL_W)} (M3 法兰螺母) + 上沿 {F(WH.GRIP)}×{F(WH.CAP_T)} 压 PCB + y 端挡块 {F(WH.END_T)}",
-    subtitle=f"图为 +x 装配位; −x 侧同一件绕 Z 转 180° (件自身 y 对称)。打印 STL wireless_clamp_v1_2.stl。PCB {F(WH.MOD_L)}×{F(WH.MOD_W)} Z{F(WH.MZ0)}–{F(WH.PCB_Z1)} (顶面离承载盘顶 {F(WH.PCB_TOP_GAP)}), y {F(WH.MOD_Y0)}…{F(WH.MOD_Y1)}; 整组外包 {F(2 * WH.XO)}×{F(WH.BY1 - WH.BY0)}, 零间隙",
+    subtitle=f"图为 +x 装配位; −x 侧同一件绕 Z 转 180° (件自身 y 对称)。打印 STL wireless_clamp_v1_2.stl。PCB {F(WH.MOD_L)}×{F(WH.MOD_W)} Z{F(WH.MZ0)}–{F(WH.PCB_Z1)} (顶面离承载盘顶 {F(WH.PCB_TOP_GAP)}), y {F(WH.MOD_Y0)}…{F(WH.MOD_Y1)}; 整组外包 {F(2 * WH.XO)}×{F(WH.BY1 - WH.BY0)}, PCB 端贴立柱、y 向两挡块净距 {F(WH.MOD_W + 2 * WH.END_CLR)} (每边留 {F(WH.END_CLR)})",
     orient=f"正立 (底面 Z{F(WH.RIM_TOP)} 贴床); 上沿 {F(WH.GRIP)} 悬臂 (下空 {F(WH.LIP_Z0 - WH.RIM_TOP)}), 建议上沿朝下翻转打印或加支撑",
     sec=dict(ang=0, r0=WH.XI - 1.0, r1=WH.XO + 1.0, origin=(0.0, (WH.EXIT_Y[0] + WH.EXIT_Y[1]) / 2),
              zd=[(WH.RIM_TOP, WH.LIP_Z0, f"{F(WH.LIP_Z0 - WH.RIM_TOP)} 上沿下空"), (WH.LIP_Z0, WH.TOP_Z, f"{F(WH.CAP_T)} 上沿"), (WH.RIM_TOP, WH.TOP_Z, f"{F(WH.TOP_Z - WH.RIM_TOP)} 总高")],
@@ -805,9 +805,15 @@ if __name__ == "__main__":
         sp["out"].parent.mkdir(parents=True, exist_ok=True)
         try:
             out, png, sl = draw(sp)
-        except PermissionError:
-            sp["out"] = sp["out"].with_name(f"{sp['code']}_drawing.NEW.pdf")
-            out, png, sl = draw(sp)
+        except PermissionError:                  # 原图被阅读器占用 ⇒ .NEW.pdf, 再占用 ⇒ .NEW2.pdf
+            for _sfx in ("NEW", "NEW2", "NEW3"):
+                sp["out"] = sp["out"].with_name(f"{sp['code']}_drawing.{_sfx}.pdf")
+                try:
+                    out, png, sl = draw(sp); break
+                except PermissionError:
+                    continue
+            else:
+                raise
         print(f"wrote {out}  ({sl})", flush=True)
         if sp["code"] in _FOLDER:                # 11-16 晚: 转子盘 / 定子盘 文件夹里的图纸出图即同步 (export_3mf_v1_2.py 也会拷, 但它先于出图跑)
             import shutil
