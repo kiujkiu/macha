@@ -25,7 +25,7 @@ from OCP.TopLoc import TopLoc_Location
 from OCP.TopoDS import TopoDS, TopoDS_Compound
 
 # ---------------- 紧固件尺寸 ----------------
-M3_HEAD_D, M3_HEAD_H = 7.0, 1.5
+M3_HEAD_D, M3_HEAD_H = 7.0, 1.2                      # 11-19 用户「螺丝的头深度都是1.2mm左右」(原 1.5); 沉孔仍 1.5, 头缩进 0.3
 NUT_FL_D, NUT_FL_H, NUT_AF, NUT_T = 7.6, 1.0, 5.9, 3.7
 INS_D = 4.2
 INS_L_DISC, INS_L_FL = 4.0, 4.0                 # 11-12 夜: 全部 M3×4 (孔 Φ4.2×4.2)
@@ -286,12 +286,12 @@ if B.ROTOR_B:
         screw(f"M3x{RSB.MNT_L:g} 内六角 转子罩B→固定件", i, x, y, RSB.BOSS_Z1, RSB.MNT_L, False, hd=5.5, hh=3.0, engage=("铜螺母", RB.H_Z1 - RB.H_INS_H, RB.H_Z1))
         add(f"M3x4 铜螺母 固定件 罩子锁点 #{i}", insert(x, y, RB.H_Z1 - RB.H_INS_H, RB.H_INS_H), "#B8860B")
 
-# 13 无线供电模块固定件 (11-19 两件对称夹块直方条, wireless_holder_v1_2): 4×M3×6 超薄头从承载盘底往上 (同底板: 底面 Φ7.4×1.5 让位, 头支承 Z28.8), 进夹块底面 M3×4 铜螺母 (Z30.5..34.5)
+# 13 无线供电模块固定件 (11-19 两件对称夹块直方条, wireless_holder_v1_2): 4×M3×14 超薄头从承载盘底往上 (同底板: 底面 Φ7.4×1.5 让位, 头支承 Z28.8), 穿夹块立柱 Φ3.4 通孔, 立柱顶 M3 法兰螺母 (15:30 用户「螺丝应该是通孔，上边锁螺母」, 15:46「蓝色是法兰螺母」)
 import wireless_holder_v1_2 as WH
 for i, (x, y) in enumerate(B.MOD_HOLES):
     if B.ROTOR_B:
-        screw(f"M3x{WH.SCR_L:g} 超薄头 无线夹块", i, x, y, WH.CB_Z, WH.SCR_L, True, engage=("铜螺母", WH.RIM_TOP, WH.RIM_TOP + WH.INS_H))
-        add(f"M3x4 铜螺母 无线夹块底面 #{i}", insert(x, y, WH.RIM_TOP, WH.INS_H), "#B8860B")
+        screw(f"M3x{WH.SCR_L:g} 超薄头 无线夹块", i, x, y, WH.CB_Z, WH.SCR_L, True, engage=("法兰螺母", WH.TOP_Z, WH.TOP_Z + WH.NUT_H))
+        add(f"M3 法兰螺母 无线夹块立柱顶 #{i}", WH.inserts[i], "#666666")
     else:
         screw("M3x8 内六角 无线托盘", i, x, y, WH.CB_Z, 8.0, False, hd=5.5, hh=3.0, engage=("铜螺母", WH.RIM_TOP - 4.0, WH.RIM_TOP))
 
