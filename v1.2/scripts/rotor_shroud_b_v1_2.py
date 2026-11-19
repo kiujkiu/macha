@@ -33,6 +33,7 @@ MNT_L = 8.0                           # M3×8: 支承 Z41 → 尾 Z33 (固定件
 assert abs(BOSS_Z1 - MNT_L - (RB.H_Z1 - RB.H_INS_H)) < 1e-6
 SPLIT_Y = RS.ECC                      # 分界: 灯板中面 y = SCR_ECC (11-18 夜 −4.69, 原 −4.36; 两端竖缝内)
 # 11-18 夜 用户: 底板上边 R85 圆弧伸出罩壁 r82–85 ⇒ +y 半罩底开缺口 = 底板板框外扩 BB_NOTCH_CLR, 从罩底到板顶 + BB_NOTCH_CLR (伸出的板被玻璃座挡住, 外面看不到)
+BB_NOTCH = False                      # 11-19 用户: 底板回 r4j 矩形 (最远 r76.78 < 罩内壁 r82), 不再开缺口; 要恢复 R85 圆弧时改 True
 BB_NOTCH_CLR = 0.5
 BB_NOTCH_Z1 = B.Z_BB0 + B.BB_T + BB_NOTCH_CLR   # 37.1
 
@@ -83,7 +84,7 @@ def half(k):
     y0, y1 = (SPLIT_Y, 100) if sy > 0 else (-100, SPLIT_Y)
     s = common(ring, gbox(-100, y0, Z0 - 1, 100, y1, Z1 + 1))
     s = fuse(s, lid_plain(k))
-    if sy > 0: s = cut(s, bb_notch())  # 底板 R85 缺口
+    if sy > 0 and BB_NOTCH: s = cut(s, bb_notch())  # 底板 R85 缺口
     for a in RS.W_A:                  # 配重孔上方顶盖开孔 (配重螺丝从罩顶插)
         x, y = pol(RS.W_R, a)
         if (y > SPLIT_Y) == (sy > 0): s = cut(s, cyl(x, y, RS.W_CB_D, RS.W_BEAR, Z1 + 1))
