@@ -103,13 +103,16 @@ def _octa(h, c, z0, z1):
     return BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(pg.Wire()).Face(), gp_Vec(0, 0, z1 - z0)).Shape()
 r_ = fuse(cut(_octa(COLLAR_FLAT, RING_CH, 0, FL_Z0), cyl(0, 0, BORE_D, -1, FL_Z0 + 1)),        # 托法兰盘的方座 ±35.5 / 内孔 Φ59
           cut(cyl(0, 0, TUBE_OD, FL_Z0, TUBE_TOP), cyl(0, 0, BORE_D, FL_Z0 - 1, TUBE_TOP + 1)))   # 内管 Φ63 (穿法兰盘孔)
-WIRE_A0, WIRE_AW, WIRE_ZH = 270.0, 40.0, 6.0      # 用户 11-13: 电机出线口 270–310° (宽 40, 对准实物出线 ~285–290°), 高 6 (底面 Z0 起); 原 255–285° 高到 Z11.2
+WIRE_A0, WIRE_AW, WIRE_ZH = 265.0, 22.0, 6.0      # 11-19 22:5x 用户「265到287」(先说 265–300 随即改口; 原 270–310); 用户 11-13: 电机出线口 270–310° (宽 40, 对准实物出线 ~285–290°), 高 6 (底面 Z0 起); 原 255–285° 高到 Z11.2
 r_ = cut(r_, cut(_octa(COLLAR_FLAT + 1, RING_CH, RING_CORNER_T, FL_Z0 + 1), cyl(0, 0, COLLAR_D, RING_CORNER_T - 1, FL_Z0 + 2)))  # 圆外四角削到 RING_CORNER_T (4.5) 厚
 r_ = cut(r_, op(BRepAlgoAPI_Common, cyl(0, 0, 90, -1, WIRE_ZH, ang=WIRE_AW, a0=WIRE_A0), cyl(0, 0, 90, -1, WIRE_ZH)))
 # 用户 11-13: 出线口边 (310° 射线) 切过 315° 角耳, 在底边留一个尖三角 ⇒ 角耳出线口一侧 (310–315°) 修成绕螺丝孔的圆 R4.3 (法兰螺母 Φ7.6 + 0.5)
 _ca = math.radians(round((WIRE_A0 + WIRE_AW - 45) / 90) * 90 + 45)            # 出线口末端相邻的角 (315°)
 _cx, _cy = RING_M3_XY * math.sqrt(2) * math.cos(_ca), RING_M3_XY * math.sqrt(2) * math.sin(_ca)
-r_ = cut(r_, cut(cut(cyl(0, 0, 120, -1, RING_CORNER_T + 0.01, ang=math.degrees(_ca) - WIRE_A0, a0=WIRE_A0), cyl(0, 0, COLLAR_D, -2, RING_CORNER_T + 1)),
+# 11-19: 只有出线口终边伸进角耳 (角耳起点 = Φ77 圆与 ±35.5 平边交点, 距轴 acos(35.5/38.5)=22.8°) 才修; 265–287 终边 17° < 22.8° 不碰角耳, 不修
+_EAR_A = math.degrees(math.acos(COLLAR_FLAT / (COLLAR_D / 2)))
+if (WIRE_A0 + WIRE_AW) % 90 > _EAR_A:
+  r_ = cut(r_, cut(cut(cyl(0, 0, 120, -1, RING_CORNER_T + 0.01, ang=math.degrees(_ca) - WIRE_A0, a0=WIRE_A0), cyl(0, 0, COLLAR_D, -2, RING_CORNER_T + 1)),
                  cyl(_cx, _cy, 8.6, -2, RING_CORNER_T + 1)))
 for x, y in FLANGE_SCREWS:
     r_ = cut(r_, cyl(x, y, 3.2, -1, TUBE_TOP + 1))
@@ -245,7 +248,7 @@ MOD_HOLES = [(28.25, -60.5), (-28.25, -60.5), (28.25, -42.5), (-28.25, -42.5)]  
 rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.2, 33.0) for x, y in MOD_HOLES])) if MOD_HOLES else rim
 #   线圈 (腔 r34–76) 两根 AC 引线从承载盘小孔上来, 接无线供电模块 (−y 侧) —— 位置归 wireless_holder_v1_2.py
 AC_HOLE_D = 3.5                                   # 11-19 15:00 用户「直径3.5mm」(原 3.0)
-AC_HOLES = [(28.93, -29.96), (43.29, -55.96)]   # 11-19 21:21 用户画圈「应该这样」⇒ 内孔沿 r41.65 (仍切腔内缘) 转到 −46° (用户点约 −47.8° r43.5 离无线夹块只剩 0.45, 取 −46 留 ~2.7): 离灯板B 5.25→~17, 离桥板B 0→~14, 离 Q 沉孔 ~10; 21:11 版 (36.07,−20.83) @−30° 作废
+AC_HOLES = [(28.93, -29.96), (64.12, -29.9)]   # 11-19 22:15 用户「改到 −25°」⇒ 外孔 r70.75 −25° (离屏幕固定件+x 0.5, 离灯板B 13.6, 离无线组 30.4); 之前 22:05 −20°: 11-19 22:05 用户「外环出线孔改到 −20° 看看」⇒ 外孔 r70.75 (仍切腔外缘) 由 −52.28° 转到 −20°: 离屏幕固定件+x 0.5 (径向, 固定件弧形带在 −45…−15° 都是 0.5), 离灯板B 8.6, −15° 以内碰固定件/灯板B; 11-19 21:21 用户画圈「应该这样」⇒ 内孔沿 r41.65 (仍切腔内缘) 转到 −46° (用户点约 −47.8° r43.5 离无线夹块只剩 0.45, 取 −46 留 ~2.7): 离灯板B 5.25→~17, 离桥板B 0→~14, 离 Q 沉孔 ~10; 21:11 版 (36.07,−20.83) @−30° 作废
 AC_HOLES_OLD_1519 = [(38.54, -15.79), (43.29, -55.96)]   # 11-19 用户: Φ3.5, 线圈腔正上方, AC 侧夹块外侧; 「内外都改3.5，都做相接」⇒ 内孔边切腔内缘 (r 39.9+1.75 = 41.65 @−22.28°), 外孔边切腔外缘 (r 72.5−1.75 = 70.75 @−52.28°, 从下往上看在内孔逆时针 30°: 原 −42.3° 处离屏幕固定件弧形带只剩 0.5, 转到带外 −44° 以外取离屏幕件最远)
 rim = clean(cut(rim, *[cyl(x, y, AC_HOLE_D, 20.0, 33.0) for x, y in AC_HOLES]))
 # 11-16 晚 用户: 承载盘减薄 —— 盘体 Z27–32 → RIM_BOT Z29.5–32 (2.5 厚), 顶面 Z32 不动; 毂盘两圈接触面跟着加高 Z27 → Z29.5 (原设计贴合, 间隙 0 照旧)
