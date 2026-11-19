@@ -762,7 +762,8 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
                             where=f"r{F(RSB.RS.W_R)} ×{len(wp)}  M3×{F(RSB.RS.W_L)} 从罩顶插, 唇下挂 M3 螺母配重 (最多 {RSB.RS.W_NUT_MAX} 颗)")],
                 notes=[f"各层高度: 罩壁底 Z{F(RSB.Z0)} (坐承载盘) / 凸台 Z{F(RSB.BOSS_Z0)}–{F(RSB.BOSS_Z1)} (坐固定件带顶) / 配重唇 Z{F(RSB.RS.LIP_Z0)}–{F(RSB.RS.LID_Z0)} / 顶盖 Z{F(RSB.RS.LID_Z0)}–{F(RSB.Z1)}",
                        f"两端竖缝 y{F(RSB.RS.SLOT_Y0)}…{F(RSB.RS.SLOT_Y1)} (天线板) 就是两半之间的缝; 原 x=0 分缝凸耳/切向螺丝、顶盖螺丝都取消",
-                       "顶盖内边退让灯板 / 桥板槽 / 天线板缺口同 V1.2 顶盖",
+                       f"顶盖桥板让位通槽: x{F(-RSB.RS.BR_SLOT_HX)}…{F(RSB.RS.BR_SLOT_HX)} (宽 {F(2 * RSB.RS.BR_SLOT_HX)} = 桥板 {F(2 * RSB.RS.BR_HW)} + 两边各 {F(RSB.RS.BR_SLOT_CLR)}), 通到 y{F(RSB.RS.BR_POCKET[k][1])}, 盖厚 {F(RSB.RS.LID_T)} 全通 (Z{F(RSB.RS.LID_Z0)}–{F(RSB.Z1)})",
+                       "顶盖内边退让灯板器件 / 天线板缺口同 V1.2 顶盖",
                        f"装配: 屏幕装好后, 两半从 ±y 两侧合上, 各 {len(mp)} 颗 M3×{F(RSB.MNT_L)} 顺起子孔拧到固定件"])
         SPECS += [_shrb_spec("a"), _shrb_spec("b")]
     _FOLDER_B = {"rim_ring_v1_2b": "转子盘B", "screen_holder_v1_2b_a": "转子盘B", "screen_holder_v1_2b_b": "转子盘B", "rotor_shroud_b_a_v1_2b": "转子盘B", "rotor_shroud_b_b_v1_2b": "转子盘B"}
