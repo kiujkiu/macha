@@ -241,11 +241,11 @@ rim = clean(cut(rim, *[cyl(x, y, 3.4, 20.0, 33.0) for x, y in RH_PTS]))   # 8 �
 hub = clean(fuse(hub, op(BRepAlgoAPI_Common, fuse(*[cyl(x, y, 4.6, 21.5, 27.0) for x, y in RH_OLD]), cyl(0, 0, 2 * 82.4, 0, 40))))   # 旧 R82.5 孔残口补实 (不出 r82.4)
 hub = clean(cut(hub, *[fuse(cyl(x, y, 3.4, 20.0, 28.0), cyl(x, y, 4.2, 20.0, RH_INS[1])) for x, y in RH_PTS]))
 #   无线供电模块固定件 (wireless_holder_v1_2.py, −y 侧): M3 铜螺母孔 (11-16 晚: 罩壁缩到 r82, 托盘整体往 +y 挪 3)
-MOD_HOLES = [(11.0, -76.5), (-11.0, -76.5), (0.0, -31.0)]   # 内舌孔留 −31 (挪到 −28 会贴承载盘内缘 r26)
+MOD_HOLES = [(23.0, -74.5), (-23.0, -74.5), (23.0, -34.0), (-23.0, -34.0)]   # 11-19 用户: 改两件对称夹块 (wireless_holder_v1_2), 每件 2×M3 通孔 (夹块伸出 PCB ±y 两端的矮耳上); 原 [(±11, −76.5), (0, −31)] 托盘 3 孔作废
 rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.2, 33.0) for x, y in MOD_HOLES])) if MOD_HOLES else rim
 #   线圈 (腔 r34–76) 两根 AC 引线从承载盘小孔上来, 接无线供电模块 (−y 侧) —— 位置归 wireless_holder_v1_2.py
 AC_HOLE_D = 3.0
-AC_HOLES = [(21.0, -70.0), (21.0, -49.0)]
+AC_HOLES = [(27.5, -66.4), (27.5, -41.4)]   # 11-19: 模块脚朝上焊线 ⇒ 线圈线从 +x 夹块里 Φ3 竖通道上来 (PCB +x 短边外侧), 顶面横槽弯到焊点出口; 原 (21, −70)/(21, −49) 在 PCB 下作废
 rim = clean(cut(rim, *[cyl(x, y, AC_HOLE_D, 20.0, 33.0) for x, y in AC_HOLES]))
 # 11-16 晚 用户: 承载盘减薄 —— 盘体 Z27–32 → RIM_BOT Z29.5–32 (2.5 厚), 顶面 Z32 不动; 毂盘两圈接触面跟着加高 Z27 → Z29.5 (原设计贴合, 间隙 0 照旧)
 #   实测原叠层: 承载盘 r25–82.5 Z27–32, 下凸台 r35–40 Z24.5–27 (坐毂盘 r35–40 Z24.5 台阶上, 定位), 裙边 r82.5–85 Z21.5–32;

@@ -588,33 +588,36 @@ def _lid_spec(k):
 SPECS.append(_lid_spec("a"))
 SPECS.append(_lid_spec("b"))
 
-# ---------------- 无线供电模块托盘 (11-16, wireless_holder_v1_2.py; import 只建几何) ----------------
+# ---------------- 无线供电模块两件对称夹块 (11-19 用户改, wireless_holder_v1_2.py; import 只建几何) ----------------
 import json as _json  # noqa: E402
 import wireless_holder_v1_2 as WH  # noqa: E402
-_wh_scr = WH.SCR_OUT + WH.SCR_IN
 try:
     _whb = _json.load(open(M / "wireless_holder_v1_2" / "wireless_holder_report.json"))["balance"]
-    _wh_bal = f"托盘 {F(_whb['holder_g'])} g + 模块 ≈ {F(_whb['total_g'])} g, 质心 ({F(_whb['total_cog'][0])}, {F(_whb['total_cog'][1])}); 1200 rpm 离心力 ≈ {F(_whb['F_centrifugal_N_1200rpm'])} N (wireless_holder_report.json)"
+    _wh_bal = f"每件 {F(_whb['clamp_each_g'])} g; 两件 + 模块 + 螺丝 ≈ {F(_whb['total_g'])} g, 质心 ({F(_whb['total_cog'][0])}, {F(_whb['total_cog'][1])}); 1200 rpm 离心力 ≈ {F(_whb['F_centrifugal_N_1200rpm'])} N"
 except Exception:
     _wh_bal = "质量 / 质心 / 离心力见 wireless_holder_report.json"
+_wh_ey = WH.EXIT_Y[1]
 SPECS.append(dict(
-    code="wireless_holder_v1_2", shape=WH.H, short="无线供电模块托盘", qty="1", material="PETG (建议) / PLA",
-    title=f"无线供电模块托盘: 托底 + r{F(WH.OUT_R)} 承力外墙 + 3×M3×8 锁承载盘 + 2 扎带",
-    subtitle=f"模块 {F(WH.MOD_W)}×{F(WH.MOD_L)}×{F(WH.MOD_H)} ({F(WH.MOD_G)} g) 长边沿 x, 中心 (0, {F(WH.MOD_YC)}), 坐托底 Z{F(WH.MZ0)}–{F(WH.MZ1)}; 转子盘 −y 侧",
-    orient=f"正立 (底面 Z{F(WH.RIM_TOP)} 贴床, 打印姿态 = 装配姿态); 底面扎带槽小搭桥",
-    sec=dict(ang=270, r0=24.0,
-             zd=[(WH.RIM_TOP, WH.OUT_Z1, f"{F(WH.OUT_Z1 - WH.RIM_TOP)} 外墙"), (WH.RIM_TOP, WH.IN_Z1, f"{F(WH.IN_Z1 - WH.RIM_TOP)} 内墙"),
-                 (WH.RIM_TOP, WH.MZ0, f"{F(WH.FLOOR_T)} 底")],
-             rd=[(-WH.TONGUE_Y1, -(WH.MOD_Y1 + WH.IN_T), f"{F(WH.TONGUE_Y1 - WH.MOD_Y1 - WH.IN_T)} 舌"), (-WH.MOD_Y1, -WH.MOD_Y0, f"{F(WH.MOD_W)} 模块"),
-                 (-WH.MOD_Y0, WH.OUT_R, f"{F(WH.OUT_R + WH.MOD_Y0)} 外墙")]),
-    holes=[dict(tag="M", pts=_wh_scr, spec=f"Φ3.4 通 + 顶面 Φ{F(WH.CB_D)} 沉孔 (头支承 Z{F(WH.CB_Z)}; 内舌顶即 Z{F(WH.TONGUE_Z1)})",
-                where=xy(_wh_scr, 3) + f"\nM3×8 内六角 → 承载盘 M3×4 铜螺母 Z{F(WH.RIM_TOP - 4)}–{F(WH.RIM_TOP)}, 啮合 4",
-                det=dict(kind="cb", d=3.4, D=WH.CB_D, h=WH.OUT_Z1 - WH.CB_Z, side="top", z=(WH.RIM_TOP, WH.OUT_Z1), pt=WH.SCR_OUT[0], ang=0, title="外墙螺丝孔 M (沿 x 剖)"))],
-    notes=[f"外墙 (−y 径向外) y{F(WH.MOD_Y0)} 到外面 r{F(WH.OUT_R)} 圆弧, 顶 Z{F(WH.OUT_Z1)}, 挡离心力 (承载盘 r{F(B.RIM_D / 2)}, 转子罩内壁 r{F(WH.SHR_R0)}, 留 {F(WH.SHR_R0 - WH.OUT_R)})",
-           f"侧墙 {F(WH.SIDE_T)} 厚顶 Z{F(WH.SIDE_Z1)}; 内矮墙 {F(WH.IN_T)} 厚顶 Z{F(WH.IN_Z1)}; 内舌 x±{F(WH.TONGUE_X)} 到 y{F(WH.TONGUE_Y1)} 顶 Z{F(WH.TONGUE_Z1)}",
-           f"扎带 ×2 (4.8 宽) @ y{F(WH.TIE_Y[0])} / {F(WH.TIE_Y[1])}: 模块顶 → 侧墙外槽 → 底面槽 {F(WH.TIE_W)}×{F(WH.TIE_T)}",
-           f"底窗 ×4: +x 端 2 个对承载盘 AC 引线孔 {xy(WH.AC_HOLES, 2)}, 线圈线直上焊 AC 脚",
-           "底窗 −x 端 2 个从侧墙底穿出, 24V/GND 线沿承载盘顶面出 (到底板 r4b)", _wh_bal]))
+    code="wireless_holder_v1_2", shape=WH.HA, stl_asm=True, short="无线模块夹块 (a=+x, b=镜像)", qty="2 (a 1 + b 镜像 1)", material="PETG (建议) / PLA", date="2026-11-19",
+    title=f"无线供电模块夹块 (两件对称): 夹 PCB 短边 + 4 个 Φ{F(WH.EXIT_D)} 焊脚出口 + 每件 2×M3×8 通孔",
+    subtitle=f"图为 a 件 (+x); b 件 = a 关于 x=0 镜像 (切片镜像打印)。模块 {F(WH.MOD_W)}×{F(WH.MOD_L)} PCB 底 Z{F(WH.MZ0)} (离承载盘顶 {F(WH.PCB_GAP)}), y {F(WH.MOD_Y0)}…{F(WH.MOD_Y1)}",
+    orient=f"正立 (底面 Z{F(WH.RIM_TOP)} 贴床, 打印姿态 = 装配姿态); 夹槽顶 {F(WH.HX + WH.SLOT_CLR_X - WH.XI)} 宽搭桥",
+    sec=dict(ang=0, r0=WH.XI - 1.0, r1=WH.XO + 1.0, origin=(0.0, _wh_ey),
+             zd=[(WH.RIM_TOP, WH.SLOT_Z0, f"{F(WH.PCB_GAP)} 槽底"), (WH.SLOT_Z0, WH.SLOT_Z1, f"{F(WH.SLOT_Z1 - WH.SLOT_Z0)} 槽"),
+                 (WH.SLOT_Z1, WH.TOP_Z, f"{F(WH.CAP_T)} 盖"), (WH.TOP_Z - WH.GROOVE_D, WH.TOP_Z, f"{F(WH.GROOVE_D)} 横槽"), (WH.RIM_TOP, WH.TOP_Z, f"{F(WH.TOP_Z - WH.RIM_TOP)} 总高")],
+             rd=[(WH.XI, WH.HX + WH.SLOT_CLR_X, f"{F(WH.HX + WH.SLOT_CLR_X - WH.XI)} 槽深"), (WH.XI, WH.XO, f"x{F(WH.XI)}–{F(WH.XO)}")]),
+    holes=[dict(tag="M", pts=[WH.SCR_OUT[0], WH.SCR_IN[0]], spec=f"Φ3.4 直通 (矮耳顶 Z{F(WH.EAR_Z1)}, 无沉孔)",
+                where=xy([WH.SCR_OUT[0], WH.SCR_IN[0]], 2) + f"\nM3×8 内六角 → 承载盘 M3×3 铜螺母 Z{F(WH.RIM_TOP - 3)}–{F(WH.RIM_TOP)}, 啮合 3",
+                det=hole_det(WH.HA, WH.SCR_IN[0], f"螺丝孔 M (耳高 {F(WH.EAR_Z1 - WH.RIM_TOP)})", W=4.0, z=(WH.RIM_TOP, WH.EAR_Z1))),
+           dict(tag="E", pts=[(WH.EXIT_X, y) for y in WH.EXIT_Y], spec=f"Φ{F(WH.EXIT_D)} 直通 (焊脚出口, 脚朝上, 线从盖顶出)",
+                where=xy([(WH.EXIT_X, y) for y in WH.EXIT_Y], 2) + "\na: AC1/AC2; b (镜像): GND/24V; 脚偏心 ≤0.5"),
+           dict(tag="C", pts=list(WH.AC_HOLES), spec=f"Φ{F(WH.EXIT_D)} 直通 (AC 线圈引线竖通道) + 盖顶横槽 {F(WH.GROOVE_W)}×{F(WH.GROOVE_D)} 到 E",
+                where=xy(list(WH.AC_HOLES), 2) + "\n对承载盘 AC 引线孔; 只 a 件用, b 件同位通道空着")],
+    notes=[f"PCB (厚按 {F(WH.PCB_T)} 假设) 插夹槽 Z{F(WH.SLOT_Z0)}–{F(WH.SLOT_Z1)} (+{F(WH.SLOT_CLR_Z)}), 槽从 x{F(WH.XI)} 深到 PCB 端 +{F(WH.SLOT_CLR_X)}; ±y 端封口墙 {F(WH.WALL_Y)} (挡离心)",
+           f"外侧 (−y) 耳按 r{F(WH.R_MAX)} 圆弧裁 (转子罩内壁 r{F(WH.SHR_R0)})",
+           "装: 先在 4 个脚上焊好线 → 线穿过各自 E 孔 → 两件从两端套上 PCB → 4×M3×8 锁承载盘",
+           "线圈 AC 线: 承载盘孔 → a 件 C 通道上来 → 盖顶横槽 → 弯进 E 孔焊 AC 脚; 24V/GND 从 b 件 E 孔出顶面, 沿盘面到 x≈−55 去底板",
+           f"假设待实物核: PCB 厚 {F(WH.PCB_T)}; 元件只在中段 |x|≤{F(WH.COMP_X)} (两端 5 宽带无件); 脚位按底板 r1 封装推算", _wh_bal]))
 
 # ---------------- 底盘 MR30 座 + 电机线束线夹 (11-16 晚, motor_wire_v1_2.py; import 只建几何; 出图 STL 由本脚本按装配坐标写 out/dwg_stl/) ----------------
 import io as _io, contextlib as _cl  # noqa: E401,E402

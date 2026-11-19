@@ -98,8 +98,8 @@ for x, y in ANCHOR_PTS:                                             # 4 颗穿�
     cuts.append(cyl(x, y, 3.4, Z_F0 - 1, Z_TOP + 1))
 for x, y in B.BB_HOLES:                                             # 底板 r4j 4 孔: Φ3.4 通 + 底面 Φ7.4 让位到 Z_T0+1.5 (头埋托盘)
     cuts += [cyl(x, y, 3.4, Z_F0 - 1, Z_TOP + 1), cyl(x, y, BB_CB_D, Z_F1 - 0.1, Z_T0 + BB_CB_H)]
-for x, y in B.MOD_HOLES:                                            # 无线托盘 3 孔: 顶面 Φ4.2×3 铜螺母 (11-18 M3×3) + 下面 Φ3.2 让螺丝尖 (M3×8 尖 Z_TOP−4)
-    cuts += [cyl(x, y, INS_D, Z_TOP - INS_H, Z_TOP + 1), cyl(x, y, 3.2, Z_TOP - 5.0, Z_TOP)]
+for x, y in B.MOD_HOLES:                                            # 11-19 无线模块两夹块 4 孔: 顶面 Φ4.2×3 铜螺母 (M3×3); M3×8 从耳顶 Z35.5 下来尾 Z27.5 = 螺母底, 不再挖 Φ3.2 让尖 (内侧 2 孔 r41 在线圈腔上方, 托盘底留 0.2)
+    cuts += [cyl(x, y, INS_D, Z_TOP - INS_H, Z_TOP + 1)]
 for x, y in B.AC_HOLES:                                             # 线圈 AC 引线 Φ3 通 + 外环处 Φ3.4 缺口
     cuts += [cyl(x, y, B.AC_HOLE_D, Z_F0 - 1, Z_TOP + 1), cyl(x, y, B.AC_HOLE_D + 0.4, Z_F1 - 0.1, Z_T0 + 0.01)]
 rim = clean(cut(rim, *cuts))
