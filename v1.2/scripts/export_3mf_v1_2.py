@@ -91,7 +91,10 @@ if ROTOR_B:   # 转子盘/ 文件夹 (旧转子) 不再覆盖; 转子盘B/ 由 r
         for f, dst in ((d / f'{n}_print.stl', gd / f'{n}.stl'), (d / f'{n}.step', gd / f'{n}.step'), (d / f'{n}_drawing.pdf', gd / f'{n}_drawing.pdf')):
             if f.exists():
                 try: shutil.copy2(f, dst)
-                except PermissionError: shutil.copy2(f, dst.with_name(f'{dst.stem}.NEW{dst.suffix}')); print('  被占用, 另存', dst.stem + '.NEW')
+                except PermissionError:                     # 11-19 21:30: .NEW 也开着 → 依次 NEW2/NEW3
+                    for _s in ('NEW', 'NEW2', 'NEW3'):
+                        try: shutil.copy2(f, dst.with_name(f'{dst.stem}.{_s}{dst.suffix}')); print('  被占用, 另存', dst.stem + '.' + _s); break
+                        except PermissionError: continue
     if (V12 / 'models' / 'rim_ring_v1_2b' / 'rotor_b_asm.step').exists(): shutil.copy2(V12 / 'models' / 'rim_ring_v1_2b' / 'rotor_b_asm.step', gd / 'rotor_b_asm.step')
 for g, items in _GROUPS.items():
     gd = V12 / g; gd.mkdir(exist_ok=True)
