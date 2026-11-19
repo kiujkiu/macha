@@ -274,8 +274,11 @@ if B.ROTOR_B:
         import rotor_shroud_b_v1_2 as RSB
     RB = RSB.RB
     _FB = RB.Z_F0 + 1.5
-    for i, (x, y) in enumerate(RB.IN_PTS + RB.OUT_NUT_PTS):
-        screw("M3x7 超薄头 玻纤板→承载盘", i, x, y, _FB, 7.0, True, engage=("铜螺母", RB.Z_TOP - RB.INS_H, RB.Z_TOP))
+    for i, (x, y) in enumerate(RB.IN_PTS):        # 11-19 16:53 内圈 8 颗: 承载盘顶 Φ8×3.7 沉孔里 M3 法兰螺母 (坐沉孔底 Z26.8), M3×7 尾 Z30.0 (低于盘顶 0.5)
+        screw("M3x7 超薄头 玻纤板→承载盘 内圈", i, x, y, _FB, 7.0, True, engage=("M3 法兰螺母", RB.Z_TOP - RB.IN_NUT_H, RB.Z_TOP - RB.IN_NUT_H + NUT_T))
+        add(f"M3 法兰螺母 承载盘内圈沉孔 #{i}", flange_nut(x, y, RB.Z_TOP - RB.IN_NUT_H), "#707070")
+    for i, (x, y) in enumerate(RB.OUT_NUT_PTS):
+        screw("M3x7 超薄头 玻纤板→承载盘 外圈", i, x, y, _FB, 7.0, True, engage=("铜螺母", RB.Z_TOP - RB.INS_H, RB.Z_TOP))
         add(f"M3x3 铜螺母 承载盘B #{i}", insert(x, y, RB.Z_TOP - RB.INS_H, RB.INS_H), "#B8860B")
     for i, (x, y) in enumerate(RB.ANCHOR_PTS):
         screw("M3x18 超薄头 玻纤板→固定件锚孔", i, x, y, _FB, 18.0, True, engage=("M3 法兰螺母", RB.H_Z1, RB.H_Z1 + NUT_T))

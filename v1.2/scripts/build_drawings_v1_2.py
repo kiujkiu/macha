@@ -250,7 +250,7 @@ SPECS.append(dict(
     sec=dict(ang=B.JN_ANG0, r0=70.0, zd=[(0, B.TRI_T), (0, B.SPLIT_Z), (B.SPLIT_Z, B.SPLIT_Z + B.RG_H)], rd=[(B.SPIG_IN, B.SH_OUT), (B.RG_R0, B.RG_R0 + B.RG_W)]),
     holes=sh_holes + [dict(tag="J", pts=B.JN_PTS, spec=f"Φ{F(B.JN_D)} 通 + 底面圆窝 Φ{F(B.JN_NUT_FD)} 深 {F(B.JN_NUT_Z1)} (M4 法兰螺母 法兰朝上压入)",
                            where=ring_txt(B.JN_PTS) + f"  配玻璃座 M4×{F(B.JN_L)}",
-                           det=dict(kind="cb", d=B.JN_D, D=B.JN_NUT_D, h=B.JN_NUT_Z1, side="bot", z=(0, B.SPLIT_Z), pt=B.JN_PTS[0], title="螺母窝 J (圆 Φ9.8, 法兰朝上压入)"))],
+                           det=dict(kind="cb", d=B.JN_D, D=B.JN_NUT_D, h=B.JN_NUT_Z1, side="bot", z=(0, B.SPLIT_Z), pt=B.JN_PTS[0], title=f"螺母窝 J (圆 Φ{F(B.JN_NUT_FD)}, 法兰朝上压入)"))],
     notes=[f"墙 r{F(B.SPIG_IN)}–{F(B.SH_OUT)} Z0→{F(B.SPLIT_Z)}; A 孔心到墙内面 {F(B.SPIG_IN - B.SH_R)}"] + gl_notes[2:] + [f"底座+玻璃座分界 Z{F(B.SPLIT_Z)} (承载盘顶); 顶面止口凸筋 r{F(B.RG_R0)}–{F(B.RG_R0 + B.RG_W)} 高 {F(B.RG_H)} 插玻璃座底槽 (单边 {F(B.RG_CLR)})",
                           "以后改可视高度只重打玻璃座, 本件不动", f"M4×{F(B.JN_L)} 穿通两段: 尾 Z{F(B.JN_TIP)}, 法兰螺母 Z{F(B.JN_NUT_Z1 - B.JN_NUT_H)}..{F(B.JN_NUT_Z1)} (啮合 {F(B.JN_NUT_Z1 - B.JN_TIP)}), 底面平坐底盘"]))
 SPECS.append(dict(
@@ -695,22 +695,22 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
                      (RB.LIP_R0, RB.RIM_R, f"外唇 {F(RB.RIM_R - RB.LIP_R0)} (包玻纤板边)")]),
         holes=[dict(tag="M", pts=RB.MOT_PTS, spec="电机 4 孔: " + hole_txt(RB.rim, RB.MOT_PTS[0]), where=ring_txt(RB.MOT_PTS) + "  M3×12 从顶面往下, 穿玻纤板进电机",
                     det=hole_det(RB.rim, RB.MOT_PTS[0], "电机孔 M (顶面沉孔)", W=5.0, z=(_zf1, _ztop))),
-               dict(tag="N", pts=_rb_ins + RB.OUT_NUT_PTS, spec="铜螺母孔 ×12: " + hole_txt(RB.rim, _rb_ins[0]),
-                    where=f"内圈 {ring_txt(_rb_ins)}\n外圈 {ring_txt(RB.OUT_NUT_PTS)}\nM3 从玻纤板底往上, 顶面压 M3×4 铜螺母",
-                    det=hole_det(RB.rim, _rb_ins[0], "铜螺母孔 N", W=4.0, z=(_zf1, _ztop))),
+               dict(tag="N", pts=list(RB.OUT_NUT_PTS), spec="铜螺母孔 ×4: " + hole_txt(RB.rim, RB.OUT_NUT_PTS[0]),
+                    where=f"外圈 {ring_txt(RB.OUT_NUT_PTS)}; M3×7 从玻纤板底往上, 顶面压 M3×3 铜螺母",
+                    det=hole_det(RB.rim, RB.OUT_NUT_PTS[0], "铜螺母孔 N", W=4.0, z=(_zf1, _ztop))),
+               dict(tag="Q", pts=_rb_ins, spec=f"Φ3.4 通 + 顶面 Φ{F(RB.IN_NUT_D)}×{F(RB.IN_NUT_H)} 沉孔 (放 M3 法兰螺母) ×8: " + hole_txt(RB.rim, _rb_ins[0]),
+                    where=f"内圈 {ring_txt(_rb_ins)}; M3×7 从玻纤板底往上, 尾 Z{F(RB.Z_F0 + 1.5 + 7)}, 沉孔下实体 {F(RB.Z_TOP - RB.IN_NUT_H - RB.Z_F1)}",
+                    det=hole_det(RB.rim, _rb_ins[0], "法兰螺母沉孔 Q", W=5.0, z=(_zf1, _ztop))),
                dict(tag="G", pts=RB.ANCHOR_PTS, spec="固定件锚孔 ×4: " + hole_txt(RB.rim, RB.ANCHOR_PTS[0]),
                     where=ring_txt(RB.ANCHOR_PTS) + "\nM3 从玻纤板底往上穿本件 + 屏幕固定件, 固定件顶面法兰螺母"),
                dict(tag="P", pts=list(B.BB_HOLES), spec="底板 r4j 4 孔: " + hole_txt(RB.rim, B.BB_HOLES[0]),
                     where=xy(B.BB_HOLES) + "\n螺丝从底面往上, 薄头 Φ7×1.5 埋进托盘 (不进线圈腔)",
                     det=hole_det(RB.rim, B.BB_HOLES[0], "底板孔 P (底面沉孔)", W=5.0, z=(_zf1, _ztop))),
-               dict(tag="W", pts=list(B.MOD_HOLES), spec="无线托盘 3 孔: " + hole_txt(RB.rim, B.MOD_HOLES[0]), where=xy(B.MOD_HOLES, 3) + "  顶面压 M3×4 铜螺母"),
-               dict(tag="A", pts=list(B.AC_HOLES), spec=f"线圈 AC 引线 Φ{F(B.AC_HOLE_D)} 通", where=xy(B.AC_HOLES) + "  (21,−70) 在外环处另开 Φ3.4 缺口"),
+               dict(tag="W", pts=list(B.MOD_HOLES), spec="无线夹块 4 孔 (同 P): " + hole_txt(RB.rim, B.MOD_HOLES[0]), where=xy(B.MOD_HOLES, 4) + "  M3×14 超薄头往上 → 夹块顶法兰螺母"),
+               dict(tag="A", pts=list(B.AC_HOLES), spec=f"线圈 AC 引线 Φ{F(B.AC_HOLE_D)} 通", where=xy(B.AC_HOLES) + "  孔边分别切线圈腔内/外缘"),
                dict(tag="C", pts=[(0.0, 0.0)], spec=f"底面中心窝 Φ{F(RB.CENTER_D)}×{F(RB.CENTER_H)} (电机轴头)", where="盘心", lab_off=(-3, -3))],
-        notes=[f"各层高度 (装配 Z): 外唇底 Z{F(_zf0)} (= 电机顶 = 玻纤板底) / 中心+外环底 Z{F(_zf1)} (= 玻纤板顶) / 线圈腔顶 = 托盘底 Z{F(_zt0)} / 盘顶 Z{F(_ztop)}",
-               f"剖视竖向: 外唇伸出 {F(_zf1 - _zf0)} / 线圈腔 {F(_zt0 - _zf1)} / 托盘 {F(_ztop - _zt0)} / 中心·外环总高 {F(_ztop - _zf1)} / 全高 {F(_ztop - _zf0)}",
-               f"线圈 ID80 × 厚 2.7 放线圈腔 (腔深 {F(RB.CAV_H)}, 线圈坐玻纤板上); 外环宽 {F(RB.LIP_R0 - RB.COIL_R1)} (铜螺母环)",
-               f"屏幕固定件坐盘顶 Z{F(_ztop)}–{F(RB.H_Z1)} (另件); 罩子锁点改在固定件上 (r{F(RB.SHR_LOCK_R)})",
-               "装配: 桌上 玻纤板 + 本件 + 固定件 16 颗从下往上锁好 → 整体上电机 (电机 4 颗从顶面) → 底板/托盘/灯板 → 罩子"]))
+        notes=[f"Z: 外唇底 {F(_zf0)} / 中心·外环底 {F(_zf1)} / 腔顶 {F(_zt0)} / 盘顶 {F(_ztop)}; " +
+               "装配: 底板 P / 无线夹块 W 从本件底往上锁好 → 放线圈 → 玻纤板 16 颗往上 (内圈 8 进沉孔法兰螺母) → 上电机 → 灯板 → 罩子"]))
     def _hold_spec(k):
         sx = 1 if k == "a" else -1
         sh = RB.hold_a if k == "a" else RB.hold_b

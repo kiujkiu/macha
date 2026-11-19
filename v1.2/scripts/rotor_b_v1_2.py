@@ -92,7 +92,11 @@ for x, y in MOT_PTS:                                                # 电机 4 �
     cuts += [cyl(x, y, 3.2, Z_F0 - 1, Z_TOP + 1), cyl(x, y, 7.0, Z_TOP - MOT_CB_H, Z_TOP + 1)]
 cuts.append(cyl(0, 0, CENTER_D, Z_F1 - 1, Z_F1 + CENTER_H))        # 中心窝 Φ5.2×3.5 (底面)
 if FPC_POCKET: cuts.append(gbox(FPC_POCKET[0], FPC_POCKET[1], FPC_POCKET[4], FPC_POCKET[2], FPC_POCKET[3], Z_TOP + 1))   # FPC B 让位槽
-for x, y in IN_PTS + OUT_NUT_PTS:                                   # 12 颗从下往上进铜螺母: Φ3.2 通 + 顶面 Φ4.2×4
+IN_NUT_D, IN_NUT_H = 8.0, 3.7                    # 11-19 16:53 用户「这8个改一下，用法兰螺母，沉孔改为深度3.7mm，直径8mm」: 内圈 R34 ×8 取消铜螺母, 顶面 Φ8×3.7 沉孔放 M3 法兰螺母 (底 Z26.8, 下面中心实体剩 2.3)
+assert R_IN + IN_NUT_D / 2 <= COIL_R0 - 1.0       # 沉孔不进线圈腔 (r38 < 39.9)
+for x, y in IN_PTS:
+    cuts += [cyl(x, y, 3.4, Z_F0 - 1, Z_TOP + 1), cyl(x, y, IN_NUT_D, Z_TOP - IN_NUT_H, Z_TOP + 1)]
+for x, y in OUT_NUT_PTS:                                            # 外圈 4 颗从下往上进铜螺母: Φ3.2 通 + 顶面 Φ4.2×3
     cuts += [cyl(x, y, 3.2, Z_F0 - 1, Z_TOP + 1), cyl(x, y, INS_D, Z_TOP - INS_H, Z_TOP + 1)]
 for x, y in ANCHOR_PTS:                                             # 4 颗穿到固定件: Φ3.4 通
     cuts.append(cyl(x, y, 3.4, Z_F0 - 1, Z_TOP + 1))
