@@ -98,10 +98,15 @@ for x, y in ANCHOR_PTS:                                             # 4 颗穿�
     cuts.append(cyl(x, y, 3.4, Z_F0 - 1, Z_TOP + 1))
 for x, y in B.BB_HOLES:                                             # 底板 r4j 4 孔: Φ3.4 通 + 底面 Φ7.4 让位到 Z_T0+1.5 (头埋托盘)
     cuts += [cyl(x, y, 3.4, Z_F0 - 1, Z_TOP + 1), cyl(x, y, BB_CB_D, Z_F1 - 0.1, Z_T0 + BB_CB_H)]
-for x, y in B.MOD_HOLES:                                            # 11-19 无线模块两夹块 4 孔: 顶面 Φ4.2×3 铜螺母 (M3×3); M3×8 从耳顶 Z35.5 下来尾 Z27.5 = 螺母底, 不再挖 Φ3.2 让尖 (内侧 2 孔 r41 在线圈腔上方, 托盘底留 0.2)
-    cuts += [cyl(x, y, INS_D, Z_TOP - INS_H, Z_TOP + 1)]
+for x, y in B.MOD_HOLES:                                            # 11-19 用户「螺丝是从下往上锁」「和 soc 底板一样」: 无线模块两夹块 4 孔同底板 —— Φ3.4 通 + 底面 Φ7.4 让位到 Z_T0+1.5 (M3×6 超薄头埋托盘, 进夹块底面 M3×4 铜螺母)
+    cuts += [cyl(x, y, 3.4, Z_F0 - 1, Z_TOP + 1), cyl(x, y, BB_CB_D, Z_F1 - 0.1, Z_T0 + BB_CB_H)]
 for x, y in B.AC_HOLES:                                             # 线圈 AC 引线 Φ3 通 + 外环处 Φ3.4 缺口
     cuts += [cyl(x, y, B.AC_HOLE_D, Z_F0 - 1, Z_TOP + 1), cyl(x, y, B.AC_HOLE_D + 0.4, Z_F1 - 0.1, Z_T0 + 0.01)]
+    _r = math.hypot(x, y)
+    if _r < COIL_R0 + 1.0:                                          # 11-19: 孔落在线圈内圈 (中心实体) 里 ⇒ 腔层开径向槽 (宽 Φ+0.4) 从孔通到线圈腔, 引线从线圈内缘过来
+        _w = B.AC_HOLE_D + 0.4
+        _sl = gbox(_r - 0.01, -_w / 2, Z_F1 - 0.1, COIL_R0 + 0.5, _w / 2, Z_T0 + 0.01)
+        cuts.append(xf(_sl, rotz(math.degrees(math.atan2(y, x)))))
 rim = clean(cut(rim, *cuts))
 
 # ---------------- 屏幕固定件 (= 立板 led_post 换掉耳朵) ----------------

@@ -5,12 +5,14 @@
   · 模块 PCB (厚按 1.6 假设) 底面离承载盘顶 4 ⇒ PCB Z34.5–36.1; 元件 (总高 15) 假设只在 PCB 中段 |x|≤19, 两短边端部 5 宽带空 (夹块压这条带)。
   · 夹块 a (+x) / b (−x) 关于 x=0 镜像 (打印时切片里镜像一件即可): 实心块 x 19.5–30.5, 底 Z30.5, 顶 Z39.3;
     PCB 夹槽 Z34.5–36.3 (PCB + 0.2), 从 x=19.5 往外深到 PCB 端 +0.3, ±y 两端封口 (墙 1.5, 挡离心力); 槽上盖 3 厚。
-  · 焊脚出口: 四脚正上方 Φ3 竖通孔 (整块打通, 脚朝上焊线, 线从盖顶出; 先焊线再穿孔装夹块)。
-    一个出口位置同时罩住镜像两侧的脚 (+x AC1/AC2, −x GND/24V 坐标差 ≤0.5)。
-  · AC 引线 (只 +x 夹块用; −x 那条通道空着): 承载盘 Φ3 孔 B.AC_HOLES (x27.5) 直上进夹块 Φ3 竖通道 → 盖顶面横槽 2.2×1.2 → 弯进焊点出口。
-  · 螺丝: 每件 2×M3×8 内六角, 打在夹块伸出 PCB ±y 两端的矮耳上 (耳顶 Z35.5, Φ3.4 直通孔, 无沉孔), 进承载盘顶 M3×3 铜螺母 (Z27.5–30.5) 啮合 3。
-    外侧 (−y) 耳被 r81.7 圆弧裁 (转子罩内壁 r82)。
-  · 模块整体比 11-16 托盘版往 +y 挪 2.5 (y −69.5…−39), 让外侧螺丝在 r81.7 内。
+  · 11-19 14:22 用户改: 「1.这个件往中央挪一点 2.如图，螺丝放在左右，不放在上下 3.电路板出线位置，四角5*5mm的位置，这里要上部留空」
+  · 焊脚敞开区: 以焊脚为心 5×5 往上全空 (PCB 顶面以上无盖), 往 ±y 并到槽端、往 x 并到槽口和 AC 通道 (OPEN_BOX), 直接从上面焊线;
+    盖只剩两排焊脚之间一段压 PCB。一个位置同时罩住镜像两侧的脚 (+x AC1/AC2, −x GND/24V 坐标差 ≤0.5); 脚下 Φ3 让位孔。
+  · AC 引线 (11-19 15:00 改): 承载盘 Φ3.5 孔 B.AC_HOLES 在线圈腔正上方 (托盘最薄处), 内孔 (41.5, −17) 靠腔内缘 / 外孔 (51.4, −46.8) 靠腔外缘, 都在 AC 侧夹块外侧; 线从腔里竖上来, 跨 +x 夹块顶进敞开区焊 AC 脚; 夹块实心无通道。
+  · 11-19 14:33 简化: 每件就是一根沿 y 的直方条 x21–36.4 × y(PCB±) × Z30.5–38.3, 无台阶/耳朵/圆弧裁。
+  · 螺丝 (11-19 用户: 从下往上, 同底板): 每件 2×M3×6 超薄头, 从承载盘底 Φ7.4×1.5 让位 (支承 Z28.8) 穿 Φ3.4 通孔, 进方条底面 M3×4 铜螺母 (x34.0, y 对齐两排焊脚), 啮合 4; 线圈/玻纤板装之前拧。
+  · 模块位置: y −51.5…−21 (离灯板组实测最近 桥板 B 5.02; 11-19 上午 −69.5…−39, 11-16 托盘版 −72…−41.5)。
+  · 11-19 14:29 用户「这个件压住电路板宽度做到3.5mm就行了」: 夹块 x 21–30.5 (槽深 3.5 + 0.3)。
 输出: models/wireless_holder_v1_2/wireless_holder_v1_2.{step,stl} (装配坐标, 两件 + 模块占位/螺丝/铜螺母/脚)
       out/打印STL/wireless_holder_v1_2_a.stl / _b.stl (打印姿态 = 装配姿态, 底落床); wireless_holder_report.json
 """
@@ -58,7 +60,7 @@ def cog(s):
 RIM_TOP = B.Z_RIM_TOP                       # 30.5 (转子盘B)
 MOD_L, MOD_W, MOD_H, MOD_G = 49.0, 30.5, 15.0, 19.2
 HX = MOD_L / 2                              # 24.5
-MOD_Y0 = -69.5                              # 11-19: 外 (−y) 长边 (原 −72, 往 +y 挪 2.5 让外侧螺丝进 r81.7)
+MOD_Y0 = -51.5                              # 11-19 用户「往中央挪」+ 补充: 挪到离灯板组正好 5 (实测最近 桥板 B 5.02, 次近 FPC B, 挪动量取整 0.5) ⇒ 比上午 −69.5 往 +y 挪 18.0 (11-16 托盘版 −72); 实测见 scratchpad wl_dist.py
 MOD_Y1 = MOD_Y0 + MOD_W                     # −39.0
 MOD_YC = (MOD_Y0 + MOD_Y1) / 2              # −54.25
 PCB_T = 1.6                                 # 假设 (待实物)
@@ -66,54 +68,71 @@ PCB_GAP = 4.0                               # 用户: PCB 离底面 4
 MZ0 = RIM_TOP + PCB_GAP                     # 34.5 PCB 底
 PCB_Z1 = MZ0 + PCB_T                        # 36.1
 MZ1 = MZ0 + MOD_H                           # 49.5 模块顶 (元件包络)
-COMP_X = HX - 5.5                           # 元件假设只在 |x|≤19 (两端 5.5 宽带给夹块)
+COMP_X = None                               # (下面按 GRIP 定)
 SLOT_CLR_Z, SLOT_CLR_X, SLOT_CLR_Y = 0.2, 0.3, 0.3
 SLOT_Z0, SLOT_Z1 = MZ0, PCB_Z1 + SLOT_CLR_Z  # 34.5–36.3
-CAP_T = 3.0
-TOP_Z = SLOT_Z1 + CAP_T                     # 39.3
-XI, XO = 19.5, 30.5                         # 夹块 x 范围 (+x 件), 压 PCB 端 5 宽
-WALL_Y = 1.5                                # 槽 ±y 封口墙
-BY0, BY1 = MOD_Y0 - SLOT_CLR_Y - WALL_Y, MOD_Y1 + SLOT_CLR_Y + WALL_Y   # 块体 y −71.3…−37.2
-EAR_Z1 = RIM_TOP + 5.0                      # 35.5 矮耳顶 = 螺丝头支承 (M3×8 ⇒ 尾 Z27.5, 铜螺母 Z27.5–30.5 啮合 3)
-CB_Z = EAR_Z1                               # (旧名, fasteners/图纸读)
-SCR_L = 8.0
-SCR_X = 23.0
-SCR_DY = 3.2                                # 螺丝心离块体端面 (头 Φ5.5 离块体 0.45)
-SCR_OUT = [(SCR_X, BY0 - SCR_DY), (-SCR_X, BY0 - SCR_DY)]   # (±23, −74.5)
-SCR_IN = [(SCR_X, BY1 + SCR_DY), (-SCR_X, BY1 + SCR_DY)]    # (±23, −34.0)
-EAR_R = 3.3                                 # 耳端离螺丝心
+CAP_T = 2.0                                 # 11-19 14:33 简化成直方条: 盖 2 (用户「其余可薄」)
+TOP_Z = SLOT_Z1 + CAP_T                     # 38.3
+GRIP = 3.5                                  # 11-19 14:29 用户「这个件压住电路板宽度做到3.5mm就行了」(原压 5)
+# 11-19 14:33 用户草图「我感觉就是这么一个件，然后有的壁厚一点」: 夹块 = 沿 y 直方条 (直角, 无台阶/耳朵/圆弧裁), 外侧半边 2 颗 M3 竖直通孔
+CH_X = HX + SLOT_CLR_X + 1.2 + 1.5          # 27.5 (11-19 15:00 AC 竖通道已取消, 只作螺丝定位参考)
+# 11-19 用户「螺丝是从下往上锁」「这个不通过玻纤，这个是 rim 上边的东西，和 soc 底板一样」: 照底板 BB_HOLES ——
+#   承载盘 rim_ring_v1_2b 底面 Φ7.4×1.5 让位 (头埋托盘, 支承 Z28.8) + Φ3.4 通 → 夹块底面热压 M3×4 铜螺母 (Φ4.2×4, Z30.5–34.5) + Φ3.2 让尖到 Z35.5
+#   螺丝 M3×6 超薄头 (Φ7×1.5): 支承 Z28.8 → 尾 Z34.8, 铜螺母啮合 4。须在线圈/玻纤板装上之前从承载盘底拧 (同底板)。
+INS_D, INS_H = 4.2, 4.0
+WALL_SCR = 2.0                              # 铜螺母孔壁 ≥2
+BB_CB_D, BB_CB_H = 7.4, 1.5                 # = rotor_b 底板孔 (承载盘底让位)
+SCR_X = 34.0                                # 螺丝心 x
+assert SCR_X >= CH_X + 1.5 + WALL_SCR + INS_D / 2 - 1e-9                     # 夹块里: 铜螺母孔离 AC 通道壁 ≥2 (33.1)
+# 11-19 15:00 用户「换个位置开，你开的不行，直径3.5mm。这两个孔需要在最薄的位置开，然后不要影响屏幕，然后和最薄这个环形相接就行」:
+#   AC 引线孔 Φ3.5 改到 +x 夹块外侧 (螺丝再往外) 线圈腔 r39.9–72.5 正上方 (托盘最薄 3.2), 线圈线从腔里直接竖上来, 绕过夹块顶进焊脚敞开区; 夹块里 AC 竖通道取消
+XI, XO = HX - GRIP, SCR_X + INS_D / 2 + WALL_SCR  # 方条 x 21.0–38.1 (+x 件); 槽深 = 3.5 + 端部余量 0.3
+XF = XO                                     # (旧名)
+COMP_X = XI                                 # 元件包络假设 |x|≤21 (两端 3.5 宽带给夹块)
+WALL_OUT, WALL_IN = 3.0, 1.5                # 槽 −y 封口墙 (挡离心, 厚) / +y 封口墙
+WALL_Y = WALL_IN
+BY0, BY1 = MOD_Y0 - SLOT_CLR_Y - WALL_OUT, MOD_Y1 + SLOT_CLR_Y + WALL_IN   # 方条 y −55.3…−19.7
+CB_Z = 27.3 + BB_CB_H                       # 28.8 螺丝头支承 (托盘底 Z_T0 27.3 + 1.5, 同底板)
+SCR_L = 6.0                                 # M3×6 超薄头: 尾 Z34.8
+REL_Z1 = CB_Z + SCR_L + 0.7                 # 35.5 让尖
+EAR_Z1 = TOP_Z                              # (旧名)
 R_MAX = 81.7                                # 罩内一切 ≤ r81.7
 SHR_R0, SHR_R1 = 82.0, 85.0
 OUT_R = R_MAX
 ECC = B.SCR_ECC
-assert sorted(SCR_OUT + SCR_IN) == sorted((round(x, 3), round(y, 3)) for x, y in B.MOD_HOLES), (SCR_OUT + SCR_IN, B.MOD_HOLES)
 # 引脚 (封装本地 fx 向右, fy 向下, 框 48.6×30; 绕 Z 转 180° 使 AC 在 +x): X = −(fx − 24.3), Y = MOD_YC + (fy − 15)  (待实物核)
 FP = {'AC1': (2.8, 2.5), 'AC2': (2.0, 27.75), '24V': (45.91, 28.0), 'GND': (46.28, 3.22)}
 PINS = {k: (round(-(fx - 24.3), 2), round(MOD_YC + (fy - 15.0), 2)) for k, (fx, fy) in FP.items()}
 EXIT_D = 3.0
 EXIT_X = 21.85                              # 镜像两侧共用
-EXIT_Y = [MOD_Y0 + 3.1, MOD_Y0 + 28.1]      # −66.4 / −41.4
+EXIT_Y = [MOD_Y0 + 3.1, MOD_Y0 + 28.1]      # −48.4 / −23.4 (两排焊脚)
+SCR_OUT = [(SCR_X, EXIT_Y[0]), (-SCR_X, EXIT_Y[0])]   # 螺丝 y 对齐焊脚行: (±34, −48.4)
+SCR_IN = [(SCR_X, EXIT_Y[1]), (-SCR_X, EXIT_Y[1])]    # (±34, −23.4)
+OPEN = 5.0                                  # 用户「四角5*5mm的位置，这里要上部留空」: 以焊脚为心 5×5 以上全空; 往 ±y 并到槽端、往 x 并到槽口和 AC 通道 (不留细条)
+OPEN_DY = OPEN / 2                          # 焊脚行 ±2.5
 for k, (px, py) in PINS.items():            # 每个脚 (Φ1) 都要在某个 Φ3 出口里, 偏心 ≤ 1
     assert min(math.hypot(abs(px) - EXIT_X, py - ey) for ey in EXIT_Y) <= 1.0 - 1e-9, (k, px, py)
-CH_X = 27.5                                 # AC 竖通道 (x 27.5, 墙: 到槽端 1.2 / 到外面 1.5)
-AC_HOLES = [(CH_X, y) for y in EXIT_Y]
+AC_HOLES = list(B.AC_HOLES)                 # 11-19 15:00: 内孔 (41.5, −17.0) r44.85 / 外孔 (51.4, −46.8) r69.48, 外孔从下往上看在内孔逆时针 20° (俯视顺时针)
+def _box_gap(x, y, x0, y0, x1, y1): return math.hypot(max(x0 - x, 0, x - x1), max(y0 - y, 0, y - y1))
+for _x, _y in AC_HOLES:
+    _r = math.hypot(_x, _y); assert 39.9 + 1 + B.AC_HOLE_D / 2 <= _r <= 72.5 - 1 - B.AC_HOLE_D / 2, ('AC 孔离线圈腔内外缘 <1', _r)
+    assert _box_gap(_x, _y, XI, BY0, XO, BY1) - B.AC_HOLE_D / 2 >= 1.5 - 1e-9, ('AC 孔离夹块 <1.5', _x, _y)
+# 敞开区 (+x 件, 世界坐标 x0, y0, x1, y1): 外排从槽端到焊脚 +2.5, 内排从焊脚 −2.5 到槽端; x 从槽口外到 AC 通道外缘
+OPEN_X0, OPEN_X1 = min(XI - 1.0, EXIT_X - OPEN / 2), HX + SLOT_CLR_X     # x 到槽端 (AC 竖通道取消)
+OPEN_BOX = [(OPEN_X0, MOD_Y0 - SLOT_CLR_Y, OPEN_X1, EXIT_Y[0] + OPEN_DY), (OPEN_X0, EXIT_Y[1] - OPEN_DY, OPEN_X1, MOD_Y1 + SLOT_CLR_Y)]
+assert all(b[0] <= EXIT_X - OPEN / 2 and EXIT_X + OPEN / 2 <= b[2] and b[1] <= ey - OPEN_DY + 1e-9 and ey + OPEN_DY <= b[3] + 1e-9 for b, ey in zip(OPEN_BOX, EXIT_Y))
 assert sorted(AC_HOLES) == sorted(B.AC_HOLES), (AC_HOLES, B.AC_HOLES)
-GROOVE_W, GROOVE_D = 2.2, 1.2               # 盖顶横槽: 通道 → 焊点出口
 
 # ---------------- 夹块 ----------------
 def clamp_a():
-    s = gbox(XI, BY0, RIM_TOP, XO, BY1, TOP_Z)                                                    # 块体
-    for ys in (SCR_OUT[0][1], SCR_IN[0][1]):                                                       # 两端矮耳
-        y0, y1 = (ys - EAR_R, BY0 + 0.01) if ys < BY0 else (BY1 - 0.01, ys + EAR_R)
-        s = fuse(s, gbox(XI, y0, RIM_TOP, XO, y1, EAR_Z1))
-    s = B.op(BRepAlgoAPI_Common, s, cyl(0, 0, 2 * R_MAX, RIM_TOP - 1, TOP_Z + 1))                 # r81.7 裁
+    s = gbox(XI, BY0, RIM_TOP, XO, BY1, TOP_Z)                                                    # 直方条
     s = cut(s, gbox(XI - 1, MOD_Y0 - SLOT_CLR_Y, SLOT_Z0, HX + SLOT_CLR_X, MOD_Y1 + SLOT_CLR_Y, SLOT_Z1))   # PCB 夹槽
     for x, y in (SCR_OUT[0], SCR_IN[0]):
-        s = cut(s, cyl(x, y, 3.4, RIM_TOP - 1, EAR_Z1 + 1))                                        # M3 通孔
+        s = cut(s, cyl(x, y, INS_D, RIM_TOP - 1, RIM_TOP + INS_H), cyl(x, y, 3.2, RIM_TOP, REL_Z1))   # 底面铜螺母孔 Φ4.2×4 + Φ3.2 让尖
     for y in EXIT_Y:
-        s = cut(s, cyl(EXIT_X, y, EXIT_D, RIM_TOP - 1, TOP_Z + 1),                                 # 焊脚出口
-                cyl(CH_X, y, EXIT_D, RIM_TOP - 1, TOP_Z + 1),                                      # AC 竖通道
-                gbox(EXIT_X, y - GROOVE_W / 2, TOP_Z - GROOVE_D, CH_X, y + GROOVE_W / 2, TOP_Z + 1))   # 盖顶横槽
+        s = cut(s, cyl(EXIT_X, y, EXIT_D, RIM_TOP - 1, SLOT_Z0 + 0.01))                            # 焊脚下 Φ3 让位 (脚尾)
+    for x0, y0, x1, y1 in OPEN_BOX:
+        s = cut(s, gbox(x0, y0, PCB_Z1, x1, y1, TOP_Z + 1))                                        # 焊脚 5×5 以上全空 (PCB 顶面往上)
     return clean(s)
 
 HA = clamp_a()
@@ -122,9 +141,9 @@ H = fuse(HA, HB)
 pcb = gbox(-HX, MOD_Y0, MZ0, HX, MOD_Y1, PCB_Z1)
 module = fuse(pcb, gbox(-COMP_X, MOD_Y0, PCB_Z1 - 0.01, COMP_X, MOD_Y1, MZ1))    # 占位: PCB + 中段元件包络
 pins = {k: cyl(x, y, 1.0, PCB_Z1, PCB_Z1 + 2.0) for k, (x, y) in PINS.items()}   # 示意: 脚朝上伸出 2
-def sock(x, y, zb, L): return fuse(cyl(x, y, 5.5, zb, zb + 3.0), cyl(x, y, 3.0, zb - L, zb + 0.01))
-screws = [sock(x, y, CB_Z, SCR_L) for x, y in SCR_OUT + SCR_IN]
-inserts = [cut(cyl(x, y, 4.2, RIM_TOP - 3.0, RIM_TOP), cyl(x, y, 3.0, 0, 40)) for x, y in SCR_OUT + SCR_IN]
+def thin_up(x, y, zb, L): return fuse(cyl(x, y, 7.0, zb - 1.5, zb), cyl(x, y, 3.0, zb - 0.01, zb + L))   # 超薄头 Φ7×1.5 头在下
+screws = [thin_up(x, y, CB_Z, SCR_L) for x, y in SCR_OUT + SCR_IN]
+inserts = [cut(cyl(x, y, INS_D, RIM_TOP, RIM_TOP + INS_H), cyl(x, y, 3.0, 0, 50)) for x, y in SCR_OUT + SCR_IN]   # 夹块里 M3×4 铜螺母
 
 # ---------------- 周边禁区 ----------------
 def ann(r0, r1, z0, z1): return cut(cyl(0, 0, 2 * r1, z0, z1), cyl(0, 0, 2 * r0, z0 - 1, z1 + 1))
@@ -157,12 +176,16 @@ def report():
     rep['misc']['max_r_all'] = {k: round(max_r(v), 3) for k, v in PARTS.items()}
     rep['misc']['max_r_ok'] = max(rep['misc']['max_r_all'].values()) <= R_MAX + 1e-3
     rep['misc']['screws'] = {f'{x:g},{y:g}': round(math.hypot(x, y), 2) for x, y in SCR_OUT + SCR_IN}
-    rep['misc']['ac_holes'] = {f'{x:g},{y:g}': round(math.hypot(x, y), 2) for x, y in AC_HOLES}
+    rep['misc']['ac_holes'] = {f'{x:g},{y:g}': dict(r=round(math.hypot(x, y), 2), 方位角=round(math.degrees(math.atan2(y, x)), 2), 离夹块=round(_box_gap(x, y, XI, BY0, XO, BY1) - B.AC_HOLE_D / 2, 2),
+                                                    离腔内缘=round(math.hypot(x, y) - B.AC_HOLE_D / 2 - 39.9, 2), 离腔外缘=round(72.5 - math.hypot(x, y) - B.AC_HOLE_D / 2, 2)) for x, y in AC_HOLES}
     rep['misc']['pin_exit_offset'] = {k: round(min(math.hypot(abs(px) - EXIT_X, py - ey) for ey in EXIT_Y), 2) for k, (px, py) in PINS.items()}
     # 最薄: 槽端 → AC 通道 / 通道 → 外面 / 螺丝孔 → r81.7
-    rep['misc']['walls'] = {'槽端→AC通道': round(CH_X - EXIT_D / 2 - (HX + SLOT_CLR_X), 2), 'AC通道→外面': round(XO - CH_X - EXIT_D / 2, 2),
-                            '外螺丝孔→r81.7': round(R_MAX - math.hypot(*SCR_OUT[0]) - 1.7, 2), '槽 ±y 封口墙': WALL_Y, '盖厚': CAP_T,
-                            '螺丝头→块体端面': round(SCR_DY - 2.75, 2)}
+    rep['misc']['bar_size'] = dict(x=round(XO - XI, 2), y=round(BY1 - BY0, 2), z=round(TOP_Z - RIM_TOP, 2), x_range=[XI, round(XO, 2)], y_range=[round(BY0, 2), round(BY1, 2)])
+    rep['misc']['walls'] = {'槽端→铜螺母孔': round(SCR_X - INS_D / 2 - (HX + SLOT_CLR_X), 2),
+                            '铜螺母孔→条外面': round(XO - SCR_X - INS_D / 2, 2), '铜螺母孔→条 ±y 端': round(min(EXIT_Y[0] - INS_D / 2 - BY0, BY1 - EXIT_Y[1] - INS_D / 2), 2),
+                            '槽 −y 封口墙': WALL_OUT, '槽 +y 封口墙': WALL_IN, '盖厚': CAP_T, '槽底 (PCB 下)': PCB_GAP, '压 PCB 宽': GRIP}
+    rep['misc']['open_box_a'] = [[round(v, 2) for v in b] for b in OPEN_BOX]
+    rep['misc']['cap_left_y'] = [round(OPEN_BOX[0][3], 2), round(OPEN_BOX[1][1], 2)]
     rep['gap'] = {}
     asm = fuse(H, module, PARTS['screws'])
     for b in KEEP:
@@ -173,7 +196,7 @@ def report():
     ma, ca = cog(HA); mb, cb = cog(HB)
     mod_c = (0.0, MOD_YC, (MZ0 + MZ1) / 2)
     M3_G, INS_G = 0.7, 0.4
-    items = [('clamp_a', ma * RHO, ca), ('clamp_b', mb * RHO, cb), ('module', MOD_G, mod_c)] + [('M3×8+铜螺母', M3_G + INS_G, (x, y, 30)) for x, y in SCR_OUT + SCR_IN]
+    items = [('clamp_a', ma * RHO, ca), ('clamp_b', mb * RHO, cb), ('module', MOD_G, mod_c)] + [('M3×6超薄头+铜螺母', M3_G + INS_G, (x, y, 30)) for x, y in SCR_OUT + SCR_IN]
     tot = sum(g for _, g, _ in items)
     c = [sum(g * p[i] for _, g, p in items) / tot for i in range(3)]
     rep['balance'] = dict(holder_g=round((ma + mb) * RHO, 2), clamp_each_g=round(ma * RHO, 2), holder_cog=[round(v, 2) for v in ca],
@@ -190,7 +213,7 @@ if __name__ == '__main__':
              ('无线供电模块 PCB 49×30.5×1.6 + 元件包络 (占位)', module, '#3D85C6', None, False)]
     PCOL = {'AC1': '#E69138', 'AC2': '#E69138', '24V': '#CC0000', 'GND': '#222222'}
     items += [(f'模块脚 {k}', v, PCOL[k], None, False) for k, v in pins.items()]
-    items += [('M3×8 内六角', s, '#888888', None, False) for s in screws] + [('M3×3 铜螺母 (承载盘)', s, '#B8860B', None, False) for s in inserts]
+    items += [('M3×6 超薄头 (承载盘底往上)', s, '#888888', None, False) for s in screws] + [('M3×4 铜螺母 (夹块底面)', s, '#B8860B', None, False) for s in inserts]
     write_doc(items, OUT / f'{NAME}.step', NAME)
     BRepMesh_IncrementalMesh(H, 0.02, False, 0.2, True)
     w = StlAPI_Writer(); w.ASCIIMode = False; assert w.Write(H, str(OUT / f'{NAME}.stl'))

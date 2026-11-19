@@ -434,7 +434,13 @@ else:   # in: 竖槽上来 → 翻过 J6 顶 (Z = 口高 + 2R_U) → 180° 回�
     pb.line((J6['mouth_y'] + OUT_J6) - pb.p[0], 'J6 顶上平段').arc(R_U, -180, '180° 回弯 → 进 J6').line(OUT_J6 + FPC_INS, 'J6 口外直段 + 插入')
 # A 根: 桥板 A 座朝下出 2.0 → 180° 回弯 → 竖直往上 (B 竖段的 −y 侧) → 过 J6 顶 → 贴 CZ06 顶 → 外沿 (过了 y53.3 才弯) 折下 → 进 J5
 pa = Path2(yA, zM + FPC_INS, -90)
-if BRIDGE_FLIP:
+# 11-19 下午 用户「FPC A 绕太多, 简单点」: 默认不再下到桥板下沿以下回弯再上来, 沿 F 面下到 CZ06 顶高度直接 90° 弯朝 +y 平铺; 旧走法 FPC_A_SIMPLE=0
+A_SIMPLE = BRIDGE_FLIP and os.environ.get('FPC_A_SIMPLE', '1') == '1'
+if A_SIMPLE:
+    pa.line(FPC_INS + OUT_A, '插入 桥板 A 座 + 口外直段'); _jog(pa, JOG, 1, '外移躲 F 面器件')
+    pa.line(pa.p[1] - (Z_FLAT_A + R_STD), '沿桥板 A F 面下').arc(R_STD, 90, '弯 → 过 J6 顶')
+    Y_RA = pa.p[0] - R_STD                          # 下行段 y (竖槽里已无 A, 只给报告用)
+elif BRIDGE_FLIP:
     # 下行段贴 F 面器件外 (y yA+JOG) 下到桥板下沿以下, 往 −y 内收 (灯板组下面是空的), 180° 回弯, 竖段从下行段外侧 (+y) 上来过 J6 顶
     Y_RA = yA + JOG + FPC_T + CH_GAP / 2            # A 竖段 (在下行段外侧, 层叠)
     _yd = Y_RA - 2 * R_CH                           # 回弯起点 y
@@ -444,7 +450,8 @@ if BRIDGE_FLIP:
     assert abs(pa.p[0] - Y_RA) < 1e-6 and Y_RB - Y_RA - FPC_T >= CH_GAP, (pa.p, Y_RA, Y_RB)
 else:
     pa.line(FPC_INS + OUT_A, '插入 桥板 A 座 + 口外直段').arc(R_CH, 180, '座口下 180° 回弯')
-pa.line((Z_FLAT_A - R_STD) - pa.p[1], '竖段 (竖槽 −y 侧)').arc(R_STD, -90, '弯 → 过 J6 顶')
+if not A_SIMPLE:
+    pa.line((Z_FLAT_A - R_STD) - pa.p[1], '竖段 (竖槽 −y 侧)').arc(R_STD, -90, '弯 → 过 J6 顶')
 if J5['face'] < 0:
     _rmax = (J5['mouth_y'] - OUT_A - CZ06_Y1 - 0.075) / 2     # S 弯起点在 CZ06 外沿以外 ≥0.075 (r4f 现状正好 R1.6)
     if _rmax < R_J5 - 1e-9: R_J5 = math.floor(_rmax * 20 + 1e-6) / 20   # CZ06 外移时 S 弯收小 (取 0.05 档)

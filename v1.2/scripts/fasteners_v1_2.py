@@ -286,11 +286,14 @@ if B.ROTOR_B:
         screw(f"M3x{RSB.MNT_L:g} 内六角 转子罩B→固定件", i, x, y, RSB.BOSS_Z1, RSB.MNT_L, False, hd=5.5, hh=3.0, engage=("铜螺母", RB.H_Z1 - RB.H_INS_H, RB.H_Z1))
         add(f"M3x4 铜螺母 固定件 罩子锁点 #{i}", insert(x, y, RB.H_Z1 - RB.H_INS_H, RB.H_INS_H), "#B8860B")
 
-# 13 无线供电模块固定件 (11-19 两件对称夹块, wireless_holder_v1_2): 4×M3×8 内六角 (耳顶 Z35.5 支承, 通孔无沉孔) 进承载盘 M3×3 铜螺母 (Z27.5..30.5)
+# 13 无线供电模块固定件 (11-19 两件对称夹块直方条, wireless_holder_v1_2): 4×M3×6 超薄头从承载盘底往上 (同底板: 底面 Φ7.4×1.5 让位, 头支承 Z28.8), 进夹块底面 M3×4 铜螺母 (Z30.5..34.5)
 import wireless_holder_v1_2 as WH
 for i, (x, y) in enumerate(B.MOD_HOLES):
-    screw("M3x8 内六角 无线夹块", i, x, y, WH.CB_Z, 8.0, False, hd=5.5, hh=3.0, engage=("铜螺母", WH.RIM_TOP - (3.0 if B.ROTOR_B else 4.0), WH.RIM_TOP))
-    add(f"M3x{3 if B.ROTOR_B else 4} 铜螺母 承载盘 无线夹块 #{i}", cut(cyl(x, y, INS_D - 0.02, WH.RIM_TOP - (3.0 if B.ROTOR_B else 4.0), WH.RIM_TOP), cyl(x, y, 3.0, 0, 50)), "#B8860B")
+    if B.ROTOR_B:
+        screw(f"M3x{WH.SCR_L:g} 超薄头 无线夹块", i, x, y, WH.CB_Z, WH.SCR_L, True, engage=("铜螺母", WH.RIM_TOP, WH.RIM_TOP + WH.INS_H))
+        add(f"M3x4 铜螺母 无线夹块底面 #{i}", insert(x, y, WH.RIM_TOP, WH.INS_H), "#B8860B")
+    else:
+        screw("M3x8 内六角 无线托盘", i, x, y, WH.CB_Z, 8.0, False, hd=5.5, hh=3.0, engage=("铜螺母", WH.RIM_TOP - 4.0, WH.RIM_TOP))
 
 # 14 底盘 MR30 座 + 电机线束线夹 (11-16 晚, motor_wire_v1_2): 各 2×M3 从底盘底面 Φ7×2 沉孔往上 (头支承 Z-4), 进件顶热压 M3×4 铜螺母 (顶齐件顶)
 #    MR30 座 M3×12 (件顶 Z8.0) / 线夹 M3×10 (件顶 Z6.0), 尖 = 件顶, 啮合 4
