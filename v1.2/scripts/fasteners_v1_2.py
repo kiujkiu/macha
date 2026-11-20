@@ -278,8 +278,8 @@ if B.ROTOR_B:
         screw("M3x7 超薄头 玻纤板→承载盘 内圈", i, x, y, _FB, 7.0, True, engage=("M3 法兰螺母", RB.Z_TOP - RB.IN_NUT_H, RB.Z_TOP - RB.IN_NUT_H + NUT_T))
         add(f"M3 法兰螺母 承载盘内圈沉孔 #{i}", flange_nut(x, y, RB.Z_TOP - RB.IN_NUT_H), "#707070")
     for i, (x, y) in enumerate(RB.OUT_NUT_PTS):
-        screw("M3x7 超薄头 玻纤板→承载盘 外圈", i, x, y, _FB, 7.0, True, engage=("铜螺母", RB.Z_TOP - RB.INS_H, RB.Z_TOP))
-        add(f"M3x3 铜螺母 承载盘B #{i}", insert(x, y, RB.Z_TOP - RB.INS_H, RB.INS_H), "#B8860B")
+        screw("M3x7 超薄头 玻纤板→承载盘 外圈", i, x, y, _FB, 7.0, True, engage=("M3 法兰螺母", RB.Z_TOP - RB.IN_NUT_H, RB.Z_TOP - RB.IN_NUT_H + NUT_T))   # 11-20 外圈也改法兰螺母 (原 M3×3 铜螺母)
+        add(f"M3 法兰螺母 承载盘外圈沉孔 #{i}", flange_nut(x, y, RB.Z_TOP - RB.IN_NUT_H), "#707070")
     for i, (x, y) in enumerate(RB.ANCHOR_PTS):
         screw("M3x18 超薄头 玻纤板→固定件锚孔", i, x, y, _FB, 18.0, True, engage=("M3 法兰螺母", RB.H_Z1, RB.H_Z1 + NUT_T))
         add(f"M3 法兰螺母 固定件带顶 #{i}", flange_nut(x, y, RB.H_Z1), "#707070")
