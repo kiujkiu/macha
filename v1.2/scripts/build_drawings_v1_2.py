@@ -461,17 +461,19 @@ SPECS.append(dict(
 
 SPECS.append(dict(
     code="led_bar_v1_2", shape=L.bar_s, short="灯板夹条", qty="1", material="PETG (建议) / PLA",
-    title=f"灯板夹条: 夹在两板 F 面之间 厚 {F(2 * L.GAP_HALF)}, Z{F(L.Z0)}–{F(L.BAR_Z1)} (两端到 Z{F(L.BAR_END_Z1)}), H1/H2 M3 横穿, 底面 2 竖孔",
-    subtitle=f"中面 y = {F(_EY)} (偏心 SCR_ECC); 11-16 晚 中间 T 件取消 ⇒ 只两端立板竖螺丝固定 (x ±{F(L.T_X)})",
+    title=f"灯板夹条: 夹在两板 F 面之间 厚 {F(2 * L.GAP_HALF)}, Z{F(L.Z0)}–{F(L.BAR_Z1)} (两端到 Z{F(L.BAR_END_Z1)})" + (f", 长 ±{F(L.BAR_HX)} (转子盘B 让铜螺柱, 无螺丝孔)" if B.ROTOR_B else ", H1/H2 M3 横穿, 底面 2 竖孔"),
+    subtitle=f"中面 y = {F(_EY)} (偏心 SCR_ECC); " + ("转子盘B: 无螺丝, 靠两板夹持 + F 面器件浅槽定位" if B.ROTOR_B else f"11-16 晚 中间 T 件取消 ⇒ 只两端立板竖螺丝固定 (x ±{F(L.T_X)})"),
     orient="侧放 (4.6 厚的面贴床), 免支撑",
-    sec=dict(ang=0, r0=0.0, origin=(0.0, L.ECC), zd=[(L.Z0, L.BAR_Z1, F(L.BAR_Z1 - L.Z0)), (L.Z0, L.BAR_END_Z1, F(L.BAR_END_Z1 - L.Z0))], rd=[(0, L.HALF_W, f"x±{F(L.HALF_W)}")]),
-    holes=[dict(tag="T", pts=[(x, _EY) for x in L.BAR_SCR_X], spec=f"底面 Φ{F(L.BAR_TAP_D)} 竖孔深 {F(L.BAR_TAP_H)} (M3 自攻, 两侧被灯板夹住)",
+    sec=dict(ang=0, r0=0.0, origin=(0.0, L.ECC), zd=[(L.Z0, L.BAR_Z1, F(L.BAR_Z1 - L.Z0)), (L.Z0, L.BAR_END_Z1, F(L.BAR_END_Z1 - L.Z0))], rd=[(0, L.BAR_HX, f"x±{F(L.BAR_HX)}")]),
+    holes=([] if B.ROTOR_B else [dict(tag="T", pts=[(x, _EY) for x in L.BAR_SCR_X], spec=f"底面 Φ{F(L.BAR_TAP_D)} 竖孔深 {F(L.BAR_TAP_H)} (M3 自攻, 两侧被灯板夹住)",
                 where="x " + " / ".join(F(x) for x in L.BAR_SCR_X) + f"  两端立板来的 M3×{F(L.BAR_SCR_L)} 进 {F(L.BAR_SCR_BEAR + L.BAR_SCR_L - L.Z0)}", lab_off=(2.4, 3.0)),
-           dict(tag="H", pts=[(L.H1_X, _EY), (-L.H1_X, _EY)], spec=f"Φ3.4 沿 Y 横穿, 中心 Z{F(L.H1_Z)} (= 灯板 H1/H2)", where=f"x ±{F(L.H1_X)}  M3×{F(L.SCREW_H1_L)} 内六角 + M3 法兰螺母 (板-条-板)", lab_off=(2.4, -3.0)),
+           dict(tag="H", pts=[(L.H1_X, _EY), (-L.H1_X, _EY)], spec=f"Φ3.4 沿 Y 横穿, 中心 Z{F(L.H1_Z)} (= 灯板 H1/H2)", where=f"x ±{F(L.H1_X)}  M3×{F(L.SCREW_H1_L)} 内六角 + M3 法兰螺母 (板-条-板)", lab_off=(2.4, -3.0))]) + [
            dict(tag="M", pts=[(x, _EY) for x, z in L.BAR_M2], spec=f"Φ2.4 沿 Y 横穿, Z{F(L.BAR_M2[0][1])} (= 灯板下中 M2 孔, 可选)", where="x ±23  可选 M2 薄头螺丝 (桥板与 LED 面之间只 3.0)", lab_off=(2.4, 3.0))],
     notes=[f"厚 {F(2 * L.GAP_HALF)} = 两板间隙 (每面收 0.01), 下沿齐灯板下沿 Z{F(L.Z0)}; |x|≥{F(L.BAR_END_X)} 加高到 Z{F(L.BAR_END_Z1)}",
            f"F 面器件处挖浅槽 {L.BAR_CUTS} 处 (器件包围盒 +0.3)",
-           "原 ±38 两个中间 T 件竖孔取消 (11-16 晚)", "装: 先 H1/H2 两颗 M3 横穿夹紧, 再从下面锁两端立板"]))
+           "原 ±38 两个中间 T 件竖孔取消 (11-16 晚)"] + ([f"11-20 夜(二) 转子盘B: 端头收短到 |x|≤{F(L.BAR_HX)} 让灯板 F 面开窗焊的六角铜螺柱 (x±{F(L.SO_X)} Z{F(L.SO_WIN_Z[0])}–{F(L.SO_WIN_Z[1])}, 每端 2 颗错开) + 屏幕竖螺丝; 两竖自攻孔 + H1/H2 横穿取消",
+                                                                "现作用: 两板下沿之间的定距垫条 (保 5.0 间隙, F 面器件卡在浅槽里定位), 坐在两端侧立件上; 不再受螺丝力", "装: 夹进两板之间后再整组拧屏幕螺丝"]
+                                                               if B.ROTOR_B else ["装: 先 H1/H2 两颗 M3 横穿夹紧, 再从下面锁两端立板"])))
 
 SPECS.append(dict(
     code="led_top_v1_2", shape=L.top, short="灯板顶部件 (偏心帽 + 轴座在转轴)", qty="1", material="PETG (建议) / PLA",
@@ -746,27 +748,29 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
         holes=[dict(tag="N", pts=_H["out"], spec="Φ3.4 通 ×2 (外圈螺丝)", where=ring_txt(_H["out"]) + f"  M3×{F(RB.OUT_SCR_L)} 从 fr4_plate 底往上穿承载盘 + 本板, 本板顶 M3 法兰螺母 Z{F(RB.OUT_NUT_Z[0])}–{F(RB.OUT_NUT_Z[1])}"),
                dict(tag="S", pts=_H["lock"], spec=f"Φ{F(RB.SHR_HOLE_D)} 通 + 底面 Φ{F(RB.SP_CB_D)}×{F(RB.SP_CB_H)} 沉孔 ×2 (罩子锁点)", where=xy(_H["lock"]) + f"  M3×{F(RB.SHR_SCR_L)} 超薄头从本板底往上 (支承 Z{F(RB.SHR_SCR_BEAR)}) 穿罩耳, 罩耳顶 M3 法兰螺母; 离外圈孔 {F(RB.SHR_GAP['out'])}",
                     det=hole_det(RB.screen_fr4_loc, _H["lock"][0], "罩子锁点 S (底面沉孔)", W=4.5, z=(RB.SP_Z0, RB.SP_Z1))),
-               dict(tag="T", pts=_H["scr"], spec=f"Φ3.4 通 + 底面 Φ{F(RB.SP_CB_D)}×{F(RB.SP_CB_H)} 沉孔 ×2 (屏幕夹条螺丝)", where=xy(_H["scr"]) + f"  只用 y=ECC 那个 (放 0°/180° 时); M3×{F(RB.BAR_SCR_L)} 超薄头 穿本板 + 侧立件自攻进夹条",
-                    det=hole_det(RB.screen_fr4_loc, _H["scr"][0], "夹条孔 T (底面沉孔)", W=4.5, z=(RB.SP_Z0, RB.SP_Z1))),
-               dict(tag="P", pts=_H["pin"], spec=f"Φ{F(RB.PIN_HOLE_D)} 通 ×3 (侧立件定位销孔)", where=xy(_H["pin"]) + f"  侧立件 2 个 Φ{F(RB.PIN_D)}×{F(RB.PIN_H)} 销插其中 2 个 (y=0 与 y=2·ECC)")],
-        notes=[f"4 块同一零件: 孔位相对板中心 外圈 ±22.5° r{F(RB.R_OUT)} / 罩子锁点 ({F(RB.SHR_LOC_X)}, ±{F(RB.SHR_LOC_Y)}) / 夹条孔 (73, ±{F(RB.SP_SCR_DY)}) / 销孔 (77.5, 0, ±{F(2 * RB.SP_SCR_DY)}) 全对 x 轴对称; 上下 (90/270°) 位置夹条孔/销孔空着",
+               dict(tag="T", pts=_H["scr"], spec=f"Φ3.4 腰形 (沿 y 长 {F(3.4 + 2 * RB.SP_SCR_SL)}) 通 + 底面 Φ{F(RB.SP_SCR_CB_D)}×{F(RB.SP_CB_H)} 沉孔 ×2 (屏幕螺丝; 沉孔外边破出板边 {F(-RB.SP_EDGE['scr_cb'])})",
+                    where=xy(_H["scr"]) + f"  放 0° 用 y−, 180° 用 y+ (90/270° 空); M3×{F(RB.BAR_SCR_L)} 超薄头 穿本板 + 侧立件, 拧进灯板 F 面开窗下颗铜螺柱 (吃 {F(RB.BAR_SCR_ENG)})",
+                    det=hole_det(RB.screen_fr4_loc, _H["scr"][0], "屏幕螺丝孔 T (底面沉孔, 板边破口)", W=5.0, z=(RB.SP_Z0, RB.SP_Z1)))],
+        notes=[f"4 块同一零件: 孔位相对板中心 外圈 ±22.5° r{F(RB.R_OUT)} / 罩子锁点 ({F(RB.SHR_LOC_X)}, ±{F(RB.SHR_LOC_Y)}) / 屏幕螺丝孔 ({F(RB.SP_SCR_X)}, ±{F(RB.SP_SCR_DY)}) 全对 x 轴对称; 上下 (90/270°) 位置屏幕螺丝孔空着",
+               f"11-20 夜(二) 屏幕螺丝改拧灯板铜螺柱 (灯板 F 面板边 6×10 开窗焊 M3 六角铜螺柱 对边 4.6 长 5 横躺): 螺丝在 x={F(RB.SP_SCR_X)} 两端轴线 y=ECC∓0.2 ⇒ 孔取中 ±{F(RB.SP_SCR_DY)} 做腰形 ±{F(RB.SP_SCR_SL)}; 原夹条孔 (73, ±4.69) 与 3 个销孔 (用户「这三个孔没用就拿掉」) 删除",
+               f"屏幕螺丝沉孔 Φ{F(RB.SP_SCR_CB_D)} 外沿 x{F(RB.SP_SCR_X + RB.SP_SCR_CB_D / 2)} 破出板外边 x{F(RB.SP_X1)}: 该处罩壁是两端竖缝 (罩不碰); 超薄头 Φ7 在板上剩承压约 22.9 mm² (84%), 过孔外侧板边最薄 {F(RB.SP_EDGE['scr_hole'])}",
                "11-20 夜 用户「罩子要在这里从下往上装一个螺丝，然后罩子放上，然后装一个法兰螺母」「这装罩子的孔是装在屏幕安装这个件上的，不需要在转子盘做」: 罩锁孔 S 只在本板 (承载盘/fr4_plate 不开)",
-               f"11-20 晚 用户「我感觉长方形就行」: 外形长方形 (原扇形 ±32° + 内伸舌作废); 两外角超出罩壁内面的部分按 R{F(RB.SP_R1)} (圆心 = 转轴) 圆角; 孔边距 外圈 {F(RB.SP_EDGE['out'])} / 销孔 {F(RB.SP_EDGE['pin'])} / 夹条沉孔 {F(RB.SP_EDGE['scr_cb'])} / 罩锁沉孔 {F(RB.SP_EDGE['lock_cb'])}",
+               f"11-20 晚 用户「我感觉长方形就行」: 外形长方形 (原扇形 ±32° + 内伸舌作废); 两外角超出罩壁内面的部分按 R{F(RB.SP_R1)} (圆心 = 转轴) 圆角; 孔边距 外圈 {F(RB.SP_EDGE['out'])} / 屏幕螺丝过孔 {F(RB.SP_EDGE['scr_hole'])} (沉孔破口 {F(-RB.SP_EDGE['scr_cb'])}) / 罩锁沉孔 {F(RB.SP_EDGE['lock_cb'])}",
                "CNC 内角允许刀具圆角 R≤1; 未注公差 ±0.1; 无铜, 不需要阻焊/丝印",
-               f"装配: 罩锁 M3×{F(RB.SHR_SCR_L)} 从本板底沉孔插上 → 侧立件 + 本板 + 夹条 用 M3×12 拧成一组 → 放承载盘 (罩锁螺丝头被夹住不掉) → 外圈 M3×{F(RB.OUT_SCR_L)} 从 fr4_plate 底往上 + 本板顶法兰螺母 → 罩子 → 罩耳顶法兰螺母"]))
+               f"装配: 罩锁 M3×{F(RB.SHR_SCR_L)} 从本板底沉孔插上 → 本板 + 侧立件 + 灯板组 (已焊铜螺柱) 用 M3×{F(RB.BAR_SCR_L)} 拧成一组 → 放承载盘 (罩锁螺丝头被夹住不掉) → 外圈 M3×{F(RB.OUT_SCR_L)} 从 fr4_plate 底往上 + 本板顶法兰螺母 → 罩子 → 罩耳顶法兰螺母"]))
     SPECS.append(dict(
         code="screen_post_v1_2b", shape=RB.post_a, stl_asm=True, date="2026-11-20", qty="2", material="PETG",
         short="侧立件 ×2 (转子盘B, 两端同件)",
         title=f"转子盘B 侧立件 (垫块): x{F(RB.POST_X0)}–{F(RB.POST_X1)} × |y|≤{F(RB.POST_HY)} × Z{F(RB.SP_Z1)}–{F(RB.LS.Z0)} (厚 {F(RB.LS.Z0 - RB.SP_Z1)}); 11-20 夜 腹板 + 天线板去掉",
         subtitle=f"图示 +x 装配位 (y 偏 ECC {F(RB.LS.ECC)}); −x 端同件转 180°; 用户 11-20「侧立面这个，能不能做到别的件，我想锁屏幕这个做玻纤」",
         orient=f"顶面 (Z{F(RB.LS.Z0)}) 贴床平放 (销朝上), 免支撑",
-        sec=dict(ang=0, r0=60.0, origin=(0.0, RB.LS.ECC), auto_dims=False, zd=[(RB.SP_Z1 - RB.PIN_H, RB.SP_Z1, f"{F(RB.PIN_H)} 销"), (RB.SP_Z1, RB.LS.Z0, f"{F(RB.LS.Z0 - RB.SP_Z1)} 垫块")]),
-        holes=[dict(tag="T", pts=[RB.BAR_SCR_PTS[0]], spec="Φ3.4 通 (夹条螺丝)", where=xy([RB.BAR_SCR_PTS[0]]) + f"  M3×{F(RB.BAR_SCR_L)} 超薄头从玻纤板底往上, 尾 Z{F(RB.BAR_SCR_BEAR + RB.BAR_SCR_L)}"),
-               dict(tag="P", pts=[(RB.PIN_X, RB.LS.ECC + s * RB.SP_SCR_DY) for s in (1, -1)], spec=f"底面定位销 Φ{F(RB.PIN_D)}×{F(RB.PIN_H)} ×2", where="插屏幕玻纤板 Φ3.2 孔")],
+        sec=dict(ang=0, r0=60.0, origin=(0.0, RB.LS.ECC), auto_dims=False, zd=[(RB.SP_Z1, RB.LS.Z0, f"{F(RB.LS.Z0 - RB.SP_Z1)} 垫块")]),
+        holes=[dict(tag="T", pts=[RB.BAR_SCR_PTS[0]], spec="Φ3.4 通 (屏幕螺丝)", where=xy([RB.BAR_SCR_PTS[0]]) + f"  M3×{F(RB.BAR_SCR_L)} 超薄头从屏幕玻纤板底往上, 拧进灯板 B 的下颗铜螺柱, 尾 Z{F(RB.BAR_SCR_BEAR + RB.BAR_SCR_L)}; 孔外壁 0.62")],
         notes=[f"11-20 夜 用户「贴到罩子吧」: 天线 FPC 改贴转子罩内壁 ⇒ 本件只剩垫块 Z{F(RB.SP_Z1)}–{F(RB.LS.Z0)} (顶 = 灯板/夹条下沿), 原腹板 + 天线板 x77–83.7 去掉",
                "用户要的「4 个 M3 + 沉孔从下往上」锁本件放不下: 屏幕玻纤板宽 15.2 (x66–81.2) 里已有夹条 Φ7.2 沉孔 (73, ±4.69), 4 板同件使孔位按 y=±4.69 镜像成对, 新沉孔与夹条沉孔/罩锁沉孔 (73, ±19.5) 必叠; 仍由夹条 M3×12 (一颗压 玻纤板 + 本件 + 夹条) + 2 销定位",
                f"垫块 |y|≤{F(RB.POST_HY)}: 世界 y {F(round(RB.LS.ECC - RB.POST_HY, 2))}…{F(round(RB.LS.ECC + RB.POST_HY, 2))}, 离罩耳内边 (y ±15.5) ≥1.31",
-               "自身 y 对称, ±x 两端同一零件 (转 180°)"]))
+               f"11-20 夜(二) 外边 x80.4 → {F(RB.POST_X1)} 包住屏幕螺丝孔 (局部 ({F(RB.SP_SCR_X)}, −0.2)), 外角按两端装配位 r{F(RB.SP_R1)} 切; 底面 2 销删除 (用户「这三个孔没用就拿掉」), 定位靠屏幕螺丝 + 灯板下沿",
+               "±x 两端同一零件 (绕灯板中面 (0, ECC) 转 180°); 平放打印"]))
     if any("rotor_shroud_b" in a for a in sys.argv[1:]):
         with _cl.redirect_stdout(_io.StringIO()):
             import rotor_shroud_b_v1_2 as RSB

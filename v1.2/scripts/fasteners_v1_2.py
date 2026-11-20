@@ -284,8 +284,10 @@ if B.ROTOR_B:
     for i, (x, y) in enumerate(RB.SHR_LOCK_PTS):  # 11-20 夜 罩子锁点 ×8 (每块屏幕玻纤板本地 (73, ±19.5)): 超薄头从屏幕玻纤板底 Φ7.2×1.5 沉孔往上 (支承 Z32), 穿板 + 罩耳, 罩耳顶法兰螺母 Z37.5–41.2
         screw(f"M3x{RSB.MNT_L:g} 超薄头 屏幕玻纤板→罩耳 罩子锁点", i, x, y, RB.SHR_SCR_BEAR, RSB.MNT_L, True, engage=("M3 法兰螺母", *RSB.NUT_Z))   # 尾 Z42.0 露 0.8
         add(f"M3 法兰螺母 罩耳顶 罩子锁点 #{i}", flange_nut(x, y, RSB.NUT_Z[0]), "#707070")
-    for i, (x, y) in enumerate(RB.BAR_SCR_PTS):   # 11-20 屏幕夹条: 用户「固定屏幕的m3螺丝沉孔做到1.5深度」, 超薄头从屏幕玻纤板底沉孔 (支承 Z32) 穿 玻纤板 → 侧立件 → 自攻进夹条
-        screw(f"M3x{RB.BAR_SCR_L:g} 超薄头 屏幕玻纤板→侧立件→夹条 (自攻)", i, x, y, RB.BAR_SCR_BEAR, RB.BAR_SCR_L, True, engage=("夹条 Φ2.6 自攻", L.Z0, L.Z0 + L.BAR_TAP_H))
+    for i, (x, y) in enumerate(RB.BAR_SCR_PTS):   # 11-20 夜(二) 屏幕螺丝: 超薄头从屏幕玻纤板底 Φ7.6 沉孔 (支承 Z32) 穿 玻纤板 → 侧立件 → 中缝, 拧进灯板 F 面开窗焊的六角铜螺柱 (原自攻进夹条)
+        screw(f"M3x{RB.BAR_SCR_L:g} 超薄头 屏幕玻纤板→侧立件→灯板铜螺柱", i, x, y, RB.BAR_SCR_BEAR, RB.BAR_SCR_L, True, engage=("M3 六角铜螺柱", L.SO_Z0, L.SO_Z1))
+    for n_, sh_ in L.SO:                          # 灯板 F 面开窗焊的 M3 六角铜螺柱 (对边 4.6 长 5, 横躺) ×8: 下部+中部开窗, 每端板A/板B 各 1 颗上下错开; 螺丝拧每端下颗
+        add(n_, sh_, "#B8860B")
     for i, (x, y) in enumerate(RB.MOT_PTS):
         screw("M3x10 内六角 承载盘→电机", i, x, y, RB.Z_TOP - RB.MOT_CB_H, 10.0, False, hd=5.5, hh=3.0, engage=("电机顶螺纹", B.MOTOR_Z0, B.ROTOR_TOP))
     # (11-20 晚) 罩子 ±14° 8 点 M3×12 从上往下 + 承载盘窝法兰螺母 取消; (11-20 夜) 外圈 M3×18 锁罩耳也取消, 罩子由上面屏幕玻纤板上 8 颗 M3×10 + 罩耳顶法兰螺母锁住

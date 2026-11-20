@@ -129,8 +129,38 @@ BAR_SCR_X = [T_X, -T_X]                           # 竖螺丝 x (两端立板), 
 BAR_SCR_Y = ECC                                   # 世界 y
 BAR_SCR_L = 8.0                                   # M3×8 内六角: 头在立板底面沉孔 (支承 Z35), 尾 Z43 (进夹条 6)
 BAR_SCR_BEAR = RIM_TOP + 3.0                      # 35 (立板底面 Φ6×3 沉孔, 头 Z32–35)
+# 11-20 夜(二) 转子盘B 六角铜螺柱: 灯板 F 面 (驱动面, 朝中缝) 下角 6×10 F.Mask 开窗 (KiCad x93.12–99.12 / 250.88–256.88, y148.80–158.80; 板框 x93.12–256.88, 底边 y166)
+#   焊 M3 内牙六角铜螺柱 对边 4.6 × 长 5.0, 横躺 (一个平面贴 F 面, 轴线竖直朝下), 屏幕玻纤板底 M3 从下往上拧进 (rotor_b_v1_2 BAR_SCR_*)。
+#   用户「这里是贴六边形铜螺母的地方，也就会导致下边的螺丝要固定在这里，这个不能随便动的」「这个螺母有发过，安装方式对」「两个都焊接，错开」+ 发图「这样就错开了」:
+#   每块板每个板边开窗 (下部 + 中部, 顶两角是 J4/J5 铜块不管) 焊 1 颗, 占开窗一半: 板本地 (KiCad 正视) 左侧开窗焊 **下半** (靠板底), 右侧开窗焊 **上半**。
+#   灯板 STEP 世界 x = KiCad x − 175 (不镜像; 核对: B 面电解 VHXC KiCad (246.55, 155.7) = 板 A 世界 +71.55 下沿+10.3) ⇒ 板 A: −x 端下半 / +x 端上半;
+#   板 B = 板 A 绕 (0, ECC) 转 180° ⇒ 板 B: +x 端下半 / −x 端上半。每端两颗一上一下 Z 错开, 轴线 y 差 0.4 (板 A ECC+0.2 / 板 B ECC−0.2)。
+#   屏幕玻纤板底 M3 从下往上拧进每端 **下面那颗**: +x 端 = 板 B 的 (y ECC−0.2), −x 端 = 板 A 的 (y ECC+0.2); 尾巴不得顶到上面那颗 (尾 ≤ 下颗顶)。
+#   螺柱凸出 F 面 4.6, 自由面离对面板 F 面 0.4。
+#   H1/H2 横穿 M3 (±78.63, Z41.5) 与竖螺丝 (x±78.88 从 Z37.5 爬到螺柱底) 同位必撞 ⇒ 转子盘B 取消 H1/H2 横穿螺丝 (待用户确认)。
+SO_AF, SO_L = 4.6, 5.0
+SO_X = round(175.0 - (93.12125 + 99.12125) / 2, 3)   # 78.879 板系横向 (开窗中心)
+SO_WIN_Z = (round(Z0 + 166.0 - 158.80375, 3), round(Z0 + 166.0 - 148.80375, 3))   # 下部开窗 Z44.696–54.696
+SO_WIN_MID_Z = (round(Z0 + 166.0 - 65.415, 3), round(Z0 + 166.0 - 55.415, 3))     # 中部开窗 Z138.085–148.085
+SO_Z0 = SO_WIN_Z[0]; SO_Z1 = SO_Z0 + SO_L          # 下颗 (被拧的) Z44.696–49.696
+SO_YL = GAP_HALF - SO_AF / 2                      # 0.2: 板 A 螺柱轴 局部 +0.2, 板 B −0.2
+SO_PTS = [(SO_X, ECC - SO_YL), (-SO_X, ECC + SO_YL)]   # 被拧的下颗 (世界): +x 端板 B / −x 端板 A
+BAR_HX = round(SO_X - SO_AF / math.sqrt(3) - 0.5, 2) if B.ROTOR_B else HALF_W   # 转子盘B 夹条端头收短到 |x|≤75.72 (螺柱对角 5.31 内缘 76.22 让 0.5; 竖螺丝/原 H1 孔都在外面)
+def hexz(x, y, af, z0, z1):
+    """竖轴六角柱, 一对平面 ⊥ y (横躺贴板: 平面贴 F 面), 对角沿 x"""
+    rc = af / math.sqrt(3); h = gbox(-rc, -af / 2, z0, rc, af / 2, z1)
+    for a in (60, 120): h = common(h, xf(gbox(-rc, -af / 2, z0 - 1, rc, af / 2, z1 + 1), rotz(a)))
+    return xf(h, tr(x, y, 0))
+def standoff(x, y, z0): return cut(hexz(x, y, SO_AF, z0, z0 + SO_L), cyl(x, y, 3.0, z0 - 1, z0 + SO_L + 1))
+SO_ALL = []                                       # (名, 板, 端, 窗, 下/上半, x, y, z0)
+for _wn, (_w0, _w1) in (('下部', SO_WIN_Z), ('中部', SO_WIN_MID_Z)):
+    for _bd, _sy in (('A', 1), ('B', -1)):
+        for _sx in (1, -1):
+            _low = (_sx < 0) == (_bd == 'A')          # 板 A: −x 下半 / +x 上半; 板 B 相反
+            SO_ALL.append((_bd, '+x' if _sx > 0 else '−x', _wn, '下半' if _low else '上半', _sx * SO_X, ECC + _sy * SO_YL, _w0 if _low else _w0 + SO_L))
+SO = [(f'M3 六角铜螺柱 对边4.6×5 灯板{bd} {wn}开窗{h} {e}', standoff(x, y, z)) for bd, e, wn, h, x, y, z in SO_ALL] if B.ROTOR_B else []
 FPC_T = 0.3
-TONGUE_X = 2.8                                    # 顶部件立舌半宽 (上中 F.Mask 窗)
+TONGUE_X = 2.8                                   # 顶部件立舌半宽 (上中 F.Mask 窗)
 
 # ---------------- 顶部件 + 梳齿 ----------------
 TOP_TONGUE_Z0 = Z1 - 13.7                         # 231.3 (上中窗 上沿−4…14)
@@ -181,9 +211,9 @@ def post(sx):
 
 def bar(led_pair):
     """led_pair = 局部坐标的两块灯板 (中面 y=0); 返回局部坐标夹条 (外面再平移 ECC)"""
-    s = gbox(-HALF_W, -GAP_HALF + 0.01, Z0, HALF_W, GAP_HALF - 0.01, BAR_Z1)   # 每面收 0.01: 零间隙贴 F 面, 免布尔假重叠
+    s = gbox(-BAR_HX, -GAP_HALF + 0.01, Z0, BAR_HX, GAP_HALF - 0.01, BAR_Z1)   # 每面收 0.01: 零间隙贴 F 面, 免布尔假重叠 (转子盘B 端头收到 BAR_HX 让铜螺柱 + 竖螺丝)
     for sx in (1, -1):
-        s = fuse(s, gbox(min(sx * BAR_END_X, sx * HALF_W), -GAP_HALF + 0.01, Z0, max(sx * BAR_END_X, sx * HALF_W), GAP_HALF - 0.01, BAR_END_Z1))
+        s = fuse(s, gbox(min(sx * BAR_END_X, sx * BAR_HX), -GAP_HALF + 0.01, Z0, max(sx * BAR_END_X, sx * BAR_HX), GAP_HALF - 0.01, BAR_END_Z1))
     # F 面器件让位: 灯板 STEP 里伸进间隙 (|y|<2.3) 且在夹条高度内的件, 包围盒 +0.3
     from OCP.TopExp import TopExp_Explorer
     from OCP.TopAbs import TopAbs_SOLID
@@ -196,9 +226,11 @@ def bar(led_pair):
                 cuts.append(gbox(b[0] - 0.3, max(b[1] - 0.3, -GAP_HALF - 1), b[2] - 0.3, b[3] + 0.3, min(b[4] + 0.3, GAP_HALF + 1), b[5] + 0.3))
             e.Next()
     if cuts: s = cut(s, *cuts)
-    for sx in (1, -1): s = cut(s, ycyl(sx * H1_X, H1_Z, 3.4, -5, 5))
+    if not B.ROTOR_B:   # 转子盘B: H1/H2 横穿取消 (孔位已在收短的端头外) + 夹条不再有竖螺丝 (竖螺丝改拧灯板铜螺柱)
+        for sx in (1, -1): s = cut(s, ycyl(sx * H1_X, H1_Z, 3.4, -5, 5))
     for x, z in BAR_M2: s = cut(s, ycyl(x, z, 2.4, -5, 5))
-    for x in BAR_SCR_X: s = cut(s, cyl(x, 0, BAR_TAP_D, Z0 - 1, Z0 + BAR_TAP_H))
+    if not B.ROTOR_B:
+        for x in BAR_SCR_X: s = cut(s, cyl(x, 0, BAR_TAP_D, Z0 - 1, Z0 + BAR_TAP_H))
     return clean(s), len(cuts)
 
 
@@ -250,7 +282,7 @@ def ins(x, y, z0, z1, d=4.2): return cut(cyl(x, y, d, z0, z1), cyl(x, y, 3.0, z0
 # H1/H2: 板 A (+y) LED 面在 x 67.7–76.3 有 5.9 高电解 (下沿+6…15); 板 B 转 180° 后它到 −x 端 −y 面
 # ⇒ +x 端: 头 (Φ5.5) 在 +y, 法兰螺母在 −y; −x 端相反。(局部建, 平移 ECC)
 h1 = []
-for sx in (1, -1):
+for sx in ((1, -1) if not B.ROTOR_B else ()):   # 转子盘B 取消 (与 x±78.88 竖螺丝同位, 见 SO_* 注释)
     sy_head = 1 if sx > 0 else -1
     h1.append(('M3×12 内六角 灯板 H1/H2', xf(sock(sx * H1_X, H1_Z, sy_head * Y_LED, SCREW_H1_L, axis='y', sy=sy_head), T_ECC)))
     h1.append(('M3 法兰螺母 灯板 H1/H2', xf(fnut_y(sx * H1_X, H1_Z, -sy_head * Y_LED, -sy_head), T_ECC)))
@@ -258,6 +290,7 @@ for sx in (1, -1):
 foot_scr = [(f'M3×{FOOT_SCREW_L:g} 内六角 立板耳朵 (兼锁盘)', sock(x, y, FOOT_CB_Z, FOOT_SCREW_L)) for x, y in FOOT_PTS]
 foot_ins = [('M3×4 铜螺母 毂盘底 立板耳朵', ins(x, y, *HUB_INS)) for x, y in FOOT_PTS]
 bar_scr = [('M3×8 内六角 立板→夹条 (从下往上)', fuse(cyl(x, BAR_SCR_Y, 5.5, BAR_SCR_BEAR - 3.0, BAR_SCR_BEAR), cyl(x, BAR_SCR_Y, 3.0, BAR_SCR_BEAR - 0.01, BAR_SCR_BEAR + BAR_SCR_L))) for x in BAR_SCR_X]
+if B.ROTOR_B: bar_scr = []                       # 转子盘B: 夹条竖螺丝取消 (屏幕玻纤板底 M3 改拧铜螺柱, 在 fasteners 12b)
 comb_scr = [('M3×8 内六角 梳齿→帽', sock(sx * COMB_FIX_X, ECC, COMB_Z1, 8.0)) for sx in (1, -1)]
 comb_ins = [('M3×4 铜螺母 帽', ins(sx * COMB_FIX_X, ECC, Z1, Z1 + CAP_T)) for sx in (1, -1)]
 # 天线 (18.5×37.7×0.15 软板), 外面 x=±(ANT_X1 − 0.3); 局部建, 绕 (0, ECC) 转 180° 得 −x 那片
@@ -358,7 +391,7 @@ def report():
         for b in ks[i + 1:]:
             v = common_v(SUP[a], SUP[b])
             if v > 1e-4: rep['interf'][f'{a} × {b}'] = round(v, 4)
-    fast = h1 + foot_scr + bar_scr + comb_scr
+    fast = h1 + foot_scr + bar_scr + comb_scr + SO
     for nm, s in fast:
         for b in ('led_a', 'led_b', 'bb_r2_step', 'bb_r2_pcb', 'wireless_holder', 'bridge_a', 'bridge_b', 'rim', 'hub', 'shroud_lo', 'shroud_hi', 'key_bracket',
                   *[k for k in OTHERS if k.startswith('罩底凸台')]):
@@ -512,7 +545,7 @@ if __name__ == '__main__':
         ('桥板 A', br_a, '#1E8449', None, False), ('桥板 B', br_b, '#1E8449', None, False),
         ('天线 18.5×37.7 软板 +x 竖', ant_a, '#C0392B', None, False), ('天线 18.5×37.7 软板 −x 竖', ant_b, '#C0392B', None, False),
         ('底板 r4c 板框', VB['baseboard'], '#2E7D32', None, False), ('FPC B 平铺段 (示意)', fpc_flat_b, '#E67E22', None, False)] + [
-        (n, s, '#888888', None, False) for n, s in h1 + foot_scr + foot_ins + bar_scr + comb_scr + comb_ins]
+        (n, s, '#888888', None, False) for n, s in h1 + foot_scr + foot_ins + bar_scr + comb_scr + comb_ins] + [(n, s, '#B8860B', None, False) for n, s in SO]
     write_doc(items, OUT / 'led_support_装配位.step', 'led_support_asm')
     rep = report()
     json.dump(rep, open(OUT / 'led_support_report.json', 'w'), indent=1, ensure_ascii=False)
