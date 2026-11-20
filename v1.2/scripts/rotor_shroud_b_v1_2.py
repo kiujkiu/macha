@@ -14,6 +14,7 @@
   - 配重孔按新锁点自动避让 (_wa_ok: 与 Φ10 套筒孔中心距 ≥ (10+5.8)/2+1), 候选 = 原 RS.W_A + 40/140/220/320 + 22.5+45k (旧套筒位)
   - (11-20 夜) 天线 FPC 改贴罩内壁 (用户「贴到罩子吧」「罩子天然有这个侧立面」「这个天线是fpc的」): 定位浅槽 38.1×18.9×0.3 @25.2° (+y 半) / 205.2° (−y 半), Z32.68–70.78;
     侧立件天线板取消 ⇒ 两端竖缝从 y −14.79…5.41 收窄到 −9.19…−0.19 (只让灯板 + 夹条端头, 外角 r82.35 进罩壁)
+  - (11-20 夜) 用户「罩子桥板让位放到0.3」: 顶盖桥板通槽外边外扩 0.15 (BR_POCKET_ADD), 离桥板 FPC 座 0.19 → ≈0.34
   - 顶盖螺丝 (原 47.5/132.5/227.5/312.5°) 取消, 盖与唇局部填实; 配重孔上方顶盖开 Φ5.8 孔, 配重螺丝从罩顶插
 打印: 倒放 (罩顶 Z73.08 落床, 顶盖整面贴床; 原单独顶盖时唇顶低 2 要支撑, 现在没有了)。
 """
@@ -68,6 +69,10 @@ ANT_Z0, ANT_Z1 = LS.ANT_B_ZC - LS.ANT_L / 2, LS.ANT_B_ZC + LS.ANT_L / 2   # 32.6
 ANT_MARGIN = dict(ear=round(min(a - ANT_HA for a in ANT_ANG if a < 90) - math.degrees(math.asin(EAR_Y1 / R0)), 2),   # 槽边 ↔ 罩耳外边 (度)
                   lip=round(RS.LIP_ARCS[0][0] - max(a + ANT_HA for a in ANT_ANG if a < 90), 2))                 # 槽边 ↔ 配重唇 33° (度)
 assert min(ANT_MARGIN.values()) > 0.5 and ANT_Z1 <= RS.LID_Z0 - 0.2, ANT_MARGIN
+# 11-20 夜 用户「罩子桥板让位放到0.3」: 顶盖桥板通槽外边 (RS.BR_POCKET, 叠高 +0.4 ⇒ ECC±11.318) 离桥板 FPC 座 (y 6.44 / −15.82, ECC±11.13) 只 0.19
+#   ⇒ 本件槽外边再外扩 BR_POCKET_ADD 0.15 (ECC±11.468, 离座 ≈0.34); 槽半宽 |x|≤38.5 (离桥板 0.5) 不动; RS 原罩不改
+BR_POCKET_ADD = 0.15
+BR_POCKET = {k: (x0, yb + (BR_POCKET_ADD if k == 'a' else -BR_POCKET_ADD)) for k, (x0, yb) in RS.BR_POCKET.items()}   # +6.778 / −16.158
 SPLIT_Y = RS.ECC                      # 分界: 灯板中面 y = SCR_ECC (11-18 夜 −4.69, 原 −4.36; 两端竖缝内)
 # 11-18 夜 用户: 底板上边 R85 圆弧伸出罩壁 r82–85 ⇒ +y 半罩底开缺口 = 底板板框外扩 BB_NOTCH_CLR, 从罩底到板顶 + BB_NOTCH_CLR (伸出的板被玻璃座挡住, 外面看不到)
 BB_NOTCH = False                      # 11-19 用户: 底板回 r4j 矩形 (最远 r76.78 < 罩内壁 r82), 不再开缺口; 要恢复 R85 圆弧时改 True
@@ -116,7 +121,8 @@ def lid_plain(k):
     plate = common(lid, gbox(-100, -100, RS.LID_Z0, 100, 100, Z1 + 1))
     scr = RS.LID_SCR_A if k == 'a' else [a + 180 for a in RS.LID_SCR_A]
     fill = [common(cyl(*pol(RS.W_R, a), 7.0, RS.LID_Z0, Z1), cyl(0, 0, 2 * RS.LID_R, RS.LID_Z0 - 1, Z1 + 1)) for a in scr]
-    return clean(fuse(plate, *fill))
+    x0, yb = BR_POCKET[k]; yb0 = RS.BR_POCKET[k][1]   # 桥板让位槽外边外扩 (11-20 夜, 离桥板 ≥0.3)
+    return clean(cut(fuse(plate, *fill), gbox(x0, min(yb, yb0 - 0.01 * (1 if k == 'a' else -1)), RS.LID_Z0 - 1, -x0, max(yb, yb0 - 0.01 * (1 if k == 'a' else -1)), Z1 + 1)))
 
 
 def half(k):
@@ -154,7 +160,7 @@ def report():
                valid=dict(a=BRepCheck_Analyzer(shr_a).IsValid(), b=BRepCheck_Analyzer(shr_b).IsValid()), solids=dict(a=len(solids(shr_a)), b=len(solids(shr_b))),
                boss=dict(z=(BOSS_Z0, BOSS_Z1), w=BOSS_W, ear_loc=dict(x0=EAR_X0, y=(EAR_Y0, EAR_Y1)), hole_r=round(HOLE_R, 3), ang=MNT_A, screw=f'M3×{MNT_L:g} 超薄头 从下往上 尾 Z{SCR_TIP:g}', nut_z=NUT_Z, acc_d=ACC_D,
                          w_a=W_A, w_drop=W_DROP, n_w=len(W_A)),
-               balance=balance(), slot_y=(SLOT_Y0, SLOT_Y1), antenna=dict(ang=ANT_ANG, half_ang=round(ANT_HA, 3), z=(ANT_Z0, ANT_Z1), margin_deg=ANT_MARGIN))
+               balance=balance(), slot_y=(SLOT_Y0, SLOT_Y1), br_pocket={k: round(v[1], 3) for k, v in BR_POCKET.items()}, antenna=dict(ang=ANT_ANG, half_ang=round(ANT_HA, 3), z=(ANT_Z0, ANT_Z1), margin_deg=ANT_MARGIN))
     others = dict(承载盘B=RB.rim, **{n: sh for n, sh, _ in RB.SCREEN_PARTS}, 底板=RB.VB['baseboard'], 底板器件=RB.VB['bb_parts'], CZ06=RB.VB['cz06'],
                   灯板=RB.VB['led'], 夹条=LS.bar_s, 顶部件=LS.top, 无线托盘=RB.WH.H, FPC_A=_fpc['fpc_a_v1_2'], FPC_B=_fpc['fpc_b_v1_2'],
                   桥板A=_fpc['bridge_a_v1_2'], 桥板B=_fpc['bridge_b_v1_2'], FPC座=_fpc['bb_fpc_seats_v1_2'], 天线a=LS.ant_a, 天线b=LS.ant_b)
