@@ -4,10 +4,12 @@
 由 V1.2 rotor_shroud_v1_2 (罩身 A/B 沿 x=0 分 + 顶盖 ±y 两片) 改:
   - 分法: 沿灯板那条线分成 +y / −y 两半, 每半连自己的顶盖做成一件 (罩身两端竖缝 y −14.46…+5.74 本来就把罩壁断开, 顶盖本来就是 ±y 两片)
   - 原 x=0 分缝凸耳 + 切向螺丝取消 (那条缝没了)
-  - (11-20) 罩底 8 个耳朵 (原 4 个坐固定件带顶 Z37, 40/140/220/320 进铜螺母, 取消): 坐屏幕玻纤板顶 Z33.5–37.5, r77.5 @14/76/104/166/194/256/284/346
-    (= 4 块玻纤板各自中心 ±14°; 用户画图「大概是这样的，要对称」、「我们尽量不用铜螺母，用法兰」), M3×12 从耳顶往下 穿耳 4 + 玻纤板 3 → 承载盘顶面法兰螺母窝
-    +y 半 = 14/76/104/166, −y 半 = 194/256/284/346 (分缝 y=ECC −4.69 两侧各 4)
-  - (11-20) 76/104/256/284 的 Φ6.5 起子孔会切到配重孔 73.5/80/100/106.5/253.5/260/280/286.5 ⇒ 这 8 个配重孔取消, 旧锁点 40/140/220/320 补 4 个配重孔 (W_A)
+  - (11-20 晚) 罩底 8 个耳朵坐屏幕玻纤板顶 Z33.5–37.5, r77.5 @22.5+45k (= 外圈 8 孔; 用户「螺丝从下往上出，然后罩子用螺母向下锁住」):
+    M3×18 超薄头从 fr4_plate 底往上穿 承载盘 + 屏幕玻纤板 + 耳, 耳顶 M3 法兰螺母 (Z37.5–41.2) 往下锁住罩子; 耳宽 12 (放 Φ8 法兰, 两侧各留 2)
+    +y 半 = 22.5/67.5/112.5/157.5, −y 半 = 202.5/247.5/292.5/337.5 (分缝 y=ECC −4.69 两侧各 4)
+    耳上方 45° 斜撑 + 唇 + 顶盖开 Φ10 套筒孔 (只切到罩壁内面 r82, 不进罩壁), 套筒 (M3 螺母对边 5.5, 外径 ≤9) 从罩顶竖直下去拧螺母
+    (之前 11-20: 14/76/…/346 ±14° 8 耳, M3×12 从耳顶往下进承载盘六角窝 —— 作废)
+  - 配重孔按新锁点自动避让 (_wa_ok: 与 Φ10 套筒孔中心距 ≥ (10+5.8)/2+1), 候选 = 原 RS.W_A + 40/140/220/320
   - 顶盖螺丝 (原 47.5/132.5/227.5/312.5°) 取消, 盖与唇局部填实; 配重孔上方顶盖开 Φ5.8 孔, 配重螺丝从罩顶插
 打印: 倒放 (罩顶 Z73.08 落床, 顶盖整面贴床; 原单独顶盖时唇顶低 2 要支撑, 现在没有了)。
 """
@@ -28,16 +30,24 @@ Z0, Z1, R0, R1 = RS.Z0, RS.Z1, RS.R0, RS.R1
 BOSS_Z0 = RB.SP_Z1                    # 33.5 耳底 = 屏幕玻纤板顶 (11-20; 原 37 固定件带顶)
 BOSS_T = 4.0                          # 4 (同原凸台厚)
 BOSS_Z1 = BOSS_Z0 + BOSS_T            # 37.5 螺丝头支承
-BOSS_RI = RB.SP_R0                    # 73 耳内端 = 玻纤板内缘 (原 72.5, 不悬空)
+BOSS_RI = 73.0                        # 73 耳内端 (法兰 Φ8 内缘 r73.5; 玻纤板 11-20 晚改长方形, 内边 x66)
+BOSS_W = 12.0                         # 11-20 晚 耳宽 8 → 12: 耳顶放 M3 法兰螺母 Φ8, 两侧各留 2
 GUS_Z1 = BOSS_Z1 + (R0 - BOSS_RI)     # 45° 斜撑贴壁顶
 HOLE_R = RB.SHR_LOCK_R                # 77.5
-MNT_A = list(RB.SHR_LOCK_ANG)         # 14/76/104/166/194/256/284/346
-MNT_L = 12.0                          # M3×12: 支承 Z37.5 → 尾 Z25.5; 法兰螺母窝 Z26.8–30.5 全牙吃满 3.7, 尾下 Φ3.4 让位到 Z25
-NUT_Z = (RB.Z_TOP - RB.LOCK_NUT_T, RB.Z_TOP)
-assert NUT_Z[0] - 1.5 <= BOSS_Z1 - MNT_L <= NUT_Z[0] and BOSS_Z1 - MNT_L > RB.LOCK_RELIEF_Z
-# 配重孔: 原 RS.W_A 去掉与起子孔 (Φ6.5 @r77.5) 相碰的 (中心距 < (6.5+5.8)/2 + 1), 旧锁点 40/140/220/320 补上
-def _wa_ok(a): return all(math.dist(pol(RS.W_R, a), pol(HOLE_R, m)) >= (RS.ACC_D + RS.W_CB_D) / 2 + 1.0 for m in MNT_A)
-W_A = sorted([a for a in RS.W_A if _wa_ok(a)] + [a for a in (40.0, 140.0, 220.0, 320.0) if _wa_ok(a)])
+MNT_A = list(RB.SHR_LOCK_ANG)         # 22.5+45k (11-20 晚 = 外圈 8 孔)
+MNT_L = RB.OUT_SCR_L                  # M3×18 超薄头 从下往上 (支承 Z23.0 → 尾 Z41.0)
+NUT_T = 3.7                           # M3 法兰螺母 Φ8×3.7, 法兰朝下坐耳顶
+NUT_Z = (BOSS_Z1, BOSS_Z1 + NUT_T)    # 37.5–41.2
+SCR_TIP = RB.OUT_SCR_BEAR + MNT_L     # 41.0
+assert SCR_TIP - NUT_Z[0] >= 3.0 and SCR_TIP - NUT_Z[1] <= 1.5, (SCR_TIP, NUT_Z)
+ACC_D = 10.0                          # 套筒让位孔 Φ10 (原 Φ6.5 起子孔); 与 r<R0 取交, 不切罩壁
+assert ACC_D >= 9.0 + 1.0 - 1e-9 and HOLE_R + 4.0 <= R0   # 套筒外径 ≤9 留 0.5/边; 法兰 Φ8 外缘 r81.5 在罩壁内面以内
+# 配重孔: 原 RS.W_A + 40/140/220/320 候选, 去掉与套筒孔 (Φ10 @r77.5) 相碰的 (中心距 < (10+5.8)/2 + 1)
+def _wa_ok(a): return all(math.dist(pol(RS.W_R, a), pol(HOLE_R, m)) >= (ACC_D + RS.W_CB_D) / 2 + 1.0 for m in MNT_A)
+W_A = sorted([a for a in RS.W_A if _wa_ok(a)] + [a for a in (40.0, 140.0, 220.0, 320.0) if _wa_ok(a) and a not in RS.W_A])
+def acc_cut(x, y, z0, z1):
+    """套筒孔 Φ ACC_D, 只切到罩壁内面 (r ≤ R0)"""
+    return common(cyl(x, y, ACC_D, z0, z1), cyl(0, 0, 2 * R0, z0 - 1, z1 + 1))
 W_DROP = [a for a in RS.W_A if not _wa_ok(a)]
 SPLIT_Y = RS.ECC                      # 分界: 灯板中面 y = SCR_ECC (11-18 夜 −4.69, 原 −4.36; 两端竖缝内)
 # 11-18 夜 用户: 底板上边 R85 圆弧伸出罩壁 r82–85 ⇒ +y 半罩底开缺口 = 底板板框外扩 BB_NOTCH_CLR, 从罩底到板顶 + BB_NOTCH_CLR (伸出的板被玻璃座挡住, 外面看不到)
@@ -60,14 +70,14 @@ def bb_notch():
 def ring_body_b():
     s = B.ann(R0, R1, Z0, Z1)
     for a0, a1 in RS.LIP_ARCS: s = fuse(s, sector(RS.LIP_R0, R0 + 0.5, RS.LIP_Z0, RS.LID_Z0, a0, a1))
-    for a in MNT_A:                   # 凸台坐固定件带顶 Z37–41 + 45° 斜撑接罩壁
-        b = fuse(gbox(BOSS_RI, -RS.BOSS_W / 2, BOSS_Z0, R0 + 0.5, RS.BOSS_W / 2, BOSS_Z1),
-                 prism_xz([(BOSS_RI, BOSS_Z1 - 0.01), (R0 + 0.5, BOSS_Z1 - 0.01), (R0 + 0.5, GUS_Z1 + 0.5)], -RS.BOSS_W / 2, RS.BOSS_W / 2))
+    for a in MNT_A:                   # 耳坐屏幕玻纤板顶 Z33.5–37.5 + 45° 斜撑接罩壁
+        b = fuse(gbox(BOSS_RI, -BOSS_W / 2, BOSS_Z0, R0 + 0.5, BOSS_W / 2, BOSS_Z1),
+                 prism_xz([(BOSS_RI, BOSS_Z1 - 0.01), (R0 + 0.5, BOSS_Z1 - 0.01), (R0 + 0.5, GUS_Z1 + 0.5)], -BOSS_W / 2, BOSS_W / 2))
         s = fuse(s, xf(b, rotz(a)))
     s = clean(s)
     for a in MNT_A:
         x, y = pol(HOLE_R, a)
-        s = cut(s, cyl(x, y, 3.4, BOSS_Z0 - 1, BOSS_Z1 + 0.01), cyl(x, y, RS.ACC_D, BOSS_Z1, Z1 + 1))
+        s = cut(s, cyl(x, y, 3.4, BOSS_Z0 - 1, BOSS_Z1 + 0.01), acc_cut(x, y, BOSS_Z1, Z1 + 1))
     for a in W_A:                     # 配重孔 (原顶盖螺丝位也改成配重孔; 11-20 按新锁点增删)
         x, y = pol(RS.W_R, a)
         s = cut(s, cyl(x, y, 3.4, RS.LIP_Z0 - 1, Z1 + 1), cyl(x, y, RS.W_CB_D, RS.W_BEAR, Z1 + 1))
@@ -96,19 +106,33 @@ def half(k):
     for a in W_A:                     # 配重孔上方顶盖开孔 (配重螺丝从罩顶插)
         x, y = pol(RS.W_R, a)
         if (y > SPLIT_Y) == (sy > 0): s = cut(s, cyl(x, y, RS.W_CB_D, RS.W_BEAR, Z1 + 1))
-    for a in MNT_A:                   # 凸台起子孔穿顶盖
+    for a in MNT_A:                   # 套筒孔穿顶盖
         x, y = pol(HOLE_R, a)
-        if (y > SPLIT_Y) == (sy > 0): s = cut(s, cyl(x, y, RS.ACC_D, BOSS_Z1, Z1 + 1))
+        if (y > SPLIT_Y) == (sy > 0): s = cut(s, acc_cut(x, y, BOSS_Z1, Z1 + 1))
     return clean(s)
 
 
 shr_a, shr_b = half('a'), half('b')
 
+def balance():
+    """两半罩 PLA 1.24 g/cm³ 的质心偏移 (g·mm, 相对转轴), 各半 + 合计"""
+    from OCP.GProp import GProp_GProps
+    from OCP.BRepGProp import BRepGProp
+    out = {}; tx = ty = 0.0
+    for k, sh in (('a', shr_a), ('b', shr_b)):
+        g = GProp_GProps(); BRepGProp.VolumeProperties_s(sh, g); c = g.CentreOfMass(); m = g.Mass() * 1.24e-3
+        out[k] = dict(m=round(m, 2), cx=round(c.X(), 3), cy=round(c.Y(), 3), Ux=round(m * c.X(), 1), Uy=round(m * c.Y(), 1)); tx += m * c.X(); ty += m * c.Y()
+    out['U'] = dict(x=round(tx, 1), y=round(ty, 1), abs=round(math.hypot(tx, ty), 1))
+    return out
+
+
 def report():
     _fpc = RB.load_fpc()
     rep = dict(vol=dict(a=round(vol(shr_a), 1), b=round(vol(shr_b), 1)), mass_g=dict(a=round(vol(shr_a) * 1.24e-3, 1), b=round(vol(shr_b) * 1.24e-3, 1)),
                valid=dict(a=BRepCheck_Analyzer(shr_a).IsValid(), b=BRepCheck_Analyzer(shr_b).IsValid()), solids=dict(a=len(solids(shr_a)), b=len(solids(shr_b))),
-               boss=dict(z=(BOSS_Z0, BOSS_Z1), hole_r=HOLE_R, ang=MNT_A, screw=f'M3×{MNT_L:g}', nut_z=NUT_Z, w_a=W_A, w_drop=W_DROP))
+               boss=dict(z=(BOSS_Z0, BOSS_Z1), w=BOSS_W, hole_r=HOLE_R, ang=MNT_A, screw=f'M3×{MNT_L:g} 超薄头 从下往上 尾 Z{SCR_TIP:g}', nut_z=NUT_Z, acc_d=ACC_D,
+                         w_a=W_A, w_drop=W_DROP, n_w=len(W_A)),
+               balance=balance())
     others = dict(承载盘B=RB.rim, **{n: sh for n, sh, _ in RB.SCREEN_PARTS}, 底板=RB.VB['baseboard'], 底板器件=RB.VB['bb_parts'], CZ06=RB.VB['cz06'],
                   灯板=RB.VB['led'], 夹条=LS.bar_s, 顶部件=LS.top, 无线托盘=RB.WH.H, FPC_A=_fpc['fpc_a_v1_2'], FPC_B=_fpc['fpc_b_v1_2'],
                   桥板A=_fpc['bridge_a_v1_2'], 桥板B=_fpc['bridge_b_v1_2'], FPC座=_fpc['bb_fpc_seats_v1_2'])
