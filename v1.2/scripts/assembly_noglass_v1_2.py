@@ -174,9 +174,9 @@ note = [f'玻璃罩 OD{B.GL_OD:g}×{B.GL_T:g}×{B.GL_H:g} / 玻璃上 / 圆环�
         f'实测: 灯板-底板 r3 最近 {D_BB:.2f}, 灯板-CZ06 {D_CZ:.2f}, 灯板-无线托盘/模块 {D_WH:.2f}; 灯板/立板/天线最大半径 {R_LED:.2f} (天线板外角, 在罩壁 ±x 缝 |y|≤{RS.SLOT_Y:g} 里; 罩外圆 r{RS.R1:g}, 余 {RS.R1 - R_LED:.2f}); 转子罩外 r{R_SHR:.2f} (玻璃下内面 r{B.SPIG_IN:g}, 余 {B.SPIG_IN - R_SHR:.2f})']
 if B.ROTOR_B:
     note[2] = (f'灯板背靠背 (F 面 y=±{L.GAP_HALF:g}); 偏心 SCR_ECC {B.SCR_ECC:g}; 转子盘B: 玻纤板 Φ165×3 + 承载盘单件 (并入毂盘, 线圈腔深 {RB.CAV_H:g}); '
-               f'屏幕玻纤板 ×4 (长方形 x{RB.SP_X0:g}–{RB.SP_X1:g} |y|≤{RB.SP_HY:g}, Z{RB.SP_Z0:g}–{RB.SP_Z1:g}) + 侧立件 ×2; 外圈 8×M3×{RB.OUT_SCR_L:g} 从玻纤板底穿上来 (承载盘+屏幕玻纤板+罩耳) + 罩耳顶法兰螺母; 夹条 / 顶部件 / 梳齿同前')
+               f'屏幕玻纤板 ×4 (长方形 x{RB.SP_X0:g}–{RB.SP_X1:g} |y|≤{RB.SP_HY:g}, Z{RB.SP_Z0:g}–{RB.SP_Z1:g}) + 侧立件 ×2; 外圈 8×M3×{RB.OUT_SCR_L:g} 从玻纤板底穿上来 (承载盘+屏幕玻纤板) + 屏幕玻纤板顶法兰螺母; 夹条 / 顶部件 / 梳齿同前')
     note[3] = (f'转子罩 2 片 (沿灯板线 y{RSB.SPLIT_Y:g} 分, 各带顶盖; r{RSB.R0:g}–{RSB.R1:g}, Z{RSB.Z0:g}–{RSB.Z1:g}): 耳坐屏幕玻纤板顶, '
-               f'8 耳 @22.5+45k 由外圈 M3×{RSB.MNT_L:g} (从下往上) + 耳顶法兰螺母锁住; 配重唇 {len(RSB.W_A)} 孔 M3×{RS.W_L:g} 从罩顶插, 按需')
+               f'8 耳在屏幕玻纤板本地 ({RB.SHR_LOC_X:g}, ±{RB.SHR_LOC_Y:g}), M3×{RSB.MNT_L:g} 从屏幕玻纤板底往上 + 耳顶法兰螺母锁住; 配重唇 {len(RSB.W_A)} 孔 M3×{RS.W_L:g} 从罩顶插, 按需')
 fig.text(0.03, 0.025, '\n'.join('· ' + s for s in note), fontsize=8, va='bottom')
 fig.text(0.98, 0.012, f'v1.2/scripts/assembly_noglass_v1_2.py  2026-11-18 (转子盘B)' if B.ROTOR_B else 'v1.2/scripts/assembly_noglass_v1_2.py  2026-11-16', fontsize=7, ha='right', color='#666')
 OUT2 = B.V12 / 'assembly_v1_2_不装玻璃_装配图'

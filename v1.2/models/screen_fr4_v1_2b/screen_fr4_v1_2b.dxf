@@ -489,7 +489,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461365.7624884257
+2461365.7925578705
   9
 $TDUCREATE
  40
@@ -497,7 +497,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461365.7624884257
+2461365.7925578705
   9
 $TDUUPDATE
  40
@@ -549,7 +549,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-48
+4E
   9
 $SURFTAB1
  70
@@ -929,11 +929,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{A009A336-18B4-4EE3-91FE-D781D70B4651}
+{A1887167-52CF-47DE-8FC2-B8C5BE76F127}
   9
 $VERSIONGUID
   2
-{3B713933-5827-4608-A16A-1AE41531DB95}
+{7152923F-C8DE-4667-87C2-A6244279BD8F}
   9
 $EXTNAMES
 290
@@ -1323,9 +1323,9 @@ ISM
   0
 CLASS
   1
-LAYOUT
+ACDBPLACEHOLDER
   2
-AcDbLayout
+AcDbPlaceHolder
   3
 ObjectDBX Classes
  90
@@ -1339,9 +1339,9 @@ ObjectDBX Classes
   0
 CLASS
   1
-ACDBPLACEHOLDER
+LAYOUT
   2
-AcDbPlaceHolder
+AcDbLayout
   3
 ObjectDBX Classes
  90
@@ -1797,7 +1797,7 @@ ACAD
   0
 APPID
   5
-45
+4B
 330
 3
 100
@@ -1811,7 +1811,7 @@ HATCHBACKGROUNDCOLOR
   0
 APPID
   5
-46
+4C
 330
 3
 100
@@ -2415,6 +2415,46 @@ CIRCLE
 100
 AcDbEntity
   8
+HOLES
+100
+AcDbCircle
+ 10
+73.0
+ 20
+19.5
+ 30
+0.0
+ 40
+1.6
+  0
+CIRCLE
+  5
+41
+330
+17
+100
+AcDbEntity
+  8
+HOLES
+100
+AcDbCircle
+ 10
+73.0
+ 20
+-19.5
+ 30
+0.0
+ 40
+1.6
+  0
+CIRCLE
+  5
+42
+330
+17
+100
+AcDbEntity
+  8
 CBORE
 100
 AcDbCircle
@@ -2429,7 +2469,7 @@ AcDbCircle
   0
 TEXT
   5
-41
+43
 330
 17
 100
@@ -2459,7 +2499,7 @@ AcDbText
   0
 CIRCLE
   5
-42
+44
 330
 17
 100
@@ -2479,7 +2519,7 @@ AcDbCircle
   0
 TEXT
   5
-43
+45
 330
 17
 100
@@ -2507,9 +2547,109 @@ AcDbText
 100
 AcDbText
   0
+CIRCLE
+  5
+46
+330
+17
+100
+AcDbEntity
+  8
+CBORE
+100
+AcDbCircle
+ 10
+73.0
+ 20
+19.5
+ 30
+0.0
+ 40
+3.6
+  0
 TEXT
   5
-44
+47
+330
+17
+100
+AcDbEntity
+  8
+TEXT
+100
+AcDbText
+ 10
+63.5
+ 20
+23.7
+ 30
+0.0
+ 40
+1.2
+  1
+底面沉孔 %%c7.2 深1.5
+ 11
+63.5
+ 21
+23.7
+ 31
+0.0
+100
+AcDbText
+  0
+CIRCLE
+  5
+48
+330
+17
+100
+AcDbEntity
+  8
+CBORE
+100
+AcDbCircle
+ 10
+73.0
+ 20
+-19.5
+ 30
+0.0
+ 40
+3.6
+  0
+TEXT
+  5
+49
+330
+17
+100
+AcDbEntity
+  8
+TEXT
+100
+AcDbText
+ 10
+63.5
+ 20
+-24.9
+ 30
+0.0
+ 40
+1.2
+  1
+底面沉孔 %%c7.2 深1.5
+ 11
+63.5
+ 21
+-24.9
+ 31
+0.0
+100
+AcDbText
+  0
+TEXT
+  5
+4A
 330
 17
 100
@@ -2527,7 +2667,7 @@ AcDbText
  40
 1.5
   1
-screen_fr4_v1_2b  FR4 无铜 厚3  数量 4  孔: 4x%%c3.4 通 / 3x%%c3.2 通 (销孔) / 2x 底面沉孔 %%c7.2x1.5  未注公差 ±0.1
+screen_fr4_v1_2b  FR4 无铜 厚3  数量 4  孔: 4x%%c3.4 通 / 5x%%c3.2 通 (销孔 3 + 罩锁 2) / 4x 底面沉孔 %%c7.2x1.5 (夹条 2 + 罩锁 2)  未注公差 ±0.1
  11
 40.0
  21
@@ -3527,7 +3667,7 @@ CREATED_BY_EZDXF
   3
 WRITTEN_BY_EZDXF
 350
-47
+4D
   0
 DICTIONARYVAR
   5
@@ -3539,11 +3679,11 @@ DictionaryVariables
 280
 0
   1
-1.4.4 @ 2026-11-20T10:17:59.089564+00:00
+1.4.4 @ 2026-11-20T11:01:17.844818+00:00
   0
 DICTIONARYVAR
   5
-47
+4D
 330
 2D
 100
@@ -3551,7 +3691,7 @@ DictionaryVariables
 280
 0
   1
-1.4.4 @ 2026-11-20T10:17:59.092851+00:00
+1.4.4 @ 2026-11-20T11:01:17.848660+00:00
   0
 ENDSEC
   0

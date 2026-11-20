@@ -263,6 +263,18 @@ comb_ins = [('M3×4 铜螺母 帽', ins(sx * COMB_FIX_X, ECC, Z1, Z1 + CAP_T)) f
 # 天线 (18.5×37.7×0.15 软板), 外面 x=±(ANT_X1 − 0.3); 局部建, 绕 (0, ECC) 转 180° 得 −x 那片
 _ant = gbox(ANT_X1 - ANT_REC, -ANT_SZ[1] / 2, ANT_ZC - ANT_SZ[0] / 2, ANT_X1 - ANT_REC + 0.15, ANT_SZ[1] / 2, ANT_ZC + ANT_SZ[0] / 2)
 ant_a, ant_b = xf(_ant, T_ECC), xf(xf(_ant, rotz(180)), T_ECC)
+# 11-20 夜 转子盘B: 用户「贴到罩子吧」「罩子天然有这个侧立面」「这个天线是fpc的」⇒ 天线 FPC 改贴转子罩内壁 (r82, rotor_shroud_b_v1_2 定位浅槽 0.3 深),
+#   软板顺圆柱面弯 (r82.15–82.3), 长边沿 Z; 中心角 ANT_B_ANG (+y 半 25.2° / −y 半 205.2°, 罩耳与配重唇之间), 槽心 Z ANT_B_ZC (槽顶离顶盖底 0.3); 侧立件不再有天线板
+ANT_B_R = 82.0                                    # 转子罩内壁 (rotor_shroud_v1_2.R0)
+ANT_B_ANG = (25.2, 205.2)
+ANT_B_ZC = round(B.Z_VIEW0 - 2.0 - 0.3 - ANT_L / 2, 2)   # 51.73 ⇒ 槽 Z32.68–70.78 (顶盖底 Z71.08)
+if B.ROTOR_B:
+    def _ant_b(a):
+        ha = math.degrees(ANT_SZ[1] / 2 / ANT_B_R)
+        r1 = ANT_B_R + ANT_REC
+        o = cyl(0, 0, 2 * r1, ANT_B_ZC - ANT_SZ[0] / 2, ANT_B_ZC + ANT_SZ[0] / 2, ang=2 * ha, a0=a - ha)
+        return cut(o, cyl(0, 0, 2 * (r1 - 0.15), ANT_B_ZC - ANT_SZ[0] / 2 - 1, ANT_B_ZC + ANT_SZ[0] / 2 + 1))
+    ant_a, ant_b = _ant_b(ANT_B_ANG[0]), _ant_b(ANT_B_ANG[1])
 
 
 def pair(s_a_local0):
