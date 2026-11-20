@@ -278,8 +278,8 @@ if B.ROTOR_B:
         screw("M3x7 超薄头 玻纤板→承载盘 内圈", i, x, y, _FB, 7.0, True, engage=("M3 法兰螺母", RB.Z_TOP - RB.IN_NUT_H, RB.Z_TOP - RB.IN_NUT_H + NUT_T))
         add(f"M3 法兰螺母 承载盘内圈沉孔 #{i}", flange_nut(x, y, RB.Z_TOP - RB.IN_NUT_H), "#707070")
     for i, (x, y) in enumerate(RB.OUT_NUT_PTS):
-        screw("M3x7 超薄头 玻纤板→承载盘 外圈", i, x, y, _FB, 7.0, True, engage=("M3 法兰螺母", RB.Z_TOP - RB.IN_NUT_H, RB.Z_TOP - RB.IN_NUT_H + NUT_T))   # 11-20 外圈也改法兰螺母 (原 M3×3 铜螺母)
-        add(f"M3 法兰螺母 承载盘外圈沉孔 #{i}", flange_nut(x, y, RB.Z_TOP - RB.IN_NUT_H), "#707070")
+        screw("M3x12 超薄头 玻纤板→承载盘 外圈", i, x, y, _FB, 12.0, True, engage=("M3 法兰螺母", RB.Z_TOP, RB.Z_TOP + NUT_T))   # 11-20 用户「不是，就做通孔就行，因为这里高度够」: 通孔 + 法兰螺母坐盘顶 Z30.5–34.2, 支承 Z23 ⇒ M3×12 尾 Z35 (原 M3×7 + M3×3 铜螺母)
+        add(f"M3 法兰螺母 承载盘外圈顶面 #{i}", flange_nut(x, y, RB.Z_TOP), "#707070")
     for i, (x, y) in enumerate(RB.ANCHOR_PTS):
         screw("M3x18 超薄头 玻纤板→固定件锚孔", i, x, y, _FB, 18.0, True, engage=("M3 法兰螺母", RB.H_Z1, RB.H_Z1 + NUT_T))
         add(f"M3 法兰螺母 固定件带顶 #{i}", flange_nut(x, y, RB.H_Z1), "#707070")
