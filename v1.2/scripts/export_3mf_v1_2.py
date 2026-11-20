@@ -35,7 +35,7 @@ if ROTOR_B:
         import rotor_shroud_b_v1_2 as RSB
     RB = RSB.RB
     EXT = EXT[:2] + [('玻纤板 fr4_plate_v1_2b Φ165×3 (无铜 FR4, 板厂件)',RB.fr4,'#C9B458',0.05),('承载盘 rim_ring_v1_2b (转子盘B, 并入毂盘)',RB.rim,'#6AA84F',0.05)]
-    ROT = [('屏幕固定件 +x screen_holder_v1_2b_a',RB.hold_a,'#F1C232',0.03),('屏幕固定件 −x screen_holder_v1_2b_b',RB.hold_b,'#E69138',0.03),
+    ROT = [*[(n,sh,c,0.03) for n,sh,c in RB.SCREEN_PARTS],   # 11-20 屏幕玻纤板 ×4 + 侧立件 ×2 (原 screen_holder a/b)
            *[r for r in ROT if not r[0].startswith(('灯板支撑','转子罩'))],
            ('转子罩 +y 半 rotor_shroud_b_a_v1_2b (含顶盖)',RSB.shr_a,'#6FA8DC',0.05),('转子罩 −y 半 rotor_shroud_b_b_v1_2b (含顶盖)',RSB.shr_b,'#93C47D',0.05)]
 GTOP=[('玻璃上 glass_top_v1_2',glass_top,'#7FB3D5',0.05),('圆环玻璃 OD180×ID20×10 (外购)',glass_disc,'#AED6F1',0.1),('中心堵头 glass_top_hub_v1_2',glass_top_hub,'#2E86C1',0.02),('玻璃压圈 glass_top_clamp_v1_2',glass_top_clamp,'#1B4F72',0.05),('硅胶垫 上 OD180×ID171×1 (外购, 压后 0.8)',glass_gasket_top,'#E5E7E9',0.05),('硅胶垫 下 OD180×ID171×1 (外购, 压后 0.8)',glass_gasket_bot,'#E5E7E9',0.05)]
@@ -86,7 +86,7 @@ _GROUPS = {'定子盘': [('flange_disc_v1_2', V12 / 'models' / 'flange_disc_v1_2
 if ROTOR_B:   # 转子盘/ 文件夹 (旧转子) 不再覆盖; 转子盘B/ 由 rotor_b / rotor_shroud_b (STL=打印姿态, STEP=装配) 和出图同步
     _GROUPS.pop('转子盘')
     gd = V12 / '转子盘B'; gd.mkdir(exist_ok=True)
-    for n in ('rim_ring_v1_2b', 'screen_holder_v1_2b_a', 'screen_holder_v1_2b_b', 'rotor_shroud_b_a_v1_2b', 'rotor_shroud_b_b_v1_2b'):
+    for n in ('rim_ring_v1_2b', 'screen_fr4_v1_2b', 'screen_post_v1_2b', 'rotor_shroud_b_a_v1_2b', 'rotor_shroud_b_b_v1_2b'):
         d = V12 / 'models' / n
         for f, dst in ((d / f'{n}_print.stl', gd / f'{n}.stl'), (d / f'{n}.step', gd / f'{n}.step'), (d / f'{n}_drawing.pdf', gd / f'{n}_drawing.pdf')):
             if f.exists():

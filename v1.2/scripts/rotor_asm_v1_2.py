@@ -25,7 +25,7 @@ assert B.ROTOR_B, '本图只画转子盘B'
 PARTS = [('电机 Φ55×21.5 (占位, 参考)', B.motor, '#333333', 'M'),
          (f'玻纤板 fr4_plate_v1_2b Φ{RB.FR4_OD:g}×{RB.FR4_T:g}', RB.fr4, '#C9B458', 'G'),
          ('承载盘 rim_ring_v1_2b', RB.rim, '#6AA84F', 'R'),
-         ('屏幕固定件 +x screen_holder_v1_2b_a', RB.hold_a, '#F1C232', 'U'), ('屏幕固定件 -x screen_holder_v1_2b_b', RB.hold_b, '#E69138', 'U'),
+         *[(n, sh, c, 'U') for n, sh, c in RB.SCREEN_PARTS],   # 11-20 屏幕玻纤板 ×4 + 侧立件 ×2
          ('灯板夹条 led_bar', L.bar_s, '#8E7CC3', 'U'), ('灯板顶部件 led_top', L.top, '#6FA8DC', 'U'), ('灯板梳齿 led_comb', L.comb_s, '#9FC5E8', 'U'),
          ('灯板 A (+y)', L.led_a, '#145A32', 'U'), ('灯板 B (-y)', L.led_b, '#0E3B22', 'U'),
          (f'Φ8×{L.ROD_L:g} 钢轴', L.rod, '#999999', 'U'),
