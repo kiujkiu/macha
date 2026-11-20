@@ -103,9 +103,17 @@ def _octa(h, c, z0, z1):
     return BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(pg.Wire()).Face(), gp_Vec(0, 0, z1 - z0)).Shape()
 r_ = fuse(cut(_octa(COLLAR_FLAT, RING_CH, 0, FL_Z0), cyl(0, 0, BORE_D, -1, FL_Z0 + 1)),        # 托法兰盘的方座 ±35.5 / 内孔 Φ59
           cut(cyl(0, 0, TUBE_OD, FL_Z0, TUBE_TOP), cyl(0, 0, BORE_D, FL_Z0 - 1, TUBE_TOP + 1)))   # 内管 Φ63 (穿法兰盘孔)
-WIRE_A0, WIRE_AW, WIRE_ZH = 268.0, 24.0, 7.5      # 11-20 用户「265°–287°改成268-292 高度从6改到7.5」; 11-19 23:0x 用户「开口高度5mm」(原 6); 292.5° 中央螺丝孔 (13.47,−32.52) 原要求四周实体 ⇒ 终边 ≤287 (孔壁 1.8) —— 11-20 用户改 292, 已知切开 292.5° 螺丝孔 Z0–7.5 下段; 11-19 22:5x 用户「265到287」(先说 265–300 随即改口; 原 270–310); 用户 11-13: 电机出线口 270–310° (宽 40, 对准实物出线 ~285–290°), 高 6 (底面 Z0 起); 原 255–285° 高到 Z11.2
+WIRE_A0, WIRE_AW, WIRE_ZH = 268.0, 24.0, 7.5      # 11-20 晚起 WIRE_A0/AW 已废弃 (出线口改直边槽, 见下 WIRE_XL…), 只留给角耳判断/旧引用; 11-20 用户「265°–287°改成268-292 高度从6改到7.5」; 11-19 23:0x 用户「开口高度5mm」(原 6); 292.5° 中央螺丝孔 (13.47,−32.52) 原要求四周实体 ⇒ 终边 ≤287 (孔壁 1.8) —— 11-20 用户改 292, 已知切开 292.5° 螺丝孔 Z0–7.5 下段; 11-19 22:5x 用户「265到287」(先说 265–300 随即改口; 原 270–310); 用户 11-13: 电机出线口 270–310° (宽 40, 对准实物出线 ~285–290°), 高 6 (底面 Z0 起); 原 255–285° 高到 Z11.2
 r_ = cut(r_, cut(_octa(COLLAR_FLAT + 1, RING_CH, RING_CORNER_T, FL_Z0 + 1), cyl(0, 0, COLLAR_D, RING_CORNER_T - 1, FL_Z0 + 2)))  # 圆外四角削到 RING_CORNER_T (4.5) 厚
-r_ = cut(r_, op(BRepAlgoAPI_Common, cyl(0, 0, 90, -1, WIRE_ZH, ang=WIRE_AW, a0=WIRE_A0), cyl(0, 0, 90, -1, WIRE_ZH)))
+# 11-20 用户「啊不是这个意思，就是这个圈以外的，你多去掉一点，不是从扇形区域去掉」+「这样」(画图): 出线口不再用扇形, 改两条竖直 (平行 y) 边的直槽 Z−1→WIRE_ZH, 从内孔切出方座 −y 平边;
+#   左边 x=WIRE_XL; 右边 x=孔心x−WIRE_RING_D/2 (与 292.5° A 孔外 Φ5.2 圈相切), 孔心高度以下再往右切到孔心 x; 减去 Φ5.2 圈 ⇒ 孔外留 1.0 壁小圈, 圈左/左下挖空, 圈右侧原实体保留
+WIRE_XL, WIRE_RING_D = -1.5, 5.2
+WIRE_HX, WIRE_HY = FLANGE_SCREWS[6]                 # 292.5° 中央 A 孔 (13.47, −32.52)
+WIRE_XR = WIRE_HX - WIRE_RING_D / 2                 # 10.87
+_wb = lambda x0, y0, z0, x1, y1, z1: GC.tag(BRepPrimAPI_MakeBox(gp_Pnt(x0, y0, z0), gp_Pnt(x1, y1, z1)).Shape(), "box", x0, y0, z0, x1, y1, z1)
+_wc = fuse(_wb(WIRE_XL, -COLLAR_D / 2 - 5, -1, WIRE_XR, 0, WIRE_ZH),
+           _wb(WIRE_XR - 0.01, -COLLAR_D / 2 - 5, -1, WIRE_HX, WIRE_HY, WIRE_ZH))
+r_ = cut(r_, cut(_wc, cyl(WIRE_HX, WIRE_HY, WIRE_RING_D, -2, WIRE_ZH + 1)))
 # 用户 11-13: 出线口边 (310° 射线) 切过 315° 角耳, 在底边留一个尖三角 ⇒ 角耳出线口一侧 (310–315°) 修成绕螺丝孔的圆 R4.3 (法兰螺母 Φ7.6 + 0.5)
 _ca = math.radians(round((WIRE_A0 + WIRE_AW - 45) / 90) * 90 + 45)            # 出线口末端相邻的角 (315°)
 _cx, _cy = RING_M3_XY * math.sqrt(2) * math.cos(_ca), RING_M3_XY * math.sqrt(2) * math.sin(_ca)
