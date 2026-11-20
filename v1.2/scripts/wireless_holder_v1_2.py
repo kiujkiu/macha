@@ -127,6 +127,19 @@ OPEN_BOX = [(OPEN_X0, MOD_Y0 - END_CLR, OPEN_X1, MOD_Y0 + OPEN_LEN), (OPEN_X0, M
 assert all(b[0] <= abs(px) - 0.5 and abs(px) + 0.5 <= b[2] and b[1] <= py - 0.5 and py + 0.5 <= b[3] for px, py in PINS.values() for b in [min(OPEN_BOX, key=lambda bb: abs((bb[1] + bb[3]) / 2 - py))])   # 每个脚 (Φ1) 都在开窗里
 assert sorted((round(x, 3), round(y, 3)) for x, y in SCR_OUT + SCR_IN) == sorted((round(x, 3), round(y, 3)) for x, y in B.MOD_HOLES), (SCR_OUT + SCR_IN, B.MOD_HOLES)
 
+# 11-20 用户「无线电路这个件做个斜切」(俯视截图在夹块外侧 (|x| 大、离 PCB 远) ±y 两个角各画一条斜线):
+#   立柱外侧两角竖棱倒斜角 CH×45° 全高 Z30.5–36.5; 内侧 (压 PCB 上沿 + y 端挡块 x XI–XC0) 不切, 挡离心力不受影响。
+#   CH = 5 时法兰螺母座 Φ8 到斜面最小壁 (XO−BY0−CH − (SCR_X−SCR_OUT_y))/√2 − 4 = 1.02 (要求 ≥1.0)。
+CH = 5.0
+_ch_wall = (XO - SCR_X + (SCR_OUT[0][1] - BY0) - CH) / math.sqrt(2) - NUT_FL_D / 2
+assert _ch_wall >= 1.0 - 1e-9 and XO - CH >= XC0, ('斜切太大', _ch_wall)
+def _tri_prism(pts, z0, z1):
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakePolygon, BRepBuilderAPI_MakeFace
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism
+    pg = BRepBuilderAPI_MakePolygon()
+    for x, y in pts: pg.Add(gp_Pnt(x, y, z0))
+    pg.Close(); return BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(pg.Wire()).Face(), gp_Vec(0, 0, z1 - z0)).Shape()
+
 # ---------------- 夹块 (倒 L) ----------------
 def clamp_a():
     s = fuse(gbox(XC0, BY0, RIM_TOP, XO, BY1, TOP_Z),                                              # 立柱 8 宽
@@ -137,6 +150,8 @@ def clamp_a():
         s = cut(s, cyl(x, y, 3.4, RIM_TOP - 1, TOP_Z + 1))                                          # Φ3.4 通孔
     for x0, y0, x1, y1 in OPEN_BOX:
         s = cut(s, gbox(x0, y0, LIP_Z0 - 0.01, x1, y1, TOP_Z + 1))                                  # 焊脚开窗 (只开上沿)
+    for yc, sy in ((BY0, 1), (BY1, -1)):                                                             # 外侧两角竖棱倒斜角 (全高)
+        s = cut(s, _tri_prism([(XO + 1, yc - sy * 1), (XO - CH - 1, yc - sy * 1), (XO + 1, yc + sy * (CH + 1))], RIM_TOP - 1, TOP_Z + 1))
     return clean(s)
 
 HA = clamp_a()
@@ -194,7 +209,7 @@ def report():
     # 最薄: 槽端 → AC 通道 / 通道 → 外面 / 螺丝孔 → r81.7
     rep['misc']['bar_size'] = dict(x=round(XO - XI, 2), y=round(BY1 - BY0, 2), z=round(TOP_Z - RIM_TOP, 2), x_range=[XI, round(XO, 2)], y_range=[round(BY0, 2), round(BY1, 2)])
     rep['misc']['walls'] = {'法兰 Φ7.6→立柱外面': round(XO - SCR_X - NUT_FL_D / 2, 2), '法兰→立柱内面': round(SCR_X - NUT_FL_D / 2 - XC0, 2), '法兰→y 端': round(min(SCR_OUT[0][1] - NUT_FL_D / 2 - BY0, BY1 - SCR_IN[0][1] - NUT_FL_D / 2), 2), '两法兰净空': round(SCR_PITCH - NUT_FL_D, 2),
-                            'y 端挡块': END_T, '上沿厚': CAP_T, '上沿宽': GRIP, '立柱宽': COL_W}
+                            '外角斜切→法兰': round(_ch_wall, 2), '外角斜切': CH, 'y 端挡块': END_T, '上沿厚': CAP_T, '上沿宽': GRIP, '立柱宽': COL_W}
     rep['misc']['open_box_a'] = [[round(v, 2) for v in b] for b in OPEN_BOX]
     rep['misc']['section'] = {'立柱 x 宽': COL_W, '上沿 x 宽': GRIP, '上沿实压 PCB': round(HX - XI, 2), '上沿厚': CAP_T, '总高': round(TOP_Z - RIM_TOP, 2), 'PCB 顶离盘顶': PCB_TOP_GAP, 'PCB 底离盘顶': round(PCB_GAP, 2),
                               '上沿下': '空 (不托 PCB)', 'PCB 端→立柱': X_CLR, 'PCB 侧→y 挡块': END_CLR, 'y 挡块厚': END_T, '开窗 x×y (外排/内排)': [round(OPEN_X1 - OPEN_X0, 2), [round(b[3] - b[1], 2) for b in OPEN_BOX]],
