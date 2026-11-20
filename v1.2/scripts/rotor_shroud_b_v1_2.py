@@ -4,13 +4,13 @@
 由 V1.2 rotor_shroud_v1_2 (罩身 A/B 沿 x=0 分 + 顶盖 ±y 两片) 改:
   - 分法: 沿灯板那条线分成 +y / −y 两半, 每半连自己的顶盖做成一件 (罩身两端竖缝 y −14.46…+5.74 本来就把罩壁断开, 顶盖本来就是 ±y 两片)
   - 原 x=0 分缝凸耳 + 切向螺丝取消 (那条缝没了)
-  - (11-20 夜) 罩底 8 个耳朵坐屏幕玻纤板顶 Z33.5–37.5, 在每块屏幕玻纤板本地 (73, ±19.5) (用户「罩子要在这里从下往上装一个螺丝，然后罩子放上，然后装一个法兰螺母」,
-    「这装罩子的孔是装在屏幕安装这个件上的，不需要在转子盘做」): M3×10 超薄头从屏幕玻纤板底沉孔往上 (支承 Z32), 穿板 + 耳, 耳顶 M3 法兰螺母 Z37.5–41.2 往下锁住罩子
-    耳 = 板本地长方条 x68.5→罩壁 × y 15.5…24.5 (宽 9; 内边 = 螺母边, 离侧立件 ≥1.06; 外边离外圈法兰螺母 1.16), 耳顶平
-    世界角 14.96/75.04/104.96/165.04 (+y 半) / 194.96/255.04/284.96/345.04 (−y 半), r75.56
-    耳上方 45° 斜撑 + 唇 + 顶盖开 Φ10 套筒孔 (只切到罩壁内面 r82), 套筒 (外径 ≤9) 从罩顶竖直下去拧螺母
-    外圈 8 孔 (r77.5 @22.5+45k) 的法兰螺母坐屏幕玻纤板顶 Z33.5–37.2 (在罩子之前装), 罩耳避开, 罩壁内面离螺母 0.5
-    (之前 11-20 晚: 耳在 22.5+45k 由外圈 M3×18 锁; 再之前 ±14° M3×12 从耳顶往下进承载盘六角窝 —— 均作废)
+  - (11-21) 罩底 8 个耳朵坐屏幕支撑件 (PETG 打印, rotor_b) 顶 Z LS.Z0 (38.5), 耳厚 4.5: 用户「罩子还是用螺丝向下锁 螺母嵌在这个支撑件上」
+    DIN912 M3×12 从耳顶往下, 穿耳 + 支撑件, 拧进支撑件底面倒扣的 M3 法兰螺母 (Z30.5–34.2), 尾 Z31 离承载盘顶 0.5; 罩顶开 Φ7 起子孔 (起子 Φ6)
+    A 件 (0/180°) 锁点本地 (61, ±30.5) r68.2 (用户图), 耳 = 本地 x56.5→罩壁 × y26…35 (悬伸 ~18, 整条坐在支撑件上);
+    B 件 (90/270°) 锁点 (73, ±19.5) r75.56, 耳 x68.5→壁 × y15…24; 45° 斜撑从锁点外 4.3 起
+    外圈 8 颗法兰螺母嵌支撑件顶面 (顶低于件顶 0.3), 罩耳可直接盖过
+    (之前 11-20 夜: M3×10 超薄头从屏幕玻纤板底往上 + 耳顶法兰螺母, 耳 Z33.5–37.5; 更早外圈 M3×18 / ±14° —— 均作废)
+  - (11-21) 天线槽 25.2° → 9.2° (A 件罩耳压在原位); 竖缝上边 −0.19 → +0.35, 顶盖内边再退 0.2 (罩 ↔ 灯板 0.108 → ≥0.3)
   - 配重孔按新锁点自动避让 (_wa_ok: 与 Φ10 套筒孔中心距 ≥ (10+5.8)/2+1), 候选 = 原 RS.W_A + 40/140/220/320 + 22.5+45k (旧套筒位)
   - (11-20 夜) 天线 FPC 改贴罩内壁 (用户「贴到罩子吧」「罩子天然有这个侧立面」「这个天线是fpc的」): 定位浅槽 38.1×18.9×0.3 @25.2° (+y 半) / 205.2° (−y 半), Z32.68–70.78;
     侧立件天线板取消 ⇒ 两端竖缝从 y −14.79…5.41 收窄到 −9.19…−0.19 (只让灯板 + 夹条端头, 外角 r82.35 进罩壁)
@@ -32,46 +32,62 @@ from OCP.gp import gp_Trsf, gp_Vec, gp_Ax1, gp_Pnt, gp_Dir
 cyl, cut, fuse, clean, gbox, vol, bbox, xf, rotz, solids = B.cyl, B.cut, B.fuse, B.clean, B.gbox, B.vol, B.bbox, B.xf, B.rotz, B.solids
 common, common_v, sector, pol, prism_xz = RB.common, RB.common_v, RS.sector, RS.pol, RS.prism_xz
 Z0, Z1, R0, R1 = RS.Z0, RS.Z1, RS.R0, RS.R1
-BOSS_Z0 = RB.SP_Z1                    # 33.5 耳底 = 屏幕玻纤板顶 (11-20; 原 37 固定件带顶)
-BOSS_T = 4.0                          # 4 (同原凸台厚)
-BOSS_Z1 = BOSS_Z0 + BOSS_T            # 37.5 螺丝头支承
-NUT_T, NUT_D = 3.7, 8.0               # M3 法兰螺母 Φ8×3.7, 法兰朝下坐耳顶
-EAR_X0 = RB.SHR_LOC_X - NUT_D / 2 - 0.5   # 68.5 耳内端 (板本地 x; 螺母内缘 69 + 0.5; 屏幕玻纤板内边 x66)
-EAR_Y0 = RB.SHR_LOC_Y - NUT_D / 2         # 15.5 耳内边 = 螺母边 (侧立件腹板 y 到 −14.44 ⇒ 1.06; 横杆 −12.69 ⇒ 2.81)
-EAR_Y1 = RB.SHR_LOC_Y + NUT_D / 2 + 1.0   # 24.5 耳外边 (外圈法兰螺母 Φ8 @(71.6, ±29.66) 下缘 y25.66 ⇒ 1.16)
-BOSS_W = EAR_Y1 - EAR_Y0              # 9
+BOSS_Z0 = RB.SP_Z1                    # 38.5 耳底 = 支撑件顶 (= 灯板下沿 LS.Z0, 跟灯板走)
+BOSS_T = RB.SHR_EAR_T                 # 4.5 (按 DIN912 M3×12 尾离承载盘顶 0.5 反推)
+BOSS_Z1 = BOSS_Z0 + BOSS_T            # 43.0 螺丝头支承 = 耳顶
+# 11-21 罩锁改从上往下 (用户「罩子还是用螺丝向下锁 螺母嵌在这个支撑件上」): 螺母倒扣嵌在支撑件底面, 耳上只有 Φ3.4 过孔 + 起子孔
+EAR_HW = 4.5                          # 耳宽 9 (以锁点为中线, 沿支撑件局部 x 方向伸到罩壁)
+EAR_IN = 4.5                          # 耳内端在锁点内侧 4.5 (孔边料 2.8)
+NUT_T = RB.NUT_T
+NUT_D = RB.WELL_FL_D
+EAR_X0 = RB.SHR_LOC_X - EAR_IN        # 68.5 (B 件; A 件 56.5) 兼容旧名
+EAR_Y0, EAR_Y1 = RB.SHR_LOC_Y - EAR_HW, RB.SHR_LOC_Y + EAR_HW   # B 件 15…24 兼容旧名
+BOSS_W = 2 * EAR_HW
 BOSS_RI = EAR_X0                      # 兼容旧名 (图纸)
-HOLE_R = RB.SHR_LOCK_R                # 75.56
-MNT_PTS = list(RB.SHR_LOCK_PTS)       # 世界 8 点 (每块屏幕玻纤板本地 (73, ±19.5))
-MNT_A = list(RB.SHR_LOCK_ANG)         # 14.96/75.04/…/345.04
-MNT_L = RB.SHR_SCR_L                  # M3×10 超薄头 从屏幕玻纤板底往上 (支承 Z32.0 → 尾 Z42.0)
-NUT_Z = (BOSS_Z1, BOSS_Z1 + NUT_T)    # 37.5–41.2
-SCR_TIP = RB.SHR_SCR_BEAR + MNT_L     # 42.0
-assert SCR_TIP - NUT_Z[1] >= 0 and SCR_TIP - NUT_Z[1] <= 1.5, (SCR_TIP, NUT_Z)
-ACC_D = 10.0                          # 套筒让位孔 Φ10; 与 r<R0 取交, 不切罩壁
-assert ACC_D >= 9.0 + 1.0 - 1e-9 and HOLE_R + NUT_D / 2 <= R0 - 0.5   # 套筒外径 ≤9 留 0.5/边; 法兰 Φ8 外缘 r79.56 在罩壁内面以内
-OUT_PTS = list(RB.ANCHOR_PTS) + list(RB.OUT_NUT_PTS)   # 外圈 8 颗法兰螺母 (坐屏幕玻纤板顶 Z33.5–37.2, 罩子之前装)
-# 配重孔: 候选 原 RS.W_A + 40/140/220/320 + 22.5+45k, 去掉与套筒孔 (Φ10) 相碰的 (中心距 < (10+5.8)/2 + 1); 保持 20 个 (多了按与原表最接近取)
+HOLE_R = RB.SHR_LOCK_R                # {'a': 68.2, 'b': 75.56}
+MNT_PTS = list(RB.SHR_LOCK_PTS)       # 世界 8 点
+MNT_A = list(RB.SHR_LOCK_ANG)         # 26.57/75.04/104.96/153.43/206.57/255.04/284.96/333.43
+MNT_L = RB.SHR_SCR_L                  # DIN912 M3×12 从耳顶往下 (支承 Z43 → 尾 Z31)
+NUT_Z = RB.LOCK_NUT_Z                 # 30.5–34.2 倒扣在支撑件底
+SCR_TIP = RB.SHR_SCR_TIP              # 31.0
+ACC_D = 7.0                           # 起子孔 Φ7 (起子/内六角扳手 Φ6 包络 + 0.5/边; DIN912 头 Φ5.5); 与 r<R0 取交, 不切罩壁
+assert ACC_D >= 6.0 + 1.0 - 1e-9 and max(HOLE_R.values()) + ACC_D / 2 <= R0 - 0.5
+GUSSET_X0 = ACC_D / 2 + 0.8           # 45° 斜撑从锁点外侧 4.3 起 (不挡起子孔)
+OUT_PTS = list(RB.ANCHOR_PTS) + list(RB.OUT_NUT_PTS)   # 外圈 8 颗法兰螺母 (嵌在支撑件顶面, 顶低于件顶 0.3, 罩子之前装; 罩耳可盖过)
+# 配重孔: 候选 原 RS.W_A + 40/140/220/320, 去掉与起子孔相碰的 (中心距 < (ACC_D+5.8)/2 + 1)
 def _wa_ok(a): return all(math.dist(pol(RS.W_R, a), p) >= (ACC_D + RS.W_CB_D) / 2 + 1.0 for p in MNT_PTS)
 W_CAND = sorted(set(RS.W_A) | {40.0, 140.0, 220.0, 320.0})
 W_A = sorted(a for a in W_CAND if _wa_ok(a))
 def acc_cut(x, y, z0, z1):
-    """套筒孔 Φ ACC_D, 只切到罩壁内面 (r ≤ R0)"""
+    """起子孔 Φ ACC_D, 只切到罩壁内面 (r ≤ R0)"""
     return common(cyl(x, y, ACC_D, z0, z1), cyl(0, 0, 2 * R0, z0 - 1, z1 + 1))
 W_DROP = [a for a in W_CAND if not _wa_ok(a)]
 # 11-20 夜 两端竖缝收窄: 原 y RS.SLOT_Y0…SLOT_Y1 (−14.79…5.41, 让天线板) → 只让灯板 + 夹条端头 (两端 x±81.88 处 y −8.79…−0.59, 外角 r82.35 进罩壁) 各 0.4
-SLOT_Y0, SLOT_Y1 = -8.79 - 0.4, -0.59 + 0.4    # −9.19…−0.19 (跨分缝 y=ECC −4.69)
+SLOT_Y0, SLOT_Y1 = -8.79 - 0.4, 0.0 + 0.35     # −9.19…+0.35 (跨分缝 y=ECC −4.69); 11-21 上边 −0.19 → +0.35: 灯板 A 两端 MIP 顶到 y0.0 (v2_boards 灯板, x80.4–81.88), 原缝边离它 0.12
 # 11-20 夜 天线 FPC 18.5×37.7 改贴罩子内壁 (用户「贴到罩子吧」「罩子天然有这个侧立面」「这个天线是fpc的」), 定位浅槽 38.1×18.9×0.3, 长边沿 Z, 槽底 = 圆柱面 r82.3
 #   位置 (LS.ANT_B_ANG): 两端 0°/180° 附近罩壁被竖缝 + 罩耳 (板本地 y 15.5…24.5 接壁处 ±17.38°) 夹住只剩弧长 ~15 < 18.9 ⇒ 挪到 罩耳外侧 ~ 唇 (33°) 之间, 中心 25.2° (+y 半) / 205.2° (−y 半)
-ANT_ANG = tuple(LS.ANT_B_ANG)
+# 11-21 A 件罩耳 (板本地 y 26…35, 接壁 18.5°…25.3°) 正好压在原天线位 25.2° ± 6.6° ⇒ 天线挪到 竖缝 (≈0°) 与 A 件罩耳之间: 中心 ANT_ANG_NEW
+#   ⚠ 天线实体 / 原值在 led_support (LS.ANT_B_ANG = 25.2/205.2) —— 本脚本不改 led_support, 槽按新角度切, 校核用本地重建的天线 (ant_new); 需同步 LS.ANT_B_ANG
+ANT_ANG_NEW = 9.2
+ANT_ANG = (ANT_ANG_NEW, ANT_ANG_NEW + 180.0)
 ANT_HA = math.degrees(LS.ANT_W / 2 / R0)         # 6.60° 半角 (弧长 18.9 @r82)
 ANT_Z0, ANT_Z1 = LS.ANT_B_ZC - LS.ANT_L / 2, LS.ANT_B_ZC + LS.ANT_L / 2   # 32.68–70.78 (顶离顶盖底 Z71.08 0.3)
-ANT_MARGIN = dict(ear=round(min(a - ANT_HA for a in ANT_ANG if a < 90) - math.degrees(math.asin(EAR_Y1 / R0)), 2),   # 槽边 ↔ 罩耳外边 (度)
-                  lip=round(RS.LIP_ARCS[0][0] - max(a + ANT_HA for a in ANT_ANG if a < 90), 2))                 # 槽边 ↔ 配重唇 33° (度)
+_EAR_A_IN = math.degrees(math.asin((RB.LOCK_A_LOC[0][1] - EAR_HW) / R0))     # A 件 +y 罩耳下边接壁角 18.5°
+_SLOT_A = math.degrees(math.atan2(SLOT_Y1, R0))                               # 竖缝上边 (y +0.35) ≈ 0.24°
+ANT_MARGIN = dict(ear=round(_EAR_A_IN - (ANT_ANG[0] + ANT_HA), 2),          # 槽边 ↔ A 件罩耳 (度)
+                  slot=round((ANT_ANG[0] - ANT_HA) - _SLOT_A, 2))           # 槽边 ↔ 竖缝 (度)
 assert min(ANT_MARGIN.values()) > 0.5 and ANT_Z1 <= RS.LID_Z0 - 0.2, ANT_MARGIN
+_ha_ant = math.degrees(LS.ANT_SZ[1] / 2 / LS.ANT_B_R)
+def _ant_new(a):   # 同 led_support._ant_b, 角度换新
+    r1 = LS.ANT_B_R + LS.ANT_REC
+    o = cyl(0, 0, 2 * r1, LS.ANT_B_ZC - LS.ANT_SZ[0] / 2, LS.ANT_B_ZC + LS.ANT_SZ[0] / 2, ang=2 * _ha_ant, a0=a - _ha_ant)
+    return cut(o, cyl(0, 0, 2 * (r1 - 0.15), LS.ANT_B_ZC - LS.ANT_SZ[0] / 2 - 1, LS.ANT_B_ZC + LS.ANT_SZ[0] / 2 + 1))
+ant_new_a, ant_new_b = _ant_new(ANT_ANG[0]), _ant_new(ANT_ANG[1])
 # 11-20 夜 用户「罩子桥板让位放到0.3」: 顶盖桥板通槽外边 (RS.BR_POCKET, 叠高 +0.4 ⇒ ECC±11.318) 离桥板 FPC 座 (y 6.44 / −15.82, ECC±11.13) 只 0.19
 #   ⇒ 本件槽外边再外扩 BR_POCKET_ADD 0.15 (ECC±11.468, 离座 ≈0.34); 槽半宽 |x|≤38.5 (离桥板 0.5) 不动; RS 原罩不改
 BR_POCKET_ADD = 0.15
+# 11-21 罩 a ↔ 灯板 A MIP 顶 (x±81.6, Z71–73) 只 0.108: 顶盖内边 (RS.LID_YIN, 板厚按 1.468 算的) 两片各再退 0.2 ⇒ 0.308
+LID_YIN_ADD = 0.2
 BR_POCKET = {k: (x0, yb + (BR_POCKET_ADD if k == 'a' else -BR_POCKET_ADD)) for k, (x0, yb) in RS.BR_POCKET.items()}   # +6.778 / −16.158
 SPLIT_Y = RS.ECC                      # 分界: 灯板中面 y = SCR_ECC (11-18 夜 −4.69, 原 −4.36; 两端竖缝内)
 # 11-18 夜 用户: 底板上边 R85 圆弧伸出罩壁 r82–85 ⇒ +y 半罩底开缺口 = 底板板框外扩 BB_NOTCH_CLR, 从罩底到板顶 + BB_NOTCH_CLR (伸出的板被玻璃座挡住, 外面看不到)
@@ -95,11 +111,11 @@ def ring_body_b():
     s = B.ann(R0, R1, Z0, Z1)
     for a0, a1 in RS.LIP_ARCS: s = fuse(s, sector(RS.LIP_R0, R0 + 0.5, RS.LIP_Z0, RS.LID_Z0, a0, a1))
     clip = cyl(0, 0, 2 * (R0 + 0.5), BOSS_Z0 - 1, Z1 + 1)
-    for a in RB.SP_ANG:               # 耳坐屏幕玻纤板顶 Z33.5–37.5 (板本地长方条, 耳顶平) + 45° 斜撑接罩壁; 4 块板同样 2 个
-        for sy in (1, -1):
-            y0, y1 = (EAR_Y0, EAR_Y1) if sy > 0 else (-EAR_Y1, -EAR_Y0)
-            b = fuse(gbox(EAR_X0, y0, BOSS_Z0, R0 + 0.5, y1, BOSS_Z1),
-                     prism_xz([(EAR_X0, BOSS_Z1 - 0.01), (R0 + 0.5, BOSS_Z1 - 0.01), (R0 + 0.5, BOSS_Z1 + (R0 + 0.5 - EAR_X0))], y0, y1))
+    for a in RB.SP_ANG:               # 耳坐支撑件顶 (局部沿 x 的长条: 锁点内侧 EAR_IN → 罩壁, 宽 9, 耳顶平) + 45° 斜撑 (从锁点外 GUSSET_X0 起) 接罩壁
+        for lx, ly in RB.SHR_LOCK_SET[a]:
+            y0, y1 = ly - EAR_HW, ly + EAR_HW
+            b = fuse(gbox(lx - EAR_IN, y0, BOSS_Z0, R0 + 0.5, y1, BOSS_Z1),
+                     prism_xz([(lx + GUSSET_X0, BOSS_Z1 - 0.01), (R0 + 0.5, BOSS_Z1 - 0.01), (R0 + 0.5, BOSS_Z1 + (R0 + 0.5 - lx - GUSSET_X0))], y0, y1))
             s = fuse(s, xf(common(b, clip), rotz(a)) if a else common(b, clip))
     s = clean(s)
     for x, y in MNT_PTS:
@@ -122,7 +138,9 @@ def lid_plain(k):
     scr = RS.LID_SCR_A if k == 'a' else [a + 180 for a in RS.LID_SCR_A]
     fill = [common(cyl(*pol(RS.W_R, a), 7.0, RS.LID_Z0, Z1), cyl(0, 0, 2 * RS.LID_R, RS.LID_Z0 - 1, Z1 + 1)) for a in scr]
     x0, yb = BR_POCKET[k]; yb0 = RS.BR_POCKET[k][1]   # 桥板让位槽外边外扩 (11-20 夜, 离桥板 ≥0.3)
-    return clean(cut(fuse(plate, *fill), gbox(x0, min(yb, yb0 - 0.01 * (1 if k == 'a' else -1)), RS.LID_Z0 - 1, -x0, max(yb, yb0 - 0.01 * (1 if k == 'a' else -1)), Z1 + 1)))
+    yi = RS.LID_YIN[k]                                # 盖内边 (RS 按板厚 1.468 算; 板改 1.6 后离 MIP 顶只剩 0.108) ⇒ 再退 LID_YIN_ADD (11-21, ≥0.3)
+    yin_cut = gbox(-100, yi - 1, RS.LID_Z0 - 1, 100, yi + LID_YIN_ADD, Z1 + 1) if k == 'a' else gbox(-100, yi - LID_YIN_ADD, RS.LID_Z0 - 1, 100, yi + 1, Z1 + 1)
+    return clean(cut(fuse(plate, *fill), gbox(x0, min(yb, yb0 - 0.01 * (1 if k == 'a' else -1)), RS.LID_Z0 - 1, -x0, max(yb, yb0 - 0.01 * (1 if k == 'a' else -1)), Z1 + 1), yin_cut))
 
 
 def half(k):
@@ -158,12 +176,12 @@ def report():
     _fpc = RB.load_fpc()
     rep = dict(vol=dict(a=round(vol(shr_a), 1), b=round(vol(shr_b), 1)), mass_g=dict(a=round(vol(shr_a) * 1.24e-3, 1), b=round(vol(shr_b) * 1.24e-3, 1)),
                valid=dict(a=BRepCheck_Analyzer(shr_a).IsValid(), b=BRepCheck_Analyzer(shr_b).IsValid()), solids=dict(a=len(solids(shr_a)), b=len(solids(shr_b))),
-               boss=dict(z=(BOSS_Z0, BOSS_Z1), w=BOSS_W, ear_loc=dict(x0=EAR_X0, y=(EAR_Y0, EAR_Y1)), hole_r=round(HOLE_R, 3), ang=MNT_A, screw=f'M3×{MNT_L:g} 超薄头 从下往上 尾 Z{SCR_TIP:g}', nut_z=NUT_Z, acc_d=ACC_D,
+               boss=dict(z=(BOSS_Z0, BOSS_Z1), w=BOSS_W, ear_loc=dict(x0=EAR_X0, y=(EAR_Y0, EAR_Y1)), hole_r=HOLE_R, ang=MNT_A, screw=f'DIN912 M3×{MNT_L:g} 从耳顶往下 尾 Z{SCR_TIP:g}', nut_z=NUT_Z, acc_d=ACC_D,
                          w_a=W_A, w_drop=W_DROP, n_w=len(W_A)),
                balance=balance(), slot_y=(SLOT_Y0, SLOT_Y1), br_pocket={k: round(v[1], 3) for k, v in BR_POCKET.items()}, antenna=dict(ang=ANT_ANG, half_ang=round(ANT_HA, 3), z=(ANT_Z0, ANT_Z1), margin_deg=ANT_MARGIN))
     others = dict(承载盘B=RB.rim, **{n: sh for n, sh, _ in RB.SCREEN_PARTS}, 底板=RB.VB['baseboard'], 底板器件=RB.VB['bb_parts'], CZ06=RB.VB['cz06'],
                   灯板=RB.VB['led'], 夹条=LS.bar_s, 顶部件=LS.top, 无线托盘=RB.WH.H, FPC_A=_fpc['fpc_a_v1_2'], FPC_B=_fpc['fpc_b_v1_2'],
-                  桥板A=_fpc['bridge_a_v1_2'], 桥板B=_fpc['bridge_b_v1_2'], FPC座=_fpc['bb_fpc_seats_v1_2'], 天线a=LS.ant_a, 天线b=LS.ant_b)
+                  桥板A=_fpc['bridge_a_v1_2'], 桥板B=_fpc['bridge_b_v1_2'], FPC座=_fpc['bb_fpc_seats_v1_2'], 天线a=ant_new_a, 天线b=ant_new_b)
     inter = {}
     for n1, s1 in (('罩A(+y)', shr_a), ('罩B(-y)', shr_b)):
         for n2, s2 in others.items():

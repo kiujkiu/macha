@@ -43,8 +43,8 @@ if ROTOR_B:
         import rotor_shroud_b_v1_2 as RSB
     RB=RSB.RB
     for k in ('hub','rim','led_post_a','led_post_b','rotor_shroud_a','rotor_shroud_b','rotor_lid_a','rotor_lid_b'): S.pop(k)
-    S.update({'fr4':RB.fr4,'rim_b':RB.rim,**{k:sh for k,(_,sh,_) in zip(RB.SCREEN_KEYS,RB.SCREEN_PARTS)},'shroud_b_a':RSB.shr_a,'shroud_b_b':RSB.shr_b,'coil':RB.coil})   # 11-20 固定件 → 玻纤板 ×4 + 侧立件 ×2
-    RMAP={'hub':'fr4','rim':'rim_b','led_post_a':'post_b_a','led_post_b':'post_b_b','rotor_shroud_a':'shroud_b_a','rotor_shroud_b':'shroud_b_b','rotor_lid_a':'shroud_b_a','rotor_lid_b':'shroud_b_b'}
+    S.update({'fr4':RB.fr4,'rim_b':RB.rim,**{k:sh for k,(_,sh,_) in zip(RB.SCREEN_KEYS,RB.SCREEN_PARTS)},'shroud_b_a':RSB.shr_a,'shroud_b_b':RSB.shr_b,'coil':RB.coil})   # 11-21 屏幕支撑件 A ×2 (0/180°) + B ×2 (90/270°)
+    RMAP={'hub':'fr4','rim':'rim_b','led_post_a':'scr_sup_0','led_post_b':'scr_sup_180','rotor_shroud_a':'shroud_b_a','rotor_shroud_b':'shroud_b_b','rotor_lid_a':'shroud_b_a','rotor_lid_b':'shroud_b_b'}
 P={k:pts(v) for k,v in S.items()}; print('sampled',f'{time.time()-T0:.0f}s',flush=True)
 K={k:cKDTree(v) for k,v in P.items()}
 def md(a,b): d,_=K[b].query(P[a],k=1,distance_upper_bound=20); return float(d.min())
@@ -74,9 +74,9 @@ if ROTOR_B:
         x,y=RMAP.get(x,x),RMAP.get(y,y)
         if x==y or frozenset((x,y)) in _seen: continue
         _seen.add(frozenset((x,y))); _np.append((x,y))
-    for x,y in [('coil',z) for z in ('fr4','rim_b','ring','flange_disc','mounting_flange','motor')]+[(h,z) for h in RB.SCREEN_KEYS[:4] for z in ('fr4','rim_b','shroud_b_a','shroud_b_b','bb_r2','wireless_holder','wireless_module','led_a','led_b','led_bar','fpc_a','fpc_b','bridge_a','bridge_b','seat_j5','seat_j6','post_b_a','post_b_b')]+\
+    for x,y in [('coil',z) for z in ('fr4','rim_b','ring','flange_disc','mounting_flange','motor')]+[(h,z) for h in RB.SCREEN_KEYS[:4] for z in ('fr4','rim_b','shroud_b_a','shroud_b_b','bb_r2','wireless_holder','wireless_module','led_a','led_b','led_bar','fpc_a','fpc_b','bridge_a','bridge_b','seat_j5','seat_j6','ant_a','ant_b')]+\
                [('fr4',z) for z in ('flange_disc','mounting_flange','ring','motor','wireless_module','bb_r2')]+[('rim_b',z) for z in ('motor','wireless_module','seat_j5','seat_j6','led_bar')]+[('shroud_b_a','shroud_b_b')]+\
-               [(h,z) for h in ('post_b_a','post_b_b') for z in ('led_bar','led_top','ant_a','ant_b','fpc_a','fpc_b','seat_j5','seat_j6')]:
+               [(h,z) for h in RB.SCREEN_KEYS for z in ('led_top',)]:   # 11-21 侧立件取消 (原 post_b_a/b 配对并进上面支撑件)
         if frozenset((x,y)) in _seen: continue
         _seen.add(frozenset((x,y))); _np.append((x,y))
     PAIRS=_np

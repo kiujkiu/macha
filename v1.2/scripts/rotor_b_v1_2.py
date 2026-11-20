@@ -8,16 +8,17 @@
   承载盘 rim_ring_v1_2b   V0.4 rim_ring 外形 (Φ170) + 并入毂盘:
       托盘 r≤85 Z27.3–32 (厚 4.7); 底面线圈腔 r39.9–72.5 Z24.5–27.3 (深 2.8, 线圈 ID80 × 2.7, 用户 11-17);
       中心实体 r≤39.9 / 外环 r72.5–85 都下到玻纤板顶 Z24.5; 外唇 r82.7–85 再往下包住玻纤板边到 Z21.5
-  (11-20 起) 屏幕固定件 = 玻纤平板 screen_fr4_v1_2b ×4 (同一件, 0/90/180/270°, Z30.5–33.5; 11-20 晚改长方形 x66–81.2 |y|≤35, 外角按 r81.7 圆角) + 侧立件 screen_post_v1_2b ×2 (同一件, 底 Z33.5; 11-20 夜只剩垫块, 天线 FPC 改贴罩内壁);
-      原 screen_holder_v1_2b_a/b (PETG 弧形带 + 立板一体, Z30.5–37) 作废 (产物移 转子盘B/作废_11-20/)
+  (11-21 起) 屏幕支撑件 = PETG 打印 ×4, 两种件, Z30.5 (承载盘顶) → 灯板下沿 LS.Z0 (灯板 +1 后 38.5, 高 8):
+      A 屏幕支架件 screen_sup_a_v1_2b ×2 (0°/180° 同件) 托灯板/夹条; B 上下件 screen_sup_b_v1_2b ×2 (90°/270° 同件)
+      取代 屏幕玻纤板 screen_fr4_v1_2b ×4 + 侧立件 screen_post_v1_2b ×2 (11-20, 产物移 转子盘B/作废_11-21/)
 螺丝 (全部在桌上装好再上电机):
-  - 屏幕夹条 2×M3×12 超薄头: 从屏幕玻纤板底面 Φ7.2×1.5 沉孔往上 (支承 Z32) 穿 玻纤板 → 侧立件 → 自攻进夹条 (尾 Z44) ⇒ 先把 玻纤板 + 侧立件 + 夹条 拧成一组, 再整组放上承载盘
+  - 屏幕螺丝 2× M3 超薄头 (长度按铜螺柱 Z 自动选, 现 M3×18): 从 A 件底面 Φ7.6×1.5 沉孔往上 (支承 Z32) 穿 A 件 → 中缝 → 拧进灯板 F 面每端下颗铜螺柱
   - 16 颗从 fr4_plate 底往上 (头埋 Φ7.2×1.5 沉孔, 支承 Z23): 内圈 R34 ×8 → 承载盘顶面 Φ8×3.7 沉孔 M3 法兰螺母 (M3×7);
-    外圈 r77.5 @22.5+45k ×8 → 穿承载盘 + 屏幕玻纤板, 法兰螺母坐屏幕玻纤板顶 Z33.5–37.2 (M3×15, 尾 Z38 露 0.8; 11-20 夜恢复, 只锁屏幕玻纤板)
-  - 罩子锁点 ×8 (11-20 夜 用户「罩子要在这里从下往上装一个螺丝，然后罩子放上，然后装一个法兰螺母」「这装罩子的孔是装在屏幕安装这个件上的，不需要在转子盘做」):
-    每块屏幕玻纤板本地 (73, ±19.5) Φ3.2 通 + 板底 Φ7.2×1.5 沉孔; M3×10 超薄头从板底往上 (支承 Z32, 头藏板底, 板坐承载盘上螺丝掉不下来),
-    穿板剩余 1.5 + 罩耳 Z33.5–37.5, 罩耳顶 M3 法兰螺母 Z37.5–41.2, 尾 Z42 露 0.8; 承载盘 / fr4_plate 不开这些孔
-    (之前 11-20 晚: 罩子锁点 = 外圈 8 孔 M3×18 螺母坐罩耳顶; 再之前 ±14° M3×12 从上往下进承载盘窝 —— 均作废)
+    外圈 r77.5 @22.5+45k ×8 → 穿承载盘 + 支撑件, 法兰螺母嵌在支撑件顶面六角窝 (法兰朝上, 顶低于件顶 0.3), M3×15 尾低于件顶 0.5
+  - 罩子锁点 ×8 (11-21 用户「罩子还是用螺丝向下锁 螺母嵌在这个支撑件上」): DIN912 M3×12 从罩耳顶往下, 穿罩耳 → 支撑件,
+    拧进 倒扣嵌在支撑件底面六角窝的 M3 法兰螺母 (法兰朝下, 支撑件压在承载盘上螺母掉不出来); 承载盘 / fr4_plate 不开孔;
+    A 件本地 (61, ±30.5) (用户图), B 件本地 (73, ±19.5)
+    (之前 11-20 夜: M3×10 超薄头从屏幕玻纤板底往上, 罩耳顶法兰螺母; 再之前外圈 M3×18 / ±14° 承载盘窝 —— 均作废)
   - 电机 4×M3×10 从承载盘顶面 Φ7×5 沉孔往下 (头顶 Z30), 穿玻纤板进电机 4.5
   - (11-18 取消) 托盘顶面 FPC B 让位槽 37×22.5 深 2
   - 底板 r4j 4 孔: 承载盘底面 Φ7.4×1.5 沉孔 (头埋进托盘, 不进线圈腔) 往上
@@ -71,12 +72,7 @@ MOT_PTS = [pol(R_MOT, 45 + 90 * k) for k in range(4)]
 INS_D, INS_H = B.INS_HOLE_D, 3.0                  # 11-18 用户: 热熔螺母改 M3×3 (盘减薄), 孔 Φ4.2 × 3.0 (原 M3×4)
 CENTER_D, CENTER_H = 5.2, 3.5                     # 用户 11-17: M5 真实 5.2, 深 3.5 (有无玻纤板都能用)
 BB_CB_D, BB_CB_H = 7.4, 1.5                       # 底板螺丝 薄头 Φ7×1.5 埋进托盘
-# 11-20 夜 罩子锁点改在屏幕玻纤板上 (用户「我画的这装罩子的孔是装在屏幕安装这个件上的，不需要在转子盘做」; 图上圈 (±72,−21)(±22,−72)):
-#   每块板本地 (SHR_LOC_X, ±SHR_LOC_Y), 4 板同件 ⇒ 8 点对称; 定位见下面 SP 段 (SHR_LOCK_LOC / SHR_LOCK_PTS / SHR_LOCK_ANG / SHR_LOCK_R)
-SHR_LOC_X, SHR_LOC_Y = 73.0, 19.5                 # 用户量的 (72, ±21) 微调: 离外圈孔 (71.6, ±29.66) 10.26 (两个 Φ8 螺母不打架); 罩耳内边 y15.5 离侧立件 (y≥−14.44) 1.06
-SHR_LOCK_R = math.hypot(SHR_LOC_X, SHR_LOC_Y)     # 75.56
-OUT_SCR_BEAR = Z_F0 + 1.5                         # 23.0 超薄头支承 (fr4_plate 底 Φ7.2×1.5 沉孔)
-OUT_SCR_L = 15.0                                  # 11-20 夜恢复 M3×15: 尾 Z38.0; 屏幕玻纤板顶法兰螺母 Z33.5–37.2 吃满, 露 0.8 (11-20 晚 M3×18 到罩耳顶 作废)
+# 罩子锁点 / 外圈螺丝 / 屏幕螺丝 参数见下面「屏幕支撑件」段 (11-21 改 PETG 打印支撑件 ×4, 罩锁从上往下进嵌入式法兰螺母)
 H_Z1 = LS.Z0                                      # 37.0 = 灯板下沿 = 横杆顶
 MOT_CB_H = Z_TOP - 27.0                           # 3.5: 电机螺丝头支承仍 Z27 (M3×10 进电机 4.5 不变), 头顶 Z30 低于盘顶 0.5
 # FPC B 从桥板 B 下沿过转轴到底板 J6, 原实测最低 Z30.6 (x±17.75, y −14.26…6.74), 比盘顶 Z32 低 ⇒ 原托盘顶面开让位槽; 11-18 改灯板抬 2 (FPC 最低 Z31.1, 盘顶 30.5) (V1.2 原承载盘中心是 Φ50 通孔, 自然让开)
@@ -122,97 +118,145 @@ for x, y in B.AC_HOLES:                                             # 线圈 AC 
 # 罩子锁点不在承载盘上开孔 (11-20 夜 只在屏幕玻纤板上; 原承载盘顶面六角法兰螺母窝 LOCK_POCKET 已删, 17:4x 用户「这里不需要孔」)
 rim = clean(cut(rim, *cuts))
 
-# ---------------- 11-20 屏幕固定件拆成: 玻纤平板 ×4 (同一件) + 侧立件 ×2 (同一件) ----------------
-# 用户 11-20 原话: 「这4个件我们细化一下，1.厚度做到3mm，固定屏幕的m3螺丝沉孔做到1.5深度，上边锁法兰螺母通孔就行 2.上下我理解也做一个吧，罩子锁4个点稳定一点，现在动平衡难度较大，不能让本体旋转有晃动」
-#   「左右两个件是不是能做成1个，开两个孔就行」「然后侧立面这个，能不能做到别的件，我想锁屏幕这个做玻纤」「能不能这4个玻纤做成一样，做成2个款也行」
-#   「不要干涉到灯板，在安装孔的位置」
-# 玻纤板 screen_fr4_v1_2b (外协 CNC, 无铜 FR4 3 厚) ×4: 同一零件放 0/90/180/270°, 平贴承载盘顶 Z30.5–33.5; 每块板孔位相对自身中心角:
-#   外圈 2×Φ3.4 @±22.5° r77.5 (fr4_plate 底往上的 M3×15, 法兰螺母坐本板顶) / 罩子锁点 2×Φ3.2 + 底面 Φ7.2×1.5 沉孔 @(73, ±19.5) (11-20 夜, M3×10 从板底往上, 罩耳顶法兰螺母) /
-#   屏幕夹条孔 2×Φ3.4 + 底面沉孔 @局部 (73, ±4.69) (只用一个) / 侧立件定位孔 3×Φ3.2 @局部 (77.5, 0 / ±9.38) (左右板用 2 个, 上下板全空)
-# 侧立件 screen_post_v1_2b (PETG 打印) ×2: 11-20 夜起只剩垫块 x67–80.4 |y|≤9.5 Z33.5–37.5 (天线 FPC 改贴罩内壁, 腹板 + 天线板去掉); 下面两行为 11-20 旧说明:
-#   原 holder() 里 LS.post 的横杆 + 腹板 + 天线板, 底面坐玻纤板顶 Z33.5 (原从 Z30.5 起, 截掉 3);
-#   横杆局部 |y| 14 → 8 (当时让 ±14° 罩耳; 11-20 晚罩耳挪到 ±22.5° 后不再紧, 保持 8 不重打), 再与自身 y 镜像取交 ⇒ ±x 两件 = 同一零件转 180°; 底面 2 个 Φ3×2 定位销插玻纤板 Φ3.2 孔
-#   夹条竖螺丝 M3 从玻纤板底沉孔往上: 玻纤板 → 侧立件 → 夹条 (自攻), 一颗压三层
-SP_Z0, SP_T = Z_TOP, 3.0
-SP_Z1 = SP_Z0 + SP_T                              # 33.5 玻纤板顶 = 侧立件底 = 罩耳底
-SP_R1 = LS.R_CLIP                                 # 81.7 外角圆角半径 (以轴心为圆心, = 原弧形带外缘, 罩壁 r82 以内)
-# 11-20 晚 用户「我感觉长方形就行」: 外形 = 长方形 x SP_X0–SP_X1 × |y|≤SP_HY, 两个外角超出 r81.7 的部分按 r81.7 圆弧切掉 (不改回扇形; 原扇形 r73–81.7 ±32° + 内伸舌 x68 |y|≤13 作废)
-SP_X0, SP_X1, SP_HY = 66.0, 81.2, 35.0            # 内边 x66 (放 270° 时离无线夹块 y−63.6 ≥2.4; 外圈孔边 3.9); 外边 x81.2 (销孔边 2.1, |y|≤9.0 段为直边); |y|≤35 (外圈孔边 3.64, 托住罩耳)
+# ---------------- 11-21 屏幕支撑件 = PETG 打印 ×4 (两种件), 取代 屏幕玻纤板 ×4 + 侧立件 ×2 ----------------
+# 用户 11-20 夜 原话: 「既然无法兼容，屏幕支架和这个，做两个，屏幕支架改一下」「所有的这个固定我们改一下，反扣一个法兰螺母在这里」
+#   「罩子还是用螺丝向下锁 螺母嵌在这个支撑件上，我们还是用3d打印方式做」「我们留4mm给这个件在屏幕下边厚度」
+#   「锁罩子是另一回事，我们要把这个法兰螺母嵌入到这个支撑件里面，这样罩子安装就很灵活」
+# 高度 = 承载盘顶 Z_TOP → 灯板下沿 LS.Z0 (灯板 +1 后 30.5 → 38.5 = 8), 不写死。
+#   A 屏幕支架件 screen_sup_a_v1_2b ×2 (0° / 180°, 同件转 180°): 托灯板/夹条; 屏幕螺丝从本件底往上拧灯板铜螺柱; 罩锁点挪到本地 (61, ±30.5) (用户图上 (±61, ±30.5))
+#   B 上下件     screen_sup_b_v1_2b ×2 (90° / 270°, 同件): 不托灯板, 罩锁点保持本地 (73, ±19.5)
+# 罩锁 ×8: 螺丝从上往下 (DIN912 M3 内六角圆柱头, 头坐罩耳顶), 穿罩耳 → 拧进 倒扣嵌在支撑件底面的 M3 法兰螺母 (法兰朝下, 从件底压进六角窝,
+#   拧紧时六角顶顶在窝顶打印料上; 支撑件压在承载盘上螺母掉不出来); 承载盘不开孔; 尾离承载盘顶 SHR_TIP_CLR
+# 外圈 8 颗 (r77.5 @22.5+45k): 仍从 fr4_plate 底往上穿 承载盘 → 支撑件, 法兰螺母改嵌在支撑件顶面 (法兰朝上, 六角窝止转, 顶低于件顶 0.3, 罩耳可直接盖过去);
+#   法兰窝外侧离件外缘只剩 0.1 ⇒ 法兰窝朝外开口 (U 形, 罩壁内面离螺母 ≥0.7)
+SP_Z0 = Z_TOP                                     # 30.5 支撑件底 = 承载盘顶
+SP_Z1 = LS.Z0                                     # 38.5 支撑件顶 = 灯板下沿 (跟灯板走)
+SP_T = round(SP_Z1 - SP_Z0, 3)                    # 8
+assert SP_T >= 4.0, SP_T                          # 用户「留4mm给这个件在屏幕下边厚度」
+SP_R1 = LS.R_CLIP                                 # 81.7 外缘 (以轴心为圆心; 罩壁内面 r82)
+SP_X1 = 81.2                                      # 外边直线段 (两种件同)
 SP_ANG = (0.0, 90.0, 180.0, 270.0)
-SP_HOLE_A = (22.5, -22.5)                         # 外圈螺丝 (承载盘 r77.5 @22.5+45k 全 8 颗都穿本板)
-# 11-20 夜(二) 屏幕螺丝改拧灯板铜螺柱 (LS.SO_*): 板边开窗中心 x=±78.88, 拧每端下面那颗: +x 端板 B 的 (y ECC−0.2) / −x 端板 A 的 (y ECC+0.2)
-#   板放 0° 用局部 (78.88, −4.89), 放 180° 用 (78.88, +4.49) ⇒ 取中 y=±4.69 时螺丝偏 0.2 正好吃光 Φ3.4 过孔余量, 所以 4 板同件按 x 轴对称成对: 孔做 Φ3.4 腰形 中心 ±4.69 沿 y 长 ±0.2, 沉孔 Φ7.6 (= Φ7.2 + 2×0.2) 圆心 ±4.69
-SP_SCR_X, SP_SCR_DY = LS.SO_X, abs(LS.ECC)        # 屏幕螺丝孔 局部 (78.88, ±4.69) (原夹条孔 (73, ±4.69) 作废)
+SP_TYPE = {0.0: 'a', 90.0: 'b', 180.0: 'a', 270.0: 'b'}
+SP_HOLE_A = (22.5, -22.5)                         # 外圈螺丝 (承载盘 r77.5 @22.5+45k 全 8 颗都穿支撑件)
+# A 件外形: 主体 x66–81.2 × |y|≤37 ∩ r81.7 + 内伸翼 x54.5–66 × 22≤|y|≤37 (包住罩锁螺母窝, 壁 ≥2.4); B 件: x66.5–81.2 × |y|≤35 ∩ r81.7
+SP_A_X0, SP_A_HY, SP_A_WING = 66.0, 37.0, (54.5, 22.0)     # 翼 x0 / 翼内边 |y|
+SP_B_X0, SP_B_HY = 66.5, 35.0                     # 66 → 66.5: 放 90° 时内边 y66 离 CZ06 包络 (y≤65.82, Z35.1–41.7) 只 0.18 (件变高 8 后 Z 重叠); 放 270° 离无线夹块 2.9
+SP_X0, SP_HY = SP_A_X0, SP_A_HY                   # 兼容旧名
+LOCK_A_LOC = [(61.0, 30.5), (61.0, -30.5)]        # A 件罩锁 (用户图上量 (±61, ±30.5), r68.20; 原 (73, ±19.5) 在 A 件上删 —— 原 −x 端套筒 Φ9 离灯板B 0.33)
+SHR_LOC_X, SHR_LOC_Y = 73.0, 19.5                 # B 件罩锁 (保持)
+LOCK_B_LOC = [(SHR_LOC_X, SHR_LOC_Y), (SHR_LOC_X, -SHR_LOC_Y)]
+SHR_LOCK_SET = {a: (LOCK_A_LOC if SP_TYPE[a] == 'a' else LOCK_B_LOC) for a in SP_ANG}
+# 屏幕螺丝 (A 件): 灯板铜螺柱 x=±78.88, 放 0° 用局部 (78.88, −4.89), 放 180° 用 (78.88, +4.49) ⇒ 孔 Φ3.4 腰形 中心 ±4.69 沿 y ±0.2 (两个孔都开, 同件), 底面沉孔 Φ7.6
+SP_SCR_X, SP_SCR_DY = LS.SO_X, abs(LS.ECC)
 SP_SCR_SL = LS.SO_YL                              # 腰形半长 0.2
-SP_SCR_CB_D = 7.2 + 2 * SP_SCR_SL                 # 7.6: 超薄头 Φ7 偏心 0.2 仍留 0.1/边; 外缘 x82.68 在板外边 x81.2 外破口 1.48 (该处罩壁是两端竖缝, 不碰罩)
-SP_CB_D, SP_CB_H = 7.2, 1.5                       # 底面沉孔: 用户「沉孔做到1.5深度」; 直径按超薄头 Φ7 (同 fr4_plate Φ7.2×1.5; 任务单写 Φ6 装不下 Φ7 头, 待用户确认)
-POST_HY = 9.5                                     # 侧立件垫块局部半长 (11-20 夜 8 → 9.5): 世界 y −14.19…4.81, 离罩耳内边 (y ±15.5) 1.31
-POST_X0, POST_X1 = 67.0, 81.2                     # 垫块 x (11-20 夜, 原横杆 x69–77 + 腹板到 83.7): 落在屏幕玻纤板 x66–81.2 内; 外角 r81.64 < 81.7
-# 11-20 夜 用户「贴到罩子吧」「罩子天然有这个侧立面」「这个天线是fpc的」: 天线 FPC 改贴罩子内壁 ⇒ 侧立件去掉腹板 + 天线板, 只剩垫块 (平放打印)
-#   用户要「4 个 M3 + 沉孔, 沉孔都从下往上」锁侧立件: 放不下 (见报告) ⇒ 仍是 夹条 M3×12 (一颗压 玻纤板+垫块+夹条) + 2 销 定位
-PIN_D, PIN_H, PIN_HOLE_D = 3.0, 2.0, 3.2          # 侧立件底面定位销 Φ3×2 → 玻纤板 Φ3.2 通孔
-PIN_X = 77.5                                      # (作废, 名字留给旧图) 原销 局部 (77.5, ±4.69), 板上孔 (77.5, 0 / ±9.38)
-# 11-20 夜(二) 用户「这三个孔没用就拿掉」: 屏幕玻纤板 3 个 Φ3.2 销孔 + 侧立件底面 2 个销 全删; 侧立件靠屏幕螺丝 (穿本件 Φ3.4) + 灯板下沿压住定位
-SP_PIN_LOC = []
-SHR_HOLE_D = 3.2                                  # 罩子锁点 Φ3.2 通 (超薄头从板底沉孔往上, 头藏板底)
-SHR_LOCK_LOC = [(SHR_LOC_X, SHR_LOC_Y), (SHR_LOC_X, -SHR_LOC_Y)]
-SP_HOLES_LOC = dict(out=[pol(R_OUT, a) for a in SP_HOLE_A],
-                    scr=[(SP_SCR_X, SP_SCR_DY), (SP_SCR_X, -SP_SCR_DY)], pin=SP_PIN_LOC, lock=SHR_LOCK_LOC)
+SP_SCR_CB_D = 7.2 + 2 * SP_SCR_SL                 # 7.6 (外缘 x82.68 破出件外边 1.48, 该处罩壁是两端竖缝)
+SP_CB_H = 1.5                                     # 屏幕螺丝底面沉孔深 (超薄头 Φ7×1.2~1.5; 用户说 ≈2, 但 2 深时 M3×16 吃牙 2.8 / M3×18 尾顶上颗 ⇒ 1.5, 见 BAR_SCR_*)
+SP_CB_D = 7.2                                     # 兼容旧名
+# 法兰螺母 (同 fasteners_v1_2: 法兰 Φ7.6×1.0, 六角对边 5.9, 总高 3.7) 的窝 (参考 cap_clamp cap-c NUT_HEX_WELL: 六角窝 AF6.1 + 法兰窝 Φ8.2)
+NUT_FL_D, NUT_FL_H, NUT_AF, NUT_T = 7.6, 1.0, 5.9, 3.7
+WELL_FL_D, WELL_FL_H = 8.2, 1.1                   # 法兰窝 Φ8.2 × 1.1 (法兰 1.0 + 0.1)
+WELL_AF_LOCK = 6.0                                # 罩锁螺母 (从件底压进, 倒放): 六角窝对边 6.0 (单边 0.05 轻压, 拿起支撑件时螺母不掉; 打印孔偏小时用烙铁/锉刀修)
+WELL_AF_OUT = 6.1                                 # 外圈螺母 (从件顶放进, 重力在下): 对边 6.1
+WELL_TOP_CLR = 0.1                                # 罩锁螺母六角顶 ↔ 窝顶 (拧紧后贴死)
+LOCK_NUT_Z = (SP_Z0, SP_Z0 + NUT_T)               # 30.5–34.2 法兰朝下坐承载盘顶
+OUT_NUT_TOP = SP_Z1 - 0.3                         # 外圈螺母顶低于件顶 0.3
+OUT_NUT_Z = (OUT_NUT_TOP - NUT_T, OUT_NUT_TOP)    # 34.5–38.2
+# 罩锁螺丝: DIN912 M3 内六角圆柱头 (头 Φ5.5×3, 2.5 内六角, 起子 Φ6 包络) 从罩耳顶往下; 罩耳厚按选定长度反推, 尾离承载盘顶 SHR_TIP_CLR
+SHR_SCR_L, SHR_TIP_CLR = 12.0, 0.5
+SHR_SCR_TIP = SP_Z0 + SHR_TIP_CLR                 # 31.0 (吃螺母 34.2 − 31.0 = 3.2; 承载盘顶不开孔所以吃不满 3.7)
+SHR_SCR_BEAR = SHR_SCR_TIP + SHR_SCR_L            # 43.0 = 罩耳顶
+SHR_EAR_T = round(SHR_SCR_BEAR - SP_Z1, 3)        # 4.5
+assert 3.5 <= SHR_EAR_T <= 6.0, SHR_EAR_T
+SHR_ENG = round(LOCK_NUT_Z[1] - SHR_SCR_TIP, 2)
+assert SHR_ENG >= 3.0, SHR_ENG
+SHR_HEAD_D, SHR_HEAD_H = 5.5, 3.0
+SHR_HOLE_D = 3.4
+# 外圈螺丝 M3 超薄头 从 fr4_plate 底 (支承 Z23) 往上: 选最长的标准长度使尾 ≤ 件顶 −0.3 (罩耳盖在上面), 吃螺母 ≥3
+OUT_SCR_BEAR = Z_F0 + 1.5                         # 23.0
+OUT_SCR_L = max(L for L in (10, 12, 14, 15, 16, 18, 20) if OUT_SCR_BEAR + L <= SP_Z1 - 0.3)
+OUT_ENG = round(OUT_SCR_BEAR + OUT_SCR_L - OUT_NUT_Z[0], 2)
+assert OUT_ENG >= 3.0, (OUT_SCR_L, OUT_ENG)
+# 屏幕螺丝 M3 超薄头 从 A 件底沉孔往上 (支承 Z_TOP + SP_CB_H), 拧进每端下颗铜螺柱: 吃牙 ≥3, 尾离上颗底 ≥0.5
+BAR_SCR_BEAR = SP_Z0 + SP_CB_H                    # 32.0
+BAR_SCR_L = float(min(L for L in (12, 14, 16, 18, 20, 22) if BAR_SCR_BEAR + L - LS.SO_Z0 >= 3.0))
+BAR_SCR_ENG = round(BAR_SCR_BEAR + BAR_SCR_L - LS.SO_Z0, 2)
+assert 3.0 <= BAR_SCR_ENG and BAR_SCR_BEAR + BAR_SCR_L <= LS.SO_Z1 - 0.5, (BAR_SCR_L, BAR_SCR_ENG)
+BAR_SCR_PTS = list(LS.SO_PTS)                     # 世界: (78.88, ECC−0.2) 板B 下颗 / (−78.88, ECC+0.2) 板A 下颗
+# 减重 (动平衡 / 惯量): 顶面开口盲槽, 槽底留 SP_POCKET_FLOOR; 不在灯板/夹条正下方、不在罩耳下、离孔/螺母窝 ≥2
+SP_POCKET_FLOOR = 3.0
+SP_POCKETS = {'a': [(68.0, 12.5, 76.5, 23.5), (68.0, -23.5, 76.5, -12.5)],     # (x0, y0, x1, y1) 局部
+              'b': [(68.5, -13.4, 77.5, 13.4)]}
+
 def _rot(p, a): c, s_ = math.cos(math.radians(a)), math.sin(math.radians(a)); return (p[0] * c - p[1] * s_, p[0] * s_ + p[1] * c)
-SHR_LOCK_PTS = sorted([_rot(p, a) for a in SP_ANG for p in SHR_LOCK_LOC], key=lambda p: math.atan2(p[1], p[0]) % (2 * math.pi))   # 世界 8 点
-SHR_LOCK_ANG = tuple(round(math.degrees(math.atan2(y, x)) % 360, 3) for x, y in SHR_LOCK_PTS)    # 14.96/75.04/104.96/165.04/194.96/255.04/284.96/345.04
-SHR_SCR_BEAR = SP_Z0 + SP_CB_H                    # 32.0 罩锁螺丝超薄头支承
-SHR_SCR_L = 10.0                                  # M3×10: 尾 Z42.0, 罩耳顶法兰螺母 Z37.5–41.2 吃满 3.7, 露 0.8 (M3×8 尾 Z40 只吃 2.5)
-OUT_NUT_Z = (SP_Z1, SP_Z1 + 3.7)                  # 外圈法兰螺母坐本板顶 33.5–37.2
-SHR_GAP = dict(out=round(min(math.dist(p, q) for p in SHR_LOCK_LOC for q in SP_HOLES_LOC['out']), 2),           # 罩锁孔 ↔ 外圈孔 圆心距
-               scr=round(min(math.dist(p, q) for p in SHR_LOCK_LOC for q in SP_HOLES_LOC['scr']) - (SP_CB_D + SP_SCR_CB_D) / 2, 2))
-assert SHR_GAP['out'] >= 10.0 and SHR_GAP['scr'] >= 1.0, SHR_GAP
-def _edge(x, y, rh):
-    """孔 (半径 rh) 到长方形+圆角外形的最小边距"""
-    return min(x - rh - SP_X0, SP_X1 - x - rh, SP_HY - abs(y) - rh, SP_R1 - math.hypot(x, y) - rh)
-SP_EDGE = dict(out=round(min(_edge(x, y, 1.7) for x, y in SP_HOLES_LOC['out']), 2), scr_cb=round(min(_edge(x, y, SP_SCR_CB_D / 2) for x, y in SP_HOLES_LOC['scr']), 2),   # scr_cb 为负 = 沉孔在板外边破口
-               scr_hole=round(min(_edge(x, y, 1.7) for x, y in SP_HOLES_LOC['scr']), 2),
-               lock_cb=round(min(_edge(x, y, SP_CB_D / 2) for x, y in SHR_LOCK_LOC), 2))
-assert SP_EDGE['lock_cb'] >= 2.0 and SP_EDGE['out'] >= 2.0 and SP_EDGE['scr_hole'] >= 0.5, SP_EDGE
-# 屏幕螺丝超薄头 Φ7 (孔 Φ3.4 腰形) 在板底的承压面 (shapely 量, 11-20 夜(二)): 整环 27.1 mm² → 板内剩 ≈22.9 mm² (84%); 孔外侧板边最薄 0.62 (x80.58→81.2)
-#   (对比 ISO 7380 Φ5.7×1.65 要沉孔深 1.7 剩板 1.3: 剩 13.0 mm²; DIN 7984 Φ5.5×2: 11.6 mm²) ⇒ 留用超薄头, 不换小头
+SHR_LOCK_PTS = sorted([_rot(p, a) for a in SP_ANG for p in SHR_LOCK_SET[a]], key=lambda p: math.atan2(p[1], p[0]) % (2 * math.pi))   # 世界 8 点
+SHR_LOCK_ANG = tuple(round(math.degrees(math.atan2(y, x)) % 360, 3) for x, y in SHR_LOCK_PTS)
+SHR_LOCK_R = {k: round(math.hypot(*L[0]), 3) for k, L in (('a', LOCK_A_LOC), ('b', LOCK_B_LOC))}   # a 68.20 / b 75.56
+SP_HOLES_LOC = dict(out=[pol(R_OUT, a) for a in SP_HOLE_A], scr=[(SP_SCR_X, SP_SCR_DY), (SP_SCR_X, -SP_SCR_DY)], lock_a=LOCK_A_LOC, lock_b=LOCK_B_LOC,
+                    lock=LOCK_B_LOC)              # lock: 兼容旧名
+
+def _hexp(x, y, af, z0, z1, ang=0.0):
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakePolygon, BRepBuilderAPI_MakeFace
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism
+    rc = af / math.sqrt(3); pg = BRepBuilderAPI_MakePolygon()
+    for k in range(6):
+        t = math.radians(ang + 30 + 60 * k); pg.Add(gp_Pnt(x + rc * math.cos(t), y + rc * math.sin(t), z0))
+    pg.Close()
+    return BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(pg.Wire()).Face(), gp_Vec(0, 0, z1 - z0)).Shape()
+
 def _slot(x, y, z0, z1, d=3.4, hl=SP_SCR_SL):
     """沿 y 的腰形孔 (中心 (x, y), 半长 hl)"""
     return fuse(cyl(x, y - hl, d, z0, z1), cyl(x, y + hl, d, z0, z1), gbox(x - d / 2, y - hl, z0, x + d / 2, y + hl, z1))
 
+def lock_nut_well(x, y):
+    """罩锁: 件底面倒扣法兰螺母窝 (法兰窝 Φ8.2×1.1 + 六角窝 AF6.0 到 螺母顶 +0.1) + Φ3.4 通"""
+    return fuse(cyl(x, y, WELL_FL_D, SP_Z0 - 1, SP_Z0 + WELL_FL_H), _hexp(x, y, WELL_AF_LOCK, SP_Z0 + WELL_FL_H - 0.01, LOCK_NUT_Z[1] + WELL_TOP_CLR, math.degrees(math.atan2(y, x))),
+                cyl(x, y, SHR_HOLE_D, SP_Z0 - 1, SP_Z1 + 1))
 
-def screen_fr4_local():
-    """板中心在 0° 的局部坐标 (= 放 0° 时的世界坐标)"""
-    s = _ocm(gbox(SP_X0, -SP_HY, SP_Z0, SP_X1, SP_HY, SP_Z1), cyl(0, 0, 2 * SP_R1, SP_Z0 - 1, SP_Z1 + 1))   # 长方形 ∩ r81.7 (外角圆角)
-    s = cut(s, *[cyl(x, y, 3.4, SP_Z0 - 1, SP_Z1 + 1) for x, y in SP_HOLES_LOC['out']],
-            *[_slot(x, y, SP_Z0 - 1, SP_Z1 + 1) for x, y in SP_HOLES_LOC['scr']],
-            *[cyl(x, y, SP_SCR_CB_D, SP_Z0 - 1, SP_Z0 + SP_CB_H) for x, y in SP_HOLES_LOC['scr']],
-            *[cyl(x, y, SP_CB_D, SP_Z0 - 1, SP_Z0 + SP_CB_H) for x, y in SHR_LOCK_LOC],
-            *[cyl(x, y, SHR_HOLE_D, SP_Z0 - 1, SP_Z1 + 1) for x, y in SHR_LOCK_LOC])
-    return clean(s)
+def out_nut_well(x, y):
+    """外圈: 件顶面法兰螺母窝 (法兰朝上; 六角窝 AF6.1 平边朝径向 + 法兰窝 Φ8.2 往外开口到件外) + Φ3.4 通"""
+    a = math.degrees(math.atan2(y, x)); zf = OUT_NUT_Z[1] - NUT_FL_H - 0.1     # 法兰支承台阶
+    fl = fuse(cyl(x, y, WELL_FL_D, zf, SP_Z1 + 1), xf(gbox(math.hypot(x, y), -WELL_FL_D / 2, zf, SP_R1 + 2, WELL_FL_D / 2, SP_Z1 + 1), rotz(a)))
+    return fuse(fl, _hexp(x, y, WELL_AF_OUT, OUT_NUT_Z[0] - 0.1, zf + 0.01, a), cyl(x, y, 3.4, SP_Z0 - 1, SP_Z1 + 1))
 
-def screen_post_local():
-    """侧立件局部 (灯板组坐标, y 未加 ECC): 11-20 夜 只剩垫块 (腹板 + 天线板去掉, 天线 FPC 改贴罩子内壁), 两端同件 (转 180°)
-    垫块 x POST_X0–POST_X1 × |y|≤POST_HY × Z33.5–37.5 (顶 = 灯板下沿); 屏幕螺丝 Φ3.4 @(78.88, −0.2); 底面定位销已删 (11-20 夜(二))
-    11-20 夜(二) 外边 80.4 → 81.2 (包住新螺丝孔, 孔外壁 0.62), 再与两个 r81.7 圆 (圆心局部 (0, ±|ECC|), 即两端装配位的转轴) 取交 ⇒ 两端同件都 ≤ r81.7"""
-    p = gbox(POST_X0, -POST_HY, SP_Z1, POST_X1, POST_HY, LS.Z0)
-    for sy in (1, -1): p = _ocm(p, cyl(0, sy * SP_SCR_DY, 2 * SP_R1, SP_Z1 - 1, LS.Z0 + 1))
-    p = cut(p, cyl(SP_SCR_X, -LS.SO_YL, 3.4, SP_Z1 - 1, LS.Z0 + 1))   # 两端都在局部 (78.88, −0.2)
-    return clean(p)
+def screen_sup_local(kind):
+    """kind 'a' = 屏幕支架件 (放 0°/180°), 'b' = 上下件 (放 90°/270°); 局部 = 放 0° 时的世界坐标"""
+    clip = cyl(0, 0, 2 * SP_R1, SP_Z0 - 1, SP_Z1 + 1)
+    if kind == 'a':
+        s = fuse(gbox(SP_A_X0, -SP_A_HY, SP_Z0, SP_X1, SP_A_HY, SP_Z1),
+                 gbox(SP_A_WING[0], SP_A_WING[1], SP_Z0, SP_A_X0 + 0.01, SP_A_HY, SP_Z1), gbox(SP_A_WING[0], -SP_A_HY, SP_Z0, SP_A_X0 + 0.01, -SP_A_WING[1], SP_Z1))
+        locks = LOCK_A_LOC
+    else:
+        s = gbox(SP_B_X0, -SP_B_HY, SP_Z0, SP_X1, SP_B_HY, SP_Z1); locks = LOCK_B_LOC
+    s = _ocm(s, clip)
+    cuts = [out_nut_well(x, y) for x, y in SP_HOLES_LOC['out']] + [lock_nut_well(x, y) for x, y in locks]
+    if kind == 'a':
+        cuts += [_slot(x, y, SP_Z0 - 1, SP_Z1 + 1) for x, y in SP_HOLES_LOC['scr']] + [cyl(x, y, SP_SCR_CB_D, SP_Z0 - 1, SP_Z0 + SP_CB_H) for x, y in SP_HOLES_LOC['scr']]
+    cuts += [gbox(x0, y0, SP_Z0 + SP_POCKET_FLOOR, x1, y1, SP_Z1 + 1) for x0, y0, x1, y1 in SP_POCKETS[kind]]
+    return clean(cut(s, *cuts))
 
-screen_fr4_loc = screen_fr4_local()
-screen_post_loc = screen_post_local()
-SCR_FR4 = [_rz(screen_fr4_loc, a) for a in SP_ANG]                 # 0° (+x) / 90° (+y) / 180° (−x) / 270° (−y)
-post_a = _mv(screen_post_loc, 0, LS.ECC)                          # +x 侧立件
-post_b = _mv(_rz(screen_post_loc, 180), 0, LS.ECC)                # −x 侧立件 (同一零件转 180°)
-SCREEN_PARTS = [(f'屏幕玻纤板 screen_fr4_v1_2b @{a:g}°', sh, '#C9B458') for a, sh in zip(SP_ANG, SCR_FR4)] + \
-               [('侧立件 +x screen_post_v1_2b', post_a, '#F1C232'), ('侧立件 −x screen_post_v1_2b', post_b, '#E69138')]
-SCREEN_KEYS = ['scr_fr4_0', 'scr_fr4_90', 'scr_fr4_180', 'scr_fr4_270', 'post_b_a', 'post_b_b']   # 校核用短名
-BAR_SCR_PTS = list(LS.SO_PTS)                                        # 屏幕螺丝 (世界) = 每端下颗铜螺柱轴线 (78.88, ECC−0.2) 板B / (−78.88, ECC+0.2) 板A
-BAR_SCR_BEAR = SP_Z0 + SP_CB_H                                       # 32.0 超薄头支承
-BAR_SCR_L = 16.0                                                     # 11-20 夜(二) M3×16: 穿 屏幕玻纤板 → 侧立件 → 中缝 → 拧进铜螺柱 (Z44.70–49.70), 尾 Z48.0 吃 3.3, 离下颗顶 (= 上颗底 Z49.70) 1.7 (原 M3×12 自攻进夹条)
-BAR_SCR_ENG = round(BAR_SCR_BEAR + BAR_SCR_L - LS.SO_Z0, 2)
-assert 3.0 <= BAR_SCR_ENG and BAR_SCR_BEAR + BAR_SCR_L <= LS.SO_Z1 - 0.5, BAR_SCR_ENG
+screen_sup_a_loc = screen_sup_local('a')
+screen_sup_b_loc = screen_sup_local('b')
+SCR_SUP = [_rz(screen_sup_a_loc if SP_TYPE[a] == 'a' else screen_sup_b_loc, a) for a in SP_ANG]   # 0° (+x) / 90° (+y) / 180° (−x) / 270° (−y)
+SCR_FR4 = SCR_SUP                                 # 兼容旧名 (fpc_v1_2 / group_asm 等)
+post_a, post_b = SCR_SUP[0], SCR_SUP[2]           # 兼容旧名 (原侧立件 +x / −x; 现 = A 件两个装配位)
+screen_fr4_loc, screen_post_loc = screen_sup_a_loc, screen_sup_b_loc   # 兼容旧名 (图纸旧段)
+SCREEN_PARTS = [(f'屏幕支撑件 {"A screen_sup_a_v1_2b" if SP_TYPE[a] == "a" else "B screen_sup_b_v1_2b"} @{a:g}°', sh, '#F1C232' if SP_TYPE[a] == 'a' else '#C9B458')
+                for a, sh in zip(SP_ANG, SCR_SUP)]
+SCREEN_KEYS = ['scr_sup_0', 'scr_sup_90', 'scr_sup_180', 'scr_sup_270']   # 校核用短名
+
+def _edge(kind, x, y, rh):
+    """孔 (半径 rh) 到件外形的最小边距 (近似: 直边 + r81.7)"""
+    if kind == 'a':
+        x0 = SP_A_WING[0] if abs(y) >= SP_A_WING[1] else SP_A_X0
+        return min(x - rh - x0, SP_X1 - x - rh, SP_A_HY - abs(y) - rh, SP_R1 - math.hypot(x, y) - rh)
+    return min(x - rh - SP_B_X0, SP_X1 - x - rh, SP_B_HY - abs(y) - rh, SP_R1 - math.hypot(x, y) - rh)
+SP_EDGE = dict(a_lock_well=round(min(_edge('a', x, y, WELL_FL_D / 2) for x, y in LOCK_A_LOC), 2),
+               b_lock_well=round(min(_edge('b', x, y, WELL_FL_D / 2) for x, y in LOCK_B_LOC), 2),
+               out_hex=round(min(_edge('a', x, y, WELL_AF_OUT / 2) for x, y in SP_HOLES_LOC['out']), 2),   # 六角平边朝外
+               scr_hole=round(min(_edge('a', x, y, 1.7) for x, y in SP_HOLES_LOC['scr']), 2),
+               lock_out_a=round(min(math.dist(p, q) for p in LOCK_A_LOC for q in SP_HOLES_LOC['out']) - WELL_FL_D, 2),   # 罩锁窝 ↔ 外圈窝 壁 (不同 Z, 保守)
+               lock_out_b=round(min(math.dist(p, q) for p in LOCK_B_LOC for q in SP_HOLES_LOC['out']) - WELL_FL_D, 2))
+assert SP_EDGE['a_lock_well'] >= 2.0 and SP_EDGE['b_lock_well'] >= 2.0 and SP_EDGE['scr_hole'] >= 0.5 and SP_EDGE['out_hex'] >= 1.0, SP_EDGE
 
 # ---------------- 校核 (11-18: 挪进 report(), import 时不跑; 整机切转子盘B 后各脚本都要 import 本模块) ----------------
 coil = cut(ann(COIL_R0 + 0.1, COIL_R1 - 0.1, Z_F1, Z_F1 + 2.7), *[cyl(x, y, 4.0, Z_F1 - 1, Z_T0) for x, y in B.AC_HOLES])
@@ -226,17 +270,28 @@ def load_fpc():
 
 def report():
     _fpc = load_fpc()
-    rep = dict(z=dict(fr4=(Z_F0, Z_F1), cavity=(Z_F1, Z_T0), tray=(Z_T0, Z_TOP), screen_fr4=(SP_Z0, SP_Z1), post=(SP_Z1, LS.Z0)),
-               vol=dict(fr4=round(vol(fr4), 1), rim=round(vol(rim), 1), screen_fr4=round(vol(screen_fr4_loc), 1), post=round(vol(screen_post_loc), 1)),
-               mass_g=dict(fr4=round(vol(fr4) * 1.85e-3, 1), rim_PLA=round(vol(rim) * 1.24e-3, 1), screen_fr4_each=round(vol(screen_fr4_loc) * 1.85e-3, 2),
-                           post_PETG_each=round(vol(screen_post_loc) * 1.27e-3, 2)),
-               valid=dict(rim=BRepCheck_Analyzer(rim).IsValid(), fr4=BRepCheck_Analyzer(fr4).IsValid(), screen_fr4=BRepCheck_Analyzer(screen_fr4_loc).IsValid(),
-                          post=BRepCheck_Analyzer(screen_post_loc).IsValid()),
-               solids=dict(rim=len(solids(rim)), screen_fr4=len(solids(screen_fr4_loc)), post=len(solids(screen_post_loc))),
-               lock=dict(r=SHR_LOCK_R, ang=SHR_LOCK_ANG, pts=[(round(x, 2), round(y, 2)) for x, y in SHR_LOCK_PTS],
-                         loc=SHR_LOCK_LOC, gap=SHR_GAP, screw=f'M3×{SHR_SCR_L:g} 超薄头 支承 Z{SHR_SCR_BEAR:g} 尾 Z{SHR_SCR_BEAR + SHR_SCR_L:g}, 法兰螺母坐罩耳顶',
-                         out_screw=f'M3×{OUT_SCR_L:g} 超薄头 支承 Z{OUT_SCR_BEAR:g} 尾 Z{OUT_SCR_BEAR + OUT_SCR_L:g}, 法兰螺母坐屏幕玻纤板顶 Z{OUT_NUT_Z[0]:g}–{OUT_NUT_Z[1]:g}'),
-               screen_fr4_outline=dict(x=(SP_X0, SP_X1), hy=SP_HY, r_clip=SP_R1, edge=SP_EDGE))
+    from OCP.GProp import GProp_GProps
+    from OCP.BRepGProp import BRepGProp
+    def _mc(sh, rho):
+        g = GProp_GProps(); BRepGProp.VolumeProperties_s(sh, g); c = g.CentreOfMass(); m = g.Mass() * rho
+        return dict(m=round(m, 2), c=(round(c.X(), 2), round(c.Y(), 2), round(c.Z(), 2)))
+    U = [0.0, 0.0]
+    for sh in SCR_SUP:
+        d = _mc(sh, 1.27e-3); U[0] += d['m'] * d['c'][0]; U[1] += d['m'] * d['c'][1]
+    rep = dict(z=dict(fr4=(Z_F0, Z_F1), cavity=(Z_F1, Z_T0), tray=(Z_T0, Z_TOP), sup=(SP_Z0, SP_Z1), sup_h=SP_T),
+               vol=dict(fr4=round(vol(fr4), 1), rim=round(vol(rim), 1), sup_a=round(vol(screen_sup_a_loc), 1), sup_b=round(vol(screen_sup_b_loc), 1)),
+               mass_g=dict(fr4=round(vol(fr4) * 1.85e-3, 1), rim_PLA=round(vol(rim) * 1.24e-3, 1), sup_a_PETG_solid=round(vol(screen_sup_a_loc) * 1.27e-3, 2),
+                           sup_b_PETG_solid=round(vol(screen_sup_b_loc) * 1.27e-3, 2)),
+               sup_com=dict(a=_mc(screen_sup_a_loc, 1.27e-3), b=_mc(screen_sup_b_loc, 1.27e-3), U4_gmm=round(math.hypot(*U), 3)),
+               valid=dict(rim=BRepCheck_Analyzer(rim).IsValid(), fr4=BRepCheck_Analyzer(fr4).IsValid(), sup_a=BRepCheck_Analyzer(screen_sup_a_loc).IsValid(),
+                          sup_b=BRepCheck_Analyzer(screen_sup_b_loc).IsValid()),
+               solids=dict(rim=len(solids(rim)), sup_a=len(solids(screen_sup_a_loc)), sup_b=len(solids(screen_sup_b_loc))),
+               lock=dict(r=SHR_LOCK_R, ang=SHR_LOCK_ANG, pts=[(round(x, 2), round(y, 2)) for x, y in SHR_LOCK_PTS], loc_a=LOCK_A_LOC, loc_b=LOCK_B_LOC,
+                         screw=f'DIN912 M3×{SHR_SCR_L:g} 从罩耳顶往下 支承 Z{SHR_SCR_BEAR:g} 尾 Z{SHR_SCR_TIP:g} (离承载盘顶 {SHR_TIP_CLR:g}), 倒扣法兰螺母 Z{LOCK_NUT_Z[0]:g}–{LOCK_NUT_Z[1]:g} 吃 {SHR_ENG:g}',
+                         ear_t=SHR_EAR_T,
+                         out_screw=f'M3×{OUT_SCR_L:g} 超薄头 支承 Z{OUT_SCR_BEAR:g} 尾 Z{OUT_SCR_BEAR + OUT_SCR_L:g}, 法兰螺母嵌支撑件顶 Z{OUT_NUT_Z[0]:g}–{OUT_NUT_Z[1]:g} 吃 {OUT_ENG:g}',
+                         scr_screw=f'M3×{BAR_SCR_L:g} 超薄头 支承 Z{BAR_SCR_BEAR:g} 尾 Z{BAR_SCR_BEAR + BAR_SCR_L:g}, 铜螺柱 Z{LS.SO_Z0:g}–{LS.SO_Z1:g} 吃 {BAR_SCR_ENG:g}, 离上颗 {round(LS.SO_Z1 - BAR_SCR_BEAR - BAR_SCR_L, 2):g}'),
+               edge=SP_EDGE)
     others = dict(底板=VB['baseboard'], 底板器件=VB['bb_parts'], CZ06=VB['cz06'], 灯板=VB['led'], 夹条=LS.bar_s, 顶部件=LS.top,
                   无线托盘=WH.H, 无线模块=WH.module, FPC_A=_fpc['fpc_a_v1_2'], FPC_B=_fpc['fpc_b_v1_2'], 桥板A=_fpc['bridge_a_v1_2'], 桥板B=_fpc['bridge_b_v1_2'], FPC座=_fpc['bb_fpc_seats_v1_2'], 电机=B.motor, 定子盘=B.flange_disc, 安装法兰=B.mounting_flange, 线圈环=B.ring)
     mine = dict(玻纤板=fr4, 承载盘=rim, 线圈=coil, **{n.split(' ')[0] + n.split(' ')[-1]: sh for n, sh, _ in SCREEN_PARTS})
@@ -251,37 +306,6 @@ def report():
     print(json.dumps(rep, ensure_ascii=False, indent=1))
 
     return rep
-
-
-def export_screen_fr4_dxf():
-    """外协 CNC 用 2D: 外形 + 通孔 + 沉孔 (单独图层 CBORE, 文字注深度)。坐标 = 板放 0° 时世界 xy (轴心原点)。"""
-    import ezdxf
-    doc = ezdxf.new('R2010'); doc.units = ezdxf.units.MM; msp = doc.modelspace()
-    for ly, col in (('OUTLINE', 7), ('HOLES', 1), ('CBORE', 3), ('TEXT', 2)): doc.layers.add(ly, color=col)
-    # 外形 (11-20 晚 长方形): 内边 x66 直线 + 上下边 |y|=35 直线 + 外角 r81.7 圆弧 (圆心 = 轴心) + 外边 x81.2 直线 (|y|≤9.0)
-    xa = math.sqrt(SP_R1 ** 2 - SP_HY ** 2); ya = math.sqrt(SP_R1 ** 2 - SP_X1 ** 2)
-    aa, ab = math.degrees(math.atan2(SP_HY, xa)), math.degrees(math.atan2(ya, SP_X1))
-    L = dict(dxfattribs=dict(layer='OUTLINE'))
-    msp.add_line((SP_X0, -SP_HY), (SP_X0, SP_HY), **L)
-    msp.add_line((SP_X0, SP_HY), (xa, SP_HY), **L); msp.add_line((SP_X0, -SP_HY), (xa, -SP_HY), **L)
-    msp.add_arc((0, 0), SP_R1, ab, aa, **L); msp.add_arc((0, 0), SP_R1, -aa, -ab, **L)
-    msp.add_line((SP_X1, -ya), (SP_X1, ya), **L)
-    for x, y in SP_HOLES_LOC['out']:
-        msp.add_circle((x, y), 1.7, dxfattribs=dict(layer='HOLES'))
-    for x, y in SP_HOLES_LOC['scr']:                                   # 腰形 Φ3.4, 圆心 y±0.2
-        H = dict(dxfattribs=dict(layer='HOLES')); hl = SP_SCR_SL
-        msp.add_arc((x, y + hl), 1.7, 0, 180, **H); msp.add_arc((x, y - hl), 1.7, 180, 360, **H)
-        msp.add_line((x - 1.7, y - hl), (x - 1.7, y + hl), **H); msp.add_line((x + 1.7, y - hl), (x + 1.7, y + hl), **H)
-    for x, y in SHR_LOCK_LOC:
-        msp.add_circle((x, y), SHR_HOLE_D / 2, dxfattribs=dict(layer='HOLES'))
-    for (x, y), cd in [(p, SP_SCR_CB_D) for p in SP_HOLES_LOC['scr']] + [(p, SP_CB_D) for p in SHR_LOCK_LOC]:
-        msp.add_circle((x, y), cd / 2, dxfattribs=dict(layer='CBORE'))   # 屏幕螺丝沉孔 Φ7.6 超出板外边 = 板边破口 (CNC 按圆走刀即可)
-        msp.add_text(f'底面沉孔 %%c{cd:g} 深{SP_CB_H:g}', height=1.2, dxfattribs=dict(layer='TEXT')).set_placement((x - 9.5, y + (4.2 if y > 0 else -5.4)))
-    msp.add_text(f'screen_fr4_v1_2b  FR4 无铜 厚{SP_T:g}  数量 4  孔: 2x%%c3.4 通 / 2x%%c3.4 腰形 (长{3.4 + 2 * SP_SCR_SL:g}) 通 / 2x%%c{SHR_HOLE_D:g} 通 (罩锁) / 底面沉孔 2x%%c{SP_SCR_CB_D:g} (屏幕螺丝, 板边破口) + 2x%%c{SP_CB_D:g} (罩锁) 深{SP_CB_H:g}  未注公差 ±0.1',
-                 height=1.5, dxfattribs=dict(layer='TEXT')).set_placement((40, -50))
-    d = B.V12 / 'models' / 'screen_fr4_v1_2b'; d.mkdir(parents=True, exist_ok=True)
-    doc.saveas(d / 'screen_fr4_v1_2b.dxf')
-    return d / 'screen_fr4_v1_2b.dxf'
 
 
 # ---------------- 输出 ----------------
@@ -299,9 +323,8 @@ def out(name, sh, flip=False, color='#8A8F98'):
 if __name__ == '__main__':
     rep = report()
     out('rim_ring_v1_2b', rim, flip=True, color='#6AA84F')               # 打印: 托盘顶面朝下, 线圈腔/外环朝上 (免支撑)
-    out('screen_fr4_v1_2b', screen_fr4_loc, color='#C9B458')               # 玻纤板 (外协 CNC; STEP/STL 为放 0° 的装配位, _print 落床); DXF 见 export_screen_fr4_dxf()
-    out('screen_post_v1_2b', post_a, color='#F1C232')                      # 侧立件 (+x 装配位; −x 同件转 180°)
-    export_screen_fr4_dxf()
+    out('screen_sup_a_v1_2b', screen_sup_a_loc, color='#F1C232')           # A 屏幕支架件 (放 0° 装配位; 180° 同件); _print 底面落床 (底面窝开口朝床, 窝顶 6 mm 桥接)
+    out('screen_sup_b_v1_2b', screen_sup_b_loc, color='#C9B458')           # B 上下件 (放 0° 局部; 装 90°/270°)
     write_doc([('fr4_plate_v1_2b (装配位)', fr4, '#C9B458', None, False), ('rim_ring_v1_2b', rim, '#6AA84F', None, False),
                *[(n, sh, c, None, False) for n, sh, c in SCREEN_PARTS],
                ('线圈 (占位)', coil, '#D9822B', None, False)], B.V12 / 'models' / 'rim_ring_v1_2b' / 'rotor_b_asm.step', 'rotor_b')

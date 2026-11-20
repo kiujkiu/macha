@@ -278,19 +278,23 @@ if B.ROTOR_B:
     for i, (x, y) in enumerate(RB.IN_PTS):        # 11-19 16:53 内圈 8 颗: 承载盘顶 Φ8×3.7 沉孔里 M3 法兰螺母 (坐沉孔底 Z26.8), M3×7 尾 Z30.0 (低于盘顶 0.5)
         screw("M3x7 超薄头 玻纤板→承载盘 内圈", i, x, y, _FB, 7.0, True, engage=("M3 法兰螺母", RB.Z_TOP - RB.IN_NUT_H, RB.Z_TOP - RB.IN_NUT_H + NUT_T))
         add(f"M3 法兰螺母 承载盘内圈沉孔 #{i}", flange_nut(x, y, RB.Z_TOP - RB.IN_NUT_H), "#707070")
-    for i, (x, y) in enumerate(sorted(RB.ANCHOR_PTS + RB.OUT_NUT_PTS, key=lambda p: math.atan2(p[1], p[0]) % (2 * math.pi))):   # 外圈 8 颗 (r77.5 @22.5+45k) 穿 承载盘 + 屏幕玻纤板, 法兰螺母坐玻纤板顶 Z33.5–37.2
-        screw(f"M3x{RB.OUT_SCR_L:g} 超薄头 玻纤板→承载盘→屏幕玻纤板 外圈", i, x, y, _FB, RB.OUT_SCR_L, True, engage=("M3 法兰螺母", *RB.OUT_NUT_Z))   # 支承 Z23 ⇒ 尾 Z38 露 0.8 (11-20 夜恢复; 11-20 晚 M3×18 到罩耳顶 作废)
-        add(f"M3 法兰螺母 屏幕玻纤板顶 外圈 #{i}", flange_nut(x, y, RB.OUT_NUT_Z[0]), "#707070")
-    for i, (x, y) in enumerate(RB.SHR_LOCK_PTS):  # 11-20 夜 罩子锁点 ×8 (每块屏幕玻纤板本地 (73, ±19.5)): 超薄头从屏幕玻纤板底 Φ7.2×1.5 沉孔往上 (支承 Z32), 穿板 + 罩耳, 罩耳顶法兰螺母 Z37.5–41.2
-        screw(f"M3x{RSB.MNT_L:g} 超薄头 屏幕玻纤板→罩耳 罩子锁点", i, x, y, RB.SHR_SCR_BEAR, RSB.MNT_L, True, engage=("M3 法兰螺母", *RSB.NUT_Z))   # 尾 Z42.0 露 0.8
-        add(f"M3 法兰螺母 罩耳顶 罩子锁点 #{i}", flange_nut(x, y, RSB.NUT_Z[0]), "#707070")
-    for i, (x, y) in enumerate(RB.BAR_SCR_PTS):   # 11-20 夜(二) 屏幕螺丝: 超薄头从屏幕玻纤板底 Φ7.6 沉孔 (支承 Z32) 穿 玻纤板 → 侧立件 → 中缝, 拧进灯板 F 面开窗焊的六角铜螺柱 (原自攻进夹条)
-        screw(f"M3x{RB.BAR_SCR_L:g} 超薄头 屏幕玻纤板→侧立件→灯板铜螺柱", i, x, y, RB.BAR_SCR_BEAR, RB.BAR_SCR_L, True, engage=("M3 六角铜螺柱", L.SO_Z0, L.SO_Z1))
+    def _nut_at(fn, x, y, z0):   # 11-21 支撑件六角窝平边朝径向 (rotor_b._hexp ang=atan2(y,x)) ⇒ 螺母模型同向转
+        from OCP.gp import gp_Trsf as _T, gp_Vec as _V
+        t = _T(); t.SetTranslation(_V(x, y, 0))
+        return B.xf(B.xf(fn(0, 0, z0), B.rotz(math.degrees(math.atan2(y, x)))), t)
+    for i, (x, y) in enumerate(sorted(RB.ANCHOR_PTS + RB.OUT_NUT_PTS, key=lambda p: math.atan2(p[1], p[0]) % (2 * math.pi))):   # 外圈 8 颗 (r77.5 @22.5+45k) 穿 承载盘 + 屏幕支撑件, 法兰螺母倒放嵌支撑件顶面六角窝 (11-21)
+        screw(f"M3x{RB.OUT_SCR_L:g} 超薄头 玻纤板→承载盘→屏幕支撑件 外圈", i, x, y, _FB, RB.OUT_SCR_L, True, engage=("M3 法兰螺母", *RB.OUT_NUT_Z))   # 支承 Z23 ⇒ 尾低于支撑件顶 0.5
+        add(f"M3 法兰螺母 屏幕支撑件顶 (嵌入, 法兰朝上) 外圈 #{i}", _nut_at(flange_nut_inv, x, y, RB.OUT_NUT_Z[0]), "#707070")
+    for i, (x, y) in enumerate(RB.SHR_LOCK_PTS):  # 11-21 罩子锁点 ×8: DIN912 从罩耳顶往下, 穿罩耳 + 支撑件, 拧进支撑件底面倒扣的 M3 法兰螺母 (法兰朝下坐承载盘顶); 尾离承载盘顶 0.5
+        screw(f"M3x{RSB.MNT_L:g} 内六角 转子罩耳→屏幕支撑件 罩子锁点", i, x, y, RB.SHR_SCR_BEAR, RSB.MNT_L, False, hd=5.5, hh=3.0, engage=("M3 法兰螺母", *RB.LOCK_NUT_Z))
+        add(f"M3 法兰螺母 屏幕支撑件底 (倒扣嵌入) 罩子锁点 #{i}", _nut_at(flange_nut, x, y, RB.LOCK_NUT_Z[0]), "#707070")
+    for i, (x, y) in enumerate(RB.BAR_SCR_PTS):   # 屏幕螺丝: 超薄头从 A 件底 Φ7.6×1.5 沉孔 (支承 Z32) 穿 A 件 → 中缝, 拧进灯板 F 面开窗焊的六角铜螺柱 (每端下颗)
+        screw(f"M3x{RB.BAR_SCR_L:g} 超薄头 屏幕支撑件→灯板铜螺柱", i, x, y, RB.BAR_SCR_BEAR, RB.BAR_SCR_L, True, engage=("M3 六角铜螺柱", L.SO_Z0, L.SO_Z1))
     for n_, sh_ in L.SO:                          # 灯板 F 面开窗焊的 M3 六角铜螺柱 (对边 4.6 长 5, 横躺) ×8: 下部+中部开窗, 每端板A/板B 各 1 颗上下错开; 螺丝拧每端下颗
         add(n_, sh_, "#B8860B")
     for i, (x, y) in enumerate(RB.MOT_PTS):
         screw("M3x10 内六角 承载盘→电机", i, x, y, RB.Z_TOP - RB.MOT_CB_H, 10.0, False, hd=5.5, hh=3.0, engage=("电机顶螺纹", B.MOTOR_Z0, B.ROTOR_TOP))
-    # (11-20 晚) 罩子 ±14° 8 点 M3×12 从上往下 + 承载盘窝法兰螺母 取消; (11-20 夜) 外圈 M3×18 锁罩耳也取消, 罩子由上面屏幕玻纤板上 8 颗 M3×10 + 罩耳顶法兰螺母锁住
+    # (11-20 晚) 罩子 ±14° 8 点 M3×12 从上往下 + 承载盘窝法兰螺母 取消; (11-20 夜) 外圈 M3×18 锁罩耳 / 屏幕玻纤板底往上 M3×10 + 罩耳顶螺母 也取消; 11-21 起罩锁从上往下进支撑件嵌入螺母
 
 # 13 无线供电模块固定件 (11-19 两件对称夹块直方条, wireless_holder_v1_2): 4×M3×14 超薄头从承载盘底往上 (同底板: 底面 Φ7.4×1.5 让位, 头支承 Z28.8), 穿夹块立柱 Φ3.4 通孔, 立柱顶 M3 法兰螺母 (15:30 用户「螺丝应该是通孔，上边锁螺母」, 15:46「蓝色是法兰螺母」)
 import wireless_holder_v1_2 as WH

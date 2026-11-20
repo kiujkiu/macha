@@ -575,9 +575,9 @@ def balance(br_g, com_a, com_b, extra=()):
         with contextlib.redirect_stdout(io.StringIO()):
             import rotor_shroud_b_v1_2 as RSB
         RB = RSB.RB
-        sup = [s for k, s in L.SUP.items() if k not in ('post_a', 'post_b')] + [RB.post_a, RB.post_b, RB.rim, RSB.shr_a, RSB.shr_b]   # 11-20 侧立件 (PLA 密度); 屏幕玻纤板 FR4 另算
-        for s in RB.SCR_FR4:
-            m, c = cog(s); add(m * 1.85e-3, c)
+        sup = [s for k, s in L.SUP.items() if k not in ('post_a', 'post_b')] + [RB.rim, RSB.shr_a, RSB.shr_b]   # 11-21 屏幕支撑件 (PETG) 另算
+        for s in RB.SCR_SUP:
+            m, c = cog(s); add(m * 1.27e-3, c)
         for s in sup:
             m, c = cog(s); add(m * RHO, c)
         m, c = cog(RB.fr4); add(m * 1.85e-3, c)
@@ -631,7 +631,7 @@ def report():
         RB = RSB.RB
         RIM_, HUB_, LID_A, LID_B = RB.rim, RB.fr4, RSB.shr_a, RSB.shr_b
         for k in ('post_a', 'post_b', 'hub', 'rim', 'shroud_a', 'shroud_b', 'lid_a', 'lid_b'): OBJ.pop(k)
-        OBJ.update(holder_a=RB.post_a, holder_b=RB.post_b, **dict(zip(RB.SCREEN_KEYS[:4], RB.SCR_FR4)), fr4=RB.fr4, rim_b=RB.rim, shroud_b_a=RSB.shr_a, shroud_b_b=RSB.shr_b)
+        OBJ.update(**dict(zip(RB.SCREEN_KEYS[:4], RB.SCR_SUP)), fr4=RB.fr4, rim_b=RB.rim, shroud_b_a=RSB.shr_a, shroud_b_b=RSB.shr_b)
     NEW = dict(fpc_a=fpc_a, fpc_b=fpc_b, tape_a=tape_a, tape_b=tape_b, seat_j5=seat_j5, seat_j6=seat_j6,
                bridge_a=br_rest_a, bridge_b=br_rest_b)
     rep = dict(interf={}, axk_mate={}, gap={})
