@@ -211,7 +211,7 @@ MF_Z0 = B.FL_Z0 + (B.MF_THIN_LOW - B.FL_THIN)      # 外裙底 Z8.5 (11-16 晚, 
 SPECS.append(dict(
     code="mounting_flange_v1_2", shape=B.mounting_flange, short="安装法兰 (无线供电上盖)", qty="1",
     title=f"安装法兰 Φ170: 外裙 r82.5–85 到定子盘底 (高 {F(B.FL_TOP - MF_Z0)}), 板顶减 {F(B.MF_THIN)}, 中心孔 Φ{F(2 * B.MF_HOLE_R)}",
-    subtitle=f"外裙 r82.5–85 整个包住定子盘外缘, 底 Z{F(MF_Z0)} = 定子盘底 (11-16 晚 用户: 从外面看定子盘是完整环形盘); 4 处下罩螺母让位 Φ{F(B.MF_NUT_RELIEF[0])} 到 Z{F(B.MF_NUT_RELIEF[1])}",
+    subtitle=f"外裙 r82.5–85 整个包住定子盘外缘, 底 Z{F(MF_Z0)} = 定子盘底 (11-16 晚 用户: 从外面看定子盘是完整环形盘)" + (f"; 4 处下罩螺母让位 Φ{F(B.MF_NUT_RELIEF[0])} 到 Z{F(B.MF_NUT_RELIEF[1])}" if B.MF_NUT_RELIEF_ENABLE else ""),
     orient="翻面打印 (板顶朝下)",
     phi=[2 * B.MF_HOLE_R, 2 * B.R_SCREW, 2 * 78.0, 165.0, 170.0],
     sec=dict(ang=22.5, zd=[(MF_Z0, B.FL_TOP), (B.FL_TOP, B.MF_TOP), (MF_Z0, B.MF_TOP)]),
@@ -222,7 +222,7 @@ SPECS.append(dict(
     ],
     dets=[dict(tag="D", kind="free", z=(MF_Z0, B.MF_TOP), pt=(83.75 * math.cos(math.radians(22.5)), 83.75 * math.sin(math.radians(22.5))), ang=22.5, W=5.0,
                title="外裙 r82.5–85 (中心 r83.75)", zd=[(MF_Z0, B.FL_TOP, F(B.FL_TOP - MF_Z0), 0), (B.FL_TOP, B.MF_TOP, F(B.MF_TOP - B.FL_TOP), 0)], ud=[(-1.25, 1.25, "2.5")])],
-    notes=[f"外裙底 Z{F(MF_Z0)} = 定子盘底 (11-16 晚 外裙 4 → 5); 下罩 4 颗 M3 法兰螺母 (r86.8, 顶 Z8.7) 处外裙底挖 Φ{F(B.MF_NUT_RELIEF[0])} 到 Z{F(B.MF_NUT_RELIEF[1])}", "外圈 B 孔 r79 居中于定子盘外墙 (原 V0.4 r77.5 已补实)",
+    notes=[f"外裙底 Z{F(MF_Z0)} = 定子盘底 (11-16 晚 外裙 4 → 5)" + (f"; 下罩 4 颗 M3 法兰螺母 (r86.8, 顶 Z8.7) 处外裙底挖 Φ{F(B.MF_NUT_RELIEF[0])} 到 Z{F(B.MF_NUT_RELIEF[1])}" if B.MF_NUT_RELIEF_ENABLE else "; 下罩 4 颗 M3 法兰螺母 (r86.8, 顶 Z8.7) 离外裙底 3.3, 不开让位 (11-23 取消)"), "外圈 B 孔 r79 居中于定子盘外墙 (原 V0.4 r77.5 已补实)",
            f"中心孔 Φ{F(2 * B.MF_HOLE_R)}: 线圈环内管 Φ{F(B.TUBE_OD)} 穿过, 顶齐 Z{F(B.MF_TOP)}"],
 ))
 

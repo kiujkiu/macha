@@ -592,7 +592,10 @@ NUT_Z0 = TRI_T                                     # 用户 11-12 改 M3: M3x10 
 assert abs(SH_R - (SPIG_IN - SH_NUT_D / 2)) < 1e-9, '下罩螺母要贴墙内面'
 # 11-16 晚: 安装法兰外裙伸到 Z8.5 后, 4 颗下罩 M3 法兰螺母 (r86.8 Φ8 含余量, Z5–8.7 实高 3.7) 顶到外裙 r82.5–85 ⇒ 外裙底局部挖 Φ8.6 到 Z9.0 (留 0.3)
 MF_NUT_RELIEF = (SH_NUT_D + 0.6, NUT_Z0 + 3.7 + 0.3)
-mounting_flange = clean(cut(mounting_flange, *[cyl(x, y, MF_NUT_RELIEF[0], FL_Z0 - 1, MF_NUT_RELIEF[1] + STATOR_LIFT) for x, y in SH_M6]))   # 11-19: 让位随件抬 (件不改形)
+# 11-23 用户「这四个是不是可以去掉了」: 定子抬 3.5 后外裙底 Z12.0 离螺母顶 Z8.7 已 3.3, 螺丝尖 Z12.0 在 r85.3 外 (外裙 r85) ⇒ 让位缺口取消
+MF_NUT_RELIEF_ENABLE = False
+if MF_NUT_RELIEF_ENABLE:
+    mounting_flange = clean(cut(mounting_flange, *[cyl(x, y, MF_NUT_RELIEF[0], FL_Z0 - 1, MF_NUT_RELIEF[1] + STATOR_LIFT) for x, y in SH_M6]))   # 11-19: 让位随件抬 (件不改形)
 NUT_CLR_D = 0.0                                    # 用户 11-12: 螺母 r84–92 在定子盘 r82.5 外、顶 Z7.4 < 定子盘底 Z9.3 ⇒ 定子盘/安装法兰不再开让位 (原 Φ10)
 for x, y in SH_M6:
     s_ = cut(s_, cyl(x, y, 3.4, -1, TRI_T + 1))
