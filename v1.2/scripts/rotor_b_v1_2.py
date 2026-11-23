@@ -111,6 +111,13 @@ RX_VIA_D, RX_VIA_GAP = 0.6, 0.15                  # 过孔焊环 Φ0.6 (钻 0.3)
 RX_EDGE_MIN = 0.25                                # 过孔环 ↔ 板边 最小
 RX_SOLDER_H = 1.0                                 # 焊盘上方焊点 / 线头让位高
 RX_WIRE_HOLE_D = 3.0                              # B 件穿线孔 Φ3 (3 根 AWG30, 外径 ~0.5–0.6), 焊盘排中心正上方贯穿到件顶
+# 11-23 四版 (用户): 板上 2 个 NPTH 定位孔, B 件底面 2 个销向下插进去定位 (求装得准)。两孔沿径向放在焊盘排两端 (尽量拉开防转):
+#   内孔 = 板内端, 外孔 = 焊盘排与外端 (光敏管 / 47k) 之间 (外端再加长会让槽外端离件外边 <1.5)
+RX_LOC = True
+RX_LOC_D = 1.5                                    # 定位孔 Φ1.5 NPTH
+RX_PIN_D = 1.3                                    # B 件销 Φ1.3 (FDM 能打的最小合理值)
+RX_PIN_H = RX_PCB_T - 0.1                         # 销高 0.7 (销底离承载盘顶 0.1, 不顶)
+RX_LOC_CLR = 0.3                                  # 定位孔边 ↔ 板边 / 铜 / 器件 / 过孔
 
 # ---------------- 玻纤板 (装配体, 与 models/fr4_plate_v1_2b/build.py 同参数) ----------------
 fr4 = cyl(0, 0, FR4_OD, Z_F0, Z_F1)
@@ -228,20 +235,42 @@ SP_POCKETS = {'a': [(68.0, 12.5, 76.5, 23.5), (68.0, -23.5, 76.5, -12.5)],     #
 #   径向 (局部 x, −x = 朝轴心) 从外往里: 板外边 | 光敏管 (底, 对孔心) / 47k (顶) | 间隙 | 接插件焊盘区 (尾朝外) | 板内边
 assert SP_TYPE[(OPT_ANG + 360) % 360] == 'b'
 if RX_CONN == 'pads':
-    RX_PCB_X1 = OPT_R + RX_PT_L / 2 + RX_EDGE     # 78.2 板外边 (底面光敏管 / 顶面 47k 同在外端)
-    RX_R_X1 = RX_PCB_X1 - RX_EDGE; RX_R_X0 = RX_R_X1 - RX_R_L      # 47k 77.1–77.9
-    RX_PAD_X1 = RX_R_X0 - RX_GAP                  # 76.8 焊盘排外边
-    RX_SP_PTS = [(RX_PAD_X1 - RX_SP_D / 2 - k * RX_SP_P, 0.0) for k in range(RX_SP_N)]   # 76.3 / 75.0 / 73.7
-    RX_PAD_X0 = RX_SP_PTS[-1][0] - RX_SP_D / 2
-    RX_PCB_X0 = RX_PAD_X0 - RX_EDGE               # 板内边
-    RX_VIA_Y = RX_SP_D / 2 + RX_VIA_GAP + RX_VIA_D / 2      # 0.95 过孔在焊盘排两侧
-    RX_PCB_W = round(max(RX_R_W + 2 * RX_EDGE, RX_PT_L + 2 * RX_EDGE, 1.6 + 2 * RX_EDGE, 2 * (RX_VIA_Y + RX_VIA_D / 2 + RX_EDGE_MIN)), 3)   # 3.0
-    RX_PCB_L = round(RX_PCB_X1 - RX_PCB_X0, 3)    # 5.3
+    # 先按板局部坐标排 (u 径向, 内端 = 0; v 切向), 再平移使光敏管中心落在 OPT_R
+    _u = 0.0; RXL = {}
+    if RX_LOC: _u = RX_LOC_CLR + RX_LOC_D / 2; RXL['孔1'] = (_u, 0.0); _u += RX_LOC_D / 2 + RX_LOC_CLR + RX_SP_D / 2
+    else: _u = RX_EDGE + RX_SP_D / 2
+    for k, n in enumerate(('GND', '3V3', 'SIG')[:RX_SP_N]): RXL[f'焊盘{n}'] = (_u + k * RX_SP_P, 0.0)
+    _u += (RX_SP_N - 1) * RX_SP_P + RX_SP_D / 2   # 外侧焊盘外边
+    if RX_LOC: _u += RX_LOC_CLR + RX_LOC_D / 2; RXL['孔2'] = (_u, 0.0); _u += RX_LOC_D / 2 + RX_LOC_CLR + RX_PT_L / 2
+    else: _u += RX_GAP + RX_PT_L / 2
+    RXL['光敏管(底)'] = (_u, 0.0); RXL['47k(顶)'] = (_u, 0.0)
+    RX_VIA_Y = RX_SP_D / 2 + RX_VIA_GAP + RX_VIA_D / 2      # 0.95 过孔在最外焊盘 (SIG) 两侧
+    _sig = RXL[f"焊盘{('GND', '3V3', 'SIG')[RX_SP_N - 1]}"][0]
+    RXL['过孔a'] = (_sig, RX_VIA_Y); RXL['过孔b'] = (_sig, -RX_VIA_Y)
+    _ul = _u + RX_PT_L / 2 + RX_EDGE              # 板长
+    RX_PCB_W = round(max(RX_R_W + 2 * RX_EDGE, 1.6 + 2 * RX_EDGE, 2 * (RX_VIA_Y + RX_VIA_D / 2 + RX_EDGE_MIN), RX_LOC_D + 2 * RX_LOC_CLR if RX_LOC else 0), 3)   # 3.0
+    RX_PCB_L = round(_ul, 3)
+    _off = OPT_R - RXL['光敏管(底)'][0]            # 板局部 u → 件局部 x
+    RX_PCB_X0, RX_PCB_X1 = _off, _off + _ul
+    RX_R_X0, RX_R_X1 = OPT_R - RX_R_L / 2, OPT_R + RX_R_L / 2
+    RX_SP_PTS = sorted([(_off + u, v) for n, (u, v) in RXL.items() if n.startswith('焊盘')], reverse=True)   # 外→内
+    RX_PAD_X0, RX_PAD_X1 = RX_SP_PTS[-1][0] - RX_SP_D / 2, RX_SP_PTS[0][0] + RX_SP_D / 2
+    RX_LOC_PTS = [(_off + RXL[k][0], RXL[k][1]) for k in ('孔1', '孔2')] if RX_LOC else []
+    RX_PCB_LOCAL = dict(外形=(0.0, round(-RX_PCB_W / 2, 3), round(_ul, 3), round(RX_PCB_W / 2, 3)), **{k: (round(u, 3), round(v, 3)) for k, (u, v) in RXL.items()})
+    # 定位孔边距自检 (孔边 ↔ 板边 / 焊盘 / 过孔 / 器件 ≥ RX_LOC_CLR)
+    if RX_LOC:
+        for k in ('孔1', '孔2'):
+            u, v = RXL[k]
+            assert u - RX_LOC_D / 2 >= RX_LOC_CLR - 1e-9 and RX_PCB_W / 2 - abs(v) - RX_LOC_D / 2 >= RX_LOC_CLR - 1e-9
+            for n, (u2, v2) in RXL.items():
+                r2 = dict(焊盘=RX_SP_D / 2, 过孔=RX_VIA_D / 2).get(n[:2])
+                if r2: assert math.dist((u, v), (u2, v2)) - RX_LOC_D / 2 - r2 >= RX_LOC_CLR - 1e-9, (k, n)
+            assert abs(RXL['光敏管(底)'][0] - u) - RX_PT_L / 2 - RX_LOC_D / 2 >= RX_LOC_CLR - 1e-9
     RX_Z_PCB = (SP_Z0, SP_Z0 + RX_PCB_T)
     RX_Z1 = RX_Z_PCB[1] + RX_SOLDER_H             # 32.3 焊点让位顶
     RX_HY = RX_PCB_W / 2 + RX_CLR                 # 1.8
     RX_X0, RX_X1 = RX_PCB_X0 - RX_CLR, RX_PCB_X1 + RX_CLR
-    RX_HOLE = ((RX_SP_PTS[0][0] + RX_SP_PTS[-1][0]) / 2, 0.0, RX_WIRE_HOLE_D)   # 穿线孔 (x, y, d)
+    RX_HOLE = ((RX_SP_PTS[0][0] + RX_SP_PTS[-1][0]) / 2, 0.0, RX_WIRE_HOLE_D)   # 穿线孔 (x, y, d) 对焊盘排中心
     RX_WIN = None
     RX_HDR_X0 = RX_HDR_X1 = RX_HDR_Z1 = RX_MATE_Z1 = RX_PLUG_X0 = None
 else:
@@ -352,7 +381,10 @@ def screen_sup_local(kind):
         cuts += [_slot(x, y, SP_Z0 - 1, SP_Z1 + 1) for x, y in SP_HOLES_LOC['scr']] + [cyl(x, y, SP_SCR_CB_D, SP_Z0 - 1, SP_Z0 + SP_CB_H) for x, y in SP_HOLES_LOC['scr']]
     cuts += [gbox(x0, y0, SP_Z0 + SP_POCKET_FLOOR, x1, y1, SP_Z1 + 1) for x0, y0, x1, y1 in SP_POCKETS[kind]]
     if kind == 'b': cuts += rx_cuts()             # 11-23 底面接收板槽 + 线槽
-    return clean(cut(s, *cuts))
+    s = cut(s, *cuts)
+    if kind == 'b' and RX_CONN == 'pads' and RX_LOC:   # 11-23 定位销: 从板外形浅槽顶往下 (销底 = 板顶 − RX_PIN_H)
+        s = fuse(s, *[cyl(x, y, RX_PIN_D, RX_Z_PCB[1] - RX_PIN_H, RX_Z_PCB[1] + RX_PCB_TOP_CLR + 0.01) for x, y in RX_LOC_PTS])
+    return clean(s)
 
 screen_sup_a_loc = screen_sup_local('a')
 screen_sup_b_loc = screen_sup_local('b')
@@ -391,6 +423,11 @@ if RX_HOLE:
                    槽内端_件内边=round(RX_X0 - SP_B_X0, 2), 穿线孔_件内边=round(_hx - _hd / 2 - SP_B_X0, 2),
                    穿线孔_减重槽=round(min(_d_rect(_hx, _hy_, *pk) for pk in SP_POCKETS['b']) - _hd / 2, 2), 穿线孔_罩锁窝=round(min(math.dist((_hx, _hy_), p) for p in LOCK_B_LOC) - _hd / 2 - WELL_FL_D / 2, 2),
                    穿线孔_件外边=round(SP_X1 - _hx - _hd / 2, 2))
+    if RX_LOC:                                    # 销 ↔ 穿线孔 / 焊点让位 / 47k 让位 (销须落在板外形浅槽顶下, 不悬空)
+        RX_PIN_CLR = dict(销_穿线孔=round(min(math.dist(p, (_hx, _hy_)) for p in RX_LOC_PTS) - _hd / 2 - RX_PIN_D / 2, 2),
+                       销_焊点让位=round(min(min(abs(x - (RX_PAD_X0 - RX_CLR)), abs(x - (RX_PAD_X1 + RX_CLR))) for x, _ in RX_LOC_PTS) - RX_PIN_D / 2, 2),
+                       销_47k让位=round(min(abs(x - (RX_R_X0 - RX_CLR)) for x, _ in RX_LOC_PTS) - RX_PIN_D / 2, 2))
+        assert min(RX_PIN_CLR.values()) > 0, RX_PIN_CLR   # 销整个落在浅槽顶 (实体) 下, 不跨让位槽
     RX_WALL = {k: v for k, v in RX_WALL.items() if v is not None}
 elif RX_WIN:
     RX_WALL.update(槽内端_件内边=round(RX_X0 - SP_B_X0, 2), 通窗_件内边=round(RX_WIN[0] - SP_B_X0, 2), 通窗_减重槽=round(_pky - RX_WIN[3], 2),
@@ -442,7 +479,9 @@ def report():
                edge=SP_EDGE,
                optical=dict(hole=dict(pt=(round(OPT_PT[0], 3), round(OPT_PT[1], 3)), d=OPT_D, note='承载盘全厚通; fr4_plate 同位 Φ3.4 现场配钻 (以承载盘为钻模)', wall=OPT_WALL),
                             rx_slot=dict(conn=RX_CONN, part=GH[RX_CONN]['name'] if RX_CONN in GH else f'{RX_SP_N}×Φ{RX_SP_D:g} 焊线焊盘 P{RX_SP_P:g}', plug=GH_PLUG['name'] if RX_CONN in GH else None,
-                                         hole=RX_HOLE, pads=RX_CONN == 'pads' and [tuple(round(v, 3) for v in p) for p in RX_SP_PTS], loc_x=(round(RX_X0, 3), RX_X1), loc_hy=RX_HY, z=(SP_Z0, round(RX_Z1, 3)),
+                                         hole=RX_HOLE, pads=RX_CONN == 'pads' and [tuple(round(v, 3) for v in p) for p in RX_SP_PTS],
+                                         loc=RX_CONN == 'pads' and RX_LOC and dict(hole_d=RX_LOC_D, pin_d=RX_PIN_D, pin_h=RX_PIN_H, pts=[tuple(round(v, 3) for v in p) for p in RX_LOC_PTS]),
+                                         pcb_local=RX_CONN == 'pads' and RX_PCB_LOCAL, pin_clr=RX_CONN == 'pads' and RX_LOC and RX_PIN_CLR, loc_x=(round(RX_X0, 3), RX_X1), loc_hy=RX_HY, z=(SP_Z0, round(RX_Z1, 3)),
                                          pcb=dict(l=RX_PCB_L, w=RX_PCB_W, t=RX_PCB_T, x=(round(RX_PCB_X0, 3), RX_PCB_X1), z=RX_Z_PCB),
                                          header=RX_HDR_X0 is not None and dict(x=(round(RX_HDR_X0, 3), round(RX_HDR_X1, 3)), pad_x=(round(RX_PAD_X0, 3), round(RX_PAD_X1, 3)), top=round(RX_HDR_Z1, 3)),
                                          plug_x0=RX_PLUG_X0 and round(RX_PLUG_X0, 3), plug_top=RX_MATE_Z1 and round(RX_MATE_Z1, 3), win=RX_WIN and tuple(round(v, 3) for v in RX_WIN),
