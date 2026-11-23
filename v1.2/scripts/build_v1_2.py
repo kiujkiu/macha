@@ -77,6 +77,18 @@ MF_THIN = 0.5                                  # 用户 11-11: mounting_flange �
 MF_CB = 1.5                                    # 用户 11-11: 安装法兰 16 个 Φ7 沉孔深 2.0→1.5
 FL_TOP = 22.5 - DROP + FL_UP                   # 法兰盘顶 13.5 (= 安装法兰底)
 MF_TOP = 25.5 - MF_THIN - DROP + FL_UP         # 安装法兰顶 16.0
+# 11-23 光电对射发射板 (定子侧, 发射管朝上; 接收管在转子盘B 朝下, 转子通光孔 Φ3.2 @ r77.5): 定子盘顶面切向槽 + 槽端穿线孔 + 安装法兰通光窗。
+#   接插件待用户定, 暂按焊线 (24V/GND 两根) 出线; 以下全是参数, 改板/改接插件只动这里。局部系: LED 中心在 (IR_R, 0), +u = 逆时针切向, 再整体转 IR_ANG。
+IR_ANG, IR_R = 53.0, 77.5                      # LED 中心角度/半径 (r 必须 = 转子通光孔半径 77.5); 53° 落在 B 孔 22.5/67.5° 之间, 穿线孔落在控制板 XT60 焊盘旁
+IR_PCB_L, IR_PCB_W, IR_PCB_T = 6.0, 3.5, 1.0   # 发射小板 FR4 (1×0603 发射管 + 1×1206 电阻 一排, 沿切向; 11-23 由 2 电阻 9×4 缩小)
+IR_COMP_H = 0.6                                # 板上最高器件 (0603 发射管 ~0.6; 1206 电阻 ~0.55)
+IR_TOP_GAP = 0.2                               # 器件顶低于定子盘顶 (= 安装法兰底) 的余量
+IR_CLR = 0.2                                   # 槽比板单边大
+IR_LED_U = 1.2                                 # LED 中心离板低角端 (板 u ∈ [−IR_LED_U, IR_PCB_L − IR_LED_U])
+IR_DEPTH = IR_PCB_T + IR_COMP_H + IR_TOP_GAP   # 槽深 1.8 ⇒ 槽底 FL_TOP − 1.8
+IR_WIRE_D = 3.0                                # 穿线孔 (2 芯焊线往下到控制板), 孔边切板高角端
+IR_WIRE_U = IR_PCB_L - IR_LED_U + IR_WIRE_D / 2
+IR_WIN_D = 3.5                                 # 安装法兰通光窗 (盖在槽上, 板被它压住)
 TUBE_TOP = MF_TOP                              # 用户 11-12: 内管穿定子盘+安装法兰到 Z16 (6.5); 螺丝 r35.2 的 Φ7 沉孔内缘 r31.7 让开内管 r31.5
 CB7 = 7.0                                      # 用户 11-12: 安装法兰 A/B 沉孔 Φ7 = 定子盘内外墙宽
 R_SCREW = 31.7 + CB7 / 2                       # 用户 11-12: r34 → r35.2 (Φ7 沉孔从中心孔边 r31.7 起; 原 11-11 r36.3 → r34)
@@ -631,12 +643,20 @@ for s__ in solids(board):
     _fd = cut(_fd, sh__)
     BRD_POCKETS.append(dict(bbox=[round(v, 2) for v in b__], top=round(z1_, 2), depth=round(z1_ - FL_Z0, 2), floor_in_cavity=round(CAV_Z0 - z1_, 2)))
 LOG['board_pockets'] = BRD_POCKETS
+_irt = rotz(IR_ANG)
+IR_SLOT = xf(gbox(IR_R - IR_PCB_W / 2 - IR_CLR, -IR_LED_U - IR_CLR, FL_TOP - IR_DEPTH, IR_R + IR_PCB_W / 2 + IR_CLR, IR_WIRE_U, FL_TOP + 1), _irt)   # 板槽 (通到穿线孔中心)
+IR_WIRE = xf(cyl(IR_R, IR_WIRE_U, IR_WIRE_D, FL_Z0 - 1, FL_TOP + 1), _irt)                                                                         # 穿线孔 Φ3 打穿定子盘
+_fd = cut(_fd, IR_SLOT, IR_WIRE)
+IR_PCB = xf(gbox(IR_R - IR_PCB_W / 2, -IR_LED_U, FL_TOP - IR_DEPTH, IR_R + IR_PCB_W / 2, IR_PCB_L - IR_LED_U, FL_TOP - IR_DEPTH + IR_PCB_T + IR_COMP_H), _irt)   # 板+器件外包 (校核/显示用)
+LOG['ir_tx'] = dict(ang=IR_ANG, r=IR_R, slot_wl=(IR_PCB_W + 2 * IR_CLR, IR_WIRE_U + IR_LED_U + IR_CLR), floor_z=FL_TOP - IR_DEPTH, floor_t=FL_TOP - IR_DEPTH - FL_Z0,
+                    wire_ang=round(IR_ANG + math.degrees(math.atan2(IR_WIRE_U, IR_R)), 2), wire_r=round(math.hypot(IR_R, IR_WIRE_U), 2))
 flange_disc = clean(_fd)
 _mf2 = mounting_flange                             # 11-12 外径回原 Φ170: 保留 V0.4 原外裙 r82.5–85 (已同步短到 z9.3 = 定子盘底); 原先 cut ann(82.8,86) 是错的, 还留 0.3 薄片
 for x, y in _V04_OUT: _mf2 = fuse(_mf2, cyl(x, y, CB7 + 0.4, FL_TOP, MF_TOP))  # 原 r77.5 Φ7 沉孔 + 孔补实 (板内)
 _mf2 = clean(_mf2)                                 # 11-17 晚: LID_R 改 r77.5 与原孔同轴, 不先 clean 直接挖会布尔失败 (体积 0)
 for x, y in LID_SCREWS: _mf2 = cut(_mf2, cyl(x, y, 3.2, 0, 30), cyl(x, y, CB7, MF_TOP - MF_CB, 40))   # 上盖 r79: Φ3.2 + 顶面 Φ7×1.5
 # 11-17 用户: 安装法兰不再给 XT60 开缺口 (外裙整圈); 改由 XT60 压块 V1.2-h 在全局 Z8 以上削到接头尾 r85.8 (原 11-13 此处 cut 压块外形 +0.5, Z≤13.5)
+_mf2 = cut(_mf2, xf(cyl(IR_R, 0, IR_WIN_D, FL_TOP - 1, MF_TOP + 1), rotz(IR_ANG)))   # 11-23 光电对射通光窗 (发射管正上方)
 mounting_flange = clean(_mf2)
 seat = clean(s_); LOG['seat'] = dict(v=vol(seat), z_g=Z_G)          # 合并版 (下罩+外卡一体)
 # 分体版 (用户 11-11): 外卡三角区单独一个环, 玻璃先套内卡再从上套环; 环底 2x2 凸筋插下罩顶槽 (单边 0.1)
