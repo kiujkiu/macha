@@ -238,7 +238,7 @@ SPECS.append(dict(
     holes=[dict(tag="A", pts=B.IR_CL_HOLES, spec=f"Φ{F(B.IR_CL_HOLE_D)} 通 + 底面 Φ{F(B.IR_CL_NUT_CB_D)} 法兰螺母沉孔 (留 {F(B.IR_CL_PAD_T)})",
                 where=ring_txt(B.IR_CL_HOLES) + f"  M3×{F(B.IR_CL_SCREW_L)} (定子盘外圈 B 孔, 不换长度)")],
     notes=[f"发射板 {F(B.IR_PCB_W)}×{F(B.IR_PCB_L)}×{F(B.IR_PCB_T)} 双面: 顶 0603 IR (贴定子盘底, 伸进 Φ{F(B.IR_WIN_D)} 通光孔), 底 0603 10k + 2 焊盘",
-           f"压片只在板低角端 {F(B.IR_LEDGE)} 托边顶住板; 焊盘区开通槽, 焊线竖直下到控制板 XT60 24V/GND",
+           f"板槽底整面托板; 2 个定位销 Φ{F(B.IR_PIN_D)} 高 {F(B.IR_PIN_H)} 插板上对角 NPTH 孔 Φ{F(B.IR_HOLE_D)}; 焊盘处通孔+向内开槽, 焊线竖直下到控制板 XT60 24V/GND",
            f"螺母处只夹 {F(B.IR_CL_PAD_T)}, 法兰螺母 Z{F(B.FL_Z0 - B.IR_CL_PAD_T - 3.7)}–{F(B.FL_Z0 - B.IR_CL_PAD_T)}, M3×{F(B.IR_CL_SCREW_L)} 吃 3.2"],
 ))
 
