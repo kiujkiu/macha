@@ -35,9 +35,10 @@ M6_NUT_AF, M6_NUT_T = 10.0, 5.2
 
 def comp(shapes):
     bb = BRep_Builder(); c = TopoDS_Compound(); bb.MakeCompound(c)
+    shapes = list(shapes)
     for s in shapes:
         bb.Add(c, s)
-    return c
+    return B.GC.tag(c, 'comp', *[B.GC.key(s) for s in shapes]) if B.GC.ON else c   # 11-20 geocache
 
 
 def hexprism(x, y, af, z0, z1):
@@ -114,15 +115,16 @@ for i, (x, y) in enumerate(B.SH_M6):
     screw(f"M3x{L_SH:g} 下罩", i, x, y, CB_BEAR, L_SH, True, engage=("法兰螺母", B.TRI_T, B.TRI_T + NUT_T))
     add(f"M3 法兰螺母 下罩 #{i}", flange_nut(x, y, B.TRI_T), "#707070")
 # 4 中央 8×M3 安装法兰顶沉孔往下, 拧底盘底面 Φ8×3.7 沉孔里的 M3 法兰螺母 (11-19, 原 M3×4 铜螺母; 法兰朝下齐底面 Z-7.5..-3.8)
-L_C = 22.0                                         # 11-18: 底盘底 Z-7.5 (原 -6) ⇒ 20→22, 尖齐底面
+L_C = 25.0                                         # 11-20 底盘 5.0 (底 Z−8): 法兰螺母 −8..−4.3, 尖 −7.0 吃 2.7; 11-19 定子抬 3.5: 支承 Z18 ⇒ M3×25 尖 Z−7.0 (法兰螺母 −7.5..−3.8 吃 3.2, 不出底面); 11-18: 底盘底 Z-7.5 (原 -6) ⇒ 20→22, 尖齐底面
 for i, (x, y) in enumerate(B.FLANGE_SCREWS):
     screw(f"M3x{L_C:g} 中央", i, x, y, MF_BEAR, L_C, False, engage=("M3 法兰螺母", ZB, ZB + NUT_T))
     add(f"M3 法兰螺母 底盘底 G #{i}", flange_nut(x, y, ZB), "#707070")
-# 5 外圈 8×M3 安装法兰顶沉孔往下, 拧法兰盘底面铜螺母 (11-12 夜: M3×4 齐法兰盘底 Z8.5..12.5); M3×6 尾端 Z8.5 齐底面, 啮合 4
-L_LID = 6.0
+# 5 外圈 8×M3 安装法兰顶沉孔往下, 穿定子盘 → 定子盘底面下挂 M3 法兰螺母 (11-20 用户「不要嵌入，这样稳定」: 原 M3×4 铜螺母作废;
+#   已打印定子盘底 Φ4.2×4.2 孔不改, 法兰 Φ7.6 朝上贴定子盘底 Z12, 六角朝下 Z8.3..12, 离外裙 1.0 / 线夹 2.3 / 控制板 2.45); M3×10 尖 Z8.0 (过螺母底 0.3, 吃满 3.7)
+L_LID = 10.0
 for i, (x, y) in enumerate(B.LID_SCREWS):
-    screw("M3x6 上下盖", i, x, y, MF_BEAR, L_LID, False, engage=("铜螺母", B.FL_Z0, B.FL_Z0 + INS_L_FL))
-    add(f"铜螺母 M3x4 法兰盘 B #{i}", insert(x, y, B.FL_Z0, INS_L_FL), "#B8860B")
+    screw(f"M3x{L_LID:g} 上下盖", i, x, y, MF_BEAR, L_LID, False, engage=("M3 法兰螺母", B.FL_Z0 - NUT_T, B.FL_Z0))
+    add(f"M3 法兰螺母 定子盘底下挂 B #{i}", flange_nut_inv(x, y, B.FL_Z0 - NUT_T), "#707070")
 # 6 控制板 4×M3 (用户 11-13): 盘底 Φ7×2 沉孔往上, 穿底盘 + 板, M3 法兰螺母坐板顶 (原板顶往下进底盘 H 铜螺母)
 L_BD = 12.0                                        # 支承 Z-4, 尖 Z6; 螺母 Z1.6..5.3 ⇒ 吃满 3.7, 露 0.7
 for i, (bx, by) in enumerate(B.BHOLES):
@@ -264,6 +266,7 @@ for i, (a, sh, nt) in enumerate([] if B.ROTOR_B else zip(RS.LID_SCR_ALL, RS.FAST
 
 # 12b 转子盘B (11-18 进整机; rotor_b_v1_2 / rotor_shroud_b_v1_2):
 #    11-20 屏幕固定件 → 屏幕玻纤板 ×4 + 侧立件 ×2 (用户「上边锁法兰螺母通孔就行」「我们尽量不用铜螺母，用法兰」): 见下面代码 (以代码为准, 下面几行是 11-18 旧说明)
+#    11-20 屏幕固定件 → 屏幕玻纤板 ×4 + 侧立件 ×2 (用户「上边锁法兰螺母通孔就行」「我们尽量不用铜螺母，用法兰」): 见下面代码 (以代码为准, 下面几行是 11-18 旧说明)
 #    玻纤板底 16 颗超薄头 M3 往上 (头埋 Φ7.2×1.5 沉孔, 支承 Z23.0):
 #      内圈 R34 ×8 + 外圈 67.5/112.5/247.5/292.5 ×4 → 承载盘顶面 M3×4 铜螺母 (Z28–32): M3×8 尖 Z31, 啮合 3 (M3×10 会冒出盘顶 1)
 #      外圈锚孔 22.5/157.5/202.5/337.5 ×4 → 穿承载盘 + 固定件带 (Z32–37) → 带顶 M3 法兰螺母 (Z37–40.7): M3×18 尖 Z41 (吃满螺母, 冒 0.3)
@@ -316,173 +319,177 @@ for i, ((x, y), top, L_) in enumerate(zip(MW.MW_M3, MW.MW_TOP, MW.SCREW_L)):
     screw(f"M3x{L_:g} {_nm}", i, x, y, MW.BEAR_Z, L_, True, engage=("铜螺母", top - MW.INS_H, top))
     add(f"铜螺母 M3x4 {_nm} #{i}", insert(x, y, top - MW.INS_H, MW.INS_H), "#B8860B")
 
-# ---------------- 零件 ----------------
-PARTS = {"灯板立板+x": L.post_a, "灯板立板-x": L.post_b, "灯板夹条": L.bar_s, "灯板顶部件": L.top, "灯板梳齿": L.comb_s, "底盘": B.disc, "线圈环": B.ring, "电机": B.motor, "控制板": B.board, "散热片": B.heatsink,
-         "法兰盘": B.flange_disc, "安装法兰": B.mounting_flange, "转子毂盘": B.hub, "承载盘": B.rim,
-         "玻璃下底座": B.shroud_lo, "玻璃下玻璃座": B.shroud_hi, "外卡环": B.clamp_ring, "XT60压块": B.xt_clamp, "XT60底垫": B.xt_shim,
-         **({"MOS压块": B.CD.clamp} if B.CD.HAS_MC else {}), **({"电容卡件": B.CD.cap_clamp} if B.CD.HAS_CC else {}), "驱动板": B.CD.pcb, "驱动MOS": B.CD.mos, "驱动电解电容": B.CD.cap, "驱动散热片": B.CD.sink2, "按键支架": B.key_bracket, "按键板": B.key_board,
-         "转子罩a": RS.shr_a, "转子罩b": RS.shr_b, "转子罩顶盖+y": RS.lid_a, "转子罩顶盖-y": RS.lid_b, "无线托盘": WH.H, "无线模块 (占位)": WH.module, "底板 r4b (板框)": L.VB['baseboard'],
-         "MR30座": MW_SEAT, "电机线夹": MW_CLAMP}   # 11-16 新件; 11-16 晚 中间 T 件取消, +MR30 座 / 线夹
-if B.ROTOR_B:   # 11-18 转子盘B
-    for _k in ("灯板立板+x", "灯板立板-x", "转子毂盘", "承载盘", "转子罩a", "转子罩b", "转子罩顶盖+y", "转子罩顶盖-y"): PARTS.pop(_k)
-    PARTS.update({"玻纤板": RB.fr4, "承载盘B": RB.rim, **{n: sh for n, sh, _ in RB.SCREEN_PARTS}, "转子罩B+y": RSB.shr_a, "转子罩B-y": RSB.shr_b})
-for i, p in enumerate(B.posts):
-    PARTS[f"立柱{i}"] = p
-PB = {k: bbox(v) for k, v in PARTS.items()}
-PSOL = {k: [(s, bbox(s)) for s in solids(v)] or [(v, PB[k])] for k, v in PARTS.items()}
+# 11-20: 以下 (零件表 / 干涉 / 逐颗探针 / 整机+螺丝 3MF) 只在直接运行本脚本时做 (约 35 s);
+#   被 import 只要螺丝几何 (F / S) 时跳过 (分组装配 / 组合图脚本)。要在 import 时也做: FASTENERS_REPORT=1
+import os as _os_f
+if __name__ == '__main__' or _os_f.environ.get('FASTENERS_REPORT'):
+    # ---------------- 零件 ----------------
+    PARTS = {"灯板立板+x": L.post_a, "灯板立板-x": L.post_b, "灯板夹条": L.bar_s, "灯板顶部件": L.top, "灯板梳齿": L.comb_s, "底盘": B.disc, "线圈环": B.ring, "电机": B.motor, "控制板": B.board, "散热片": B.heatsink,
+             "法兰盘": B.flange_disc, "安装法兰": B.mounting_flange, "转子毂盘": B.hub, "承载盘": B.rim,
+             "玻璃下底座": B.shroud_lo, "玻璃下玻璃座": B.shroud_hi, "外卡环": B.clamp_ring, "XT60压块": B.xt_clamp, "XT60底垫": B.xt_shim,
+             **({"MOS压块": B.CD.clamp} if B.CD.HAS_MC else {}), **({"电容卡件": B.CD.cap_clamp} if B.CD.HAS_CC else {}), "驱动板": B.CD.pcb, "驱动MOS": B.CD.mos, "驱动电解电容": B.CD.cap, "驱动散热片": B.CD.sink2, "按键支架": B.key_bracket, "按键板": B.key_board,
+             "转子罩a": RS.shr_a, "转子罩b": RS.shr_b, "转子罩顶盖+y": RS.lid_a, "转子罩顶盖-y": RS.lid_b, "无线托盘": WH.H, "无线模块 (占位)": WH.module, "底板 r4b (板框)": L.VB['baseboard'],
+             "MR30座": MW_SEAT, "电机线夹": MW_CLAMP}   # 11-16 新件; 11-16 晚 中间 T 件取消, +MR30 座 / 线夹
+    if B.ROTOR_B:   # 11-18 转子盘B
+        for _k in ("灯板立板+x", "灯板立板-x", "转子毂盘", "承载盘", "转子罩a", "转子罩b", "转子罩顶盖+y", "转子罩顶盖-y"): PARTS.pop(_k)
+        PARTS.update({"玻纤板": RB.fr4, "承载盘B": RB.rim, **{n: sh for n, sh, _ in RB.SCREEN_PARTS}, "转子罩B+y": RSB.shr_a, "转子罩B-y": RSB.shr_b})
+    for i, p in enumerate(B.posts):
+        PARTS[f"立柱{i}"] = p
+    PB = {k: bbox(v) for k, v in PARTS.items()}
+    PSOL = {k: [(s, bbox(s)) for s in solids(v)] or [(v, PB[k])] for k, v in PARTS.items()}
 
 
-def bb_hit(a, b, m=0.0):
-    return not (a[3] < b[0] - m or b[3] < a[0] - m or a[4] < b[1] - m or b[4] < a[1] - m or a[5] < b[2] - m or b[5] < a[2] - m)
+    def bb_hit(a, b, m=0.0):
+        return not (a[3] < b[0] - m or b[3] < a[0] - m or a[4] < b[1] - m or b[4] < a[1] - m or a[5] < b[2] - m or b[5] < a[2] - m)
 
 
-def common_vol(sh, pn):
-    sb = bbox(sh); v = 0.0
-    if not bb_hit(sb, PB[pn]):
-        return 0.0
-    for s, b in PSOL[pn]:
-        if bb_hit(sb, b):
-            v += vol(op(BRepAlgoAPI_Common, sh, s))
-    return v
+    def common_vol(sh, pn):
+        sb = bbox(sh); v = 0.0
+        if not bb_hit(sb, PB[pn]):
+            return 0.0
+        for s, b in PSOL[pn]:
+            if bb_hit(sb, b):
+                v += vol(op(BRepAlgoAPI_Common, sh, s))
+        return v
 
 
-def common_bbox(sh, pn):
-    sb = bbox(sh); bs = []
-    for s, b in PSOL[pn]:
-        if bb_hit(sb, b):
-            c = op(BRepAlgoAPI_Common, sh, s)
-            if vol(c) > 1e-6:
-                bs.append(bbox(c))
-    return bs
+    def common_bbox(sh, pn):
+        sb = bbox(sh); bs = []
+        for s, b in PSOL[pn]:
+            if bb_hit(sb, b):
+                c = op(BRepAlgoAPI_Common, sh, s)
+                if vol(c) > 1e-6:
+                    bs.append(bbox(c))
+        return bs
 
 
-# ---- 干涉: 每个紧固件 vs 每个零件 ----
-rows = []
-for n, sh, c in F:
-    for pn in PARTS:
-        v = common_vol(sh, pn)
-        if v > 0.01:
-            rows.append((n, pn, v))
-print("== 紧固件 ↔ 零件 共用体积 (>0.01 mm3) ==")
-for n, pn, v in rows:
-    print(f"  {n:24s} ↔ {pn:8s} {v:8.3f} mm3")
+    # ---- 干涉: 每个紧固件 vs 每个零件 ----
+    rows = []
+    for n, sh, c in F:
+        for pn in PARTS:
+            v = common_vol(sh, pn)
+            if v > 0.01:
+                rows.append((n, pn, v))
+    print("== 紧固件 ↔ 零件 共用体积 (>0.01 mm3) ==")
+    for n, pn, v in rows:
+        print(f"  {n:24s} ↔ {pn:8s} {v:8.3f} mm3")
 
 
-# ---- 每处: 支承面 / 尾端 / 啮合 / 尾端前方最近件 / 头外侧最近件 ----
-def probe(x, y, d, z, up, span=60.0):
-    """从 z 沿轴 (up=+Z) 打一根 Φd 柱, 返回 (距离, 件名); 无则 (None, None)。"""
-    col = cyl(x, y, d, z + 1e-3, z + span) if up else cyl(x, y, d, z - span, z - 1e-3)
-    best = (None, None)
-    for pn in PARTS:
-        for b in common_bbox(col, pn):
-            dist = (b[2] - z) if up else (z - b[5])
-            if best[0] is None or dist < best[0]:
-                best = (dist, pn)
-    return best
+    # ---- 每处: 支承面 / 尾端 / 啮合 / 尾端前方最近件 / 头外侧最近件 ----
+    def probe(x, y, d, z, up, span=60.0):
+        """从 z 沿轴 (up=+Z) 打一根 Φd 柱, 返回 (距离, 件名); 无则 (None, None)。"""
+        col = cyl(x, y, d, z + 1e-3, z + span) if up else cyl(x, y, d, z - span, z - 1e-3)
+        best = (None, None)
+        for pn in PARTS:
+            for b in common_bbox(col, pn):
+                dist = (b[2] - z) if up else (z - b[5])
+                if best[0] is None or dist < best[0]:
+                    best = (dist, pn)
+        return best
 
 
-T = []
-print("== 每处螺丝 ==")
-for s in S:
-    x, y, up, bear, L, tip, d = s['x'], s['y'], s['up'], s['bear'], s['L'], s['tip'], s['d']
-    en, z0, z1 = s['engage']
-    if z1 is None:                                             # 电机: 进螺纹深度 = 尾端 - 电机底面
-        eng = tip - z0
-    else:
-        lo, hi = (bear, tip) if up else (tip, bear)
-        eng = max(0.0, min(hi, z1) - max(lo, z0))
-    tdist, tpart = probe(x, y, d, tip, up)
-    head_out = bear - s['hh'] if up else bear + s['hh']
-    hdist, hpart = probe(x, y, (s['hd'] or (M6_HEAD_D if d > 3 else M3_HEAD_D)) - 0.2, head_out, not up)   # 11-16: 有 hd 用实际头径 (M4 超薄头 8.5)
-    row = dict(组=s['group'], 号=s['i'], x=round(x, 2), y=round(y, 2), r=round(math.hypot(x, y), 2), 方向="↑" if up else "↓",
-               支承面Z=round(bear, 2), 尾端Z=round(tip, 2), 啮合=en, 啮合长=round(eng, 2),
-               尾端前方=tpart, 尾端距离=None if tdist is None else round(tdist, 2),
-               头外侧=hpart, 头外侧距离=None if hdist is None else round(hdist, 2), 头外侧Z=round(head_out, 2))
-    T.append(row)
-    print("  " + "  ".join(f"{k}={v}" for k, v in row.items()))
-for row in KEY_ROWS:                                               # 按键板横向螺丝 (沿 −Y), 不走 Z 向 probe
-    T.append(row); print("  " + "  ".join(f"{k}={v}" for k, v in row.items()))
-for row in SEAM_ROWS:                                              # 转子罩分缝切向螺丝 (沿 ±X): 沿 x 打探针
-    y, z, hx, hs, tx, ts = row.pop('_probe')
-    hdist, hpart = probe_x(y, z, 5.5 - 0.2, hx, hs)
-    tdist, tpart = probe_x(y, z, 3.0, tx, ts)
-    row.update(尾端前方=tpart, 尾端距离=None if tdist is None else round(tdist, 2), 头外侧=hpart, 头外侧距离=None if hdist is None else round(hdist, 2), 头外侧x=round(hx, 2))
-    T.append(row); print("  " + "  ".join(f"{k}={v}" for k, v in row.items()))
+    T = []
+    print("== 每处螺丝 ==")
+    for s in S:
+        x, y, up, bear, L, tip, d = s['x'], s['y'], s['up'], s['bear'], s['L'], s['tip'], s['d']
+        en, z0, z1 = s['engage']
+        if z1 is None:                                             # 电机: 进螺纹深度 = 尾端 - 电机底面
+            eng = tip - z0
+        else:
+            lo, hi = (bear, tip) if up else (tip, bear)
+            eng = max(0.0, min(hi, z1) - max(lo, z0))
+        tdist, tpart = probe(x, y, d, tip, up)
+        head_out = bear - s['hh'] if up else bear + s['hh']
+        hdist, hpart = probe(x, y, (s['hd'] or (M6_HEAD_D if d > 3 else M3_HEAD_D)) - 0.2, head_out, not up)   # 11-16: 有 hd 用实际头径 (M4 超薄头 8.5)
+        row = dict(组=s['group'], 号=s['i'], x=round(x, 2), y=round(y, 2), r=round(math.hypot(x, y), 2), 方向="↑" if up else "↓",
+                   支承面Z=round(bear, 2), 尾端Z=round(tip, 2), 啮合=en, 啮合长=round(eng, 2),
+                   尾端前方=tpart, 尾端距离=None if tdist is None else round(tdist, 2),
+                   头外侧=hpart, 头外侧距离=None if hdist is None else round(hdist, 2), 头外侧Z=round(head_out, 2))
+        T.append(row)
+        print("  " + "  ".join(f"{k}={v}" for k, v in row.items()))
+    for row in KEY_ROWS:                                               # 按键板横向螺丝 (沿 −Y), 不走 Z 向 probe
+        T.append(row); print("  " + "  ".join(f"{k}={v}" for k, v in row.items()))
+    for row in SEAM_ROWS:                                              # 转子罩分缝切向螺丝 (沿 ±X): 沿 x 打探针
+        y, z, hx, hs, tx, ts = row.pop('_probe')
+        hdist, hpart = probe_x(y, z, 5.5 - 0.2, hx, hs)
+        tdist, tpart = probe_x(y, z, 3.0, tx, ts)
+        row.update(尾端前方=tpart, 尾端距离=None if tdist is None else round(tdist, 2), 头外侧=hpart, 头外侧距离=None if hdist is None else round(hdist, 2), 头外侧x=round(hx, 2))
+        T.append(row); print("  " + "  ".join(f"{k}={v}" for k, v in row.items()))
 
-# 线圈环角法兰螺母 vs Φ77 圆台 (解析)
-ring_r = math.hypot(*B.RING_M3[0])
-ana = dict(角孔心r=round(ring_r, 3), 法兰外缘内侧r=round(ring_r - NUT_FL_D / 2, 3), 六角外接内侧r=round(ring_r - NUT_AF / math.sqrt(3), 3),
-           六角对边内侧r=round(ring_r - NUT_AF / 2, 3), 圆台r=B.COLLAR_D / 2,
-           需孔心r_法兰=round(B.COLLAR_D / 2 + NUT_FL_D / 2, 3), 需RING_M3_XY=round((B.COLLAR_D / 2 + NUT_FL_D / 2) / math.sqrt(2), 3))
-print("== 线圈环角螺母 vs Φ77 圆台 ==", ana)
-sh_r = math.hypot(*B.SH_M6[0])
-ana2 = dict(下罩孔心r=round(sh_r, 3), 法兰外缘r=round(sh_r + NUT_FL_D / 2, 3), 墙内面r=B.SPIG_IN, 法兰内缘r=round(sh_r - NUT_FL_D / 2, 3),
-            外裙=(82.5, 85.0), 螺母顶Z=B.TRI_T + NUT_T, 外裙底Z=B.FL_Z0)
-print("== 下罩螺母 ==", ana2)
+    # 线圈环角法兰螺母 vs Φ77 圆台 (解析)
+    ring_r = math.hypot(*B.RING_M3[0])
+    ana = dict(角孔心r=round(ring_r, 3), 法兰外缘内侧r=round(ring_r - NUT_FL_D / 2, 3), 六角外接内侧r=round(ring_r - NUT_AF / math.sqrt(3), 3),
+               六角对边内侧r=round(ring_r - NUT_AF / 2, 3), 圆台r=B.COLLAR_D / 2,
+               需孔心r_法兰=round(B.COLLAR_D / 2 + NUT_FL_D / 2, 3), 需RING_M3_XY=round((B.COLLAR_D / 2 + NUT_FL_D / 2) / math.sqrt(2), 3))
+    print("== 线圈环角螺母 vs Φ77 圆台 ==", ana)
+    sh_r = math.hypot(*B.SH_M6[0])
+    ana2 = dict(下罩孔心r=round(sh_r, 3), 法兰外缘r=round(sh_r + NUT_FL_D / 2, 3), 墙内面r=B.SPIG_IN, 法兰内缘r=round(sh_r - NUT_FL_D / 2, 3),
+                外裙=(82.5, 85.0), 螺母顶Z=B.TRI_T + NUT_T, 外裙底Z=B.FL_Z0)
+    print("== 下罩螺母 ==", ana2)
 
-(B.OUT).mkdir(exist_ok=True)
-json.dump(dict(interf=[dict(件=n, 零件=pn, 体积=round(v, 3)) for n, pn, v in rows], screws=T, ring=ana, shroud=ana2),
-          open(B.OUT / 'fasteners_v1_2.json', 'w'), ensure_ascii=False, indent=1)
-
-
-# ---------------- 3MF (mesh / write3mf 拷自 export_3mf_v1_2.py, 不 import 它) ----------------
-def mesh(shape, defl):
-    BRepMesh_IncrementalMesh(shape, defl, False, 0.3, True)
-    V = []; Tr = []; n = 0; e = TopExp_Explorer(shape, TopAbs_FACE)
-    while e.More():
-        f = TopoDS.Face(e.Current()); L = TopLoc_Location(); tr = BRep_Tool.Triangulation_s(f, L)
-        if tr is not None:
-            t = L.Transformation(); k = tr.NbNodes()
-            V.append(np.array([[p.X(), p.Y(), p.Z()] for p in (tr.Node(i).Transformed(t) for i in range(1, k + 1))]))
-            tt = np.array([[tr.Triangle(i).Value(j) for j in (1, 2, 3)] for i in range(1, tr.NbTriangles() + 1)]) - 1
-            if f.Orientation() == TopAbs_REVERSED: tt = tt[:, [0, 2, 1]]
-            Tr.append(tt + n); n += k
-        e.Next()
-    return np.vstack(V), np.vstack(Tr)
+    (B.OUT).mkdir(exist_ok=True)
+    json.dump(dict(interf=[dict(件=n, 零件=pn, 体积=round(v, 3)) for n, pn, v in rows], screws=T, ring=ana, shroud=ana2),
+              open(B.OUT / 'fasteners_v1_2.json', 'w'), ensure_ascii=False, indent=1)
 
 
-def write3mf(path, parts):
-    mats = ''.join(f'<base name="{n}" displaycolor="{c}FF"/>' for n, _, c, _ in parts)
-    objs = []; items = []
-    for i, (n, s, c, defl) in enumerate(parts):
-        V, Tr = mesh(s, defl)
-        vs = '\n'.join(f'<vertex x="{x:.4f}" y="{y:.4f}" z="{z:.4f}"/>' for x, y, z in V)
-        ts = '\n'.join(f'<triangle v1="{a}" v2="{b}" v3="{c_}"/>' for a, b, c_ in Tr)
-        objs.append(f'<object id="{i + 2}" name="{n}" type="model" pid="1" pindex="{i}"><mesh><vertices>{vs}</vertices><triangles>{ts}</triangles></mesh></object>')
-        items.append(f'<item objectid="{i + 2}"/>'); print(n, len(V), len(Tr), flush=True)
-    model = ('<?xml version="1.0" encoding="UTF-8"?>\n<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">'
-             f'<resources><basematerials id="1">{mats}</basematerials>{"".join(objs)}</resources><build>{"".join(items)}</build></model>')
-    with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
-        z.writestr('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>')
-        z.writestr('_rels/.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>')
-        z.writestr('3D/3dmodel.model', model)
+    # ---------------- 3MF (mesh / write3mf 拷自 export_3mf_v1_2.py, 不 import 它) ----------------
+    def mesh(shape, defl):
+        BRepMesh_IncrementalMesh(shape, defl, False, 0.3, True)
+        V = []; Tr = []; n = 0; e = TopExp_Explorer(shape, TopAbs_FACE)
+        while e.More():
+            f = TopoDS.Face(e.Current()); L = TopLoc_Location(); tr = BRep_Tool.Triangulation_s(f, L)
+            if tr is not None:
+                t = L.Transformation(); k = tr.NbNodes()
+                V.append(np.array([[p.X(), p.Y(), p.Z()] for p in (tr.Node(i).Transformed(t) for i in range(1, k + 1))]))
+                tt = np.array([[tr.Triangle(i).Value(j) for j in (1, 2, 3)] for i in range(1, tr.NbTriangles() + 1)]) - 1
+                if f.Orientation() == TopAbs_REVERSED: tt = tt[:, [0, 2, 1]]
+                Tr.append(tt + n); n += k
+            e.Next()
+        return np.vstack(V), np.vstack(Tr)
 
 
-# 控制板: 3MF 里去掉 < 1 mm 小件 (同 export 脚本), 干涉检查用全板
-import led_support_v1_2 as LS                       # 上面螺丝循环里 L 被当作长度变量覆盖, 这里重新取模块
-BOARD_LITE = comp([s for s in solids(B.board) if (lambda b: max(b[3] - b[0], b[4] - b[1]) >= 1.2 or b[5] - b[2] >= 1.0)(bbox(s))])
-grp = {}
-for n, sh, c in F:
-    grp.setdefault((n.split(" #")[0], c), []).append(sh)
-FAST = [(k, comp(v), c, 0.05) for (k, c), v in grp.items()]
-P_ = [('打印底盘 Φ220×4.5', B.disc_print, '#8A8F98', 0.05), ('玻纤板 FR4 Φ220×3', B.fr4, '#C8D86A', 0.05), ('线圈环', B.ring, '#E0A030', 0.05), ('电机 Φ55×21.5 (占位)', B.motor, '#333333', 0.05),
-      ('电机控制板', BOARD_LITE, '#2E7D32', 0.08), ('散热片 40×20×6', B.heatsink, '#C0392B', 0.05),
-      ('法兰盘 flange_disc_v1_2', B.flange_disc, '#D9A441', 0.05), ('安装法兰 mounting_flange_v1_2', B.mounting_flange, '#B5895A', 0.05),
-      ('转子毂盘 hub_disc_v1_2', B.hub, '#4F86C6', 0.05), (f'承载盘 rim_ring Φ{B.RIM_D:g}', B.rim, '#6AA84F', 0.05),
-      ('玻璃下-底座 glass_shroud_lower_v1_2', B.shroud_lo, '#7FB3D5', 0.05), ('玻璃下-玻璃座 glass_shroud_upper_v1_2', B.shroud_hi, '#5DADE2', 0.05), ('外卡环 glass_clamp_ring_v1_2', B.clamp_ring, '#2E86C1', 0.05), ('XT60 压块', B.xt_clamp, '#F1C232', 0.05), ('XT60 底垫', B.xt_shim, '#E69138', 0.05),
-      *([('MOS 压块 mos_clamp_v1_2', B.CD.clamp, '#E69138', 0.05)] if B.CD.HAS_MC else []), *([('电容卡件 cap_clamp_v1_2', B.CD.cap_clamp, '#B45F06', 0.05)] if B.CD.HAS_CC else []), ('线圈驱动板 (元件级)', B.CD.pcb, '#38761D', 0.05), ('线圈驱动 MOS', B.CD.mos, '#222222', 0.05),
-      ('线圈驱动 电解电容', B.CD.cap, '#1155CC', 0.05), ('线圈驱动 散热片', B.CD.sink2, '#C0392B', 0.05),
-      ('按键支架 key_bracket_v1_2', B.key_bracket, '#F1C232', 0.03), ('按键板 (简模)', B.key_board, '#2E7D32', 0.03),
-      ('灯板支撑 +x led_post_a', LS.post_a, '#F1C232', 0.03), ('灯板支撑 -x led_post_b', LS.post_b, '#E69138', 0.03), ('灯板夹条 led_bar', LS.bar_s, '#8E7CC3', 0.03),
-      ('灯板顶部件 led_top', LS.top, '#6FA8DC', 0.03), ('灯板梳齿 led_comb', LS.comb_s, '#9FC5E8', 0.03),
-      ('转子罩 a rotor_shroud_a_v1_2', RS.shr_a, '#6FA8DC', 0.05), ('转子罩 b rotor_shroud_b_v1_2', RS.shr_b, '#93C47D', 0.05), ('转子罩顶盖 +y rotor_lid_v1_2', RS.lid_a, '#CFE2F3', 0.05), ('转子罩顶盖 −y rotor_lid_b_v1_2', RS.lid_b, '#A4C2F4', 0.05),
-      ('无线托盘 wireless_holder_v1_2', WH.H, '#F1C232', 0.03), ('无线供电模块 30.5×49×15 (占位)', WH.module, '#3D85C6', 0.05),
-      ('MR30 座 mr30_seat_v1_2', MW_SEAT, '#F1C232', 0.03), ('电机线束线夹 motor_wire_clamp_v1_2', MW_CLAMP, '#E69138', 0.03)]
-if B.ROTOR_B:   # 11-18 转子盘B
-    _drop = ('转子毂盘', '承载盘 rim_ring', '灯板支撑', '转子罩')
-    P_ = [p for p in P_ if not p[0].startswith(_drop)] + [('玻纤板 fr4_plate_v1_2b', RB.fr4, '#C9B458', 0.05), ('承载盘 rim_ring_v1_2b', RB.rim, '#6AA84F', 0.05),
-          *[(n, sh, c, 0.03) for n, sh, c in RB.SCREEN_PARTS],
-          ('转子罩 +y 半 rotor_shroud_b_a_v1_2b', RSB.shr_a, '#6FA8DC', 0.05), ('转子罩 −y 半 rotor_shroud_b_b_v1_2b', RSB.shr_b, '#93C47D', 0.05)]
-out = f"{B.V12 / 'assembly_v1_2'}_整机+螺丝.3mf"
-write3mf(out, P_ + FAST)
-print("wrote", out)
+    def write3mf(path, parts):
+        mats = ''.join(f'<base name="{n}" displaycolor="{c}FF"/>' for n, _, c, _ in parts)
+        objs = []; items = []
+        for i, (n, s, c, defl) in enumerate(parts):
+            V, Tr = mesh(s, defl)
+            vs = '\n'.join(f'<vertex x="{x:.4f}" y="{y:.4f}" z="{z:.4f}"/>' for x, y, z in V)
+            ts = '\n'.join(f'<triangle v1="{a}" v2="{b}" v3="{c_}"/>' for a, b, c_ in Tr)
+            objs.append(f'<object id="{i + 2}" name="{n}" type="model" pid="1" pindex="{i}"><mesh><vertices>{vs}</vertices><triangles>{ts}</triangles></mesh></object>')
+            items.append(f'<item objectid="{i + 2}"/>'); print(n, len(V), len(Tr), flush=True)
+        model = ('<?xml version="1.0" encoding="UTF-8"?>\n<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">'
+                 f'<resources><basematerials id="1">{mats}</basematerials>{"".join(objs)}</resources><build>{"".join(items)}</build></model>')
+        with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
+            z.writestr('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>')
+            z.writestr('_rels/.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>')
+            z.writestr('3D/3dmodel.model', model)
+
+
+    # 控制板: 3MF 里去掉 < 1 mm 小件 (同 export 脚本), 干涉检查用全板
+    import led_support_v1_2 as LS                       # 上面螺丝循环里 L 被当作长度变量覆盖, 这里重新取模块
+    BOARD_LITE = comp([s for s in solids(B.board) if (lambda b: max(b[3] - b[0], b[4] - b[1]) >= 1.2 or b[5] - b[2] >= 1.0)(bbox(s))])
+    grp = {}
+    for n, sh, c in F:
+        grp.setdefault((n.split(" #")[0], c), []).append(sh)
+    FAST = [(k, comp(v), c, 0.05) for (k, c), v in grp.items()]
+    P_ = [('打印底盘 Φ220×4.5', B.disc_print, '#8A8F98', 0.05), ('玻纤板 FR4 Φ220×3', B.fr4, '#C8D86A', 0.05), ('线圈环', B.ring, '#E0A030', 0.05), ('电机 Φ55×21.5 (占位)', B.motor, '#333333', 0.05),
+          ('电机控制板', BOARD_LITE, '#2E7D32', 0.08), ('散热片 40×20×6', B.heatsink, '#C0392B', 0.05),
+          ('法兰盘 flange_disc_v1_2', B.flange_disc, '#D9A441', 0.05), ('安装法兰 mounting_flange_v1_2', B.mounting_flange, '#B5895A', 0.05),
+          ('转子毂盘 hub_disc_v1_2', B.hub, '#4F86C6', 0.05), (f'承载盘 rim_ring Φ{B.RIM_D:g}', B.rim, '#6AA84F', 0.05),
+          ('玻璃下-底座 glass_shroud_lower_v1_2', B.shroud_lo, '#7FB3D5', 0.05), ('玻璃下-玻璃座 glass_shroud_upper_v1_2', B.shroud_hi, '#5DADE2', 0.05), ('外卡环 glass_clamp_ring_v1_2', B.clamp_ring, '#2E86C1', 0.05), ('XT60 压块', B.xt_clamp, '#F1C232', 0.05), ('XT60 底垫', B.xt_shim, '#E69138', 0.05),
+          *([('MOS 压块 mos_clamp_v1_2', B.CD.clamp, '#E69138', 0.05)] if B.CD.HAS_MC else []), *([('电容卡件 cap_clamp_v1_2', B.CD.cap_clamp, '#B45F06', 0.05)] if B.CD.HAS_CC else []), ('线圈驱动板 (元件级)', B.CD.pcb, '#38761D', 0.05), ('线圈驱动 MOS', B.CD.mos, '#222222', 0.05),
+          ('线圈驱动 电解电容', B.CD.cap, '#1155CC', 0.05), ('线圈驱动 散热片', B.CD.sink2, '#C0392B', 0.05),
+          ('按键支架 key_bracket_v1_2', B.key_bracket, '#F1C232', 0.03), ('按键板 (简模)', B.key_board, '#2E7D32', 0.03),
+          ('灯板支撑 +x led_post_a', LS.post_a, '#F1C232', 0.03), ('灯板支撑 -x led_post_b', LS.post_b, '#E69138', 0.03), ('灯板夹条 led_bar', LS.bar_s, '#8E7CC3', 0.03),
+          ('灯板顶部件 led_top', LS.top, '#6FA8DC', 0.03), ('灯板梳齿 led_comb', LS.comb_s, '#9FC5E8', 0.03),
+          ('转子罩 a rotor_shroud_a_v1_2', RS.shr_a, '#6FA8DC', 0.05), ('转子罩 b rotor_shroud_b_v1_2', RS.shr_b, '#93C47D', 0.05), ('转子罩顶盖 +y rotor_lid_v1_2', RS.lid_a, '#CFE2F3', 0.05), ('转子罩顶盖 −y rotor_lid_b_v1_2', RS.lid_b, '#A4C2F4', 0.05),
+          ('无线托盘 wireless_holder_v1_2', WH.H, '#F1C232', 0.03), ('无线供电模块 30.5×49×15 (占位)', WH.module, '#3D85C6', 0.05),
+          ('MR30 座 mr30_seat_v1_2', MW_SEAT, '#F1C232', 0.03), ('电机线束线夹 motor_wire_clamp_v1_2', MW_CLAMP, '#E69138', 0.03)]
+    if B.ROTOR_B:   # 11-18 转子盘B
+        _drop = ('转子毂盘', '承载盘 rim_ring', '灯板支撑', '转子罩')
+        P_ = [p for p in P_ if not p[0].startswith(_drop)] + [('玻纤板 fr4_plate_v1_2b', RB.fr4, '#C9B458', 0.05), ('承载盘 rim_ring_v1_2b', RB.rim, '#6AA84F', 0.05),
+              *[(n, sh, c, 0.03) for n, sh, c in RB.SCREEN_PARTS],
+              ('转子罩 +y 半 rotor_shroud_b_a_v1_2b', RSB.shr_a, '#6FA8DC', 0.05), ('转子罩 −y 半 rotor_shroud_b_b_v1_2b', RSB.shr_b, '#93C47D', 0.05)]
+    out = f"{B.V12 / 'assembly_v1_2'}_整机+螺丝.3mf"
+    write3mf(out, P_ + FAST)
+    print("wrote", out)

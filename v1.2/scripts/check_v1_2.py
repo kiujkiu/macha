@@ -8,7 +8,23 @@ from OCP.TopAbs import TopAbs_FACE
 from OCP.BRep import BRep_Tool
 from OCP.TopLoc import TopLoc_Location
 from OCP.TopoDS import TopoDS
+import geocache as GC, pickle as _pk, os as _os
+# 11-20: 采样点 / 配对结果按形体键缓存 (geocache), 只重算变了的件; CHECK_CACHE=0 全部重算
+_CK = GC.ON and _os.environ.get('CHECK_CACHE','1')!='0'
+_PD = GC.DIR/'check'; _PD.mkdir(parents=True, exist_ok=True) if _CK else None
+_PAIRF = _PD/'pairs.pkl'
+try: _PAIRC = _pk.load(open(_PAIRF,'rb')) if _CK and _PAIRF.exists() else {}
+except Exception: _PAIRC = {}
+_ST = dict(pts_hit=0, pts_new=0, pair_hit=0, pair_new=0, pair_far=0)
 def pts(shape,dens=8.0,defl=0.05):
+    if not _CK: return _pts(shape,dens,defl)
+    f = _PD/f'pts_{GC._h(GC.key(shape),dens,defl)}.npy'
+    if f.exists():
+        try: _ST['pts_hit']+=1; return np.load(f)
+        except Exception: pass
+    a = _pts(shape,dens,defl); _ST['pts_new']+=1
+    tmp = f.with_suffix(f'.{_os.getpid()}.tmp.npy'); np.save(tmp, a); _os.replace(tmp, f); return a
+def _pts(shape,dens=8.0,defl=0.05):
     BRepMesh_IncrementalMesh(shape,defl,False,0.2,True)
     out=[]; e=TopExp_Explorer(shape,TopAbs_FACE); rng=np.random.default_rng(0)
     while e.More():
@@ -45,9 +61,19 @@ if ROTOR_B:
     for k in ('hub','rim','led_post_a','led_post_b','rotor_shroud_a','rotor_shroud_b','rotor_lid_a','rotor_lid_b'): S.pop(k)
     S.update({'fr4':RB.fr4,'rim_b':RB.rim,**{k:sh for k,(_,sh,_) in zip(RB.SCREEN_KEYS,RB.SCREEN_PARTS)},'shroud_b_a':RSB.shr_a,'shroud_b_b':RSB.shr_b,'coil':RB.coil})   # 11-21 屏幕支撑件 A ×2 (0/180°) + B ×2 (90/270°)
     RMAP={'hub':'fr4','rim':'rim_b','led_post_a':'scr_sup_0','led_post_b':'scr_sup_180','rotor_shroud_a':'shroud_b_a','rotor_shroud_b':'shroud_b_b','rotor_lid_a':'shroud_b_a','rotor_lid_b':'shroud_b_b'}
-P={k:pts(v) for k,v in S.items()}; print('sampled',f'{time.time()-T0:.0f}s',flush=True)
-K={k:cKDTree(v) for k,v in P.items()}
-def md(a,b): d,_=K[b].query(P[a],k=1,distance_upper_bound=20); return float(d.min())
+_KEY={k:GC.key(v) if GC.ON else k for k,v in S.items()}; _BB={k:bbox(v) for k,v in S.items()}
+_P={}; _K={}
+def _p(k):
+    if k not in _P: _P[k]=pts(S[k])
+    return _P[k]
+def md(a,b):
+    A,Bb=_BB[a],_BB[b]; gap=max(0.0,A[0]-Bb[3],Bb[0]-A[3],A[1]-Bb[4],Bb[1]-A[4],A[2]-Bb[5],Bb[2]-A[5])
+    if gap>20: return float('inf')                   # 包围盒相距 > 20 ⇒ 与原来 distance_upper_bound=20 的结果相同 (inf)
+    Pa=_p(a); m=np.all((Pa>=np.array(Bb[:3])-20)&(Pa<=np.array(Bb[3:])+20),axis=1)   # 对方包围盒外扩 20 以外的点距离必 > 20, 不用查 (结果不变)
+    if not m.any(): return float('inf')
+    if b not in _K: _K[b]=cKDTree(_p(b))
+    d,_=_K[b].query(Pa[m],k=1,distance_upper_bound=20); return float(d.min())
+print('shapes keyed',f'{time.time()-T0:.0f}s',flush=True)
 _CC=('cd_capclamp',) if CD.HAS_CC else ()
 _MC=('cd_clamp',) if CD.HAS_MC else ()
 PAIRS=[('board',x) for x in ('ring','flange_disc','mounting_flange','motor','seat','tube','post0','post1','post2','post3')]+\
@@ -81,12 +107,21 @@ if ROTOR_B:
         _seen.add(frozenset((x,y))); _np.append((x,y))
     PAIRS=_np
     print(f'转子盘B: 配对 {len(PAIRS)} 组',flush=True)
+_HIT0=set(_PAIRC)
 for a,b in PAIRS:
-    d=md(a,b); flag=''
-    if d<0.3:
-        v=vol(op(BRepAlgoAPI_Common,S[a],S[b])); flag=f'  相交体积 {v:.3f} mm3'
+    ck=('c1',_KEY[a],_KEY[b])
+    if _CK and ck in _PAIRC: d,v=_PAIRC[ck]; _ST['pair_hit']+=1
+    else:
+        d=md(a,b); v=vol(op(BRepAlgoAPI_Common,S[a],S[b])) if d<0.3 else None
+        _ST['pair_far' if d==float('inf') else 'pair_new']+=1
+        if _CK: _PAIRC[ck]=(d,v)
+    flag='' if v is None else f'  相交体积 {v:.3f} mm3'
+    if _os.environ.get('CHECK_BRIEF') and not (v is not None and v>1e-3) and not (_CK and ck not in _HIT0): continue   # 11-20 quick --check: 只列本次新算的配对 + 所有相交
     if a=='led_top' and b=='rod' and flag: flag+='  (预期: Φ8 轴压入 Φ7.85 孔过盈)'
     if a=='led_a' and b=='led_b' and flag: flag+='  (待查: 灯板 V0.2.0 STEP 上角 F 面 2 件 6×4 伸出 F 面 6.09 > 间隙 4.6, 各穿进对面板 1.47; 非结构件)'
     print(f'{a:14s} ↔ {b:16s} 最小距离 ≈ {d:6.2f}{flag}',flush=True)
 print(LOG['disc_holes']['grid'],'网格孔;', 'ring',LOG['ring'],flush=True)
+if _CK:
+    tmp=_PAIRF.with_suffix(f'.{_os.getpid()}.tmp'); _pk.dump(_PAIRC,open(tmp,'wb')); _os.replace(tmp,_PAIRF)
+    print(f"缓存: 采样 命中 {_ST['pts_hit']} / 新算 {_ST['pts_new']}; 配对 命中 {_ST['pair_hit']} / 新算 {_ST['pair_new']} / 包围盒远 {_ST['pair_far']}",flush=True)
 print(f'done {time.time()-T0:.0f}s')

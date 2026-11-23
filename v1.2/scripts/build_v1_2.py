@@ -27,21 +27,29 @@ ROTOR_B = os.environ.get('V12_ROTOR', 'B').upper() != 'A'
 
 def vol(s):
     g = GProp_GProps(); BRepGProp.VolumeProperties_s(s, g); return g.Mass()
+import geocache as GC                  # 11-20: 运算结果缓存 (见 geocache.py; GEO_CACHE=0 关)
 def cyl(x, y, d, z0, z1, ang=None, a0=0):
     ax = gp_Ax2(gp_Pnt(x, y, z0), gp_Dir(0, 0, 1))
-    if ang is None: return BRepPrimAPI_MakeCylinder(ax, d / 2, z1 - z0).Shape()
+    if ang is None: return GC.tag(BRepPrimAPI_MakeCylinder(ax, d / 2, z1 - z0).Shape(), 'cyl', x, y, d, z0, z1)
     ax = gp_Ax2(gp_Pnt(x, y, z0), gp_Dir(0, 0, 1), gp_Dir(math.cos(math.radians(a0)), math.sin(math.radians(a0)), 0))
-    return BRepPrimAPI_MakeCylinder(ax, d / 2, z1 - z0, math.radians(ang)).Shape()
-def op(cls, a, b):
+    return GC.tag(BRepPrimAPI_MakeCylinder(ax, d / 2, z1 - z0, math.radians(ang)).Shape(), 'cyl', x, y, d, z0, z1, ang, a0)
+def _op(cls, a, b):
     o = cls(a, b); o.Build(); assert o.IsDone(); return o.Shape()
+def op(cls, a, b):
+    if not GC.ON: return _op(cls, a, b)
+    return GC.run(('op', cls.__name__, GC.key(a), GC.key(b)), lambda: _op(cls, a, b))
 cut = lambda a, *bs: [a := op(BRepAlgoAPI_Cut, a, b) for b in bs][-1]
 fuse = lambda a, *bs: [a := op(BRepAlgoAPI_Fuse, a, b) for b in bs][-1]
-def clean(s):
+def _clean(s):
     u = ShapeUpgrade_UnifySameDomain(s, True, True, True); u.Build(); return u.Shape()
-def xf(s, t): return BRepBuilderAPI_Transform(s, t, True).Shape()
+def clean(s): return GC.run(('clean', GC.key(s)), lambda: _clean(s)) if GC.ON else _clean(s)
+def _xf(s, t): return BRepBuilderAPI_Transform(s, t, True).Shape()
+def xf(s, t): return GC.run(('xf', GC.key(s), GC.trsf_parts(t)), lambda: _xf(s, t)) if GC.ON else _xf(s, t)
 def rotz(deg):
     t = gp_Trsf(); t.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), math.radians(deg)); return t
-def one(p): return read_step(p)
+def one(p):
+    st = Path(p).stat()
+    return GC.run(('step', str(p), st.st_size, int(st.st_mtime)), lambda: read_step(p))
 
 LOG = {}
 # ---------------- 尺寸 ----------------
@@ -55,9 +63,9 @@ POCKET_D, POCKET_H = 6.2, 3.5          # 毂盘中心窝 (原 Φ6.2x2.2)
 RIM_D = 170.0                          # 承载盘外唇: 11-16 晚 用户改回 Φ170 (同晚曾改 Φ175; 11-14 改回 V0.4 Φ170; V1.0 原 180, V1.2 曾 178)
 SCR_ECC = -4.69                        # 11-18 夜 用户: 灯板间距 5 / 板厚 1.6 ⇒ −(2.5+1.6+MIP 0.59) = −4.69 (原 −4.36 = 间隙 4.6 / 板 1.468); 11-16 晚 用户: 整组灯板沿 y 平移 (同 V0.4/V1.0 偏心), 板 A MIP LED 顶面落在转轴 y=0; 各脚本都读 B.SCR_ECC
 DISC_D = 220.0
-# 用户 11-18: 底座 = 3 mm 玻纤板 (FR4, 顶 Z0) + 打印底盘 4.5 (Z-7.5..-3), 上面所有件 Z 不变。
+# 用户 11-18: 底座 = 3 mm 玻纤板 (FR4, 顶 Z0) + 打印底盘 4.5 (Z-7.5..-3) [11-20 改 5.0, Z-8..-3], 上面所有件 Z 不变。
 #   建模时仍按一整块 Z-7.5..0 的 disc 造 (底面沉孔/铜螺母孔相对底面, 顶面槽相对 Z0), 最后拆成 disc_print + fr4。
-FR4_T, PRINT_T = 3.0, 4.5
+FR4_T, PRINT_T = 3.0, 5.0   # 11-20 用户「底盘向上加厚0.5mm, coil锁下来的法兰螺母的位置太薄了」: 4.5→5.0, 底面沉孔深度不变 ⇒ 中央 G 法兰螺母窝顶 Z−4.3, 到玻纤板剩 1.3 (原 0.8)
 DISC_T = FR4_T + PRINT_T                # 7.5 (原一体底盘 6)
 M6_D, CB_D, CB_H = 6.4, 13.0, 3.0
 COLLAR_M6 = [(sx * 37.5, sy * 37.5) for sx in (1, -1) for sy in (1, -1)]
@@ -71,8 +79,10 @@ DROP = 10.2
 MOTOR_Z0 = 0.0
 ROTOR_TOP = MOTOR_Z0 + MOTOR_H                 # 21.5 (原 31.7)
 FL_THIN = 2.0                                  # 用户 11-11: flange_disc 底板减 3 (4.5→1.5), 顶面不动, 底面上抬; 11-12 夜: 加厚 1 (1.5→2.5) ⇒ 减 2, 总高 16 不变
-FL_UP = 1.2                                    # 用户 11-11 上移 1; 11-12 再 +0.2: 内管顶 = 安装法兰顶 = 总高 16 (方座顶 = FL_Z0 8.5, 11-12 夜)
-FL_Z0 = 15.5 + FL_THIN - DROP + FL_UP          # 法兰盘底 8.5 (11-12 夜, 原 9.5)
+STATOR_LIFT = 3.5                              # 11-19 23:1x 用户: 定转子间距 5.5 → 2 ⇒ 定子盘+安装法兰整体由线圈环托高 3.5 (只重打线圈环; 底盘上各件高度上限仍按旧定子盘底 FL_Z0_BASE 8.5, 不改形)
+FL_UP = 1.2 + STATOR_LIFT                                    # 用户 11-11 上移 1; 11-12 再 +0.2: 内管顶 = 安装法兰顶 = 总高 16 (方座顶 = FL_Z0 8.5, 11-12 夜)
+FL_Z0 = 15.5 + FL_THIN - DROP + FL_UP          # 法兰盘底 12.0 (11-19 抬 3.5; 11-12 夜 8.5, 原 9.5)
+FL_Z0_BASE = FL_Z0 - STATOR_LIFT                # 8.5 旧定子盘底: 底盘上件 (线圈驱动夹块/MR30 座/下罩筋) 的高度上限仍按它, 已打件不改形
 MF_THIN = 0.5                                  # 用户 11-11: mounting_flange 板厚 3→2.5 (顶面去 0.5)
 MF_CB = 1.5                                    # 用户 11-11: 安装法兰 16 个 Φ7 沉孔深 2.0→1.5
 FL_TOP = 22.5 - DROP + FL_UP                   # 法兰盘顶 13.5 (= 安装法兰底)
@@ -177,6 +187,15 @@ _low = cyl(0, 0, 400, -100, 15.5 + FL_THIN)
 _OLD_SCREWS = [(36.3 * math.cos(math.radians(22.5 + 45 * k)), 36.3 * math.sin(math.radians(22.5 + 45 * k))) for k in range(8)]
 _fd = cut(one(C10 / 'flange_disc_v4.step'), _low)
 _fd = fuse(_fd, cut(cyl(0, 0, 78.0, 15.5 + FL_THIN, 22.5), cyl(0, 0, FL_HOLE_R * 2, 0, 30)))   # 内墙 r≤39 补满到 r31.7 (旧孔一并补上; 不取 r40 免与线圈腔壁重合)
+# 11-20 22:1x 用户「这里改成一个圆孔吧，出线的，就在这个角度就行」: V0.4 原件腔底出线槽 (r40–60 @0–5°, 打穿底板) 补实,
+#   改 Φ4 圆孔 (同外圈出线孔 r70 @30° Φ4) @2.5°, 孔内边切线圈腔内缘 r39.9 (同转子盘内 AC 孔)
+FD_WIRE_D, FD_WIRE_A = 4.0, 2.5
+FD_WIRE_R = 39.9 + FD_WIRE_D / 2
+FD_WIRE_XY = (FD_WIRE_R * math.cos(math.radians(FD_WIRE_A)), FD_WIRE_R * math.sin(math.radians(FD_WIRE_A)))
+_cav0 = 22.5 - 2.8                                  # 原坐标腔底 (CAV_Z0 + DROP − FL_UP)
+_fd = fuse(_fd, op(BRepAlgoAPI_Common, cut(cyl(0, 0, 122.0, 15.5 + FL_THIN, _cav0), cyl(0, 0, 79.0, 0, 30)),
+                   _wb(30, -0.6, 15.5 + FL_THIN, 62, 6.5, _cav0)))
+_fd = cut(_fd, cyl(*FD_WIRE_XY, FD_WIRE_D, 0, 30))
 for x, y in FLANGE_SCREWS: _fd = cut(_fd, cyl(x, y, 3.2, 0, 30))
 flange_disc = zdown(clean(_fd), DROP - FL_UP)
 def _cb_xy(sh, d=7.0):
@@ -296,7 +315,7 @@ MOD_HOLES = [(28.25, -55.5), (-28.25, -55.5), (28.25, -37.5), (-28.25, -37.5)]  
 rim = clean(cut(rim, *[cyl(x, y, 4.2, 32.0 - 4.2, 33.0) for x, y in MOD_HOLES])) if MOD_HOLES else rim
 #   线圈 (腔 r34–76) 两根 AC 引线从承载盘小孔上来, 接无线供电模块 (−y 侧) —— 位置归 wireless_holder_v1_2.py
 AC_HOLE_D = 3.5                                   # 11-19 15:00 用户「直径3.5mm」(原 3.0)
-AC_HOLES = [(32.6, -25.93), (64.12, -29.9)]   # 11-20 无线组往 +y 挪 5 后夹块盖住内孔 (28.93, −29.96) ⇒ 内孔沿 r41.65 (仍切腔内缘) 由 −46° 转到 −38.5° (离夹块 1.74, 转 7.5°); 11-19 22:15 用户「改到 −25°」⇒ 外孔 r70.75 −25° (离屏幕固定件+x 0.5, 离灯板B 13.6, 离无线组 30.4); 之前 22:05 −20°: 11-19 22:05 用户「外环出线孔改到 −20° 看看」⇒ 外孔 r70.75 (仍切腔外缘) 由 −52.28° 转到 −20°: 离屏幕固定件+x 0.5 (径向, 固定件弧形带在 −45…−15° 都是 0.5), 离灯板B 8.6, −15° 以内碰固定件/灯板B; 11-19 21:21 用户画圈「应该这样」⇒ 内孔沿 r41.65 (仍切腔内缘) 转到 −46° (用户点约 −47.8° r43.5 离无线夹块只剩 0.45, 取 −46 留 ~2.7): 离灯板B 5.25→~17, 离桥板B 0→~14, 离 Q 沉孔 ~10; 21:11 版 (36.07,−20.83) @−30° 作废
+AC_HOLES = [(32.6, -25.93), (40.58, -57.95)]   # 11-20 16:3x 用户「顺时针转30度」⇒ 外孔沿 r70.75 由 −25° 转到 −55° (原 (64.12, −29.9)); 11-20 无线组往 +y 挪 5 后夹块盖住内孔 (28.93, −29.96) ⇒ 内孔沿 r41.65 (仍切腔内缘) 由 −46° 转到 −38.5° (离夹块 1.74, 转 7.5°); 11-19 22:15 用户「改到 −25°」⇒ 外孔 r70.75 −25° (离屏幕固定件+x 0.5, 离灯板B 13.6, 离无线组 30.4); 之前 22:05 −20°: 11-19 22:05 用户「外环出线孔改到 −20° 看看」⇒ 外孔 r70.75 (仍切腔外缘) 由 −52.28° 转到 −20°: 离屏幕固定件+x 0.5 (径向, 固定件弧形带在 −45…−15° 都是 0.5), 离灯板B 8.6, −15° 以内碰固定件/灯板B; 11-19 21:21 用户画圈「应该这样」⇒ 内孔沿 r41.65 (仍切腔内缘) 转到 −46° (用户点约 −47.8° r43.5 离无线夹块只剩 0.45, 取 −46 留 ~2.7): 离灯板B 5.25→~17, 离桥板B 0→~14, 离 Q 沉孔 ~10; 21:11 版 (36.07,−20.83) @−30° 作废
 AC_HOLES_OLD_1519 = [(38.54, -15.79), (43.29, -55.96)]   # 11-19 用户: Φ3.5, 线圈腔正上方, AC 侧夹块外侧; 「内外都改3.5，都做相接」⇒ 内孔边切腔内缘 (r 39.9+1.75 = 41.65 @−22.28°), 外孔边切腔外缘 (r 72.5−1.75 = 70.75 @−52.28°, 从下往上看在内孔逆时针 30°: 原 −42.3° 处离屏幕固定件弧形带只剩 0.5, 转到带外 −44° 以外取离屏幕件最远)
 rim = clean(cut(rim, *[cyl(x, y, AC_HOLE_D, 20.0, 33.0) for x, y in AC_HOLES]))
 # 11-16 晚 用户: 承载盘减薄 —— 盘体 Z27–32 → RIM_BOT Z29.5–32 (2.5 厚), 顶面 Z32 不动; 毂盘两圈接触面跟着加高 Z27 → Z29.5 (原设计贴合, 间隙 0 照旧)
@@ -363,14 +382,15 @@ BT = board_trsf()
 from OCP.BRep import BRep_Builder as _BB
 from OCP.TopoDS import TopoDS_Compound as _TC
 from helpers import read_step_cached as _rsc; _raw = _rsc(BOARD_F); _B = _BB(); _bc = _TC(); _B.MakeCompound(_bc); _drop = 0
+_bst = Path(BOARD_F).stat(); _bkey = ['board_bc', str(BOARD_F), _bst.st_size, int(_bst.st_mtime)]   # 11-20 geocache: 拼好的板按 文件 + 逐件取舍 定键 (免算 5 s 指纹)
 NOPOP = [(20.1, 28.4, 24.7, 41.0), (94.0, 99.5, 28.9, 41.0)]       # XT60 / MR30 (V1.0 同, 板系 +20/+10)
 CAP_H_MEAS, _CAP_FIX = 6.1, []
 HDR_H_RA, _HDR_FIX = 2.54, []
-for s__ in solids(_raw):
-    b__ = bbox(s__)
+for i__, s__ in enumerate(solids(_raw)):
+    b__ = bbox(s__); _s0__ = s__
     if any(b__[0] >= x0 - .01 and b__[3] <= x1 + .01 and b__[1] >= y0 - .01 and b__[4] <= y1 + .01 for x0, x1, y0, y1 in NOPOP) \
        and (b__[5] > 1.61 or b__[2] < -0.02):
-        _drop += 1; continue
+        _drop += 1; _bkey.append(('drop', i__)); continue
     # 11-16 晚 用户实测: 板上 2 颗电解 (STEP 里 Φ6.3×7.7, 顶 Z9.31) 实物高 6.1 (板面起) ⇒ 换成 Φ 同径圆柱, 顶 = 板面 + 6.1 (Z≈7.7, 定子盘底 Z8.5 下 0.8, 不再挖坑)
     _w, _d = b__[3] - b__[0], b__[4] - b__[1]
     if 6.0 < _w < 7.3 and abs(_w - _d) < 0.5 and b__[5] > 9.0:
@@ -380,8 +400,8 @@ for s__ in solids(_raw):
         # 11-16 晚 用户: 3P 直排针改弯排针 (卧装) ⇒ 包络压到板面 + 2.54 (塑料座高), 原顶 Z10.09; 定子盘底面不再挖方坑
         _HDR_FIX.append([round(v, 2) for v in b__])
         s__ = BRepPrimAPI_MakeBox(gp_Pnt(b__[0], b__[1], b__[2]), gp_Pnt(b__[3], b__[4], 1.6 + HDR_H_RA)).Shape()
-    _B.Add(_bc, s__)
-board = xf(_bc, BT); LOG['board'] = dict(dropped_solids=_drop, caps_fixed=_CAP_FIX, cap_h=CAP_H_MEAS, header_fixed=_HDR_FIX)
+    _B.Add(_bc, s__); _bkey.append(('raw', i__) if s__ is _s0__ else ('new', i__, GC.key(s__)))
+board = xf(GC.tag(_bc, *_bkey), BT); LOG['board'] = dict(dropped_solids=_drop, caps_fixed=_CAP_FIX, cap_h=CAP_H_MEAS, header_fixed=_HDR_FIX)
 def bl(x0, y0, x1, y1, z0, z1):      # 板本地矩形 -> 全局实体 (z 为全局)
     return xf(BRepPrimAPI_MakeBox(gp_Pnt(x0, y0, z0 - BOARD_Z), gp_Pnt(x1, y1, z1 - BOARD_Z)).Shape(), BT)
 BHOLES = [(24.49, 14.49), (24.49, 45.49), (95.49, 14.49), (95.49, 45.49)]
@@ -423,7 +443,7 @@ def _inkeep(x, y):
     _kc.Perform(gp_Pnt(x, y, 0), 1e-4); return _kc.State() != TopAbs_OUT
 FIXED = COLLAR_M6                                  # 用户 11-12: 下罩 4 孔改 M3 (SH_M6 位置不变, 单独开 M3 孔)
 MOTOR_HOLES = [(sx * STATOR_R * s45, sy * STATOR_R * s45) for sx in (1, -1) for sy in (1, -1)]
-M3_D, M3_CB_D, M3_CB_H = 3.2, 7.0, 1.5           # 内六角 M3 头 Φ5.5x3; 盘底往上装沉孔 用户 11-12: Φ6.5×3.5 → Φ7×2; 11-18 玻纤板方案: Φ7×1.5 (超薄头 1.5 齐底面) ⇒ 支承 Z-6, 盘底往上的 M3 全部 +2, 尖位置不变
+M3_D, M3_CB_D, M3_CB_H = 3.2, 7.0, 2.0           # 内六角 M3 头 Φ5.5x3; 盘底往上装沉孔 用户 11-12: Φ6.5×3.5 → Φ7×2; 11-18 玻纤板方案: Φ7×1.5 (超薄头 1.5 齐底面) ⇒ 支承 Z-6, 盘底往上的 M3 全部 +2, 尖位置不变; 11-20 用户「沉孔…改为2吧」+ 打印底盘 5.0 ⇒ Φ7×2, 支承仍 Z-6, 螺丝长度/尖都不变
 INS_HOLE_D, INS_HOLE_H = 4.2, 4.2               # 用户 11-12 夜: 全部 M3 铜螺母孔统一 Φ4.2×4.2 (统一装 M3×4 铜螺母, 底面齐平)
 def _loc(X, Y):      # 全局 -> 板本地
     p = gp_Pnt(X, Y, BOARD_Z).Transformed(BT.Inverted()); return p.X(), p.Y()
@@ -562,7 +582,7 @@ _cone = BRepPrimAPI_MakeCone(gp_Ax2(gp_Pnt(0, 0, Z_G), gp_Dir(0, 0, 1)), _r1, go
 s_ = ann(SPIG_IN, SH_OUT, 0, Z_G)                                              # 实心墙 r92–110
 s_ = fuse(s_, ann(gi - SPIG_T, gi, Z_G, Z_G + IN_DEPTH))                       # 内卡 (z32 以上, 内面比墙内面往里 1.2)
 s_ = fuse(s_, op(BRepAlgoAPI_Common, ann(go, SH_OUT, Z_G - 1, Z_G + OUT_DEPTH), _cone))   # 外卡 45° 斜顶
-def gbox(x0, y0, z0, x1, y1, z1): return BRepPrimAPI_MakeBox(gp_Pnt(x0, y0, z0), gp_Pnt(x1, y1, z1)).Shape()
+def gbox(x0, y0, z0, x1, y1, z1): return GC.tag(BRepPrimAPI_MakeBox(gp_Pnt(x0, y0, z0), gp_Pnt(x1, y1, z1)).Shape(), 'box', x0, y0, z0, x1, y1, z1)
 # 托台 (用户 11-11 第二版): 角上 M6 三角块厚 5 (螺母压顶面); 8 个定子盘托块单独做, 高到定子盘底 = 线圈环托台高
 P_N = 51.0
 TRI_T = 5.0
@@ -572,14 +592,14 @@ NUT_Z0 = TRI_T                                     # 用户 11-12 改 M3: M3x10 
 assert abs(SH_R - (SPIG_IN - SH_NUT_D / 2)) < 1e-9, '下罩螺母要贴墙内面'
 # 11-16 晚: 安装法兰外裙伸到 Z8.5 后, 4 颗下罩 M3 法兰螺母 (r86.8 Φ8 含余量, Z5–8.7 实高 3.7) 顶到外裙 r82.5–85 ⇒ 外裙底局部挖 Φ8.6 到 Z9.0 (留 0.3)
 MF_NUT_RELIEF = (SH_NUT_D + 0.6, NUT_Z0 + 3.7 + 0.3)
-mounting_flange = clean(cut(mounting_flange, *[cyl(x, y, MF_NUT_RELIEF[0], FL_Z0 - 1, MF_NUT_RELIEF[1]) for x, y in SH_M6]))
+mounting_flange = clean(cut(mounting_flange, *[cyl(x, y, MF_NUT_RELIEF[0], FL_Z0 - 1, MF_NUT_RELIEF[1] + STATOR_LIFT) for x, y in SH_M6]))   # 11-19: 让位随件抬 (件不改形)
 NUT_CLR_D = 0.0                                    # 用户 11-12: 螺母 r84–92 在定子盘 r82.5 外、顶 Z7.4 < 定子盘底 Z9.3 ⇒ 定子盘/安装法兰不再开让位 (原 Φ10)
 for x, y in SH_M6:
     s_ = cut(s_, cyl(x, y, 3.4, -1, TRI_T + 1))
 # 用户 11-12: 三角块两条直边 (x=±P_N / y=±P_N) 各立一片斜三角筋, 外侧面与直边齐平, 尖角 → 墙内面全长, 与块顶/墙熔一体
 #   侧视: 尖角 Z5 → 内侧面到 r GU_R85 处 Z GU_Z1 (r<85 段 ≤ 定子盘/安装法兰外裙底 FL_Z0 − 0.5) → 贴墙 Z GU_ZH (承载盘/毂盘底 Z21.5 下)
 GU_T, GU_ZH, GU_R85 = 2.5, 15.0, 85.5
-GU_Z1 = FL_Z0 - 0.5                                # 跟定子盘底走 (FL_Z0 9.5→8.5 时自动变 8.0)
+GU_Z1 = FL_Z0_BASE - 0.5                                # 跟定子盘底走 (FL_Z0 9.5→8.5 时自动变 8.0)
 assert GU_Z1 > TRI_T + 1, '定子盘太低, 筋 r<85 段没高度了'
 def _gusset():
     from OCP.BRepBuilderAPI import BRepBuilderAPI_MakePolygon, BRepBuilderAPI_MakeFace
@@ -616,7 +636,7 @@ def xt_tr():                                       # 局部 -> 全局: Y 反向�
 XT_T = xt_tr()
 def xt_pt(x, y): p = gp_Pnt(x, y, 0).Transformed(XT_T); return p.X(), p.Y()
 XT_GHOLES = [xt_pt(*h) for h in XT_HOLES]
-def gbox(x0, y0, z0, x1, y1, z1): return BRepPrimAPI_MakeBox(gp_Pnt(x0, y0, z0), gp_Pnt(x1, y1, z1)).Shape()
+def gbox(x0, y0, z0, x1, y1, z1): return GC.tag(BRepPrimAPI_MakeBox(gp_Pnt(x0, y0, z0), gp_Pnt(x1, y1, z1)).Shape(), 'box', x0, y0, z0, x1, y1, z1)
 xt_env = xf(gbox(-XT_HW, XT_Y0, 0, XT_HW, XT_Y1, XT_H), XT_T)                         # 压块+底垫外包
 s_ = cut(s_, xf(gbox(-XT_HW - 0.2, XT_Y0 - 5, -1, XT_HW + 0.2, XT_Y1 + 0.2, XT_H + 0.2), XT_T))   # 下罩开口 = 压块外形 +0.2
 for gx, gy in XT_GHOLES:
@@ -645,7 +665,7 @@ assert all(math.hypot(a - c, b - d_) < 1e-6 for (a, b), (c, d_) in zip(sorted(XT
 LOG['outer'] = dict(n=len(OUT_SCREWS), skipped=OUT_SKIPPED)
 LOG['xt60'] = dict(ang=XT_ANG, holes=[(round(x, 2), round(y, 2)) for x, y in XT_GHOLES])
 _fd = flange_disc                                  # 用户 11-12: 定子盘外径改回原尺寸 (不再扩 Φ181)
-_fd = cut(_fd, xf(gbox(-XT_HW - 0.5, XT_Y0 - 5, -1, XT_HW + 0.5, XT_Y1 + 0.5, XT_H + 0.5), XT_T))   # XT60 压块处让位 (11-13 压块内移: 切到 r82.3, 只切 Z≤13.5)
+_fd = cut(_fd, xf(gbox(-XT_HW - 0.5, XT_Y0 - 5, -1, XT_HW + 0.5, XT_Y1 + 0.5, XT_H + 0.5 + STATOR_LIFT), XT_T))   # (11-19 Z 上限随定子抬, 件不改形) XT60 压块处让位 (11-13 压块内移: 切到 r82.3, 只切 Z≤13.5)
 # 用户 11-12: 外圈 r78 8 孔保留 (原 V0.4 定子盘/安装法兰上下盖互锁螺丝), 不再补实
 CAV_R0 = COIL_SEAT_R                               # 11-17 用户: 线圈内径 80 ⇒ 内墙外圆 r38.7 → r39.9 (内墙 r31.7–39.9)
 CAV_R1 = 82.5 - NUT_RING_W                         # 11-17 用户: 外圈铜螺母环 7 宽 → 10 宽 ⇒ 腔外壁 r75.5 → r72.5 (外墙 r72.5–82.5)
@@ -672,16 +692,22 @@ for s__ in solids(board):
     BRD_POCKETS.append(dict(bbox=[round(v, 2) for v in b__], top=round(z1_, 2), depth=round(z1_ - FL_Z0, 2), floor_in_cavity=round(CAV_Z0 - z1_, 2)))
 LOG['board_pockets'] = BRD_POCKETS
 _irt = rotz(IR_ANG)
-IR_WIN = xf(cyl(IR_R, 0, IR_WIN_D, FL_Z0 - 1, FL_TOP + 1), _irt)                  # 定子盘通光孔 (贯穿)
-_fd = cut(_fd, IR_WIN)
-LOG['ir_tx'] = dict(ang=IR_ANG, r=IR_R, win_d=IR_WIN_D, led_top=FL_Z0 + IR_LED_H)
+# 11-23 用户「这个孔改一下位置或者加8个也行, 不影响强度, 好调节」: 通光孔在外圈 8 个 B 孔每个空档正中都开 (IR_ANG + 45k, 共 8 个), 发射板/压片装哪个都行; 压片仍按 IR_ANG 建
+IR_WIN_ANGS = sorted((IR_ANG + 45.0 * k) % 360 for k in range(8))
+IR_WIN = xf(cyl(IR_R, 0, IR_WIN_D, FL_Z0 - 1, FL_TOP + 1), _irt)                  # 定子盘通光孔 (贯穿, IR_ANG 那个)
+_IR_WINS = [xf(cyl(IR_R, 0, IR_WIN_D, FL_Z0 - 1, FL_TOP + 1), rotz(a)) for a in IR_WIN_ANGS]
+for _w in _IR_WINS:   # 每个孔位都必须是整段实体 (不碰别的孔/槽), 否则说明那个空档有东西
+    _cv = vol(op(BRepAlgoAPI_Common, _fd, _w)); _fv = math.pi * IR_WIN_D ** 2 / 4 * (FL_TOP - FL_Z0)
+    assert abs(_cv - _fv) < 0.05 * _fv, f'通光孔位置 {IR_WIN_ANGS[_IR_WINS.index(_w)]}° 原来不是整段实体 ({_cv:.2f}/{_fv:.2f})'
+_fd = cut(_fd, *_IR_WINS)
+LOG['ir_tx'] = dict(ang=IR_ANG, r=IR_R, win_d=IR_WIN_D, led_top=FL_Z0 + IR_LED_H, win_angs=IR_WIN_ANGS)
 flange_disc = clean(_fd)
 _mf2 = mounting_flange                             # 11-12 外径回原 Φ170: 保留 V0.4 原外裙 r82.5–85 (已同步短到 z9.3 = 定子盘底); 原先 cut ann(82.8,86) 是错的, 还留 0.3 薄片
 for x, y in _V04_OUT: _mf2 = fuse(_mf2, cyl(x, y, CB7 + 0.4, FL_TOP, MF_TOP))  # 原 r77.5 Φ7 沉孔 + 孔补实 (板内)
 _mf2 = clean(_mf2)                                 # 11-17 晚: LID_R 改 r77.5 与原孔同轴, 不先 clean 直接挖会布尔失败 (体积 0)
 for x, y in LID_SCREWS: _mf2 = cut(_mf2, cyl(x, y, 3.2, 0, 30), cyl(x, y, CB7, MF_TOP - MF_CB, 40))   # 上盖 r79: Φ3.2 + 顶面 Φ7×1.5
 # 11-17 用户: 安装法兰不再给 XT60 开缺口 (外裙整圈); 改由 XT60 压块 V1.2-h 在全局 Z8 以上削到接头尾 r85.8 (原 11-13 此处 cut 压块外形 +0.5, Z≤13.5)
-_mf2 = cut(_mf2, xf(cyl(IR_R, 0, IR_WIN_D, FL_TOP - 1, MF_TOP + 1), rotz(IR_ANG)))   # 11-23 光电对射通光窗 (与定子盘通光孔同轴)
+for _a in IR_WIN_ANGS: _mf2 = cut(_mf2, xf(cyl(IR_R, 0, IR_WIN_D, FL_TOP - 1, MF_TOP + 1), rotz(_a)))   # 11-23 光电对射通光窗 ×8 (与定子盘通光孔同轴)
 mounting_flange = clean(_mf2)
 # 11-23 光电发射板压片 ir_clamp_v1_2 (打印, 夹在定子盘底面与 2 颗 B 螺丝的下挂法兰螺母之间): 弧形条 r IR_CL_R0–R1 + 两端圆垫,
 #   顶面 (贴定子盘底) 开板槽: 全板外形深 IR_PCB_T (板顶面齐定子盘底), 电阻处再深 IR_BOT_H+IR_BOT_GAP; 板槽底长 2 个定位销插板 NPTH 孔; 板内端伸出压片内边, 焊盘露在外直接焊线 (11-23 取消出线孔/槽)。外形关于 IR_ANG 对称。

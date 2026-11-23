@@ -57,7 +57,7 @@ def ycyl(x, z, d, y0, y1):                         # 沿 y 的圆柱 (轴 x, z)
     tt = gp_Trsf(); tt.SetTranslation(gp_Vec(x, y0, z)); return xf(s, tt)
 
 # ===== 公共 =====
-TOP_MAX = B.FL_Z0 - 0.5                            # 8.0 件顶上限 (定子盘底 − 0.5)
+TOP_MAX = B.FL_Z0_BASE - 0.5                            # 8.0 件顶上限 (定子盘底 − 0.5)
 M3_HOLE_D = 3.4                                    # 底盘 M3 通孔
 CB_D, CB_H = B.M3_CB_D, B.M3_CB_H                  # 底盘底面沉孔 Φ7×2 (同 B 其他 M3)
 INS_D, INS_H = B.INS_HOLE_D, 4.0                   # M3×4 铜螺母孔 Φ4.2 深 4: 从件顶面往下压, 铜螺母顶齐件顶 (同 mos_clamp_v1_2);

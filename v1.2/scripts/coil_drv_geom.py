@@ -100,7 +100,7 @@ def hexprism(x, y, af, z0, z1):
 def make(B):
     cyl, cut, fuse, op, clean = B.cyl, B.cut, B.fuse, B.op, B.clean
     # ---------------- 推导 ----------------
-    STATOR_Z0 = B.FL_Z0                       # 9.5 (用户 11-12 夜改: 法兰盘加厚 1 ⇒ 8.5)
+    STATOR_Z0 = B.FL_Z0_BASE                       # 9.5 (用户 11-12 夜改: 法兰盘加厚 1 ⇒ 8.5)
     # 电容槽深 = 最小可行 (卡件顶 = 电容顶 + 0.15 + 1.2 ≤ 定子盘底 − 0.5), 上限 3; 到上限仍超 ⇒ 卡件 Z_LIMIT 放宽 (≥ 定子盘底 − 0.15)
     CAP_SINK = min(CAP_GROOVE_MAX, max(CAP_SINK_MIN0, round(CAP_D + 0.15 + 1.2 - (STATOR_Z0 - TOP_MARGIN), 6)))
     CC_Z_LIMIT = max(STATOR_Z0 - TOP_MARGIN, round(CAP_D - CAP_SINK + 0.15 + 1.2, 6))

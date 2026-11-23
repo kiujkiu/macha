@@ -196,12 +196,12 @@ SPECS.append(dict(
     holes=[
         dict(tag="A", pts=B.FLANGE_SCREWS, spec="Φ3.2 通", where=ring_txt(B.FLANGE_SCREWS) + "  M3×20 到底盘铜螺母"),
         dict(tag="B", pts=B.LID_SCREWS, spec=f"Φ3.2 通 + 底面 Φ{F(B.LID_INS_D)}×{F(B.LID_INS_H)} 铜螺母孔",
-             where=ring_txt(B.LID_SCREWS) + "  上下盖互锁 M3×6 + M3×4 铜螺母",
+             where=ring_txt(B.LID_SCREWS) + "  上下盖互锁 M3×10 + 底面下挂 M3 法兰螺母 (11-20; Φ4.2 孔沿用, 不嵌)",
              det=dict(kind="ins", d=3.2, D=B.LID_INS_D, h=B.LID_INS_H, side="bot", z=(B.FL_Z0, B.FL_TOP), pt=B.LID_SCREWS[0], title="外圈 M3 铜螺母孔")),
     ],
     notes=[f"Z{F(B.FL_Z0)}→{F(B.FL_TOP)}; 线圈腔 r{F(B.CAV_R0)}–{F(B.CAV_R1)} 深 {F(B.FL_TOP - B.CAV_Z0)} (11-16 晚 用户 2.5 → 2.8), 腔底 Z{F(B.CAV_Z0)}, 底板 {F(B.CAV_Z0 - B.FL_Z0)}",
            f"内墙 r31.7–{F(B.CAV_R0)}: 外圆 Φ{F(2 * B.CAV_R0)} 套线圈内径 Φ{F(B.COIL_ID)} (11-17); 外墙 (铜螺母环) r{F(B.CAV_R1)}–82.5 宽 {F(82.5 - B.CAV_R1)} (11-17 用户 ≥10); 线圈外径需 ≤ Φ{F(2 * B.CAV_R1)}",
-           "+X 处 XT60 压块让位缺口; 原 +X 线圈引线槽 (r40–61) 减薄后变通槽 (待定)",
+           "+X 处 XT60 压块让位缺口; 线圈出线孔 2 个: 内 Φ4 r41.9 @2.5° (11-20 原 r40–61 通槽补实改圆孔, 孔边切腔内缘 r39.9) + 外 Φ4 r70 @30°",
            *(["底面控制板让位: 无 (11-16 晚: 2 颗电解实测高 6.1、3P 排针改弯排针, 都低于定子盘底 Z" + F(B.FL_Z0) + ")"] if not B.BRD_POCKETS else []),
            *(["底面控制板让位 (11-12 夜): " + "; ".join(f"x{F(p['bbox'][0] - B.BRD_POCKET_GAP)}..{F(p['bbox'][3] + B.BRD_POCKET_GAP)} y{F(p['bbox'][1] - B.BRD_POCKET_GAP)}..{F(p['bbox'][4] + B.BRD_POCKET_GAP)} 深 {F(p['depth'])}" for p in B.BRD_POCKETS)] if B.BRD_POCKETS else [])],
 ))
@@ -259,6 +259,15 @@ SPECS.append(dict(
     phi=[2 * B.SH_R, 2 * B.SPIG_IN, 2 * B.gi, 2 * B.go, 2 * B.SH_OUT],
     sec=dict(ang=45, r0=70.0, zd=sh_zd, rd=sh_rd), holes=sh_holes,
     notes=gl_notes + [f"外卡 r{F(B.go)}–{F(B.SH_OUT)} 深 {F(B.OUT_DEPTH)}, 斜顶 (外缘直边 {F(B.LIP_EDGE)})"]))
+SPECS.append(dict(   # 11-20 用户「改一下，2合一，不要那个外卡环，做一个」
+    code="glass_shroud_2in1_v1_2", shape=B.shroud_split, short="玻璃下 底座+玻璃座 二合一", qty="1 (+外卡环)", date="2026-11-20",
+    title=f"玻璃下 二合一: 底座+玻璃座一体 Z0→{F(B.Z_G)} + 内卡到 Z{F(B.Z_VIEW0)}, 不含外卡环; 顶面嵌合凸筋配外卡环", orient="底面 (Z0) 贴床",
+    phi=[2 * B.SH_R, 2 * B.SPIG_IN, 2 * B.gi, 2 * B.TG_R0, 2 * (B.TG_R0 + B.TG_W), 2 * B.SH_OUT],
+    sec=dict(ang=45, r0=70.0, zd=[(0, B.TRI_T), (0, B.Z_G), (B.Z_G, B.Z_G + B.IN_DEPTH), (B.Z_G, B.Z_G + B.TG_H)],
+             rd=[(B.gi - B.SPIG_T, B.gi), (B.SPIG_IN, B.SH_OUT), (B.TG_R0, B.TG_R0 + B.TG_W)]),
+    holes=sh_holes,
+    notes=gl_notes + [f"= 分体底座+玻璃座合成一件: 不在 Z{F(B.SPLIT_Z)} 横切, 无 {B.JN_N}×M4 对锁孔/螺母窝/止口",
+                      f"外卡环 glass_clamp_ring_v1_2 单独打印: 顶面凸筋 r{F(B.TG_R0)}–{F(B.TG_R0 + B.TG_W)} 高 {F(B.TG_H)} 插外卡环底槽 (单边 {F(B.TG_CLR)})"]))
 SPECS.append(dict(
     code="glass_shroud_lower_v1_2", shape=B.shroud_lo, short="玻璃下 底座 (分体)", qty="1 (配玻璃座 + 外卡环)",
     title=f"玻璃下 底座: Z0→{F(B.SPLIT_Z)} + 顶面止口凸筋, {B.JN_N}× M4 通孔 + 底面法兰螺母窝", orient="底面 (Z0) 贴床",

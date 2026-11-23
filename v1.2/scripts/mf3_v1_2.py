@@ -7,6 +7,22 @@ from OCP.BRep import BRep_Tool
 from OCP.TopLoc import TopLoc_Location
 from OCP.TopoDS import TopoDS
 def mesh(shape, defl):
+    """11-20: 结果按形体键缓存 (geocache 目录 mesh/); 没变的件不再重划网格。"""
+    try:
+        import geocache as GC
+    except ImportError:
+        return _mesh(shape, defl)
+    if not GC.ON: return _mesh(shape, defl)
+    import os
+    f = GC.DIR / 'mesh' / f'{GC._h(GC.key(shape), defl, "m1")}.npz'
+    if f.exists():
+        try:
+            z = np.load(f); return z['V'], z['T']
+        except Exception: pass
+    V, T = _mesh(shape, defl)
+    f.parent.mkdir(exist_ok=True); tmp = f.with_name(f'{f.stem}.{os.getpid()}.tmp.npz'); np.savez(tmp, V=V, T=T); os.replace(tmp, f)
+    return V, T
+def _mesh(shape, defl):
     BRepMesh_IncrementalMesh(shape, defl, False, 0.3, True)
     V=[];T=[];n=0; e=TopExp_Explorer(shape,TopAbs_FACE)
     while e.More():

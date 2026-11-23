@@ -51,8 +51,9 @@ def xcyl(y, z, d, x0, x1):
     return BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(x0, y, z), gp_Dir(1, 0, 0)), d / 2, x1 - x0).Shape()
 def comp(shapes):
     b = BRep_Builder(); c = TopoDS_Compound(); b.MakeCompound(c)
+    shapes = list(shapes)
     for s in shapes: b.Add(c, s)
-    return c
+    return B.GC.tag(c, 'comp', *[B.GC.key(s) for s in shapes]) if B.GC.ON else c   # 11-20 geocache: 组合体键 = 各子件键
 def common(a, b):
     o = BRepAlgoAPI_Common(a, b); o.Build(); return o.Shape()
 def common_v(a, b):

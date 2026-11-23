@@ -115,7 +115,7 @@ SCR_IN = [(SCR_X, MOD_YC + SCR_PITCH / 2), (-SCR_X, MOD_YC + SCR_PITCH / 2)]    
 assert min(SCR_OUT[0][1] - BY0, BY1 - SCR_IN[0][1]) >= NUT_FL_D / 2 - 1e-9
 OPEN = 5.0                                  # 焊脚开窗 3.5 (上沿全宽) × 5 (以脚为心)
 OPEN_DY = OPEN / 2
-AC_HOLES = list(B.AC_HOLES)                 # 内孔 (32.6, −25.93) @−38.5° (11-20 无线组 +y 挪 5 盖住原 −46° 孔, 转 7.5° 到离夹块 1.74; 11-19 21:21 由 −22.28° 转到 −46° (28.93, −29.96)) r41.65 孔边切腔内缘 / 外孔 (43.29, −55.96) r70.75 孔边切腔外缘, 外孔从下往上看在内孔逆时针 30°
+AC_HOLES = list(B.AC_HOLES)                 # 内孔 (32.6, −25.93) @−38.5° (11-20 无线组 +y 挪 5 盖住原 −46° 孔, 转 7.5° 到离夹块 1.74; 11-19 21:21 由 −22.28° 转到 −46° (28.93, −29.96)) r41.65 孔边切腔内缘 / 外孔 (40.58, −57.95) r70.75 @−55° (11-20 由 −25° 顺时针转 30°) 孔边切腔外缘
 def _box_gap(x, y, x0, y0, x1, y1): return math.hypot(max(x0 - x, 0, x - x1), max(y0 - y, 0, y - y1))
 for _x, _y in AC_HOLES:
     _r = math.hypot(_x, _y); assert B.COIL_SEAT_R + B.AC_HOLE_D / 2 - 0.01 <= _r <= 72.5 - B.AC_HOLE_D / 2 + 0.01, ('AC 孔出线圈腔', _r)

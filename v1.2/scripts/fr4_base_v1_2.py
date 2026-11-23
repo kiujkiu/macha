@@ -134,7 +134,7 @@ ax.set_title('俯视 (板顶面 = 装配 Z0, 看向 -Z)  1:1 坐标 mm, 原点 =
 tx = fig.add_axes([0.60, 0.04, 0.39, 0.92]); tx.axis('off')
 L = [f'POV3D V1.2 — base_fr4_v1_2  底座玻纤板 FR4 Φ{B.DISC_D:g}×{FR4_T:g}', '',
      f'材料 FR4 (玻纤环氧板) 厚 {FR4_T:g}, 无铜, 数量 1;  全部通孔/通槽; 外形 Φ{B.DISC_D:g}',
-     '位置: 打印底盘 (4.5 厚, Z-7.5..-3) 之上, 板顶 Z0 = 原底盘顶面 (上面所有件 Z 不变)',
+     '位置: 打印底盘 (5.0 厚, Z-8..-3; 11-20 由 4.5 加厚) 之上, 板顶 Z0 = 原底盘顶面 (上面所有件 Z 不变)',
      '加工: 按 DXF (base_fr4_v1_2.dxf, 层 OUTLINE 外形 / CUT 孔槽) 铣; 孔径公差 +0.1/-0', '',
      f'圆孔 {len(holes)} 个:']
 for d, pts in groups.items():
@@ -149,7 +149,7 @@ for k, (x0, y0, x1, y1) in enumerate(slots):
     L.append(f'  S{k + 1}  {slot_name(x0, y0, x1, y1)}:  x {x0:.2f}..{x1:.2f}  y {y0:.2f}..{y1:.2f}  ({x1 - x0:.2f}×{y1 - y0:.2f})')
 L += ['', '说明:', '  · 孔形取自打印底盘 Z-0.1 截面: 原底盘顶面 3 深的槽 (电容弧形槽 / 控制板背面让位 /',
       '    电机中央 Φ12) 在玻纤板上都做成通孔; 底面沉孔与铜螺母孔只在打印底盘上',
-      '  · 由下往上的 M3 螺丝全部 +2 (底座 4.5+3=7.5, 原 6; 盘底沉孔 Φ7×1.5 超薄头齐底面), 尖位置不变',
+      '  · 由下往上的 M3 螺丝全部 +2 (底座 5+3=8, 原 6; 盘底沉孔 Φ7×2, 11-20), 尖位置不变',
       f'  · 体积 {VOL / 1000:.1f} cm3']
 tx.text(0, 1, '\n'.join(L), va='top', fontproperties=FP, fontsize=8.2, linespacing=1.45)
 fig.savefig(OUT / 'base_fr4_v1_2_drawing.pdf'); fig.savefig(OUT / 'base_fr4_v1_2_drawing_preview.png', dpi=110)

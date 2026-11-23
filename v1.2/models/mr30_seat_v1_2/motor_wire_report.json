@@ -27,7 +27,7 @@
   "n": 1
  },
  "disc_valid": true,
- "disc_min_t": 7.25,
+ "disc_min_t": 7.75,
  "cb_web_min": 30.53,
  "inter": {
   "seat/disc": 0.0,
@@ -89,8 +89,8 @@
  },
  "gap": {
   "seat/disc": 0.0,
-  "seat/flange_disc": 0.5,
-  "seat/mounting_flange": 5.001,
+  "seat/flange_disc": 4.0,
+  "seat/mounting_flange": 6.384,
   "seat/ring": 9.5,
   "seat/motor": 17.5,
   "seat/board": 28.656,
@@ -117,8 +117,8 @@
   "seat/seat_nut2": 48.377,
   "seat/seat_nut3": 114.572,
   "clamp/disc": 0.0,
-  "clamp/flange_disc": 2.5,
-  "clamp/mounting_flange": 2.511,
+  "clamp/flange_disc": 6.0,
+  "clamp/mounting_flange": 6.005,
   "clamp/ring": 11.9,
   "clamp/motor": 22.856,
   "clamp/board": 83.663,
@@ -146,10 +146,10 @@
   "clamp/seat_nut3": 74.377,
   "seat/clamp": 41.226
  },
- "seat_above_zmin": 8.5,
- "seat_top_gap": 0.5,
- "clamp_above_zmin": 8.5,
- "clamp_top_gap": 2.5,
+ "seat_above_zmin": 12.0,
+ "seat_top_gap": 4.0,
+ "clamp_above_zmin": 12.0,
+ "clamp_top_gap": 6.0,
  "plug_inter": {
   "seat": 0.0,
   "disc": 0.0

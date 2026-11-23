@@ -2,7 +2,10 @@
 V1.2 快速出单件 (甲级小改动用, 11-17 晚): 几何只建 1 遍, 只写点名件的 STL/STEP + 出它的图; 不写 3MF / 整机 / 其它件。
 原来 build → export → drawings 三个脚本各 import 一遍 build_v1_2 (整套几何建 3 遍), 这里合成 1 个进程。
 
-    cd v1.2/scripts && ../../.venv/bin/python quick_v1_2.py base_disc_v1_2_gf [其它件 ...] [--no-draw]
+    cd v1.2/scripts && ../../.venv/bin/python quick_v1_2.py base_disc_v1_2_gf [其它件 ...] [--no-draw] [--check]
+    --check: 同进程接着跑整机校核 (乙级), 只打印本次重算的配对 + 所有相交
+11-20 起几何运算走 geocache (~/.cache/macha_geo): 没变的布尔/变换/STEP 直接读缓存, 校核的采样点/配对结果也缓存;
+    单件改动 建模 ~10 s + 出图 ~12 s + 校核 ~25 s。缓存可随时删; GEO_CACHE=0 关掉对照。
     ../../.venv/bin/python quick_v1_2.py --list          # 看支持哪些件
 
 什么时候不能用 (按 feedback 分级): 动了孔位 / Z 高 / 被多件读的常量 (乙/丙级) 仍要跑 check 或全流程;
@@ -16,7 +19,7 @@ sys.path.insert(0, str(HERE))
 
 # 1) build_v1_2 里直接有形体的件: 代号 → (build_v1_2 变量名, out/ 下的旧名或 None, out 打印姿态翻面?)
 B_PARTS = {
-    'base_disc_v1_2_gf': ('disc_print', 'base_disc_D220x4p5_v1_2_gf', False),   # 11-18 玻纤板方案 (旧 base_disc_v1_2 一体 6 厚冻结)
+    'base_disc_v1_2_gf': ('disc_print', 'base_disc_D220x5_v1_2_gf', False),   # 11-18 玻纤板方案 (旧 base_disc_v1_2 一体 6 厚冻结)
     'coil_ring_v1_2': ('ring', None, False),
     'flange_disc_v1_2': ('flange_disc', None, False),
     'mounting_flange_v1_2': ('mounting_flange', None, False),
@@ -24,6 +27,7 @@ B_PARTS = {
     'hub_disc_v1_2': ('hub', 'hub_disc_v1_2', False),
     'rim_ring_v1_2_D170': ('rim', 'rim_ring_v1_2_D170', True),
     'glass_shroud_v1_2': ('seat', None, False),
+    'glass_shroud_2in1_v1_2': ('shroud_split', None, False),   # 11-20 用户「2合一，不要那个外卡环」: 底座+玻璃座一体 (不横切/无 M4), 外卡环另配
     'glass_shroud_lower_v1_2': ('shroud_lo', None, False),
     'glass_shroud_upper_v1_2': ('shroud_hi', None, False),
     'glass_clamp_ring_v1_2': ('clamp_ring', None, False),
@@ -111,4 +115,18 @@ for code in args:                                    # 成品文件夹同步 STE
         try: shutil.copy2(f, gd / f.name)
         except PermissionError: shutil.copy2(f, gd / f'{f.stem}.NEW{f.suffix}'); print('  被占用, 另存 .NEW:', f.name)
     lap(f'{code} → {GROUP[code]}/')
+try:                                                 # 11-20: 同步到分组文件夹 v1.2/分组/<n>_<组>/零件/ (分组表在 group_asm_v1_2.GROUPS)
+    import group_asm_v1_2 as _GA
+    for code in args:
+        _gd = _GA.sync_part(code)
+        if _gd: lap(f'{code} → 分组/{_gd}/零件/')
+except Exception as _e:
+    print('  分组同步失败 (不影响出件):', repr(_e))
+if '--check' in sys.argv:                            # 11-20: 同进程接着跑整机校核 (几何已建好不重建; 配对按形体键缓存, 只重算变了的件)
+    import os as _os; _os.environ['CHECK_BRIEF'] = '1'
+    print('---- 整机校核 (只列本次重算的配对 + 所有相交; 全表见 check_v1_2.py) ----', flush=True)
+    _argv = sys.argv; sys.argv = ['check_v1_2.py']
+    try: runpy.run_path(str(HERE / 'check_v1_2.py'), run_name='__main__')
+    finally: sys.argv = _argv
+    lap('校核完成')
 lap('完成')

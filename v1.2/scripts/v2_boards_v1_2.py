@@ -112,7 +112,14 @@ def _common(a, b):
     o = BRepAlgoAPI_Common(a, b); o.Build(); return o.Shape()
 
 
+_MADE = {}
 def make(B):
+    """同一进程只建一次 (11-20: led_support / rotor_shroud 各调一次, 原来建两遍)。"""
+    if id(B) not in _MADE: _MADE[id(B)] = (B, _make(B))
+    return _MADE[id(B)][1]
+
+
+def _make(B):
     """→ dict(baseboard, bb_parts, cz06, led, bb_step, info); 灯板仍按 B.Z_SCR0 摆, 底板按 B.Z_BB0 / B.BB_T"""
     from OCP.BRepPrimAPI import BRepPrimAPI_MakeCylinder
     from OCP.gp import gp_Ax2
@@ -131,12 +138,12 @@ def make(B):
     (cx, cy), w_, d_ = CZ06_C, CZ06_W, CZ06_D
     cz = _comp([_box(cx - w_ / 2, cy - d_ / 2, zt + DF40_H, cx + w_ / 2, cy + d_ / 2, zt + B.CZ06_H)] +
                [_box(cx - w_ / 2 + 2, cy - d_ / 2 + 2, zt, cx + w_ / 2 - 2, cy + d_ / 2 - 2, zt + DF40_H)])   # DF40 合高区 (简化成一块)
-    led = read_step(LED_STEP)
+    led = B.one(LED_STEP)                                               # 11-20 走 geocache (原 read_step 每次 ~1.5 s)
     t = gp_Trsf(); t.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), math.pi / 2)    # (x,y,z) → (x, −z, y): LED 面 (STEP z<0) 朝 +Y
     t2 = gp_Trsf(); t2.SetTranslation(gp_Vec(0, 0, B.Z_SCR0 + LED_HALF_H))
-    led = BRepBuilderAPI_Transform(BRepBuilderAPI_Transform(led, t, True).Shape(), t2, True).Shape()
+    led = B.xf(B.xf(led, t), t2)
     t3 = gp_Trsf(); t3.SetTranslation(gp_Vec(0, 0, z0))
-    bb_step = BRepBuilderAPI_Transform(read_step(BB_STEP), t3, True).Shape()     # r2 交付 STEP (z0 = 板底) → 世界
+    bb_step = B.xf(B.one(BB_STEP), t3)     # r2 交付 STEP (z0 = 板底) → 世界
     tall = sorted(((h, ref, fp, bb) for ref, fp, bb, h in parts), reverse=True)[:8]
     return dict(baseboard=pcb, bb_parts=_comp(comps), cz06=cz, led=led, bb_step=bb_step,
                 info=dict(outline=(x0, y0, x1, y1), outline_r=BB_R, n_parts=len(parts), n_bottom=sum(1 for p in parts if p[3] < 0),
