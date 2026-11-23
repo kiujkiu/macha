@@ -84,16 +84,16 @@ MF_TOP = 25.5 - MF_THIN - DROP + FL_UP         # 安装法兰顶 16.0
 #   11-23 用户: 板加 2 个 NPTH 定位孔 (对角拉开), 压片上 2 个销插进去定位。
 #   板局部坐标 (u, v): u = 切向 (逆时针为正) 从板低角端起, v = 径向 (向外为正) 从板内侧边起; LED 中心 (IR_LED_UV) 落在 r IR_R @ IR_ANG。改板只动这里。
 IR_ANG, IR_R = 45.0, 77.5                      # LED 中心角度/半径 (r 必须 = 转子通光孔半径 77.5); 11-23 用户: 放 B 孔 22.5/67.5° 正中 ⇒ 压片外形关于 45° 对称 (原 53°)
-IR_PCB_L, IR_PCB_W, IR_PCB_T = 5.0, 10.0, 0.8  # 发射小板 FR4: 切向 L × 径向 W × 厚。11-23 r4 通用板 10×5 (发射/接收同版图, 需求_r4_通用板8x4 文件, 先 8×4 后改 10×5): 板 a (10 长边) = v 径向, b (5 短边) = u 切向 (逆时针增), 板 r70–80 (原 3.3×7.15 r71.8–78.95); 规则: 孔边离板边 ≥0.3, 铜离板边 ≥0.2, NPTH↔铜 ≥0.25
+IR_PCB_L, IR_PCB_W, IR_PCB_T = 10.0, 5.0, 0.8  # 发射小板 FR4: 切向 L × 径向 W × 厚。11-23 r4 第 3 版通用板 10×5 对称布局 (定转子装法相同): 板 a (10) = u 切向, b (5) = v 径向 (b0 朝轴心), r = 74.1 + b ⇒ 板 r74.1–79.1, 关于 IR_ANG 对称 (8×4 / 10×5 第 2 版作废)
 IR_FP = (2.5, 0.95)                            # 0603 焊盘外包 (长 × 宽, LED 与电阻同), 排布校核用
-IR_LED_UV = (3.0, 7.5)                         # A 面 0603 发射管 D1 中心 (板 a7.5 b3.0; r4 长轴沿 b = u 切向); 板切向偏心: b0 边在顺时针侧 (向 22.5° 螺丝) 3.0, b5 边在逆时针侧 2.0
-IR_R_UV = (3.0, 7.5)                           # B 面 0603 10k R1 中心 (长轴沿 u 切向, 在 LED 正背面)
-IR_FP_ALONG_U = True                           # r4: 两颗 0603 长轴沿 u (切向); 原 r3 沿 v
-IR_PADS_UV = [(1.0, 0.8), (4.0, 0.8)]          # 金属化焊线焊盘 Φ IR_PAD_D: r4 P1 (a0.8 b1.0) = 24V / P3 (a0.8 b4.0) = GND (P2 b2.5 = N 发射板不接); r70.8 外缘 r71.3, 伸出压片内边 IR_CL_R0, 离压片 ≥0.5
+IR_LED_UV = (5.0, 3.4)                         # A 面 0603 发射管 D1 中心 (板 a5.0 b3.4, 长轴沿 b = v 径向)
+IR_R_UV = (5.0, 3.4)                           # B 面 0603 10k R1 中心 (长轴沿 v 径向, 在 LED 正背面)
+IR_FP_ALONG_U = False                          # 0603 长轴沿 v (径向); r4 第 2 版曾沿 u
+IR_PADS_UV = [(3.5, 0.8), (6.5, 0.8)]          # 金属化焊线焊盘 Φ IR_PAD_D: P1 (a3.5 b0.8) = 24V / P3 (a6.5 b0.8) = GND (P2 a5.0 = N 发射板不接); r74.9 外缘 r75.4, 露在压片内边 IR_CL_R0 外 ≥0.5
 IR_PAD_D = 1.0
-IR_HOLES_UV = [(3.95, 3.5), (1.2, 5.6)]        # NPTH 定位孔: r4 H1 (a3.50 b3.95) r73.5 / H2 (a5.60 b1.20) r75.6; 孔边离板边 ≥0.3
-IR_HOLE_D = 1.5                                # 板定位孔 NPTH
-IR_PIN_D = 1.3                                 # 压片定位销 (FDM 最小合理值)
+IR_HOLES_UV = [(2.0, 3.2), (8.0, 3.2)]         # NPTH 定位孔 Φ2.2 (M2 通孔): H1/H2 r77.3, 切向 ∓3.0
+IR_HOLE_D = 2.2                                # 板定位孔 NPTH (r4 第 3 版用户定 M2 通孔; 原 1.5, 曾议 Φ3.4)
+IR_PIN_D = 2.0                                 # 压片定位销 (r4 第 3 版 M2 孔配 Φ2.0; 原 1.3) ⇒ 销内缘 r76.3, 离压片内边 0.4
 IR_PIN_H = IR_PCB_T - 0.1                      # 销高 (从板底面平面起) 0.7, 不顶定子盘
 IR_LED_U = IR_LED_UV[0]                        # (兼容旧名)
 IR_LED_L, IR_LED_W, IR_LED_H = 1.6, 0.8, 0.6   # 0603 发射管本体 (L 沿 IR_FP_ALONG_U 定的轴; 伸进定子盘通光孔, 对角 1.79 < IR_WIN_D)
@@ -104,11 +104,11 @@ IR_LEDGE = 0.0                                 # (已废弃; 留给旧引用)
 IR_CLR = 0.2                                   # 压片板槽比板单边大
 IR_WIN_D = 3.4                                 # 定子盘通光孔 (贯穿 Z FL_Z0..FL_TOP) = 安装法兰通光窗 (同轴); 11-23 用户: 同转子 M3 通孔规格 Φ3.4 (原 3.5)
 IR_CL_WALL = 1.2                               # 压片板槽外侧壁
-IR_CL_R0 = 71.8                                # 压片弧条内半径 (板从这里伸出去, 焊盘露在外); r4 10×5: 焊盘外缘 r71.3 + 0.5 (H1 销 Φ1.3 内缘 r72.85 离内边 1.05)
-IR_CL_R1 = IR_R - IR_LED_UV[1] + IR_PCB_W + IR_CLR + IR_CL_WALL      # 外半径 81.4 (r4 10×5; 原 80.35)
-IR_CL_W = IR_CL_R1 - IR_CL_R0                  # 弧条径向宽 9.6 (r4 10×5; 原 6.85)
-assert IR_R - IR_LED_UV[1] + max(v for _, v in IR_PADS_UV) + IR_PAD_D / 2 <= IR_CL_R0 - 0.5, '焊盘要露出压片内边 ≥0.5'
-assert all(IR_R - IR_LED_UV[1] + v - IR_PIN_D / 2 >= IR_CL_R0 + 0.3 for _, v in IR_HOLES_UV), '定位销要整个落在压片上 (离内边 ≥0.3)'
+IR_CL_R0 = 75.95                               # 压片弧条内半径 (板从这里伸出去, 焊盘露在外); r4 第 3 版: 焊盘 (切向 ±1.5) 真实外缘 r75.415 + 0.5 ⇒ 75.92, 取 75.95; 销 Φ2.0 内缘 r76.36 离内边 0.41
+IR_CL_R1 = IR_R - IR_LED_UV[1] + IR_PCB_W + IR_CLR + IR_CL_WALL      # 外半径 80.5 (r4 第 3 版; 原 80.35)
+IR_CL_W = IR_CL_R1 - IR_CL_R0                  # 弧条径向宽 4.55 (r4 第 3 版; 原 6.85)
+assert all(math.hypot(IR_R - IR_LED_UV[1] + v, u - IR_LED_UV[0]) + IR_PAD_D / 2 <= IR_CL_R0 - 0.5 for u, v in IR_PADS_UV), '焊盘要露出压片内边 ≥0.5 (按真实半径)'
+assert all(math.hypot(IR_R - IR_LED_UV[1] + v, u - IR_LED_UV[0]) - IR_PIN_D / 2 >= IR_CL_R0 + 0.3 for u, v in IR_HOLES_UV), '定位销要整个落在压片上 (离内边 ≥0.3)'
 IR_CL_PAD_D = 9.6                              # 压片螺丝处圆垫 (外缘 r82.3, 不出定子盘 r82.5)
 IR_CL_NUT_CB_D = 8.4                           # 圆垫底面法兰螺母沉孔 (法兰 Φ7.6 +0.4), 只留 IR_CL_PAD_T 夹在定子盘底与螺母之间
 IR_CL_PAD_T = 0.8                              # 螺母处压片厚 ⇒ 螺母只下移 0.8: Z7.5–11.2 (67.5° 孔正下方控制板器件顶 ~Z5.85)
@@ -691,13 +691,14 @@ _cz0, _cz1 = FL_Z0 - IR_CL_T, FL_Z0
 _cl = cut(cyl(0, 0, 2 * IR_CL_R1, _cz0, _cz1, ang=_a1 - _a0, a0=_a0), cyl(0, 0, 2 * IR_CL_R0, _cz0 - 1, _cz1 + 1))
 _cl = fuse(_cl, *[cyl(x, y, IR_CL_PAD_D, _cz0, _cz1) for x, y in IR_CL_HOLES])
 _irbp = lambda u, v: (IR_R + v - IR_LED_UV[1], u - IR_LED_UV[0])                     # 板局部 (u, v) → LED 局部 (径向 x, 切向 y), 再转 IR_ANG
-_bx0, _by0 = _irbp(0, 0); _bx1, _by1 = _irbp(IR_PCB_L, IR_PCB_W)                     # 板外形 (x 径向 r70–80, r4 10×5)
+_bx0, _by0 = _irbp(0, 0); _bx1, _by1 = _irbp(IR_PCB_L, IR_PCB_W)                     # 板外形 (x 径向 r74.1–79.1, r4 第 3 版)
 _zb = _cz1 - IR_PCB_T                                                                 # 板底面 (销根)
 _rc = _irbp(*IR_R_UV); _rhx, _rhy = IR_FP[0] / 2 + IR_REL_M, IR_FP[1] / 2 + IR_REL_M    # 电阻沿 v ⇒ 局部 x 为长边
 if IR_FP_ALONG_U: _rhx, _rhy = _rhy, _rhx                                             # r4: 长轴沿 u ⇒ 局部 y (切向) 为长边
 _ex, _ey = (0.4, 0.8) if IR_FP_ALONG_U else (0.8, 0.4)                                # 0603 本体 1.6×0.8 半宽 (局部 x 径向, y 切向)
+_rx0 = _rc[0] - _rhx if _rc[0] - _rhx - IR_CL_R0 >= 0.8 else IR_CL_R0 - 1             # 电阻槽内端离压片内边 <0.8 ⇒ 直接开通 (免 0.15 薄片)
 IR_CL_POCKET = xf(fuse(gbox(_bx0 - IR_CLR, _by0 - IR_CLR, _zb, _bx1 + IR_CLR, _by1 + IR_CLR, _cz1 + 1),                                # 板槽 (板顶面齐压片顶 = 定子盘底; 内端穿出压片内边)
-                       gbox(_rc[0] - _rhx, _rc[1] - _rhy, _zb - IR_BOT_H - IR_BOT_GAP, _rc[0] + _rhx, _rc[1] + _rhy, _cz1 + 1)), _irt)   # 底面电阻让位槽
+                       gbox(_rx0, _rc[1] - _rhy, _zb - IR_BOT_H - IR_BOT_GAP, _rc[0] + _rhx, _rc[1] + _rhy, _cz1 + 1)), _irt)   # 底面电阻让位槽
 _cl = cut(_cl, IR_CL_POCKET, *[cyl(x, y, IR_CL_HOLE_D, _cz0 - 1, _cz1 + 1) for x, y in IR_CL_HOLES], *[cyl(x, y, IR_CL_NUT_CB_D, _cz0 - 1, _cz1 - IR_CL_PAD_T) for x, y in IR_CL_HOLES])
 IR_PINS = [xf(cyl(*_irbp(*q), IR_PIN_D, _zb - 0.01, _zb + IR_PIN_H), _irt) for q in IR_HOLES_UV]   # 定位销 (从板槽底长出)
 ir_clamp = clean(fuse(_cl, *IR_PINS))
