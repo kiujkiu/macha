@@ -11,7 +11,7 @@
   (11-21 起) 屏幕支撑件 = PETG 打印 ×4, 两种件, Z30.5 (承载盘顶) → 灯板下沿 LS.Z0 (灯板 +1 后 38.5, 高 8):
       A 屏幕支架件 screen_sup_a_v1_2b ×2 (0°/180° 同件) 托灯板/夹条; B 上下件 screen_sup_b_v1_2b ×2 (90°/270° 同件)
       取代 屏幕玻纤板 screen_fr4_v1_2b ×4 + 侧立件 screen_post_v1_2b ×2 (11-20, 产物移 转子盘B/作废_11-21/)
-光电对射 (11-23): 通光孔 Φ3.4 @ r77.5 90° 穿承载盘 (fr4_plate 现场配钻); 接收板双面 (底 0603 光敏管伸进孔 / 顶 47k + 3 焊线焊盘) 嵌 B 件底面槽 (B 件兼压板), 焊盘上方 B 件长圆穿线槽; 11-23 r4 改通用板 10×5 横放 (RX_*_UV 表), 线出件顶绕 CZ06 → 底板 J9 (参数 OPT_* / RX_* / GH)
+光电对射 (11-23): 通光孔 Φ3.4 @ r77.5 90° 穿承载盘 (fr4_plate 现场配钻); 接收板双面 (底 0603 光敏管伸进孔 / 顶 47k + 3 焊线焊盘) 嵌 B 件底面槽 (B 件兼压板), 焊盘上方 B 件长圆穿线槽; 11-23 r4 改通用板 10×5 对称 (第 3 版, RX_*_UV 表), 线出件顶绕 CZ06 → 底板 J9 (参数 OPT_* / RX_* / GH)
 螺丝 (全部在桌上装好再上电机):
   - 屏幕螺丝 2× M3 超薄头 (长度按铜螺柱 Z 自动选, 现 M3×18): 从 A 件底面 Φ7.6×1.5 沉孔往上 (支承 Z32) 穿 A 件 → 中缝 → 拧进灯板 F 面每端下颗铜螺柱
   - 16 颗从 fr4_plate 底往上 (头埋 Φ7.2×1.5 沉孔, 支承 Z23): 内圈 R34 ×8 → 承载盘顶面 Φ8×3.7 沉孔 M3 法兰螺母 (M3×7);
@@ -114,28 +114,28 @@ RX_WIRE_HOLE_D = 3.0                              # B 件穿线孔 Φ3 (3 根 AW
 # 11-23 四版 (用户): 板上 2 个 NPTH 定位孔, B 件底面 2 个销向下插进去定位 (求装得准)。两孔沿径向放在焊盘排两端 (尽量拉开防转):
 #   内孔 = 板内端, 外孔 = 焊盘排与外端 (光敏管 / 47k) 之间 (外端再加长会让槽外端离件外边 <1.5)
 RX_LOC = True
-RX_LOC_D = 1.5                                    # 定位孔 Φ1.5 NPTH
-RX_PIN_D = 1.3                                    # B 件销 Φ1.3 (FDM 能打的最小合理值)
+RX_LOC_D = 2.2                                    # 定位孔 NPTH (r4 第 3 版: Φ1.5 → Φ3.4 → Φ2.2 M2 通孔规格)
+RX_PIN_D = 2.0                                    # B 件销 (r4 第 3 版: Φ2.0, 孔 Φ2.2 单边 0.1)
 RX_PIN_H = RX_PCB_T - 0.1                         # 销高 0.7 (销底离承载盘顶 0.1, 不顶)
 RX_LOC_CLR = 0.3                                  # 定位孔边 ↔ 板边 / 铜 / 器件 / 过孔
 # 11-23 六版 (用户草图, 覆盖 四版 / 五版 对角): 接收板横放 —— 长边沿切向 (件局部 y), 短边沿径向 (x)
 #   光敏管 (板底) 在板中央对通光孔; 2 个定位孔在板切向两端、同在 r77.5 线上; 3 焊盘沿切向一排贴板内边 (朝轴心), 线朝轴心出;
 #   47k 在顶面光敏管背面; 焊盘做金属化通孔 (两面有铜), 光敏管底面直接走线到焊盘, 不另打过孔。
 #   B 件: 焊盘排正上方长圆穿线槽 (宽 RX_WSLOT_W, 盖住 3 焊点) 贯穿到件顶, 线出件顶沿原 CZ06 绕行路线去 J9
-# 11-23 r4 (用户定, 需求 pcb/projects/POV3D_Opto_V1.0/review/需求_r4_通用板8x4_2026-11-23.md, 先 8×4 随后改 10×5): 发射/接收合并成一种通用板 10×5, 直接写板局部坐标 (表格式, 同定子 IR_*)
-#   板局部 (需求里叫 a / b, 这里变量 u / v): u 沿 10 长边 0–10, v 沿 5 短边 0–5, 原点 = 板角 (A 面 / 光管面看); 转子横放: A 面朝下贴承载盘, v → 件局部 x (径向, x = 74.5 + v), u → 件局部 y (切向)
-#   x = OPT_R + (v − RX_PT_UV[1]); y = RX_YS·(u − RX_PT_UV[0])。B 件装 90°: 局部 (x, y) → 世界 (−y, x) ⇒ 局部 −y = 世界 +x (朝 J9 (41.5, 39)) ⇒ RX_YS = +1 (焊盘 u0.8 端在 y −6.7 朝 J9, 不镜像)
-#   (u, v) → 件局部是正交旋转 (A 面法线 → −z, det +1), 板翻面装上后孔位与 A 面视图一致, 不是镜像
-RX_PCB_U, RX_PCB_V = 10.0, 5.0                    # 外形 (u 长 × v 宽), 厚 RX_PCB_T
-RX_PT_UV = (7.50, 3.00)                           # A 面 0603 光敏管 / B 面 0603 47k 正背面 (长轴都沿 v)
+# 11-23 r4 第 3 版 (用户草图「不对」后定, 需求 pcb/projects/POV3D_Opto_V1.0/review/需求_r4_通用板8x4_2026-11-23.md; 8×4 / 10×5 第 2 版作废):
+#   发射/接收同一块通用板 10×5, 关于 u=5 左右对称, 定子 / 转子装法一样 (r = 74.1 + v)。直接写板局部坐标 (表格式, 同定子 IR_*)
+#   板局部 (需求里叫 a / b, 这里变量 u / v): u 沿 10 长边 = 切向, v 沿 5 短边 = 径向 (v=0 朝轴心 = 焊盘边), 原点 = 板角
+#   转子: A 面朝下贴承载盘, x = OPT_R + (v − 3.4) = 74.1 + v, y = u − 5 (对称, 正反 / 镜像都一样)
+RX_PCB_U, RX_PCB_V = 10.0, 5.0                    # 外形 (u 切向 × v 径向), 厚 RX_PCB_T
+RX_PT_UV = (5.00, 3.40)                           # A 面 0603 光敏管 / B 面 0603 47k 正背面 (长轴都沿 v 径向)
 RX_0603_EXT = (0.95, 2.4)                         # 0603 铜外包 (u 向 × v 向; 长轴沿 v)
-RX_SP_UV = {'VCC': (0.80, 1.00), 'SIG': (0.80, 2.50), 'GND': (0.80, 4.00)}   # 金属化焊盘 Φ RX_SP_D / 钻 RX_SP_DRILL (P1 3V3 / P2 N=SIG / P3 GND)
-RX_LOC_UV = {'H1': (3.50, 3.95), 'H2': (5.60, 1.20)}                          # NPTH Φ RX_LOC_D 定位孔 (B 件销对准)
-RX_YS = +1                                        # u → y 方向 (+1: y = u − 7.5; −1 镜像 y = 7.5 − u)
+RX_SP_UV = {'VCC': (3.50, 0.80), 'SIG': (5.00, 0.80), 'GND': (6.50, 0.80)}   # 金属化焊盘 Φ RX_SP_D / 钻 RX_SP_DRILL, 沿切向一排 (P1 3V3 / P2 N=SIG / P3 GND)
+RX_LOC_UV = {'H1': (2.00, 3.20), 'H2': (8.00, 3.20)}                          # NPTH 定位孔 Φ2.2 (M2 通孔规格, 用户 11-23 定), B 件销 Φ2.0 对准
+RX_YS = +1                                        # u → y 方向 (板对称, 取 +1 / −1 结果相同)
 RX_CU_EDGE = 0.2                                  # 铜 ↔ 板边
 RX_NPTH_EDGE, RX_NPTH_CU = 0.3, 0.25              # NPTH 孔边 ↔ 板边 / ↔ 铜 (r4 规则)
 RX_SP_DRILL = 0.5                                 # 焊盘金属化孔径
-RX_WSLOT_W = 2.0                                  # B 件长圆穿线槽宽 (切向), 长轴沿径向 x, 长 = 焊盘排 + 宽
+RX_WSLOT_W = 2.0                                  # B 件长圆穿线槽宽 (径向); 长轴沿切向, 长 = 焊盘排 + 宽 (盖住 3 焊点; 离 Φ2 销 0.83)
 
 # ---------------- 玻纤板 (装配体, 与 models/fr4_plate_v1_2b/build.py 同参数) ----------------
 fr4 = cyl(0, 0, FR4_OD, Z_F0, Z_F1)
@@ -253,7 +253,7 @@ SP_POCKETS = {'a': [(68.0, 12.5, 76.5, 23.5), (68.0, -23.5, 76.5, -12.5)],     #
 #   径向 (局部 x, −x = 朝轴心) 从外往里: 板外边 | 光敏管 (底, 对孔心) / 47k (顶) | 间隙 | 接插件焊盘区 (尾朝外) | 板内边
 assert SP_TYPE[(OPT_ANG + 360) % 360] == 'b'
 if RX_CONN == 'pads':
-    def rx_uv2xy(u, v): return (OPT_R + (v - RX_PT_UV[1]), RX_YS * (u - RX_PT_UV[0]))
+    def rx_uv2xy(u, v): return (OPT_R + (v - RX_PT_UV[1]), RX_YS * (u - RX_PT_UV[0]))   # x = 74.1 + v, y = u − 5
     def _dpr(p, c, hu, hv): return math.dist(p, (min(max(p[0], c[0] - hu), c[0] + hu), min(max(p[1], c[1] - hv), c[1] + hv)))
     # 板上规则自检 (r4 需求: 铜 ↔ 板边 ≥0.2 / NPTH ↔ 板边 ≥0.3 / NPTH ↔ 铜 ≥0.25)
     RX_PCB_CHK = {}
@@ -270,8 +270,8 @@ if RX_CONN == 'pads':
         lim = (RX_NPTH_EDGE if '板边' in k else RX_NPTH_CU) if k.startswith('H') else RX_CU_EDGE if '板边' in k else 0.3
         assert v >= lim - 1e-6, (k, v, lim)
     _cx = [rx_uv2xy(u, v) for u in (0.0, RX_PCB_U) for v in (0.0, RX_PCB_V)]
-    RX_PCB_X0, RX_PCB_X1 = min(p[0] for p in _cx), max(p[0] for p in _cx)       # 件局部 x 74.5–79.5
-    RX_PCB_Y0, RX_PCB_Y1 = min(p[1] for p in _cx), max(p[1] for p in _cx)       # 件局部 y −7.5…+2.5
+    RX_PCB_X0, RX_PCB_X1 = min(p[0] for p in _cx), max(p[0] for p in _cx)       # 件局部 x 74.1–79.1
+    RX_PCB_Y0, RX_PCB_Y1 = min(p[1] for p in _cx), max(p[1] for p in _cx)       # 件局部 y −5…+5
     RX_PCB_L = round(RX_PCB_X1 - RX_PCB_X0, 3)    # 径向 5
     RX_PCB_W = round(RX_PCB_Y1 - RX_PCB_Y0, 3)    # 切向 10
     RX_PT_XY = rx_uv2xy(*RX_PT_UV)                # (77.5, 0) 对通光孔
@@ -290,8 +290,8 @@ if RX_CONN == 'pads':
     RX_Y0, RX_Y1 = RX_PCB_Y0 - RX_CLR, RX_PCB_Y1 + RX_CLR
     RX_HY = max(-RX_Y0, RX_Y1)
     _xs = [x for x, _ in RX_SP_PTS]; _ys = [y for _, y in RX_SP_PTS]
-    assert max(_ys) - min(_ys) < 1e-9             # 焊盘排沿径向 (同 y)
-    RX_HOLE = dict(x0=min(_xs), x1=max(_xs), y=_ys[0], w=RX_WSLOT_W)   # 长圆穿线槽: 中心线 x0–x1 @ y, 宽 w (长轴沿径向 x)
+    assert max(_ys) - min(_ys) < 1e-9 or max(_xs) - min(_xs) < 1e-9   # 焊盘排沿轴向一排
+    RX_HOLE = dict(x0=min(_xs), x1=max(_xs), y0=min(_ys), y1=max(_ys), w=RX_WSLOT_W)   # 长圆穿线槽: 中心线段 (x0,y0)–(x1,y1) (轴向), 宽 w; 现长轴沿切向 y
     RX_WIN = None
     RX_HDR_X0 = RX_HDR_X1 = RX_HDR_Z1 = RX_MATE_Z1 = RX_PLUG_X0 = None
 else:
@@ -329,8 +329,8 @@ def _top_conflict():                              # 顶入: 插头顶 / 线弯 �
 RX_TOP_CONFLICT = _top_conflict()
 # B 件减重槽在中间劈开, 让出接收槽 / 通窗 / 穿线槽 (水平壁 ≥ RX_POCKET_WALL; 槽顶高于减重槽底 33.5, 但仍按水平壁留)
 if RX_HOLE:
-    _ky0 = min(RX_Y0, RX_HOLE['y'] - RX_HOLE['w'] / 2) - RX_POCKET_WALL
-    _ky1 = max(RX_Y1, RX_HOLE['y'] + RX_HOLE['w'] / 2) + RX_POCKET_WALL
+    _ky0 = min(RX_Y0, RX_HOLE['y0'] - RX_HOLE['w'] / 2) - RX_POCKET_WALL
+    _ky1 = max(RX_Y1, RX_HOLE['y1'] + RX_HOLE['w'] / 2) + RX_POCKET_WALL
 else:
     _ky0, _ky1 = -RX_HY - RX_POCKET_WALL, RX_HY + RX_POCKET_WALL
 _P0 = SP_POCKETS['b'][0]                          # 原整块 (68.5, −13.4, 77.5, 13.4)
@@ -345,7 +345,7 @@ def rx_cuts():
         return [gbox(RX_X0, RX_Y0, SP_Z0 - 1, RX_X1, RX_Y1, zb),
                 gbox(RX_R_BOX[0], RX_R_BOX[1], SP_Z0 - 1, RX_R_BOX[2], RX_R_BOX[3], RX_Z_PCB[1] + RX_R_H + 0.2),   # 47k (含焊点) 让位
                 *[cyl(x, y, RX_SP_D + 2 * RX_CLR, SP_Z0 - 1, RX_Z1) for x, y in RX_SP_PTS],     # 每个焊盘焊点让位
-                _slot_x(h['x0'], h['x1'], h['y'], RX_Z_PCB[1], SP_Z1 + 1, h['w'])]   # 长圆穿线槽 (焊盘排正上方, 长轴沿径向) 贯穿到件顶
+                _slot_seg(h['x0'], h['y0'], h['x1'], h['y1'], RX_Z_PCB[1], SP_Z1 + 1, h['w'])]   # 长圆穿线槽 (焊盘排正上方, 长轴沿切向) 贯穿到件顶
     c = [gbox(RX_PCB_X0 - RX_CLR, -RX_PCB_W / 2 - RX_CLR, SP_Z0 - 1, RX_PCB_X1 + RX_CLR, RX_PCB_W / 2 + RX_CLR, zb),             # 板外形浅槽 (槽顶压板顶)
          gbox(RX_R_X0 - RX_CLR, -RX_R_W / 2 - RX_CLR, SP_Z0 - 1, RX_R_X1 + RX_CLR, RX_R_W / 2 + RX_CLR, RX_Z_PCB[1] + RX_R_H + 0.2),   # 47k 让位
          gbox(RX_PAD_X0 - RX_CLR, -_C['W'] / 2 - RX_CLR, SP_Z0 - 1, RX_PAD_X1 + RX_CLR, _C['W'] / 2 + RX_CLR, RX_Z1)]                # 接插件 (含焊盘区) 让位, 顶压接插件
@@ -379,9 +379,10 @@ def _hexp(x, y, af, z0, z1, ang=0.0):
     pg.Close()
     return BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(pg.Wire()).Face(), gp_Vec(0, 0, z1 - z0)).Shape()
 
-def _slot_x(x0, x1, y, z0, z1, d):
-    """沿 x 的长圆槽 (中心线 x0–x1 @ y, 宽 d)"""
-    return fuse(cyl(x0, y, d, z0, z1), cyl(x1, y, d, z0, z1), gbox(x0, y - d / 2, z0, x1, y + d / 2, z1))
+def _slot_seg(x0, y0, x1, y1, z0, z1, d):
+    """轴向长圆槽 (中心线段 (x0,y0)–(x1,y1), 沿 x 或沿 y, 宽 d)"""
+    return fuse(cyl(x0, y0, d, z0, z1), cyl(x1, y1, d, z0, z1), gbox(min(x0, x1) - (d / 2 if y0 != y1 else 0), min(y0, y1) - (d / 2 if x0 != x1 or y0 == y1 else 0), z0,
+                                                                     max(x0, x1) + (d / 2 if y0 != y1 else 0), max(y0, y1) + (d / 2 if x0 != x1 or y0 == y1 else 0), z1))
 
 def _slot(x, y, z0, z1, d=3.4, hl=SP_SCR_SL):
     """沿 y 的腰形孔 (中心 (x, y), 半长 hl)"""
@@ -451,15 +452,14 @@ RX_WALL = dict(槽外端_件外边=round(min(SP_X1, math.sqrt(SP_R1 ** 2 - max(-
                接插件槽顶_件顶=round(SP_Z1 - RX_Z1, 2))
 if RX_HOLE:                                        # 穿线孔 / 长圆槽 (x, y, 宽, 半长沿 y): 距离按中心线段算
     _h = RX_HOLE; _hd = _h['w']; RX_WALL.pop('接插件槽顶_件顶')
-    def _sd(p): return math.dist(p, (min(max(p[0], _h['x0']), _h['x1']), _h['y']))   # 点 ↔ 槽中心线
-    def _sdr(x0, y0, x1, y1):                     # 槽中心线 (沿 x) ↔ 矩形
-        if y0 <= _h['y'] <= y1: return max(x0 - _h['x1'], _h['x0'] - x1, 0.0)
-        return min(_d_rect(xx, _h['y'], x0, y0, x1, y1) for xx in (_h['x0'], _h['x1'], min(max(x0, _h['x0']), _h['x1'])))
-    _h_ext_y = max(abs(_h['y']) + _hd / 2, 0)
+    def _sd(p): return math.dist(p, (min(max(p[0], _h['x0']), _h['x1']), min(max(p[1], _h['y0']), _h['y1'])))   # 点 ↔ 槽中心线段
+    def _sdr(x0, y0, x1, y1): return _rr((_h['x0'], _h['y0'], _h['x1'], _h['y1']), (x0, y0, x1, y1))           # 中心线段 (轴向) ↔ 矩形
+    _h_ext_y = max(abs(_h['y0']), abs(_h['y1'])) + _hd / 2
     RX_WALL.update(槽内端_件内边=round(RX_X0 - SP_B_X0, 2), 穿线槽_件内边=round(_h['x0'] - _hd / 2 - SP_B_X0, 2),
                    穿线槽_减重槽=round(min(_sdr(*pk) for pk in SP_POCKETS['b']) - _hd / 2, 2), 穿线槽_罩锁窝=round(min(_sd(p) for p in LOCK_B_LOC) - _hd / 2 - WELL_FL_D / 2, 2),
                    穿线槽_外圈螺丝孔=round(min(_sd(p) for p in SP_HOLES_LOC['out']) - _hd / 2 - 3.4 / 2, 2),
-                   穿线槽_件外边=round(min(SP_X1, math.sqrt(SP_R1 ** 2 - _h_ext_y ** 2)) - _h['x1'] - _hd / 2, 2))
+                   穿线槽_件外边=round(min(SP_X1, math.sqrt(SP_R1 ** 2 - _h_ext_y ** 2)) - _h['x1'] - _hd / 2, 2),
+                   槽外端_件外边=round(min(SP_X1, math.sqrt(SP_R1 ** 2 - max(-RX_Y0, RX_Y1) ** 2)) - RX_X1, 2))
     if RX_LOC:                                    # 销 ↔ 穿线槽 / 47k 让位 / 浅槽边 (销须落在板外形浅槽顶下, 不悬空)
         def _dr(p, x0, y0, x1, y1): return _d_rect(p[0], p[1], x0, y0, x1, y1)
         RX_PIN_CLR = dict(销_穿线槽=round(min(_sd(p) for p in RX_LOC_PTS) - _hd / 2 - RX_PIN_D / 2, 2),
