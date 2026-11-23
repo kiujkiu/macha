@@ -77,24 +77,28 @@ MF_THIN = 0.5                                  # 用户 11-11: mounting_flange �
 MF_CB = 1.5                                    # 用户 11-11: 安装法兰 16 个 Φ7 沉孔深 2.0→1.5
 FL_TOP = 22.5 - DROP + FL_UP                   # 法兰盘顶 13.5 (= 安装法兰底)
 MF_TOP = 25.5 - MF_THIN - DROP + FL_UP         # 安装法兰顶 16.0
-# 11-23 光电对射发射板 (定子侧, 发射管朝上; 接收管在转子盘B 朝下, 转子通光孔 Φ3.2 @ r77.5): 定子盘顶面切向槽 + 槽端穿线孔 + 安装法兰通光窗。
-#   11-23 用户: 双面板 —— 顶面 0603 发射管, 底面 0603 10k 电阻 + 2 个焊线焊盘 (24V/GND, 不要接插件) 靠穿线孔端;
-#   「LED 这面贴到件上」: 板顶面平贴安装法兰底面 (= 定子盘顶 FL_TOP, 被 22.5°/67.5° 两颗 B 螺丝锁的法兰压住), LED 本体伸进法兰通光窗。
+# 11-23 光电对射发射板 (定子侧, 发射管朝上; 接收管在转子盘B 朝下, 转子通光孔 Φ3.4 @ r77.5)。
+#   11-23 用户纠正: 板放在定子盘**底面** (Z FL_Z0 一侧) —— 双面板, 顶面 0603 发射管朝上, 底面 0603 10k + 2 个焊线焊盘 (24V/GND, 不要接插件);
+#   板顶面 (LED 面) 平贴定子盘底面, LED 伸进定子盘通光孔 (贯穿) → 安装法兰同轴通光窗 → 气隙 → 转子孔。
+#   压片 ir_clamp_v1_2 (打印): 沿 r77.5 的弧形条, 用离板最近的 2 颗外圈 B 螺丝 (M3, 盘底下挂法兰螺母) 夹在定子盘底面与法兰螺母之间, 顶面开板槽托住板。
 #   局部系: LED 中心在 (IR_R, 0), +u = 逆时针切向, 再整体转 IR_ANG。改板只动这里。
-IR_ANG, IR_R = 53.0, 77.5                      # LED 中心角度/半径 (r 必须 = 转子通光孔半径 77.5); 53° 落在 B 孔 22.5/67.5° 之间, 穿线孔落在控制板 XT60 焊盘旁
-IR_PCB_L, IR_PCB_W, IR_PCB_T = 4.0, 3.0, 0.8   # 发射小板 FR4 (切向 L × 径向 W × 厚); 底面: 焊盘 Φ1.0 ×2 径向并排 (中心距 1.6, 边距 0.2) + 0603 电阻径向放, 切向 0.2+0.8+0.5+1.0+0.2 = 2.7 (理论最小 3×3, 取 4 给过孔)
-IR_LED_U = 1.5                                 # LED 中心离板低角端 (板 u ∈ [−IR_LED_U, IR_PCB_L − IR_LED_U]); 0603 LED 径向放 1.6×0.8
-IR_LED_L, IR_LED_W, IR_LED_H = 1.6, 0.8, 0.6   # 顶面 0603 发射管 (伸进法兰通光窗, 对角 1.79 < IR_WIN_D)
+IR_ANG, IR_R = 53.0, 77.5                      # LED 中心角度/半径 (r 必须 = 转子通光孔半径 77.5); 53° 在 B 孔 22.5/67.5° 之间, 出线口正上方就是控制板 XT60 焊盘 (43.4, 61.5)
+IR_PCB_L, IR_PCB_W, IR_PCB_T = 4.0, 3.0, 0.8   # 发射小板 FR4 (切向 L × 径向 W × 厚); 底面沿 u (从低角端): 托边 0–1.3 无件 | 0603 电阻 1.5–2.3 (径向放) | 焊盘 Φ1.0 ×2 径向并排 2.8–3.8 (中心距 1.6, 边距 0.2) (理论最小 3×3, 取 4 给过孔)
+IR_LED_U = 1.5                                 # LED 中心离板低角端 (板 u ∈ [−IR_LED_U, IR_PCB_L − IR_LED_U]); 顶面 0603 LED 径向放
+IR_LED_L, IR_LED_W, IR_LED_H = 1.6, 0.8, 0.6   # 顶面 0603 发射管 (伸进定子盘通光孔, 对角 1.79 < IR_WIN_D)
 IR_BOT_H = 0.45                                # 底面 0603 电阻高
-IR_BOT_GAP = 0.2                               # 电阻底到槽底余量
-IR_TOP_FIT = 0.0                               # 板顶面高出定子盘顶 (0 = 贴合; 要压紧可给 0.05 过盈)
-IR_DEPTH = IR_PCB_T + IR_BOT_H + IR_BOT_GAP    # 槽深 1.45 (从板顶面算) ⇒ 槽底 FL_TOP + IR_TOP_FIT − 1.45
-IR_CLR = 0.2                                   # 槽比板单边大
-IR_PAD_U0 = IR_PCB_L - IR_LED_U - 1.4          # 焊盘区 (焊点+焊线) 起点 u (焊盘外缘离板端 0.2, Φ1.0 ⇒ 区 1.4 到板端)
-IR_JOINT_EXTRA = 0.5                           # 焊盘区到穿线孔这段槽底再加深 (让焊点/焊线弯)
-IR_WIRE_D = 3.0                                # 穿线孔 (2 芯焊线往下到控制板), 孔边切板高角端
-IR_WIRE_U = IR_PCB_L - IR_LED_U + IR_WIRE_D / 2
-IR_WIN_D = 3.5                                 # 安装法兰通光窗 (LED 本体在里面, LED 顶 FL_TOP+0.6 < 法兰顶)
+IR_BOT_GAP = 0.2                               # 电阻底到压片槽底余量
+IR_LEDGE = 1.3                                 # 板低角端底面托边长 (压片从这里把板顶向定子盘底面; 其余底面让器件/焊点)
+IR_PAD_ZONE = 1.4                              # 板高角端焊盘区长 (压片在此开通槽 → 内侧开口, 焊线直接往下)
+IR_CLR = 0.2                                   # 压片板槽比板单边大
+IR_WIN_D = 3.5                                 # 定子盘通光孔 (贯穿 Z FL_Z0..FL_TOP) = 安装法兰通光窗 (同轴)
+IR_CL_W = 6.0                                  # 压片弧形条径向宽 (r74.5–80.5, 板槽两侧壁 1.3)
+IR_CL_PAD_D = 9.6                              # 压片螺丝处圆垫 (外缘 r82.3, 不出定子盘 r82.5)
+IR_CL_NUT_CB_D = 8.4                           # 圆垫底面法兰螺母沉孔 (法兰 Φ7.6 +0.4), 只留 IR_CL_PAD_T 夹在定子盘底与螺母之间
+IR_CL_PAD_T = 0.8                              # 螺母处压片厚 ⇒ 螺母只下移 0.8: Z7.5–11.2 (67.5° 孔正下方控制板器件顶 ~Z5.85, 整片 2.25 厚时只剩 0.2)
+IR_CL_HOLE_D = 3.4                             # 压片螺丝孔
+IR_CL_T = IR_PCB_T + IR_BOT_H + IR_BOT_GAP + 0.8   # 压片厚 2.25 (板槽 0.8 + 器件槽 0.65 + 槽底 0.8) ⇒ 底 FL_Z0 − 2.25
+IR_CL_SCREW_L = 10.0                           # 压片处 2 颗 B 螺丝仍 M3×10 (支承 Z18, 尾 Z8.0, 吃螺母 3.2/3.7); M3×12 尾 Z6 离 67.5° 下方控制板器件只 0.15, 不可用
 TUBE_TOP = MF_TOP                              # 用户 11-12: 内管穿定子盘+安装法兰到 Z16 (6.5); 螺丝 r35.2 的 Φ7 沉孔内缘 r31.7 让开内管 r31.5
 CB7 = 7.0                                      # 用户 11-12: 安装法兰 A/B 沉孔 Φ7 = 定子盘内外墙宽
 R_SCREW = 31.7 + CB7 / 2                       # 用户 11-12: r34 → r35.2 (Φ7 沉孔从中心孔边 r31.7 起; 原 11-11 r36.3 → r34)
@@ -650,25 +654,40 @@ for s__ in solids(board):
     BRD_POCKETS.append(dict(bbox=[round(v, 2) for v in b__], top=round(z1_, 2), depth=round(z1_ - FL_Z0, 2), floor_in_cavity=round(CAV_Z0 - z1_, 2)))
 LOG['board_pockets'] = BRD_POCKETS
 _irt = rotz(IR_ANG)
-_ir_top = FL_TOP + IR_TOP_FIT                     # 板顶面 (LED 面) = 法兰底面
-_ir_fl = _ir_top - IR_DEPTH                       # 槽底
-IR_SLOT = xf(fuse(gbox(IR_R - IR_PCB_W / 2 - IR_CLR, -IR_LED_U - IR_CLR, _ir_fl, IR_R + IR_PCB_W / 2 + IR_CLR, IR_WIRE_U, FL_TOP + 1),                # 板槽 (通到穿线孔中心)
-                  gbox(IR_R - IR_PCB_W / 2 - IR_CLR, IR_PAD_U0, _ir_fl - IR_JOINT_EXTRA, IR_R + IR_PCB_W / 2 + IR_CLR, IR_WIRE_U, FL_TOP + 1)), _irt)   # 焊点区加深
-IR_WIRE = xf(cyl(IR_R, IR_WIRE_U, IR_WIRE_D, FL_Z0 - 1, FL_TOP + 1), _irt)                                                                         # 穿线孔 Φ3 打穿定子盘
-_fd = cut(_fd, IR_SLOT, IR_WIRE)
-IR_PCB = xf(fuse(gbox(IR_R - IR_PCB_W / 2, -IR_LED_U, _ir_top - IR_PCB_T - IR_BOT_H, IR_R + IR_PCB_W / 2, IR_PCB_L - IR_LED_U, _ir_top),          # 板+底面器件外包 (校核/显示用)
-                 gbox(IR_R - IR_LED_L / 2, -IR_LED_W / 2, _ir_top, IR_R + IR_LED_L / 2, IR_LED_W / 2, _ir_top + IR_LED_H)), _irt)                 # 顶面 LED
-LOG['ir_tx'] = dict(ang=IR_ANG, r=IR_R, slot_wl=(IR_PCB_W + 2 * IR_CLR, IR_WIRE_U + IR_LED_U + IR_CLR), floor_z=_ir_fl, floor_t=_ir_fl - FL_Z0,
-                    joint_floor_z=_ir_fl - IR_JOINT_EXTRA, led_top=_ir_top + IR_LED_H,
-                    wire_ang=round(IR_ANG + math.degrees(math.atan2(IR_WIRE_U, IR_R)), 2), wire_r=round(math.hypot(IR_R, IR_WIRE_U), 2))
+IR_WIN = xf(cyl(IR_R, 0, IR_WIN_D, FL_Z0 - 1, FL_TOP + 1), _irt)                  # 定子盘通光孔 (贯穿)
+_fd = cut(_fd, IR_WIN)
+LOG['ir_tx'] = dict(ang=IR_ANG, r=IR_R, win_d=IR_WIN_D, led_top=FL_Z0 + IR_LED_H)
 flange_disc = clean(_fd)
 _mf2 = mounting_flange                             # 11-12 外径回原 Φ170: 保留 V0.4 原外裙 r82.5–85 (已同步短到 z9.3 = 定子盘底); 原先 cut ann(82.8,86) 是错的, 还留 0.3 薄片
 for x, y in _V04_OUT: _mf2 = fuse(_mf2, cyl(x, y, CB7 + 0.4, FL_TOP, MF_TOP))  # 原 r77.5 Φ7 沉孔 + 孔补实 (板内)
 _mf2 = clean(_mf2)                                 # 11-17 晚: LID_R 改 r77.5 与原孔同轴, 不先 clean 直接挖会布尔失败 (体积 0)
 for x, y in LID_SCREWS: _mf2 = cut(_mf2, cyl(x, y, 3.2, 0, 30), cyl(x, y, CB7, MF_TOP - MF_CB, 40))   # 上盖 r79: Φ3.2 + 顶面 Φ7×1.5
 # 11-17 用户: 安装法兰不再给 XT60 开缺口 (外裙整圈); 改由 XT60 压块 V1.2-h 在全局 Z8 以上削到接头尾 r85.8 (原 11-13 此处 cut 压块外形 +0.5, Z≤13.5)
-_mf2 = cut(_mf2, xf(cyl(IR_R, 0, IR_WIN_D, FL_TOP - 1, MF_TOP + 1), rotz(IR_ANG)))   # 11-23 光电对射通光窗 (发射管本体伸进来, 板顶面贴法兰底面)
+_mf2 = cut(_mf2, xf(cyl(IR_R, 0, IR_WIN_D, FL_TOP - 1, MF_TOP + 1), rotz(IR_ANG)))   # 11-23 光电对射通光窗 (与定子盘通光孔同轴)
 mounting_flange = clean(_mf2)
+# 11-23 光电发射板压片 ir_clamp_v1_2 (打印, 夹在定子盘底面与 2 颗 B 螺丝的下挂法兰螺母之间): 弧形条 r IR_R ± IR_CL_W/2 + 两端圆垫,
+#   顶面 (贴定子盘底) 开板槽: 全板外形深 IR_PCB_T (板顶面齐定子盘底), 托边以外再深 IR_BOT_H+IR_BOT_GAP 让器件, 焊盘区通槽向内侧开口出线。
+_ia = lambda xy: math.degrees(math.atan2(xy[1], xy[0])) % 360
+IR_CL_HOLES = sorted(sorted(LID_SCREWS, key=lambda p: abs((_ia(p) - IR_ANG + 180) % 360 - 180))[:2], key=_ia)   # 离板最近的 2 颗 B 孔
+_a0, _a1 = _ia(IR_CL_HOLES[0]), _ia(IR_CL_HOLES[1])
+_cz0, _cz1 = FL_Z0 - IR_CL_T, FL_Z0
+_cl = cut(cyl(0, 0, 2 * (IR_R + IR_CL_W / 2), _cz0, _cz1, ang=_a1 - _a0, a0=_a0), cyl(0, 0, 2 * (IR_R - IR_CL_W / 2), _cz0 - 1, _cz1 + 1))
+_cl = fuse(_cl, *[cyl(x, y, IR_CL_PAD_D, _cz0, _cz1) for x, y in IR_CL_HOLES])
+_u0, _u1 = -IR_LED_U, IR_PCB_L - IR_LED_U                                           # 板 u 范围
+_rb0, _rb1 = IR_R - IR_PCB_W / 2 - IR_CLR, IR_R + IR_PCB_W / 2 + IR_CLR
+IR_CL_POCKET = xf(fuse(gbox(_rb0, _u0 - IR_CLR, _cz1 - IR_PCB_T, _rb1, _u1 + IR_CLR, _cz1 + 1),                                   # 板槽 (板顶面齐压片顶 = 定子盘底)
+                       gbox(_rb0, _u0 + IR_LEDGE, _cz1 - IR_PCB_T - IR_BOT_H - IR_BOT_GAP, _rb1, _u1 + IR_CLR, _cz1 + 1),        # 器件槽 (托边以外)
+                       gbox(IR_R - IR_CL_W / 2 - 1, _u1 - IR_PAD_ZONE, _cz0 - 1, _rb1, _u1 + IR_CLR, _cz1 + 1)), _irt)           # 焊盘区通槽, 向内侧开口出线
+_cl = cut(_cl, IR_CL_POCKET, *[cyl(x, y, IR_CL_HOLE_D, _cz0 - 1, _cz1 + 1) for x, y in IR_CL_HOLES], *[cyl(x, y, IR_CL_NUT_CB_D, _cz0 - 1, _cz1 - IR_CL_PAD_T) for x, y in IR_CL_HOLES])
+ir_clamp = clean(_cl)
+IR_PCB = xf(fuse(gbox(IR_R - IR_PCB_W / 2, _u0, FL_Z0 - IR_PCB_T, IR_R + IR_PCB_W / 2, _u1, FL_Z0),                              # 板 (顶面贴定子盘底)
+                 gbox(IR_R - IR_PCB_W / 2, _u0 + IR_LEDGE + 0.2, FL_Z0 - IR_PCB_T - IR_BOT_H, IR_R + IR_PCB_W / 2, _u1 - IR_PAD_ZONE, FL_Z0 - IR_PCB_T),   # 底面电阻 (外包)
+                 gbox(IR_R - IR_LED_L / 2, -IR_LED_W / 2, FL_Z0, IR_R + IR_LED_L / 2, IR_LED_W / 2, FL_Z0 + IR_LED_H)), _irt)   # 顶面 LED
+_wu = _u1 - IR_PAD_ZONE / 2
+IR_WIRE_XY = ((IR_R - IR_PCB_W / 2 - 0.5) * math.cos(math.radians(IR_ANG)) - _wu * math.sin(math.radians(IR_ANG)),
+              (IR_R - IR_PCB_W / 2 - 0.5) * math.sin(math.radians(IR_ANG)) + _wu * math.cos(math.radians(IR_ANG)))   # 焊线出压片的位置 (向下去控制板)
+LOG['ir_clamp'] = dict(holes=[round(_ia(p), 1) for p in IR_CL_HOLES], t=IR_CL_T, pad_t=IR_CL_PAD_T, z=(_cz0, _cz1), v=round(vol(ir_clamp), 1), screw_L=IR_CL_SCREW_L,
+                       wire_xy=[round(v, 2) for v in IR_WIRE_XY])
 seat = clean(s_); LOG['seat'] = dict(v=vol(seat), z_g=Z_G)          # 合并版 (下罩+外卡一体)
 # 分体版 (用户 11-11): 外卡三角区单独一个环, 玻璃先套内卡再从上套环; 环底 2x2 凸筋插下罩顶槽 (单边 0.1)
 TG_R0, TG_W, TG_H, TG_CLR = 105.0, 2.0, 2.0, 0.1   # 11-17 晚 用户: 凸筋改到玻璃座 (upper) 顶面, 外卡环底开槽; r104 → 105 让开外移后的 J 沉孔 (外缘 r103.9, 隔 1.1)

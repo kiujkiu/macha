@@ -20,6 +20,7 @@ B_PARTS = {
     'coil_ring_v1_2': ('ring', None, False),
     'flange_disc_v1_2': ('flange_disc', None, False),
     'mounting_flange_v1_2': ('mounting_flange', None, False),
+    'ir_clamp_v1_2': ('ir_clamp', None, False),   # 11-23 光电发射板压片 (定子盘底面, 2 颗 B 螺丝夹住)
     'hub_disc_v1_2': ('hub', 'hub_disc_v1_2', False),
     'rim_ring_v1_2_D170': ('rim', 'rim_ring_v1_2_D170', True),
     'glass_shroud_v1_2': ('seat', None, False),
