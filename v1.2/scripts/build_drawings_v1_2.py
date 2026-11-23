@@ -231,14 +231,14 @@ _ICZ1 = B.FL_Z0; _ICZ0 = B.FL_Z0 - B.IR_CL_T
 SPECS.append(dict(
     code="ir_clamp_v1_2", shape=B.ir_clamp, short="光电发射板压片", qty="1",
     title=f"光电发射板压片: r77.5 弧条 宽 {F(B.IR_CL_W)} 厚 {F(B.IR_CL_T)}, 两端 Φ{F(B.IR_CL_PAD_D)} 垫锁定子盘 B 孔",
-    subtitle=f"顶面贴定子盘底 Z{F(_ICZ1)}; 板槽 {F(B.IR_PCB_W + 2 * B.IR_CLR)}×{F(B.IR_PCB_L + 2 * B.IR_CLR)} 深 {F(B.IR_PCB_T)} + 器件槽 深 {F(B.IR_BOT_H + B.IR_BOT_GAP)}; 焊盘区通槽向内开口; LED r77.5 @{F(B.IR_ANG)}°",
+    subtitle=f"顶面贴定子盘底 Z{F(_ICZ1)}; 板槽 {F(B.IR_PCB_W + 2 * B.IR_CLR)}×{F(B.IR_PCB_L + 2 * B.IR_CLR)} 深 {F(B.IR_PCB_T)} + 器件槽 深 {F(B.IR_BOT_H + B.IR_BOT_GAP)}; 2 定位销; 板内端伸出压片露焊盘 (无出线孔); LED r77.5 @{F(B.IR_ANG)}° (两螺丝正中)",
     orient="顶面 (板槽面) 朝上打印",
     phi=[],
     sec=dict(ang=B.IR_ANG, zd=[(_ICZ0, _ICZ1), (_ICZ1 - B.IR_PCB_T, _ICZ1)]),
     holes=[dict(tag="A", pts=B.IR_CL_HOLES, spec=f"Φ{F(B.IR_CL_HOLE_D)} 通 + 底面 Φ{F(B.IR_CL_NUT_CB_D)} 法兰螺母沉孔 (留 {F(B.IR_CL_PAD_T)})",
                 where=ring_txt(B.IR_CL_HOLES) + f"  M3×{F(B.IR_CL_SCREW_L)} (定子盘外圈 B 孔, 不换长度)")],
     notes=[f"发射板 {F(B.IR_PCB_W)}×{F(B.IR_PCB_L)}×{F(B.IR_PCB_T)} 双面: 顶 0603 IR (贴定子盘底, 伸进 Φ{F(B.IR_WIN_D)} 通光孔), 底 0603 10k + 2 焊盘",
-           f"板槽底整面托板; 2 个定位销 Φ{F(B.IR_PIN_D)} 高 {F(B.IR_PIN_H)} 插板上对角 NPTH 孔 Φ{F(B.IR_HOLE_D)}; 焊盘处通孔+向内开槽, 焊线竖直下到控制板 XT60 24V/GND",
+           f"板槽底整面托板; 2 个定位销 Φ{F(B.IR_PIN_D)} 高 {F(B.IR_PIN_H)} 插板上对角 NPTH 孔 Φ{F(B.IR_HOLE_D)}; 板内端伸出压片内边, 底面 2 焊盘外露, 焊线斜下到控制板 XT60 24V/GND",
            f"螺母处只夹 {F(B.IR_CL_PAD_T)}, 法兰螺母 Z{F(B.FL_Z0 - B.IR_CL_PAD_T - 3.7)}–{F(B.FL_Z0 - B.IR_CL_PAD_T)}, M3×{F(B.IR_CL_SCREW_L)} 吃 3.2"],
 ))
 
