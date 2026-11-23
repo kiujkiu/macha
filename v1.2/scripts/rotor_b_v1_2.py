@@ -11,7 +11,7 @@
   (11-21 起) 屏幕支撑件 = PETG 打印 ×4, 两种件, Z30.5 (承载盘顶) → 灯板下沿 LS.Z0 (灯板 +1 后 38.5, 高 8):
       A 屏幕支架件 screen_sup_a_v1_2b ×2 (0°/180° 同件) 托灯板/夹条; B 上下件 screen_sup_b_v1_2b ×2 (90°/270° 同件)
       取代 屏幕玻纤板 screen_fr4_v1_2b ×4 + 侧立件 screen_post_v1_2b ×2 (11-20, 产物移 转子盘B/作废_11-21/)
-光电对射 (11-23): 通光孔 Φ3.4 @ r77.5 90° 穿承载盘 (fr4_plate 现场配钻); 接收板 (0603 光敏管 + 电阻, 朝下) 嵌 B 件底面槽, 3 芯焊线沿件底线槽到件内边 → 底板 J9 (参数 OPT_* / RX_*)
+光电对射 (11-23): 通光孔 Φ3.4 @ r77.5 90° 穿承载盘 (fr4_plate 现场配钻); 接收板双面 (底 0603 光敏管伸进孔 / 顶 47k + JST GH 3P 顶入) 嵌 B 件底面槽 (B 件兼压板), 接插件上方 B 件通窗, 插头线出件顶弯向轴心 → 底板 J9 (参数 OPT_* / RX_* / GH)
 螺丝 (全部在桌上装好再上电机):
   - 屏幕螺丝 2× M3 超薄头 (长度按铜螺柱 Z 自动选, 现 M3×18): 从 A 件底面 Φ7.6×1.5 沉孔往上 (支承 Z32) 穿 A 件 → 中缝 → 拧进灯板 F 面每端下颗铜螺柱
   - 16 颗从 fr4_plate 底往上 (头埋 Φ7.2×1.5 沉孔, 支承 Z23): 内圈 R34 ×8 → 承载盘顶面 Φ8×3.7 沉孔 M3 法兰螺母 (M3×7);
@@ -82,15 +82,28 @@ FPC_POCKET = None                                  # 11-18 用户「不需要, �
 # 用户: 通光孔与外圈 8 孔同半径 r77.5, 放 90° ⇒ 世界 (0, 77.5); 「电路板尽量小, 接插件待确认」⇒ 接收板最小 (只 0603 光敏管 + 0603 电阻), 暂按焊线出线。
 #   以下全是参数, 接插件定了改这里即可 (槽 / 深 / 线槽都由它推出)。
 OPT_ANG, OPT_R, OPT_D = 90.0, R_OUT, 3.4          # 通光孔: 角度 / 半径 / 直径 (承载盘全厚通; fr4_plate 现场配钻; 11-23 用户: 与 M3 通孔同 Φ3.4 一个钻头)
-RX_PCB_L, RX_PCB_W, RX_PCB_T = 4.0, 3.0, 1.0      # 接收板 长 (沿径向) × 宽 (切向) × 厚, FR4
-RX_PT_DX = 1.0                                    # 光敏管中心离板中心 (沿径向, + = 朝外); 电阻在内侧半边 ⇒ 板中心 = 孔心 − RX_PT_DX
-RX_CLR = 0.5                                      # 槽每边余量 (槽 = 板 + 2×0.5)
-RX_DEV_H = 0.7                                    # 板底面器件高 (0603 光敏管 / 电阻, 朝下; 器件底 ≈ 承载盘顶)
-RX_TOP_H = 1.0                                    # 板顶焊点 / 线头余量
-RX_SLOT_H = RX_DEV_H + RX_PCB_T + RX_TOP_H        # 2.7 槽深 (从件底往上)
-RX_EXIT = 'wire'                                  # 出线方式: 'wire' = 3 芯焊线沿件底线槽到件内边 (→ 底板 DR1M90 J9 焊盘, 世界约 (41.5, 39)); 接插件定了再加分支
-RX_WIRE_W, RX_WIRE_H = 2.5, 2.0                   # 线槽 宽 × 深 (件底面开口)
-RX_POCKET_WALL = 1.5                              # 槽 / 线槽 ↔ 顶面减重槽 水平壁
+# 11-23 二版 (用户): 接收板双面 —— 底面 0603 光敏管朝下, 光敏管面平贴承载盘顶 (板底 = Z_TOP), 本体伸进 Φ3.4 通光孔 (中心对孔心);
+#   顶面 0603 47k 上拉 + JST GH 1.25 3P 接插件, 线另一头焊底板 J9 焊盘。B 件 = 压板 (与罩锁转接件复用): 底面槽 = 板外形浅槽 (压板顶) + 器件让位, 槽顶压接插件顶。
+#   用户草图 (11-23 定): 板沿径向长条, 外端 = 光敏管 (底面, 对通光孔), 中间 = 47k (顶面), 内端 (靠轴心) = 接插件 (顶面);
+#   RX_CONN = 'top' 顶入 BM03B-GHS-TBT (默认, 用户定): 接插件正上方 B 件开通窗到顶, 插头 GHR-03V-S 竖直插拔, 线从 B 件顶面上方出来弯 R3 向轴心去 J9
+#           'side' 侧入 SM03B-GHS-TB (备选): 插头朝轴心水平插, 件底出线槽通内边
+#   接插件 / 插头尺寸 = 用户给的 GH 规格书 (3P)。板外形按最小反推。
+RX_CONN = 'top'
+RX_PCB_T = 0.8                                    # 接收板厚 (FR4)
+RX_PT_L, RX_PT_H = 0.8, 0.6                       # 0603 光敏管 沿径向宽 (长边 1.6 沿切向) / 本体高 (板底往下伸进通光孔; 孔 Φ3.4 > 0603 对角 1.79)
+RX_R_L, RX_R_W, RX_R_H = 0.8, 1.6, 0.5            # 顶面 0603 47k (长边沿切向)
+RX_EDGE, RX_GAP = 0.3, 0.3                        # 板边 ↔ 器件 / 电阻 ↔ 接插件焊盘区
+RX_PCB_SIDE = 0.2                                 # 板宽 = 接插件宽 + 2×0.2; 板内边 = 焊盘区内边 − 0.2
+GH = dict(side=dict(name='SM03B-GHS-TB', W=7.0, D=4.05, TAIL=0.8, H=4.25, LIFT=0.1, PAD_D=5.4, MATE_L=7.15, MATE_H=4.35),
+          top=dict(name='BM03B-GHS-TBT', W=7.0, D=4.25, TAIL=0.7, H=4.05, LIFT=0.15, PAD_D=5.6, MATE_H=7.3))
+GH_PLUG = dict(name='GHR-03V-S', W=5.0, L=5.7, T=4.15)   # 插头 宽 (沿针距) / 长 (插入方向) / 厚
+RX_WIRE_OD, RX_WIRE_R = 1.0, 3.0                  # 线外径 (AWG30–26 Φ0.76–1.0) / 顶入出线弯半径 (向轴心)
+RX_WIRE_BEND = 1.5                                # 侧入: 插头尾后线弯余量 (沿 −x)
+RX_CLR = 0.3                                      # 槽 / 窗每边余量 (板 / 器件 / 接插件 / 插头)
+RX_PCB_TOP_CLR = 0.05                             # 板外形浅槽顶 ↔ 板顶 (B 件压板)
+RX_TOP_CLR = 0.15                                 # 槽顶 ↔ 接插件顶 (压住, 0.1~0.2)
+RX_WIRE_W, RX_WIRE_H = 3 * RX_WIRE_OD + 0.6, 4.0  # 侧入用: 件底出线槽 宽 × 高
+RX_POCKET_WALL = 1.5                              # 槽 / 窗 ↔ 顶面减重槽 水平壁
 
 # ---------------- 玻纤板 (装配体, 与 models/fr4_plate_v1_2b/build.py 同参数) ----------------
 fr4 = cyl(0, 0, FR4_OD, Z_F0, Z_F1)
@@ -205,19 +218,58 @@ SP_POCKET_FLOOR = 3.0
 SP_POCKETS = {'a': [(68.0, 12.5, 76.5, 23.5), (68.0, -23.5, 76.5, -12.5)],     # (x0, y0, x1, y1) 局部
               'b': [(68.5, -13.4, 77.5, 13.4)]}
 # 11-23 B 件底面接收板槽 (局部 = 放 0°; B 件装 90° 时局部 (OPT_R, 0) = 世界通光孔; 270° 那个同件, 下面没孔)
-RX_X0 = OPT_R - RX_PT_DX - RX_PCB_L / 2 - RX_CLR  # 74.0
-RX_X1 = OPT_R - RX_PT_DX + RX_PCB_L / 2 + RX_CLR  # 79.0
-RX_HY = RX_PCB_W / 2 + RX_CLR                     # 2.0
-RX_Z1 = SP_Z0 + RX_SLOT_H                         # 33.2 槽顶
+#   径向 (局部 x, −x = 朝轴心) 从外往里: 板外边 | 光敏管 (底, 对孔心) / 47k (顶) | 间隙 | 接插件焊盘区 (尾朝外) | 板内边
 assert SP_TYPE[(OPT_ANG + 360) % 360] == 'b'
-if RX_HY + RX_POCKET_WALL > 0:                    # B 件减重槽在中间劈开, 让出接收板槽 + 线槽 (槽顶 33.2 vs 减重槽底 33.5 只差 0.3)
-    _hy = max(RX_HY, RX_WIRE_W / 2) + RX_POCKET_WALL
-    SP_POCKETS['b'] = [(x0, y0, x1, y1) for X0, Y0, X1, Y1 in SP_POCKETS['b'] for (x0, y0, x1, y1) in ((X0, _hy, X1, Y1), (X0, Y0, X1, -_hy)) if y1 - y0 > 1.0]
+_C = GH[RX_CONN]
+RX_PCB_X1 = OPT_R + RX_PT_L / 2 + RX_EDGE         # 78.2 板外边
+RX_R_X1 = RX_PCB_X1 - RX_EDGE; RX_R_X0 = RX_R_X1 - RX_R_L          # 47k 77.1–77.9
+RX_PAD_X1 = RX_R_X0 - RX_GAP                      # 76.8 接插件焊盘区外边
+RX_PAD_X0 = RX_PAD_X1 - _C['PAD_D']
+RX_PCB_X0 = RX_PAD_X0 - RX_PCB_SIDE               # 板内边
+RX_PCB_L = round(RX_PCB_X1 - RX_PCB_X0, 3)        # 板长 (径向)
+RX_PCB_W = _C['W'] + 2 * RX_PCB_SIDE              # 板宽 (切向) 7.4
+RX_Z_PCB = (SP_Z0, SP_Z0 + RX_PCB_T)              # 板底贴承载盘顶 30.5–31.3
+RX_HDR_X1 = RX_PAD_X1 - _C['TAIL']                # 接插件本体外端 (尾脚朝外)
+RX_HDR_X0 = RX_HDR_X1 - _C['D']                   # 本体内端
+RX_HDR_Z1 = RX_Z_PCB[1] + _C['LIFT'] + _C['H']    # 接插件顶
+RX_MATE_Z1 = RX_Z_PCB[1] + _C['MATE_H']           # 配合后插头顶 (顶入) / 配合高 (侧入)
+RX_Z1 = (RX_HDR_Z1 if RX_CONN == 'top' else max(RX_HDR_Z1, RX_MATE_Z1)) + RX_TOP_CLR   # 接插件让位槽顶 (压接插件)
+RX_HY = max(RX_PCB_W / 2, _C['W'] / 2) + RX_CLR   # 4.0
+RX_X0 = min(RX_PCB_X0, RX_PAD_X0) - RX_CLR        # 槽内端 (顶入)
+RX_X1 = RX_PCB_X1 + RX_CLR                        # 槽外端
+if RX_CONN == 'top':
+    RX_PLUG_XC = (RX_HDR_X0 + RX_HDR_X1) / 2      # 插头竖插, 截面 W 沿 y × T 沿 x, 中心对本体中心
+    RX_WIN = (RX_PLUG_XC - GH_PLUG['T'] / 2 - RX_CLR, -GH_PLUG['W'] / 2 - RX_CLR, RX_PLUG_XC + GH_PLUG['T'] / 2 + RX_CLR, GH_PLUG['W'] / 2 + RX_CLR)   # 通窗 (x0, y0, x1, y1)
+    RX_PLUG_X0 = RX_PLUG_XC - GH_PLUG['T'] / 2
+else:
+    RX_PLUG_X0 = RX_HDR_X1 - _C['MATE_L']         # 侧入: 插头尾 (配合总长从本体外端算)
+    RX_X0 = RX_PLUG_X0 - RX_WIRE_BEND
+    RX_WIN = None
+def _top_conflict():                              # 顶入: 插头顶 / 线弯 超出 B 件顶多少
+    t = GH['top']; mz = SP_Z0 + RX_PCB_T + t['MATE_H']
+    return dict(插头顶=round(mz, 2), 插头超件顶=round(mz - SP_Z1, 2), 线弯外包顶=round(mz + RX_WIRE_R + RX_WIRE_OD / 2, 2),
+                线弯超件顶=round(mz + RX_WIRE_R + RX_WIRE_OD / 2 - SP_Z1, 2))
+RX_TOP_CONFLICT = _top_conflict()
+_hy = RX_HY + RX_POCKET_WALL                      # B 件减重槽在中间劈开, 让出接收槽 / 通窗 (槽顶高于减重槽底 33.5)
+SP_POCKETS['b'] = [(x0, y0, x1, y1) for X0, Y0, X1, Y1 in SP_POCKETS['b'] for (x0, y0, x1, y1) in ((X0, _hy, X1, Y1), (X0, Y0, X1, -_hy)) if y1 - y0 > 1.0]
 def rx_cuts():
-    c = [gbox(RX_X0, -RX_HY, SP_Z0 - 1, RX_X1, RX_HY, RX_Z1)]
-    if RX_EXIT == 'wire':                         # 线槽沿件底 −x (朝轴心) 通出内边
+    zb = RX_Z_PCB[1] + RX_PCB_TOP_CLR
+    c = [gbox(RX_PCB_X0 - RX_CLR, -RX_PCB_W / 2 - RX_CLR, SP_Z0 - 1, RX_PCB_X1 + RX_CLR, RX_PCB_W / 2 + RX_CLR, zb),             # 板外形浅槽 (槽顶压板顶)
+         gbox(RX_R_X0 - RX_CLR, -RX_R_W / 2 - RX_CLR, SP_Z0 - 1, RX_R_X1 + RX_CLR, RX_R_W / 2 + RX_CLR, RX_Z_PCB[1] + RX_R_H + 0.2),   # 47k 让位
+         gbox(RX_PAD_X0 - RX_CLR, -_C['W'] / 2 - RX_CLR, SP_Z0 - 1, RX_PAD_X1 + RX_CLR, _C['W'] / 2 + RX_CLR, RX_Z1)]                # 接插件 (含焊盘区) 让位, 顶压接插件
+    if RX_CONN == 'top':                          # 接插件正上方通窗贯穿到件顶, 插头竖直插拔
+        c.append(gbox(RX_WIN[0], RX_WIN[1], RX_Z1 - 0.01, RX_WIN[2], RX_WIN[3], SP_Z1 + 1))
+    else:                                         # 侧入: 插头 + 线弯让位, 件底出线槽 −x 通出内边
+        c.append(gbox(RX_X0, -GH_PLUG['W'] / 2 - RX_CLR, SP_Z0 - 1, RX_PAD_X0, GH_PLUG['W'] / 2 + RX_CLR, RX_Z1))
         c.append(gbox(SP_B_X0 - 1, -RX_WIRE_W / 2, SP_Z0 - 1, RX_X0 + 0.01, RX_WIRE_W / 2, SP_Z0 + RX_WIRE_H))
     return c
+def rx_wire_env(run_to=60.0):
+    """顶入: 插头露出件顶段 + 3 线竖出弯 R3 向轴心 + 水平段到局部 x=run_to 的外包 (局部, 校核用)"""
+    if RX_CONN != 'top': return None
+    hy = 1.25 + RX_WIRE_OD / 2 + 0.2; z0 = RX_MATE_Z1; zc = z0 + RX_WIRE_R
+    return fuse(gbox(RX_PLUG_X0, -GH_PLUG['W'] / 2, SP_Z1, RX_PLUG_X0 + GH_PLUG['T'], GH_PLUG['W'] / 2, z0 + 0.01),
+                gbox(RX_PLUG_XC - RX_WIRE_R - RX_WIRE_OD / 2, -hy, z0, RX_PLUG_XC + RX_WIRE_OD / 2, hy, zc + RX_WIRE_OD / 2),
+                gbox(run_to, -hy, zc - RX_WIRE_OD / 2, RX_PLUG_XC - RX_WIRE_R + 0.01, hy, zc + RX_WIRE_OD / 2))
 
 def _rot(p, a): c, s_ = math.cos(math.radians(a)), math.sin(math.radians(a)); return (p[0] * c - p[1] * s_, p[0] * s_ + p[1] * c)
 SHR_LOCK_PTS = sorted([_rot(p, a) for a in SP_ANG for p in SHR_LOCK_SET[a]], key=lambda p: math.atan2(p[1], p[0]) % (2 * math.pi))   # 世界 8 点
@@ -291,13 +343,18 @@ SP_EDGE = dict(a_lock_well=round(min(_edge('a', x, y, WELL_FL_D / 2) for x, y in
                lock_out_b=round(min(math.dist(p, q) for p in LOCK_B_LOC for q in SP_HOLES_LOC['out']) - WELL_FL_D, 2))
 def _d_rect(x, y, x0, y0, x1, y1): return math.dist((min(max(x, x0), x1), min(max(y, y0), y1)), (x, y))
 _pk = SP_POCKETS['b']; _pky = min(min(abs(y0), abs(y1)) for _, y0, _, y1 in _pk)
+_sl = (RX_X0, -RX_HY, RX_X1, RX_HY)               # 槽平面外包
 RX_WALL = dict(槽外端_件外边=round(min(SP_X1, math.sqrt(SP_R1 ** 2 - RX_HY ** 2)) - RX_X1, 2),
-               槽_减重槽=round(_pky - RX_HY, 2), 线槽_减重槽=round(_pky - RX_WIRE_W / 2, 2),
-               槽_罩锁窝=round(min(_d_rect(x, y, RX_X0, -RX_HY, RX_X1, RX_HY) for x, y in LOCK_B_LOC) - WELL_FL_D / 2, 2),
-               线槽_罩锁窝=round(min(_d_rect(x, y, SP_B_X0, -RX_WIRE_W / 2, RX_X0, RX_WIRE_W / 2) for x, y in LOCK_B_LOC) - WELL_FL_D / 2, 2),
-               槽_外圈螺丝孔=round(min(_d_rect(x, y, RX_X0, -RX_HY, RX_X1, RX_HY) for x, y in SP_HOLES_LOC['out']) - 3.4 / 2, 2),
-               线槽_外圈螺丝孔=round(min(_d_rect(x, y, SP_B_X0, -RX_WIRE_W / 2, RX_X0, RX_WIRE_W / 2) for x, y in SP_HOLES_LOC['out']) - 3.4 / 2, 2),
-               槽顶_件顶=round(SP_Z1 - RX_Z1, 2), 线槽顶_件顶=round(SP_Z1 - SP_Z0 - RX_WIRE_H, 2))
+               槽_减重槽=round(_pky - RX_HY, 2),
+               槽_罩锁窝=round(min(_d_rect(x, y, *_sl) for x, y in LOCK_B_LOC) - WELL_FL_D / 2, 2),
+               槽_外圈螺丝孔=round(min(_d_rect(x, y, *_sl) for x, y in SP_HOLES_LOC['out']) - 3.4 / 2, 2),
+               接插件槽顶_件顶=round(SP_Z1 - RX_Z1, 2))
+if RX_WIN:
+    RX_WALL.update(槽内端_件内边=round(RX_X0 - SP_B_X0, 2), 通窗_件内边=round(RX_WIN[0] - SP_B_X0, 2), 通窗_减重槽=round(_pky - RX_WIN[3], 2),
+                   通窗_罩锁窝=round(min(_d_rect(x, y, *RX_WIN) for x, y in LOCK_B_LOC) - WELL_FL_D / 2, 2),
+                   通窗外端_件外边=round(SP_X1 - RX_WIN[2], 2))
+else:
+    RX_WALL.update(线槽顶_件顶=round(SP_Z1 - SP_Z0 - RX_WIRE_H, 2))   # 侧入: 槽内端经出线槽通件内边, 不算壁
 assert min(v for v in RX_WALL.values()) >= 1.2, RX_WALL
 # 承载盘通光孔 Φ3.2 @ (0, 77.5) 壁厚: 线圈腔外壁 r72.5 / 外缘 r85 / fr4_plate 外缘 r82.5 / 其它孔
 _oh = [(x, y, 3.4) for x, y in IN_PTS + ANCHOR_PTS + OUT_NUT_PTS + list(B.BB_HOLES) + list(B.MOD_HOLES)] + [(x, y, 3.2) for x, y in MOT_PTS] + [(x, y, B.AC_HOLE_D + 0.4) for x, y in B.AC_HOLES]
@@ -340,9 +397,13 @@ def report():
                          out_screw=f'M3×{OUT_SCR_L:g} 超薄头 支承 Z{OUT_SCR_BEAR:g} 尾 Z{OUT_SCR_BEAR + OUT_SCR_L:g}, 法兰螺母嵌支撑件顶 Z{OUT_NUT_Z[0]:g}–{OUT_NUT_Z[1]:g} 吃 {OUT_ENG:g}',
                          scr_screw=f'M3×{BAR_SCR_L:g} 超薄头 支承 Z{BAR_SCR_BEAR:g} 尾 Z{BAR_SCR_BEAR + BAR_SCR_L:g}, 铜螺柱 Z{LS.SO_Z0:g}–{LS.SO_Z1:g} 吃 {BAR_SCR_ENG:g}, 离上颗 {round(LS.SO_Z1 - BAR_SCR_BEAR - BAR_SCR_L, 2):g}'),
                edge=SP_EDGE,
-               optical=dict(hole=dict(pt=(round(OPT_PT[0], 3), round(OPT_PT[1], 3)), d=OPT_D, note='承载盘全厚通; fr4_plate 同位 Φ3.2 现场配钻 (以承载盘为钻模)', wall=OPT_WALL),
-                            rx_slot=dict(loc_x=(RX_X0, RX_X1), loc_hy=RX_HY, z=(SP_Z0, RX_Z1), pcb=(RX_PCB_L, RX_PCB_W, RX_PCB_T), pt_dx=RX_PT_DX, exit=RX_EXIT,
-                                         wire=dict(w=RX_WIRE_W, h=RX_WIRE_H, loc_x=(SP_B_X0, RX_X0)), pockets_b=SP_POCKETS['b'], wall=RX_WALL)))
+               optical=dict(hole=dict(pt=(round(OPT_PT[0], 3), round(OPT_PT[1], 3)), d=OPT_D, note='承载盘全厚通; fr4_plate 同位 Φ3.4 现场配钻 (以承载盘为钻模)', wall=OPT_WALL),
+                            rx_slot=dict(conn=RX_CONN, part=GH[RX_CONN]['name'], plug=GH_PLUG['name'], loc_x=(round(RX_X0, 3), RX_X1), loc_hy=RX_HY, z=(SP_Z0, round(RX_Z1, 3)),
+                                         pcb=dict(l=RX_PCB_L, w=RX_PCB_W, t=RX_PCB_T, x=(round(RX_PCB_X0, 3), RX_PCB_X1), z=RX_Z_PCB),
+                                         header=dict(x=(round(RX_HDR_X0, 3), round(RX_HDR_X1, 3)), pad_x=(round(RX_PAD_X0, 3), round(RX_PAD_X1, 3)), top=round(RX_HDR_Z1, 3)),
+                                         plug_x0=round(RX_PLUG_X0, 3), plug_top=round(RX_MATE_Z1, 3), win=RX_WIN and tuple(round(v, 3) for v in RX_WIN),
+                                         pockets_b=SP_POCKETS['b'], wall=RX_WALL,
+                                         top_conflict=RX_TOP_CONFLICT)))
     others = dict(底板=VB['baseboard'], 底板器件=VB['bb_parts'], CZ06=VB['cz06'], 灯板=VB['led'], 夹条=LS.bar_s, 顶部件=LS.top,
                   无线托盘=WH.H, 无线模块=WH.module, FPC_A=_fpc['fpc_a_v1_2'], FPC_B=_fpc['fpc_b_v1_2'], 桥板A=_fpc['bridge_a_v1_2'], 桥板B=_fpc['bridge_b_v1_2'], FPC座=_fpc['bb_fpc_seats_v1_2'], 电机=B.motor, 定子盘=B.flange_disc, 安装法兰=B.mounting_flange, 线圈环=B.ring)
     mine = dict(玻纤板=fr4, 承载盘=rim, 线圈=coil, **{n.split(' ')[0] + n.split(' ')[-1]: sh for n, sh, _ in SCREEN_PARTS})
