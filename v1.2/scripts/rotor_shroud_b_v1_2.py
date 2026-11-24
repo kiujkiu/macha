@@ -68,14 +68,16 @@ SLOT_Y0, SLOT_Y1 = -8.79 - 0.4, 0.0 + 0.35     # −9.19…+0.35 (跨分缝 y=EC
 #   位置 (LS.ANT_B_ANG): 两端 0°/180° 附近罩壁被竖缝 + 罩耳 (板本地 y 15.5…24.5 接壁处 ±17.38°) 夹住只剩弧长 ~15 < 18.9 ⇒ 挪到 罩耳外侧 ~ 唇 (33°) 之间, 中心 25.2° (+y 半) / 205.2° (−y 半)
 # 11-21 A 件罩耳 (板本地 y 26…35, 接壁 18.5°…25.3°) 正好压在原天线位 25.2° ± 6.6° ⇒ 天线挪到 竖缝 (≈0°) 与 A 件罩耳之间: 中心 ANT_ANG_NEW
 #   ⚠ 天线实体 / 原值在 led_support (LS.ANT_B_ANG = 25.2/205.2) —— 本脚本不改 led_support, 槽按新角度切, 校核用本地重建的天线 (ant_new); 需同步 LS.ANT_B_ANG
-ANT_ANG_NEW = 9.2
+ANT_ANG_NEW = LS.ANT_B_ANG[0]  # 11-24 A 直条 (锁 y±20.5, 耳 y16–25 接壁 11.3°–17.8°) 时天线回原位 25.2
 ANT_ANG = (ANT_ANG_NEW, ANT_ANG_NEW + 180.0)
 ANT_HA = math.degrees(LS.ANT_W / 2 / R0)         # 6.60° 半角 (弧长 18.9 @r82)
 ANT_Z0, ANT_Z1 = LS.ANT_B_ZC - LS.ANT_L / 2, LS.ANT_B_ZC + LS.ANT_L / 2   # 32.68–70.78 (顶离顶盖底 Z71.08 0.3)
 _EAR_A_IN = math.degrees(math.asin((RB.LOCK_A_LOC[0][1] - EAR_HW) / R0))     # A 件 +y 罩耳下边接壁角 18.5°
 _SLOT_A = math.degrees(math.atan2(SLOT_Y1, R0))                               # 竖缝上边 (y +0.35) ≈ 0.24°
 ANT_MARGIN = dict(ear=round(_EAR_A_IN - (ANT_ANG[0] + ANT_HA), 2),          # 槽边 ↔ A 件罩耳 (度)
-                  slot=round((ANT_ANG[0] - ANT_HA) - _SLOT_A, 2))           # 槽边 ↔ 竖缝 (度)
+                  slot=round((ANT_ANG[0] - ANT_HA) - _SLOT_A, 2)) if RB.SP_A_STYLE == 'ear' else \
+             dict(ear=round((ANT_ANG[0] - ANT_HA) - math.degrees(math.asin((RB.LOCK_A_LOC[0][1] + EAR_HW) / R0)), 2),   # 11-24 直条: 天线在 A 罩耳上边之外
+                  lip=round(min(a0 for a0, a1 in RS.LIP_ARCS if a0 > ANT_ANG[0]) - (ANT_ANG[0] + ANT_HA), 2) if any(a0 > ANT_ANG[0] for a0, a1 in RS.LIP_ARCS) else 9.9)
 assert min(ANT_MARGIN.values()) > 0.5 and ANT_Z1 <= RS.LID_Z0 - 0.2, ANT_MARGIN
 _ha_ant = math.degrees(LS.ANT_SZ[1] / 2 / LS.ANT_B_R)
 def _ant_new(a):   # 同 led_support._ant_b, 角度换新

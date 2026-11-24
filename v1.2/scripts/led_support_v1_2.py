@@ -300,7 +300,7 @@ ant_a, ant_b = xf(_ant, T_ECC), xf(xf(_ant, rotz(180)), T_ECC)
 # 11-20 夜 转子盘B: 用户「贴到罩子吧」「罩子天然有这个侧立面」「这个天线是fpc的」⇒ 天线 FPC 改贴转子罩内壁 (r82, rotor_shroud_b_v1_2 定位浅槽 0.3 深),
 #   软板顺圆柱面弯 (r82.15–82.3), 长边沿 Z; 中心角 ANT_B_ANG (+y 半 9.2° / −y 半 189.2°, 11-21 起; 原 25.2/205.2), 槽心 Z ANT_B_ZC (槽顶离顶盖底 0.3); 侧立件不再有天线板
 ANT_B_R = 82.0                                    # 转子罩内壁 (rotor_shroud_v1_2.R0)
-ANT_B_ANG = (9.2, 189.2)                       # 11-21 罩耳挪到 A 件 (61,±30.5) 压住原 25.2° 位, 天线槽改 9.2/189.2 (罩 rotor_shroud_b 同步)
+ANT_B_ANG = (9.2, 189.2) if __import__('os').environ.get('SP_A_STYLE', 'ear') == 'ear' else (25.2, 205.2)   # 11-24 A 直条时天线回 25.2                      # 11-21 罩耳挪到 A 件 (61,±30.5) 压住原 25.2° 位, 天线槽改 9.2/189.2 (罩 rotor_shroud_b 同步)
 ANT_B_ZC = round(B.Z_VIEW0 - 2.0 - 0.3 - ANT_L / 2, 2)   # 51.73 ⇒ 槽 Z32.68–70.78 (顶盖底 Z71.08)
 if B.ROTOR_B:
     def _ant_b(a):

@@ -143,7 +143,7 @@ W_CB_D, W_CB_H = 5.8, 3.2                      # 沉孔 Φ5.8 (r76.1–81.9 在�
 W_L, W_NUT_MAX = 16.0, 6                       # M3×16 内六角 (罩顶降到 73.08 后 18 会碰无线托盘), 唇下最多 6 颗 M3 螺母
 W_BEAR = LID_Z0 - W_CB_H                       # 67.88 (头顶 70.88 < 盖底 71.08)
 W_TIP = W_BEAR - W_L                           # 51.88
-assert W_TIP >= 50.5
+assert W_TIP >= 50.5 or B.ROTOR_B, W_TIP   # 旧罩 (A 版) 只在转子盘A 时校; 11-24 转子盘B 灯板 4 时旧罩不用
 assert all(min(abs((w - m + 180) % 360 - 180) for m in MNT_A) >= 6.0 for w in W_A), '配重孔离罩底起子孔太近'
 RHO_PLA, RHO_ST, RHO_BR = 1.24e-3, 7.85e-3, 8.5e-3
 

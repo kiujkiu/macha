@@ -286,11 +286,15 @@ if B.ROTOR_B:
         t = _T(); t.SetTranslation(_V(x, y, 0))
         return B.xf(B.xf(fn(0, 0, z0), B.rotz(math.degrees(math.atan2(y, x)))), t)
     for i, (x, y) in enumerate(sorted(RB.ANCHOR_PTS + RB.OUT_NUT_PTS, key=lambda p: math.atan2(p[1], p[0]) % (2 * math.pi))):   # 外圈 8 颗 (r77.5 @22.5+45k) 穿 承载盘 + 屏幕支撑件, 法兰螺母倒放嵌支撑件顶面六角窝 (11-21)
+        if any(math.dist((x, y), q) < 0.01 for q in getattr(RB, 'OUT_B_PTS', [])):   # 11-23 B 件位置 (67.5/112.5/247.5/292.5°): B 件顶面全平, 螺母坐 B 件顶面, 螺丝加长
+            screw(f"M3x{RB.OUT_SCR_L_B:g} 超薄头 玻纤板→承载盘→屏幕支撑件B 外圈", i, x, y, _FB, RB.OUT_SCR_L_B, True, engage=("M3 法兰螺母", *RB.OUT_NUT_Z_B))
+            add(f"M3 法兰螺母 屏幕支撑件B 顶面 (法兰朝下) 外圈 #{i}", _nut_at(flange_nut, x, y, RB.OUT_NUT_Z_B[0]), "#707070")
+            continue
         screw(f"M3x{RB.OUT_SCR_L:g} 超薄头 玻纤板→承载盘→屏幕支撑件 外圈", i, x, y, _FB, RB.OUT_SCR_L, True, engage=("M3 法兰螺母", *RB.OUT_NUT_Z))   # 支承 Z23 ⇒ 尾低于支撑件顶 0.5
-        add(f"M3 法兰螺母 屏幕支撑件顶 (嵌入, 法兰朝上) 外圈 #{i}", _nut_at(flange_nut_inv, x, y, RB.OUT_NUT_Z[0]), "#707070")
+        add(f"M3 法兰螺母 屏幕支撑件A 主体顶面浅沉孔 (法兰朝下) 外圈 #{i}", _nut_at(flange_nut, x, y, RB.OUT_NUT_Z[0]), "#707070")   # 11-23 圆沉孔 Φ8
     for i, (x, y) in enumerate(RB.SHR_LOCK_PTS):  # 11-21 罩子锁点 ×8: DIN912 从罩耳顶往下, 穿罩耳 + 支撑件, 拧进支撑件底面倒扣的 M3 法兰螺母 (法兰朝下坐承载盘顶); 尾离承载盘顶 0.5
         screw(f"M3x{RSB.MNT_L:g} 内六角 转子罩耳→屏幕支撑件 罩子锁点", i, x, y, RB.SHR_SCR_BEAR, RSB.MNT_L, False, hd=5.5, hh=3.0, engage=("M3 法兰螺母", *RB.LOCK_NUT_Z))
-        add(f"M3 法兰螺母 屏幕支撑件底 (倒扣嵌入) 罩子锁点 #{i}", _nut_at(flange_nut, x, y, RB.LOCK_NUT_Z[0]), "#707070")
+        add(f"M3 法兰螺母 屏幕支撑件底圆沉孔 罩子锁点 #{i}", _nut_at(flange_nut, x, y, RB.LOCK_NUT_Z[0]), "#707070")
     for i, (x, y) in enumerate(RB.BAR_SCR_PTS):   # 屏幕螺丝: 超薄头从 A 件底 Φ7.6×1.5 沉孔 (支承 Z32) 穿 A 件 → 中缝, 拧进灯板 F 面开窗焊的六角铜螺柱 (每端下颗)
         screw(f"M3x{RB.BAR_SCR_L:g} 超薄头 屏幕支撑件→灯板铜螺柱", i, x, y, RB.BAR_SCR_BEAR, RB.BAR_SCR_L, True, engage=("M3 六角铜螺柱", L.SO_Z0, L.SO_Z1))
     for n_, sh_ in L.SO:                          # 灯板 F 面开窗焊的 M3 六角铜螺柱 (对边 4.6 长 5, 横躺) ×8: 下部+中部开窗, 每端板A/板B 各 1 颗上下错开; 螺丝拧每端下颗

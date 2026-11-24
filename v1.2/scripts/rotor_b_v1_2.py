@@ -90,7 +90,7 @@ OPT_ANG, OPT_R, OPT_D = 90.0, R_OUT, 3.4          # 通光孔: 角度 / 半径 /
 #   接插件 / 插头尺寸 = 用户给的 GH 规格书 (3P)。板外形按最小反推。
 #   11-23 三版 (用户定): 去掉接插件, 板顶 3 个焊线焊盘 (SIG / 3V3 / GND), 线从 B 件 Φ3 穿线孔上出 ⇒ RX_CONN = 'pads' (默认; 'top' / 'side' 保留可切回)
 RX_CONN = 'pads'
-RX_PCB_T = 0.8                                    # 接收板厚 (FR4)
+RX_PCB_T = 1.6                                    # 接收板厚 (FR4); 11-24 用户「pcb的厚度应该是1.6mm」(原 0.8)
 RX_PT_L, RX_PT_H = 0.8, 0.6                       # 0603 光敏管 沿径向宽 (长边 1.6 沿切向) / 本体高 (板底往下伸进通光孔; 孔 Φ3.4 > 0603 对角 1.79)
 RX_R_L, RX_R_W, RX_R_H = 0.8, 1.6, 0.5            # 顶面 0603 47k (长边沿切向)
 RX_EDGE, RX_GAP = 0.3, 0.3                        # 板边 ↔ 器件 / 电阻 ↔ 接插件焊盘区
@@ -100,8 +100,9 @@ GH = dict(side=dict(name='SM03B-GHS-TB', W=7.0, D=4.05, TAIL=0.8, H=4.25, LIFT=0
 GH_PLUG = dict(name='GHR-03V-S', W=5.0, L=5.7, T=4.15)   # 插头 宽 (沿针距) / 长 (插入方向) / 厚
 RX_WIRE_OD, RX_WIRE_R = 1.0, 3.0                  # 线外径 (AWG30–26 Φ0.76–1.0) / 顶入出线弯半径 (向轴心)
 RX_WIRE_BEND = 1.5                                # 侧入: 插头尾后线弯余量 (沿 −x)
+RX_PCB_CLR = 0.2                                  # 11-24 用户: 板外形槽每边 0.2 (器件/焊点让位仍 RX_CLR)
 RX_CLR = 0.3                                      # 槽 / 窗每边余量 (板 / 器件 / 接插件 / 插头)
-RX_PCB_TOP_CLR = 0.0                              # 板外形浅槽顶 ↔ 板顶 (B 件压板; 11-23 用户定 0.05 → 0, 真压住板)
+RX_PCB_TOP_CLR = 0.1                              # 11-24 用户「深度做1.7」: 板槽深 = 1.6 + 0.1; 板外形浅槽顶 ↔ 板顶 (B 件压板; 11-23 用户定 0.05 → 0, 真压住板)
 RX_TOP_CLR = 0.15                                 # 槽顶 ↔ 接插件顶 (压住, 0.1~0.2)
 RX_WIRE_W, RX_WIRE_H = 3 * RX_WIRE_OD + 0.6, 4.0  # 侧入用: 件底出线槽 宽 × 高
 RX_POCKET_WALL = 1.5                              # 槽 / 窗 ↔ 顶面减重槽 水平壁
@@ -115,7 +116,7 @@ RX_WIRE_HOLE_D = 3.0                              # B 件穿线孔 Φ3 (3 根 AW
 #   内孔 = 板内端, 外孔 = 焊盘排与外端 (光敏管 / 47k) 之间 (外端再加长会让槽外端离件外边 <1.5)
 RX_LOC = True
 RX_LOC_D = 2.2                                    # 定位孔 NPTH (r4 第 3 版: Φ1.5 → Φ3.4 → Φ2.2 M2 通孔规格)
-RX_PIN_D = 2.0                                    # B 件销 (r4 第 3 版: Φ2.0, 孔 Φ2.2 单边 0.1)
+RX_PIN_D = RX_LOC_D - 0.1                         # 11-24 用户「凸台直径小于孔0.1」: Φ2.1; B 件销 (r4 第 3 版: Φ2.0, 孔 Φ2.2 单边 0.1)
 RX_PIN_H = RX_PCB_T - 0.1                         # 销高 0.7 (销底离承载盘顶 0.1, 不顶)
 RX_LOC_CLR = 0.3                                  # 定位孔边 ↔ 板边 / 铜 / 器件 / 过孔
 # 11-23 六版 (用户草图, 覆盖 四版 / 五版 对角): 接收板横放 —— 长边沿切向 (件局部 y), 短边沿径向 (x)
@@ -136,7 +137,7 @@ RX_YS = +1                                        # u → y 方向 (板对称, �
 RX_CU_EDGE = 0.2                                  # 铜 ↔ 板边
 RX_NPTH_EDGE, RX_NPTH_CU = 0.3, 0.25              # NPTH 孔边 ↔ 板边 / ↔ 铜 (r4 规则)
 RX_SP_DRILL = 0.5                                 # 焊盘金属化孔径
-RX_WSLOT_W = 2.0                                  # B 件长圆穿线槽宽 (径向); 长轴沿切向, 长 = 焊盘排 + 宽 (盖住 3 焊点; 离 Φ2 销 0.83)
+RX_WSLOT_W = 3.0                                  # 11-24 用户「这个口加大1.5倍」2.0 → 3.0; B 件长圆穿线槽宽 (径向); 长轴沿切向, 长 = 焊盘排 + 宽 (盖住 3 焊点; 离 Φ2 销 0.83)
 
 # ---------------- 玻纤板 (装配体, 与 models/fr4_plate_v1_2b/build.py 同参数) ----------------
 fr4 = cyl(0, 0, FR4_OD, Z_F0, Z_F1)
@@ -194,9 +195,10 @@ rim = clean(cut(rim, *cuts))
 # 外圈 8 颗 (r77.5 @22.5+45k): 仍从 fr4_plate 底往上穿 承载盘 → 支撑件, 法兰螺母改嵌在支撑件顶面 (法兰朝上, 六角窝止转, 顶低于件顶 0.3, 罩耳可直接盖过去);
 #   法兰窝外侧离件外缘只剩 0.1 ⇒ 法兰窝朝外开口 (U 形, 罩壁内面离螺母 ≥0.7)
 SP_Z0 = Z_TOP                                     # 30.5 支撑件底 = 承载盘顶
-SP_Z1 = LS.Z0                                     # 38.5 支撑件顶 = 灯板下沿 (跟灯板走)
-SP_T = round(SP_Z1 - SP_Z0, 3)                    # 8
-assert SP_T >= 4.0, SP_T                          # 用户「留4mm给这个件在屏幕下边厚度」
+SP_BLOCK_T = 7.0                                  # 11-23 用户: 屏幕下中段只留 4 (屏幕贴近承载盘), 锁罩子的法兰螺母要高度 ⇒ 两头螺母块 7 高, 罩耳坐其顶 (不再跟灯板走)
+SP_Z1 = SP_Z0 + SP_BLOCK_T                        # 37.5 支撑件顶 (螺母块顶 = 罩耳底)
+SP_T = round(SP_Z1 - SP_Z0, 3)                    # 7
+assert LS.Z0 <= SP_Z1 + 1e-6 and LS.Z0 - SP_Z0 >= 4.0 - 1e-6, (LS.Z0, SP_Z1)   # 灯板下沿在中段顶 (≥4), 不高于螺母块顶
 SP_R1 = LS.R_CLIP                                 # 81.7 外缘 (以轴心为圆心; 罩壁内面 r82)
 SP_X1 = 81.2                                      # 外边直线段 (两种件同)
 SP_ANG = (0.0, 90.0, 180.0, 270.0)
@@ -204,9 +206,13 @@ SP_TYPE = {0.0: 'a', 90.0: 'b', 180.0: 'a', 270.0: 'b'}
 SP_HOLE_A = (22.5, -22.5)                         # 外圈螺丝 (承载盘 r77.5 @22.5+45k 全 8 颗都穿支撑件)
 # A 件外形: 主体 x66–81.2 × |y|≤37 ∩ r81.7 + 内伸翼 x54.5–66 × 22≤|y|≤37 (包住罩锁螺母窝, 壁 ≥2.4); B 件: x66.5–81.2 × |y|≤35 ∩ r81.7
 SP_A_X0, SP_A_HY, SP_A_WING = 66.0, 37.0, (54.5, 22.0)     # 翼 x0 / 翼内边 |y|
+SP_A_LOW = round(LS.Z0 - SP_Z0, 3)                # A 件中段高 = 灯板下沿 − 承载盘顶 (托灯板); 11-23 21:4x 用户「sup a只有蓝色这个区域高度是7mm，别的都是4mm高度」: 只有两翼罩锁块 (x54.5–66, 22≤|y|≤37) 满高 SP_T, 其余 Z SP_Z0 → SP_Z0+4
 SP_B_X0, SP_B_HY = 66.5, 35.0                     # 66 → 66.5: 放 90° 时内边 y66 离 CZ06 包络 (y≤65.82, Z35.1–41.7) 只 0.18 (件变高 8 后 Z 重叠); 放 270° 离无线夹块 2.9
 SP_X0, SP_HY = SP_A_X0, SP_A_HY                   # 兼容旧名
-LOCK_A_LOC = [(61.0, 30.5), (61.0, -30.5)]        # A 件罩锁 (用户图上量 (±61, ±30.5), r68.20; 原 (73, ±19.5) 在 A 件上删 —— 原 −x 端套筒 Φ9 离灯板B 0.33)
+SP_A_STYLE = __import__('os').environ.get('SP_A_STYLE', 'ear')   # 11-24 对比: 'ear' = 两翼耳朵 (锁 (61, ±30.5)); 'bar' = 直条 (同 B 不伸翼, 锁 (72.5, ±20.5), 两头 |y|≥SP_A_BAR_KEEP 满高)
+assert SP_A_STYLE in ('ear', 'bar'), SP_A_STYLE
+SP_A_BAR_KEEP = 16.0                              # 直条: 用户黑框 |y|≥16 做满高 (罩锁 S Φ8 @y20.5 内边 16.5)
+LOCK_A_LOC = [(61.0, 30.5), (61.0, -30.5)] if SP_A_STYLE == 'ear' else [(72.5, 20.5), (72.5, -20.5)]   # 73→72.5: 锁窝外壁到 r81.7 1.78→2.26        # A 件罩锁 (用户图上量 (±61, ±30.5), r68.20; 原 (73, ±19.5) 在 A 件上删 —— 原 −x 端套筒 Φ9 离灯板B 0.33)
 SHR_LOC_X, SHR_LOC_Y = 73.0, 19.5                 # B 件罩锁 (保持)
 LOCK_B_LOC = [(SHR_LOC_X, SHR_LOC_Y), (SHR_LOC_X, -SHR_LOC_Y)]
 SHR_LOCK_SET = {a: (LOCK_A_LOC if SP_TYPE[a] == 'a' else LOCK_B_LOC) for a in SP_ANG}
@@ -223,8 +229,8 @@ WELL_AF_LOCK = 6.0                                # 罩锁螺母 (从件底压�
 WELL_AF_OUT = 6.1                                 # 外圈螺母 (从件顶放进, 重力在下): 对边 6.1
 WELL_TOP_CLR = 0.1                                # 罩锁螺母六角顶 ↔ 窝顶 (拧紧后贴死)
 LOCK_NUT_Z = (SP_Z0, SP_Z0 + NUT_T)               # 30.5–34.2 法兰朝下坐承载盘顶
-OUT_NUT_TOP = SP_Z1 - 0.3                         # 外圈螺母顶低于件顶 0.3
-OUT_NUT_Z = (OUT_NUT_TOP - NUT_T, OUT_NUT_TOP)    # 34.5–38.2
+OUT_NUT_Z = (SP_Z1 - 0.3 - NUT_T, SP_Z1 - 0.3)   # 11-23 22:1x N 在 7 高螺母块里: 顶面 Φ8 圆沉孔 (朝外开口), 螺母顶低于块顶/罩耳底 0.3 (Z33.5–37.2)
+OUT_NUT_TOP = OUT_NUT_Z[1]
 # 罩锁螺丝: DIN912 M3 内六角圆柱头 (头 Φ5.5×3, 2.5 内六角, 起子 Φ6 包络) 从罩耳顶往下; 罩耳厚按选定长度反推, 尾离承载盘顶 SHR_TIP_CLR
 SHR_SCR_L, SHR_TIP_CLR = 12.0, 0.5
 SHR_SCR_TIP = SP_Z0 + SHR_TIP_CLR                 # 31.0 (吃螺母 34.2 − 31.0 = 3.2; 承载盘顶不开孔所以吃不满 3.7)
@@ -237,9 +243,9 @@ SHR_HEAD_D, SHR_HEAD_H = 5.5, 3.0
 SHR_HOLE_D = 3.4
 # 外圈螺丝 M3 超薄头 从 fr4_plate 底 (支承 Z23) 往上: 选最长的标准长度使尾 ≤ 件顶 −0.3 (罩耳盖在上面), 吃螺母 ≥3
 OUT_SCR_BEAR = Z_F0 + 1.5                         # 23.0
-OUT_SCR_L = max(L for L in (10, 12, 14, 15, 16, 18, 20) if OUT_SCR_BEAR + L <= SP_Z1 - 0.3)
+OUT_SCR_L = max(L for L in (10, 12, 14, 15, 16, 18, 20) if OUT_SCR_BEAR + L <= OUT_NUT_Z[1])   # 尾不超螺母顶
 OUT_ENG = round(OUT_SCR_BEAR + OUT_SCR_L - OUT_NUT_Z[0], 2)
-assert OUT_ENG >= 3.0, (OUT_SCR_L, OUT_ENG)
+assert OUT_ENG >= 3.0 and OUT_NUT_Z[0] > SP_Z0 + 2.5, (OUT_SCR_L, OUT_ENG, OUT_NUT_Z)
 # 屏幕螺丝 M3 超薄头 从 A 件底沉孔往上 (支承 Z_TOP + SP_CB_H), 拧进每端下颗铜螺柱: 吃牙 ≥3, 尾离上颗底 ≥0.5
 BAR_SCR_BEAR = SP_Z0 + SP_CB_H                    # 32.0
 BAR_SCR_L = float(min(L for L in (12, 14, 16, 18, 20, 22) if BAR_SCR_BEAR + L - LS.SO_Z0 >= 3.0))
@@ -248,8 +254,17 @@ assert 3.0 <= BAR_SCR_ENG and BAR_SCR_BEAR + BAR_SCR_L <= LS.SO_Z1 - 0.5, (BAR_S
 BAR_SCR_PTS = list(LS.SO_PTS)                     # 世界: (78.88, ECC−0.2) 板B 下颗 / (−78.88, ECC+0.2) 板A 下颗
 # 减重 (动平衡 / 惯量): 顶面开口盲槽, 槽底留 SP_POCKET_FLOOR; 不在灯板/夹条正下方、不在罩耳下、离孔/螺母窝 ≥2
 SP_POCKET_FLOOR = 3.0
-SP_POCKETS = {'a': [(68.0, 12.5, 76.5, 23.5), (68.0, -23.5, 76.5, -12.5)],     # (x0, y0, x1, y1) 局部
+SP_POCKETS = {'a': [],                            # 11-23 A 件主体只剩 4 高, 不再开减重槽 (原 (68, ±12.5…±23.5, 76.5))
               'b': [(68.5, -13.4, 77.5, 13.4)]}
+# 11-23 用户「sup_b上面的沉孔都去掉」: B 件顶面全平 (无减重盲槽 / 无外圈 N 沉孔+U 口, 只留贯穿孔 + 穿线槽), 翻过来顶面 Z SP_Z1 贴床打印;
+#   B 件位置 (90°/270°) 外圈 4 颗的 M3 法兰螺母改坐 B 件顶面 (法兰朝下, Z SP_Z1 → +NUT_T), 外圈螺丝单独选长度 (A 件位置那 4 颗不变);
+#   量过 (SP_Z1=37.5): 螺母 Φ7.6 离转子罩B 内壁 0.7 (径向), 罩耳 (y15–24) 不在上方, 无线托盘 4.66; 螺母须在罩子下放前拧好
+SP_B_TOP_FLAT = True
+OUT_NUT_Z_B = (SP_Z1, SP_Z1 + NUT_T)
+OUT_SCR_L_B = max(L for L in (10, 12, 14, 15, 16, 18, 20, 22) if OUT_SCR_BEAR + L <= OUT_NUT_Z_B[1])   # 尾不超螺母顶
+OUT_ENG_B = round(OUT_SCR_BEAR + OUT_SCR_L_B - OUT_NUT_Z_B[0], 2)
+assert OUT_ENG_B >= 3.0, (OUT_SCR_L_B, OUT_ENG_B)
+OUT_B_PTS = [pol(R_OUT, a + d) for a in SP_ANG if SP_TYPE[a] == 'b' for d in SP_HOLE_A]   # 世界 67.5/112.5/247.5/292.5°
 # 11-23 B 件底面接收板槽 (局部 = 放 0°; B 件装 90° 时局部 (OPT_R, 0) = 世界通光孔; 270° 那个同件, 下面没孔)
 #   径向 (局部 x, −x = 朝轴心) 从外往里: 板外边 | 光敏管 (底, 对孔心) / 47k (顶) | 间隙 | 接插件焊盘区 (尾朝外) | 板内边
 assert SP_TYPE[(OPT_ANG + 360) % 360] == 'b'
@@ -287,8 +302,8 @@ if RX_CONN == 'pads':
                         u_to_y=RX_YS, 焊盘孔径=RX_SP_DRILL)
     RX_Z_PCB = (SP_Z0, SP_Z0 + RX_PCB_T)
     RX_Z1 = RX_Z_PCB[1] + RX_SOLDER_H
-    RX_X0, RX_X1 = RX_PCB_X0 - RX_CLR, RX_PCB_X1 + RX_CLR
-    RX_Y0, RX_Y1 = RX_PCB_Y0 - RX_CLR, RX_PCB_Y1 + RX_CLR
+    RX_X0, RX_X1 = RX_PCB_X0 - RX_PCB_CLR, RX_PCB_X1 + RX_PCB_CLR   # 11-24 用户「四周做0.2的避让」
+    RX_Y0, RX_Y1 = RX_PCB_Y0 - RX_PCB_CLR, RX_PCB_Y1 + RX_PCB_CLR
     RX_HY = max(-RX_Y0, RX_Y1)
     _xs = [x for x, _ in RX_SP_PTS]; _ys = [y for _, y in RX_SP_PTS]
     assert max(_ys) - min(_ys) < 1e-9 or max(_xs) - min(_xs) < 1e-9   # 焊盘排沿轴向一排
@@ -339,6 +354,7 @@ SP_POCKETS['b'] = [(x0, y0, x1, y1) for X0, Y0, X1, Y1 in SP_POCKETS['b'] for (x
 if RX_HOLE:                                       # 焊盘版: 中间条在槽 / 穿线槽内侧 (朝轴心) 那段照原样挖回, 离槽 / 槽 ≥ RX_POCKET_WALL
     _cx1 = min(RX_X0, RX_HOLE['x0'] - RX_HOLE['w'] / 2) - RX_POCKET_WALL
     if _cx1 - _P0[0] > 1.0: SP_POCKETS['b'].append((_P0[0], _ky0, _cx1, _ky1))
+if SP_B_TOP_FLAT: SP_POCKETS['b'] = []            # 11-23 B 件顶面全平: 不开减重槽
 def rx_cuts():
     zb = RX_Z_PCB[1] + RX_PCB_TOP_CLR
     if RX_CONN == 'pads':                         # 板外形浅槽 (压板顶) + 47k 让位 + 焊盘排焊点让位 + Φ3 穿线孔到件顶
@@ -389,28 +405,35 @@ def _slot(x, y, z0, z1, d=3.4, hl=SP_SCR_SL):
     """沿 y 的腰形孔 (中心 (x, y), 半长 hl)"""
     return fuse(cyl(x, y - hl, d, z0, z1), cyl(x, y + hl, d, z0, z1), gbox(x - d / 2, y - hl, z0, x + d / 2, y + hl, z1))
 
+# 11-23 20:4x 用户「锁法兰螺母的位置不对 … 参考这个 (承载盘 Q 孔), 应该是M3通孔加上一个圆形沉孔」:
+#   两种螺母窝都改成 Φ3.4 通 + 圆沉孔 Φ SP_NUT_CB_D (同承载盘 Q: Φ8), 不再做六角窝 / 法兰窝台阶; 螺母一律法兰朝下 (法兰压沉孔底面或承载盘顶)
+SP_NUT_CB_D = 8.0
 def lock_nut_well(x, y):
-    """罩锁: 件底面倒扣法兰螺母窝 (法兰窝 Φ8.2×1.1 + 六角窝 AF6.0 到 螺母顶 +0.1) + Φ3.4 通"""
-    return fuse(cyl(x, y, WELL_FL_D, SP_Z0 - 1, SP_Z0 + WELL_FL_H), _hexp(x, y, WELL_AF_LOCK, SP_Z0 + WELL_FL_H - 0.01, LOCK_NUT_Z[1] + WELL_TOP_CLR, math.degrees(math.atan2(y, x))),
-                cyl(x, y, SHR_HOLE_D, SP_Z0 - 1, SP_Z1 + 1))
+    """罩锁: 件底面圆沉孔 Φ8 到 螺母顶 +0.1 (法兰螺母法兰朝下从件底塞进, 坐承载盘顶, 拧紧时螺母顶顶沉孔顶) + Φ3.4 通"""
+    return fuse(cyl(x, y, SP_NUT_CB_D, SP_Z0 - 1, LOCK_NUT_Z[1] + WELL_TOP_CLR), cyl(x, y, SHR_HOLE_D, SP_Z0 - 1, SP_Z1 + 1))
 
 def out_nut_well(x, y):
-    """外圈: 件顶面法兰螺母窝 (法兰朝上; 六角窝 AF6.1 平边朝径向 + 法兰窝 Φ8.2 往外开口到件外) + Φ3.4 通"""
-    a = math.degrees(math.atan2(y, x)); zf = OUT_NUT_Z[1] - NUT_FL_H - 0.1     # 法兰支承台阶
-    fl = fuse(cyl(x, y, WELL_FL_D, zf, SP_Z1 + 1), xf(gbox(math.hypot(x, y), -WELL_FL_D / 2, zf, SP_R1 + 2, WELL_FL_D / 2, SP_Z1 + 1), rotz(a)))
-    return fuse(fl, _hexp(x, y, WELL_AF_OUT, OUT_NUT_Z[0] - 0.1, zf + 0.01, a), cyl(x, y, 3.4, SP_Z0 - 1, SP_Z1 + 1))
+    """外圈: 件顶面圆沉孔 Φ8 (底 = 螺母底 OUT_NUT_Z[0], 法兰螺母法兰朝下坐沉孔底, 顶低于件顶 0.3) + Φ3.4 通;
+    沉孔外侧离件外缘 r81.7 只剩 0.2 ⇒ 沉孔朝外开口 (U 形, 同宽 Φ8) 免薄皮"""
+    a = math.degrees(math.atan2(y, x))
+    cb = fuse(cyl(x, y, SP_NUT_CB_D, OUT_NUT_Z[0], SP_Z1 + 1), xf(gbox(math.hypot(x, y), -SP_NUT_CB_D / 2, OUT_NUT_Z[0], SP_R1 + 2, SP_NUT_CB_D / 2, SP_Z1 + 1), rotz(a)))
+    return fuse(cb, cyl(x, y, 3.4, SP_Z0 - 1, SP_Z1 + 1))
 
 def screen_sup_local(kind):
     """kind 'a' = 屏幕支架件 (放 0°/180°), 'b' = 上下件 (放 90°/270°); 局部 = 放 0° 时的世界坐标"""
     clip = cyl(0, 0, 2 * SP_R1, SP_Z0 - 1, SP_Z1 + 1)
     if kind == 'a':
-        s = fuse(gbox(SP_A_X0, -SP_A_HY, SP_Z0, SP_X1, SP_A_HY, SP_Z1),
-                 gbox(SP_A_WING[0], SP_A_WING[1], SP_Z0, SP_A_X0 + 0.01, SP_A_HY, SP_Z1), gbox(SP_A_WING[0], -SP_A_HY, SP_Z0, SP_A_X0 + 0.01, -SP_A_WING[1], SP_Z1))
+        s = gbox(SP_A_X0, -SP_A_HY, SP_Z0, SP_X1, SP_A_HY, SP_Z1)
+        if SP_A_STYLE == 'ear': s = fuse(s, gbox(SP_A_WING[0], -SP_A_HY, SP_Z0, SP_A_X0 + 0.01, SP_A_HY, SP_Z1))   # 11-23 用户「这里连上」: 两翼之间补满, 内边 x SP_A_WING[0] 一条直线 (原两翼 |y|≥22 分开)
+        _kp = SP_A_WING[1] if SP_A_STYLE == 'ear' else SP_A_BAR_KEEP
+        _low = gbox(SP_A_WING[0] - 1, -SP_A_HY - 1, SP_Z0 + SP_A_LOW, SP_R1 + 2, SP_A_HY + 1, SP_Z1 + 1)
+        _keep = [gbox(SP_A_WING[0] - 1, min(sy * _kp, sy * (SP_A_HY + 1)), SP_Z0, SP_R1 + 2, max(sy * _kp, sy * (SP_A_HY + 1)), SP_Z1 + 2) for sy in (1, -1)]   # 11-23 22:1x 两头整块 (|y|≥22, 含 S + N) 满高
+        s = cut(s, cut(_low, *_keep))                 # 11-23 其余削到 SP_A_LOW
         locks = LOCK_A_LOC
     else:
         s = gbox(SP_B_X0, -SP_B_HY, SP_Z0, SP_X1, SP_B_HY, SP_Z1); locks = LOCK_B_LOC
     s = _ocm(s, clip)
-    cuts = [out_nut_well(x, y) for x, y in SP_HOLES_LOC['out']] + [lock_nut_well(x, y) for x, y in locks]
+    cuts = [out_nut_well(x, y) if kind == 'a' or not SP_B_TOP_FLAT else cyl(x, y, 3.4, SP_Z0 - 1, SP_Z1 + 1) for x, y in SP_HOLES_LOC['out']] + [lock_nut_well(x, y) for x, y in locks]   # 11-23 B 件 N 只留 Φ3.4 通
     if kind == 'a':
         cuts += [_slot(x, y, SP_Z0 - 1, SP_Z1 + 1) for x, y in SP_HOLES_LOC['scr']] + [cyl(x, y, SP_SCR_CB_D, SP_Z0 - 1, SP_Z0 + SP_CB_H) for x, y in SP_HOLES_LOC['scr']]
     cuts += [gbox(x0, y0, SP_Z0 + SP_POCKET_FLOOR, x1, y1, SP_Z1 + 1) for x0, y0, x1, y1 in SP_POCKETS[kind]]
@@ -433,21 +456,22 @@ SCREEN_KEYS = ['scr_sup_0', 'scr_sup_90', 'scr_sup_180', 'scr_sup_270']   # 校�
 def _edge(kind, x, y, rh):
     """孔 (半径 rh) 到件外形的最小边距 (近似: 直边 + r81.7)"""
     if kind == 'a':
-        x0 = SP_A_WING[0] if abs(y) >= SP_A_WING[1] else SP_A_X0
+        x0 = SP_A_WING[0] if SP_A_STYLE == 'ear' else SP_A_X0                         # 11-23 两翼连成整块, 内边全长 x54.5
         return min(x - rh - x0, SP_X1 - x - rh, SP_A_HY - abs(y) - rh, SP_R1 - math.hypot(x, y) - rh)
     return min(x - rh - SP_B_X0, SP_X1 - x - rh, SP_B_HY - abs(y) - rh, SP_R1 - math.hypot(x, y) - rh)
 SP_EDGE = dict(a_lock_well=round(min(_edge('a', x, y, WELL_FL_D / 2) for x, y in LOCK_A_LOC), 2),
                b_lock_well=round(min(_edge('b', x, y, WELL_FL_D / 2) for x, y in LOCK_B_LOC), 2),
-               out_hex=round(min(_edge('a', x, y, WELL_AF_OUT / 2) for x, y in SP_HOLES_LOC['out']), 2),   # 六角平边朝外
+               out_cb=round(min(min(x - SP_NUT_CB_D / 2 - x0, SP_X1 - x - SP_NUT_CB_D / 2, hy - abs(y) - SP_NUT_CB_D / 2)
+                                for x, y in SP_HOLES_LOC['out'] for x0, hy in ((SP_A_X0, SP_A_HY), (SP_B_X0, SP_B_HY))), 2),   # 11-23 外圈圆沉孔 Φ8 (朝外开口, 只查内侧/两侧壁, A/B 件取小)
                scr_hole=round(min(_edge('a', x, y, 1.7) for x, y in SP_HOLES_LOC['scr']), 2),
                lock_out_a=round(min(math.dist(p, q) for p in LOCK_A_LOC for q in SP_HOLES_LOC['out']) - WELL_FL_D, 2),   # 罩锁窝 ↔ 外圈窝 壁 (不同 Z, 保守)
                lock_out_b=round(min(math.dist(p, q) for p in LOCK_B_LOC for q in SP_HOLES_LOC['out']) - WELL_FL_D, 2))
 def _d_rect(x, y, x0, y0, x1, y1): return math.dist((min(max(x, x0), x1), min(max(y, y0), y1)), (x, y))
-_pk = SP_POCKETS['b']; _pky = min(min(abs(y0), abs(y1)) for _, y0, _, y1 in _pk)
+_pk = SP_POCKETS['b']; _pky = min((min(abs(y0), abs(y1)) for _, y0, _, y1 in _pk), default=math.inf)   # 11-23 B 件无减重槽时 = inf (下面 RX_WALL 去掉)
 _sl = (RX_X0, RX_Y0, RX_X1, RX_Y1)                # 槽平面外包
 def _rr(a, b): return math.hypot(max(b[0] - a[2], a[0] - b[2], 0), max(b[1] - a[3], a[1] - b[3], 0))   # 两矩形平面距离
 RX_WALL = dict(槽外端_件外边=round(min(SP_X1, math.sqrt(SP_R1 ** 2 - max(-RX_Y0, RX_Y1) ** 2)) - RX_X1, 2),
-               槽_减重槽=round(min(_rr(_sl, pk) for pk in SP_POCKETS['b']), 2),
+               槽_减重槽=round(min((_rr(_sl, pk) for pk in SP_POCKETS['b']), default=math.inf), 2),
                槽_罩锁窝=round(min(_d_rect(x, y, *_sl) for x, y in LOCK_B_LOC) - WELL_FL_D / 2, 2),
                槽_外圈螺丝孔=round(min(_d_rect(x, y, *_sl) for x, y in SP_HOLES_LOC['out']) - 3.4 / 2, 2),
                接插件槽顶_件顶=round(SP_Z1 - RX_Z1, 2))
@@ -457,7 +481,7 @@ if RX_HOLE:                                        # 穿线孔 / 长圆槽 (x, y
     def _sdr(x0, y0, x1, y1): return _rr((_h['x0'], _h['y0'], _h['x1'], _h['y1']), (x0, y0, x1, y1))           # 中心线段 (轴向) ↔ 矩形
     _h_ext_y = max(abs(_h['y0']), abs(_h['y1'])) + _hd / 2
     RX_WALL.update(槽内端_件内边=round(RX_X0 - SP_B_X0, 2), 穿线槽_件内边=round(_h['x0'] - _hd / 2 - SP_B_X0, 2),
-                   穿线槽_减重槽=round(min(_sdr(*pk) for pk in SP_POCKETS['b']) - _hd / 2, 2), 穿线槽_罩锁窝=round(min(_sd(p) for p in LOCK_B_LOC) - _hd / 2 - WELL_FL_D / 2, 2),
+                   穿线槽_减重槽=round(min((_sdr(*pk) for pk in SP_POCKETS['b']), default=math.inf) - _hd / 2, 2), 穿线槽_罩锁窝=round(min(_sd(p) for p in LOCK_B_LOC) - _hd / 2 - WELL_FL_D / 2, 2),
                    穿线槽_外圈螺丝孔=round(min(_sd(p) for p in SP_HOLES_LOC['out']) - _hd / 2 - 3.4 / 2, 2),
                    穿线槽_件外边=round(min(SP_X1, math.sqrt(SP_R1 ** 2 - _h_ext_y ** 2)) - _h['x1'] - _hd / 2, 2),
                    槽外端_件外边=round(min(SP_X1, math.sqrt(SP_R1 ** 2 - max(-RX_Y0, RX_Y1) ** 2)) - RX_X1, 2))
@@ -475,13 +499,14 @@ elif RX_WIN:
                    通窗外端_件外边=round(SP_X1 - RX_WIN[2], 2))
 else:
     RX_WALL.update(线槽顶_件顶=round(SP_Z1 - SP_Z0 - RX_WIRE_H, 2))   # 侧入: 槽内端经出线槽通件内边, 不算壁
+RX_WALL = {k: v for k, v in RX_WALL.items() if v != math.inf}   # 11-23 B 件顶面全平: 去掉 *_减重槽 项
 assert min(v for v in RX_WALL.values()) >= 1.2, RX_WALL
 # 承载盘通光孔 Φ3.2 @ (0, 77.5) 壁厚: 线圈腔外壁 r72.5 / 外缘 r85 / fr4_plate 外缘 r82.5 / 其它孔
 _oh = [(x, y, 3.4) for x, y in IN_PTS + ANCHOR_PTS + OUT_NUT_PTS + list(B.BB_HOLES) + list(B.MOD_HOLES)] + [(x, y, 3.2) for x, y in MOT_PTS] + [(x, y, B.AC_HOLE_D + 0.4) for x, y in B.AC_HOLES]
 OPT_WALL = dict(腔外壁=round(OPT_R - OPT_D / 2 - COIL_R1, 2), 盘外缘=round(RIM_R - OPT_R - OPT_D / 2, 2), fr4外缘=round(FR4_OD / 2 - OPT_R - OPT_D / 2, 2),
                 最近孔=round(min(math.dist(OPT_PT, (x, y)) - OPT_D / 2 - d / 2 for x, y, d in _oh), 2),
                 底板让位窝=round(min(math.dist(OPT_PT, p) for p in B.BB_HOLES) - OPT_D / 2 - BB_CB_D / 2, 2))
-assert SP_EDGE['a_lock_well'] >= 2.0 and SP_EDGE['b_lock_well'] >= 2.0 and SP_EDGE['scr_hole'] >= 0.5 and SP_EDGE['out_hex'] >= 1.0, SP_EDGE
+assert SP_EDGE['a_lock_well'] >= 2.0 and SP_EDGE['b_lock_well'] >= 2.0 and SP_EDGE['scr_hole'] >= 0.5 and SP_EDGE['out_cb'] >= 1.0, SP_EDGE
 
 # ---------------- 校核 (11-18: 挪进 report(), import 时不跑; 整机切转子盘B 后各脚本都要 import 本模块) ----------------
 coil = cut(ann(COIL_R0 + 0.1, COIL_R1 - 0.1, Z_F1, Z_F1 + 2.7), *[cyl(x, y, 4.0, Z_F1 - 1, Z_T0) for x, y in B.AC_HOLES])
@@ -514,7 +539,8 @@ def report():
                lock=dict(r=SHR_LOCK_R, ang=SHR_LOCK_ANG, pts=[(round(x, 2), round(y, 2)) for x, y in SHR_LOCK_PTS], loc_a=LOCK_A_LOC, loc_b=LOCK_B_LOC,
                          screw=f'DIN912 M3×{SHR_SCR_L:g} 从罩耳顶往下 支承 Z{SHR_SCR_BEAR:g} 尾 Z{SHR_SCR_TIP:g} (离承载盘顶 {SHR_TIP_CLR:g}), 倒扣法兰螺母 Z{LOCK_NUT_Z[0]:g}–{LOCK_NUT_Z[1]:g} 吃 {SHR_ENG:g}',
                          ear_t=SHR_EAR_T,
-                         out_screw=f'M3×{OUT_SCR_L:g} 超薄头 支承 Z{OUT_SCR_BEAR:g} 尾 Z{OUT_SCR_BEAR + OUT_SCR_L:g}, 法兰螺母嵌支撑件顶 Z{OUT_NUT_Z[0]:g}–{OUT_NUT_Z[1]:g} 吃 {OUT_ENG:g}',
+                         out_screw=f'M3×{OUT_SCR_L:g} 超薄头 支承 Z{OUT_SCR_BEAR:g} 尾 Z{OUT_SCR_BEAR + OUT_SCR_L:g}, 法兰螺母嵌支撑件顶 Z{OUT_NUT_Z[0]:g}–{OUT_NUT_Z[1]:g} 吃 {OUT_ENG:g} (A 件位置)',
+                         out_screw_b=f'M3×{OUT_SCR_L_B:g} 超薄头 支承 Z{OUT_SCR_BEAR:g} 尾 Z{OUT_SCR_BEAR + OUT_SCR_L_B:g}, 法兰螺母坐 B 件顶面 Z{OUT_NUT_Z_B[0]:g}–{OUT_NUT_Z_B[1]:g} 吃 {OUT_ENG_B:g} (B 件位置 4 颗)',
                          scr_screw=f'M3×{BAR_SCR_L:g} 超薄头 支承 Z{BAR_SCR_BEAR:g} 尾 Z{BAR_SCR_BEAR + BAR_SCR_L:g}, 铜螺柱 Z{LS.SO_Z0:g}–{LS.SO_Z1:g} 吃 {BAR_SCR_ENG:g}, 离上颗 {round(LS.SO_Z1 - BAR_SCR_BEAR - BAR_SCR_L, 2):g}'),
                edge=SP_EDGE,
                optical=dict(hole=dict(pt=(round(OPT_PT[0], 3), round(OPT_PT[1], 3)), d=OPT_D, note='承载盘全厚通; fr4_plate 同位 Φ3.4 现场配钻 (以承载盘为钻模)', wall=OPT_WALL),
@@ -559,7 +585,7 @@ if __name__ == '__main__':
     rep = report()
     out('rim_ring_v1_2b', rim, flip=True, color='#6AA84F')               # 打印: 托盘顶面朝下, 线圈腔/外环朝上 (免支撑)
     out('screen_sup_a_v1_2b', screen_sup_a_loc, color='#F1C232')           # A 屏幕支架件 (放 0° 装配位; 180° 同件); _print 底面落床 (底面窝开口朝床, 窝顶 6 mm 桥接)
-    out('screen_sup_b_v1_2b', screen_sup_b_loc, color='#C9B458')           # B 上下件 (放 0° 局部; 装 90°/270°)
+    out('screen_sup_b_v1_2b', screen_sup_b_loc, flip=SP_B_TOP_FLAT, color='#C9B458')   # B 上下件 (放 0° 局部; 装 90°/270°); 11-23 顶面全平 ⇒ _print 翻面, 顶面 Z SP_Z1 贴床
     write_doc([('fr4_plate_v1_2b (装配位)', fr4, '#C9B458', None, False), ('rim_ring_v1_2b', rim, '#6AA84F', None, False),
                *[(n, sh, c, None, False) for n, sh, c in SCREEN_PARTS],
                ('线圈 (占位)', coil, '#D9822B', None, False)], B.V12 / 'models' / 'rim_ring_v1_2b' / 'rotor_b_asm.step', 'rotor_b')
