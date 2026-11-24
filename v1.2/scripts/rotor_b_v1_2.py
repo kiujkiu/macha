@@ -230,6 +230,8 @@ WELL_AF_OUT = 6.1                                 # 外圈螺母 (从件顶放�
 WELL_TOP_CLR = 0.1                                # 罩锁螺母六角顶 ↔ 窝顶 (拧紧后贴死)
 LOCK_NUT_Z = (SP_Z0, SP_Z0 + NUT_T)               # 30.5–34.2 法兰朝下坐承载盘顶
 OUT_NUT_Z = (SP_Z1 - 0.3 - NUT_T, SP_Z1 - 0.3)   # 11-23 22:1x N 在 7 高螺母块里: 顶面 Φ8 圆沉孔 (朝外开口), 螺母顶低于块顶/罩耳底 0.3 (Z33.5–37.2)
+SP_A_TOP_FLAT = True                              # 11-24 用户「这个沉孔去掉，sup_a的」: A 件 N 顶面沉孔取消, 只留 Φ3.4 通; 螺母 (法兰朝下) 坐块顶 Z SP_Z1 → +NUT_T, 罩耳底开让位口 (rotor_shroud_b NUT_NOTCH_*)
+if SP_A_TOP_FLAT: OUT_NUT_Z = (SP_Z1, SP_Z1 + NUT_T)
 OUT_NUT_TOP = OUT_NUT_Z[1]
 # 罩锁螺丝: DIN912 M3 内六角圆柱头 (头 Φ5.5×3, 2.5 内六角, 起子 Φ6 包络) 从罩耳顶往下; 罩耳厚按选定长度反推, 尾离承载盘顶 SHR_TIP_CLR
 SHR_SCR_L, SHR_TIP_CLR = 12.0, 0.5
@@ -433,7 +435,7 @@ def screen_sup_local(kind):
     else:
         s = gbox(SP_B_X0, -SP_B_HY, SP_Z0, SP_X1, SP_B_HY, SP_Z1); locks = LOCK_B_LOC
     s = _ocm(s, clip)
-    cuts = [out_nut_well(x, y) if kind == 'a' or not SP_B_TOP_FLAT else cyl(x, y, 3.4, SP_Z0 - 1, SP_Z1 + 1) for x, y in SP_HOLES_LOC['out']] + [lock_nut_well(x, y) for x, y in locks]   # 11-23 B 件 N 只留 Φ3.4 通
+    cuts = [out_nut_well(x, y) if not (SP_A_TOP_FLAT if kind == 'a' else SP_B_TOP_FLAT) else cyl(x, y, 3.4, SP_Z0 - 1, SP_Z1 + 1) for x, y in SP_HOLES_LOC['out']] + [lock_nut_well(x, y) for x, y in locks]   # 11-23 B 件 N 只留 Φ3.4 通
     if kind == 'a':
         cuts += [_slot(x, y, SP_Z0 - 1, SP_Z1 + 1) for x, y in SP_HOLES_LOC['scr']] + [cyl(x, y, SP_SCR_CB_D, SP_Z0 - 1, SP_Z0 + SP_CB_H) for x, y in SP_HOLES_LOC['scr']]
     cuts += [gbox(x0, y0, SP_Z0 + SP_POCKET_FLOOR, x1, y1, SP_Z1 + 1) for x0, y0, x1, y1 in SP_POCKETS[kind]]
@@ -539,7 +541,7 @@ def report():
                lock=dict(r=SHR_LOCK_R, ang=SHR_LOCK_ANG, pts=[(round(x, 2), round(y, 2)) for x, y in SHR_LOCK_PTS], loc_a=LOCK_A_LOC, loc_b=LOCK_B_LOC,
                          screw=f'DIN912 M3×{SHR_SCR_L:g} 从罩耳顶往下 支承 Z{SHR_SCR_BEAR:g} 尾 Z{SHR_SCR_TIP:g} (离承载盘顶 {SHR_TIP_CLR:g}), 倒扣法兰螺母 Z{LOCK_NUT_Z[0]:g}–{LOCK_NUT_Z[1]:g} 吃 {SHR_ENG:g}',
                          ear_t=SHR_EAR_T,
-                         out_screw=f'M3×{OUT_SCR_L:g} 超薄头 支承 Z{OUT_SCR_BEAR:g} 尾 Z{OUT_SCR_BEAR + OUT_SCR_L:g}, 法兰螺母嵌支撑件顶 Z{OUT_NUT_Z[0]:g}–{OUT_NUT_Z[1]:g} 吃 {OUT_ENG:g} (A 件位置)',
+                         out_screw=f'M3×{OUT_SCR_L:g} 超薄头 支承 Z{OUT_SCR_BEAR:g} 尾 Z{OUT_SCR_BEAR + OUT_SCR_L:g}, 法兰螺母{"坐" if SP_A_TOP_FLAT else "嵌"}支撑件顶 Z{OUT_NUT_Z[0]:g}–{OUT_NUT_Z[1]:g} 吃 {OUT_ENG:g} (A 件位置)',
                          out_screw_b=f'M3×{OUT_SCR_L_B:g} 超薄头 支承 Z{OUT_SCR_BEAR:g} 尾 Z{OUT_SCR_BEAR + OUT_SCR_L_B:g}, 法兰螺母坐 B 件顶面 Z{OUT_NUT_Z_B[0]:g}–{OUT_NUT_Z_B[1]:g} 吃 {OUT_ENG_B:g} (B 件位置 4 颗)',
                          scr_screw=f'M3×{BAR_SCR_L:g} 超薄头 支承 Z{BAR_SCR_BEAR:g} 尾 Z{BAR_SCR_BEAR + BAR_SCR_L:g}, 铜螺柱 Z{LS.SO_Z0:g}–{LS.SO_Z1:g} 吃 {BAR_SCR_ENG:g}, 离上颗 {round(LS.SO_Z1 - BAR_SCR_BEAR - BAR_SCR_L, 2):g}'),
                edge=SP_EDGE,

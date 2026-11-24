@@ -723,12 +723,12 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
         holes=[dict(tag="M", pts=RB.MOT_PTS, spec="电机 4 孔: " + hole_txt(RB.rim, RB.MOT_PTS[0]), where=ring_txt(RB.MOT_PTS) + "  M3×12 从顶面往下, 穿玻纤板进电机",
                     det=hole_det(RB.rim, RB.MOT_PTS[0], "电机孔 M (顶面沉孔)", W=5.0, z=(_zf1, _ztop))),
                dict(tag="N", pts=list(RB.OUT_NUT_PTS), spec="外圈孔 ×4: " + hole_txt(RB.rim, RB.OUT_NUT_PTS[0]),
-                    where=f"外圈 {ring_txt(RB.OUT_NUT_PTS)}; 11-21: M3×{F(RB.OUT_SCR_L)} 超薄头从玻纤板底往上穿本件 + 屏幕支撑件, 法兰螺母嵌支撑件顶面 Z{F(RB.OUT_NUT_Z[0])}–{F(RB.OUT_NUT_Z[1])} (尾 Z{F(RB.OUT_SCR_BEAR + RB.OUT_SCR_L)})"),
+                    where=f"外圈 {ring_txt(RB.OUT_NUT_PTS)}; 11-21: M3×{F(RB.OUT_SCR_L)} 超薄头从玻纤板底往上穿本件 + 屏幕支撑件, 法兰螺母坐支撑件顶面 Z{F(RB.OUT_NUT_Z[0])}–{F(RB.OUT_NUT_Z[1])} (尾 Z{F(RB.OUT_SCR_BEAR + RB.OUT_SCR_L)})"),
                dict(tag="Q", pts=_rb_ins, spec=f"Φ3.4 通 + 顶面 Φ{F(RB.IN_NUT_D)}×{F(RB.IN_NUT_H)} 沉孔 (放 M3 法兰螺母) ×8: " + hole_txt(RB.rim, _rb_ins[0]),
                     where=f"内圈 {ring_txt(_rb_ins)}; M3×7 从玻纤板底往上, 尾 Z{F(RB.Z_F0 + 1.5 + 7)}, 沉孔下实体 {F(RB.Z_TOP - RB.IN_NUT_H - RB.Z_F1)}",
                     det=hole_det(RB.rim, _rb_ins[0], "法兰螺母沉孔 Q", W=5.0, z=(_zf1, _ztop))),
                dict(tag="G", pts=RB.ANCHOR_PTS, spec="外圈孔 ×4 (原锚孔): " + hole_txt(RB.rim, RB.ANCHOR_PTS[0]),
-                    where=ring_txt(RB.ANCHOR_PTS) + f"\n11-21: 同 N, M3×{F(RB.OUT_SCR_L)} 超薄头往上穿本件 + 屏幕支撑件, 法兰螺母嵌支撑件顶面 (罩子锁点螺母嵌支撑件底面, 本件不开孔)"),
+                    where=ring_txt(RB.ANCHOR_PTS) + f"\n11-21: 同 N, M3×{F(RB.OUT_SCR_L)} 超薄头往上穿本件 + 屏幕支撑件, 法兰螺母坐支撑件顶面 (罩子锁点螺母嵌支撑件底面, 本件不开孔)"),
                dict(tag="P", pts=list(B.BB_HOLES), spec="底板 r4j 4 孔: " + hole_txt(RB.rim, B.BB_HOLES[0]),
                     where=xy(B.BB_HOLES) + "\n螺丝从底面往上, 薄头 Φ7×1.5 埋进托盘 (不进线圈腔)",
                     det=hole_det(RB.rim, B.BB_HOLES[0], "底板孔 P (底面沉孔)", W=5.0, z=(_zf1, _ztop))),
@@ -736,7 +736,7 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
                dict(tag="A", pts=list(B.AC_HOLES), spec=f"线圈 AC 引线 Φ{F(B.AC_HOLE_D)} 通", where=xy(B.AC_HOLES) + "  孔边分别切线圈腔内/外缘"),
                dict(tag="C", pts=[(0.0, 0.0)], spec=f"底面中心窝 Φ{F(RB.CENTER_D)}×{F(RB.CENTER_H)} (电机轴头)", where="盘心", lab_off=(-3, -3))],
         notes=[f"Z: 外唇底 {F(_zf0)} / 中心·外环底 {F(_zf1)} / 腔顶 {F(_zt0)} / 盘顶 {F(_ztop)}; " +
-               f"装配: 底板 P / 无线夹块 W 从本件底往上锁好 → 放线圈 → 玻纤板 内圈 8 颗往上进沉孔法兰螺母 → 上电机 → 屏幕支撑件 + 灯板组 (罩锁螺母已压进支撑件底) → 外圈 8 颗 M3×{F(RB.OUT_SCR_L)} 从玻纤板底往上穿本件 + 支撑件, 法兰螺母嵌支撑件顶 → 罩子竖直下放 → 罩锁 DIN912 M3×{F(RB.SHR_SCR_L)} 从罩顶往下; 本件无罩子锁点孔"]))
+               f"装配: 底板 P / 无线夹块 W 从本件底往上锁好 → 放线圈 → 玻纤板 内圈 8 颗往上进沉孔法兰螺母 → 上电机 → 屏幕支撑件 + 灯板组 (罩锁螺母已压进支撑件底) → 外圈 8 颗 M3×{F(RB.OUT_SCR_L)} 从玻纤板底往上穿本件 + 支撑件, 法兰螺母坐支撑件顶 → 罩子竖直下放 → 罩锁 DIN912 M3×{F(RB.SHR_SCR_L)} 从罩顶往下; 本件无罩子锁点孔"]))
     def _hold_spec_old(k):   # 11-20 作废 (screen_holder_v1_2b_a/b → screen_fr4_v1_2b ×4 + screen_post_v1_2b ×2), 留着对照
         sx = 1 if k == "a" else -1
         sh = RB.hold_a if k == "a" else RB.hold_b
@@ -772,7 +772,9 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
                       det=hole_det(sh, _H["out"][0], "外圈螺母沉孔 N (顶面)", W=5.5, z=(RB.SP_Z0, RB.SP_Z1))) if not A and not RB.SP_B_TOP_FLAT else
                  dict(tag="N", pts=_H["out"], spec=f"外圈 Φ3.4 通 + 主体顶面圆沉孔 Φ{F(RB.SP_NUT_CB_D)} 深 {F(RB.SP_Z0 + RB.SP_A_LOW - RB.OUT_NUT_Z[0])} (往外开口) ×2",
                       where=ring_txt(_H["out"]) + f"  M3×{F(RB.OUT_SCR_L)} 超薄头从 fr4_plate 底往上 (尾 Z{F(RB.OUT_SCR_BEAR + RB.OUT_SCR_L)}), M3 法兰螺母法兰朝下坐沉孔底 Z{F(RB.OUT_NUT_Z[0])}–{F(RB.OUT_NUT_Z[1])} (顶低于罩耳底 0.1), 吃 {F(RB.OUT_ENG)}",
-                      det=hole_det(sh, _H["out"][0], "外圈螺母沉孔 N (主体顶面)", W=5.5, z=(RB.SP_Z0, RB.SP_Z1))) if A else
+                      det=hole_det(sh, _H["out"][0], "外圈螺母沉孔 N (主体顶面)", W=5.5, z=(RB.SP_Z0, RB.SP_Z1))) if A and not RB.SP_A_TOP_FLAT else
+                 dict(tag="N", pts=_H["out"], spec="外圈 Φ3.4 通 ×2 (11-24 顶面不开沉孔)",
+                      where=ring_txt(_H["out"]) + f"  M3×{F(RB.OUT_SCR_L)} 超薄头从 fr4_plate 底往上 (尾 Z{F(RB.OUT_SCR_BEAR + RB.OUT_SCR_L)}), M3 法兰螺母法兰朝下坐块顶 Z{F(RB.OUT_NUT_Z[0])}–{F(RB.OUT_NUT_Z[1])}, 吃 {F(RB.OUT_ENG)}; 罩耳底有让位口") if A else
                  dict(tag="N", pts=_H["out"], spec="外圈 Φ3.4 通 ×2 (11-23 顶面全平, 不开沉孔)",
                       where=ring_txt(_H["out"]) + f"  M3×{F(RB.OUT_SCR_L_B)} 超薄头从 fr4_plate 底往上 (尾 Z{F(RB.OUT_SCR_BEAR + RB.OUT_SCR_L_B)}), M3 法兰螺母法兰朝下坐本件顶面 Z{F(RB.OUT_NUT_Z_B[0])}–{F(RB.OUT_NUT_Z_B[1])}, 吃 {F(RB.OUT_ENG_B)}; 螺母离转子罩内壁 0.7"),
                  dict(tag="S", pts=lk, spec=f"罩锁 Φ{F(RB.SHR_HOLE_D)} 通 + 底面圆沉孔 Φ{F(RB.SP_NUT_CB_D)} 到 Z{F(RB.LOCK_NUT_Z[1] + RB.WELL_TOP_CLR)} ×2",
@@ -796,10 +798,10 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
             notes=[f"取代 11-20 屏幕玻纤板 screen_fr4_v1_2b ×4 (FR4 3 厚) + 侧立件 screen_post_v1_2b ×2; 高度 = 灯板下沿 − 承载盘顶 = {F(RB.SP_T)} (灯板 +1 后), 跟 LS.Z0 走",
                    (f"罩锁点 S 挪到用户图上 ({F(lk[0][0])}, ±{F(lk[0][1])}) (r{F(RB.SHR_LOCK_R['a'])}); 原 (73, ±19.5) 在本件删 (−x 端套筒离灯板B 只 0.33)" if A else
                     f"罩锁点 S 保持 ({F(lk[0][0])}, ±{F(lk[0][1])}) (r{F(RB.SHR_LOCK_R['b'])}); 内边 x{F(x0)} (放 90° 离 CZ06 0.68, 放 270° 离无线夹块 2.9)"),
-                   f"螺母沉孔 (11-23 用户: 同承载盘 Q, M3 通孔 + 圆沉孔 Φ{F(RB.SP_NUT_CB_D)}): 罩锁 = 底面沉孔, 螺母法兰朝下坐承载盘顶, 拧紧时螺母顶顶沉孔顶; 外圈 = " + ("主体顶面 (4 高) Φ8 浅沉孔 (朝外开口), 螺母顶低于罩耳底 0.1" if A else "顶面沉孔, 螺母法兰朝下坐沉孔底, 沉孔外侧离件边只 0.2 ⇒ 往外开口" if not RB.SP_B_TOP_FLAT else "本件不开沉孔 (11-23), 螺母坐顶面") + "; 圆孔螺母会跟转, 拧时用扳手/镊子卡住",
+                   f"螺母沉孔 (11-23 用户: 同承载盘 Q, M3 通孔 + 圆沉孔 Φ{F(RB.SP_NUT_CB_D)}): 罩锁 = 底面沉孔, 螺母法兰朝下坐承载盘顶, 拧紧时螺母顶顶沉孔顶; 外圈 = " + ("只 Φ3.4 通, 螺母坐块顶 (见 N)" if A and RB.SP_A_TOP_FLAT else "主体顶面 (4 高) Φ8 浅沉孔 (朝外开口), 螺母顶低于罩耳底 0.1" if A else "顶面沉孔, 螺母法兰朝下坐沉孔底, 沉孔外侧离件边只 0.2 ⇒ 往外开口" if not RB.SP_B_TOP_FLAT else "本件不开沉孔 (11-23), 螺母坐顶面") + "; 圆孔螺母会跟转, 拧时用扳手/镊子卡住",
                    (f"11-23 用户「sup a只有蓝色这个区域高度是7mm，别的都是4mm高度」: 主体 Z{F(RB.SP_Z0)}–{F(RB.SP_Z0 + RB.SP_A_LOW)}, 两翼罩锁块满高到 Z{F(RB.SP_Z1)}; 不开减重槽; 罩锁窝边距 {F(RB.SP_EDGE['a_lock_well'])}" if A else f"减重: 顶面盲槽 槽底留 {F(RB.SP_POCKET_FLOOR)}; 边距 罩锁窝 {F(RB.SP_EDGE['b_lock_well'])}" if not RB.SP_B_TOP_FLAT else
                     f"11-23 用户「sup_b上面的沉孔都去掉」: 顶面全平, 不开减重槽 / 外圈沉孔; 顶面只剩贯穿孔 N Φ3.4 ×2 + S Φ{F(RB.SHR_HOLE_D)} ×2 + 接收板长圆穿线槽; 外圈螺母改坐顶面 (高出 {F(RB.NUT_T)}, 罩耳 y{F(RB.SHR_LOC_Y - 4.5)}–{F(RB.SHR_LOC_Y + 4.5)} 不在其上)"),
-                   ("装配: 桌上 2 颗罩锁螺母从底面塞进 → 本件 + 灯板组 (已焊铜螺柱) 用屏幕螺丝拧成一组 → 放承载盘 → 外圈螺母放主体顶面浅沉孔 + 外圈螺丝从 fr4_plate 底往上拧紧 → 罩子竖直下放 → 罩锁 DIN912 从罩顶起子孔拧" if A else
+                   ("装配: 桌上 2 颗罩锁螺母从底面塞进 → 本件 + 灯板组 (已焊铜螺柱) 用屏幕螺丝拧成一组 → 放承载盘 → 外圈螺母放块顶 (法兰朝下) + 外圈螺丝从 fr4_plate 底往上拧紧 (须在罩子下放前) → 罩子竖直下放 → 罩锁 DIN912 从罩顶起子孔拧" if A else
                     ("装配: 罩锁螺母从底面塞进 → 放承载盘 → 外圈螺母放顶面沉孔 + 外圈螺丝从 fr4_plate 底往上 → 罩子竖直下放 → 罩锁 DIN912 从罩顶起子孔拧" if not RB.SP_B_TOP_FLAT else
                      f"装配: 罩锁螺母从底面塞进 → 放承载盘 → 外圈法兰螺母放在顶面孔口 (法兰朝下), 镊子/扳手按住, M3×{F(RB.OUT_SCR_L_B)} 从 fr4_plate 底往上拧 (须在罩子下放前完成) → 罩子竖直下放 → 罩锁 DIN912 从罩顶起子孔拧")),
                    "PETG 打印, 壁 ≥3 圈, 填充 ≥40% (螺母窝/孔周实心); 六角窝打印偏小时用烙铁压入或修窝"])
@@ -822,14 +824,15 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
                 subtitle=f"罩底 {len(mp)} 个耳朵 (宽 {F(RSB.BOSS_W)}, 耳顶平) 坐屏幕支撑件顶 Z{F(RSB.BOSS_Z0)}–{F(RSB.BOSS_Z1)}, DIN912 M3×{F(RSB.MNT_L)} 从耳顶往下拧进支撑件底面倒扣法兰螺母; 罩壁平底坐承载盘顶 Z{F(RSB.Z0)}",
                 orient=f"倒放: 罩顶 (Z{F(RSB.Z1)}) 整面贴床, 凸台斜撑 45° 免支撑",
                 sec=dict(ang=a0, r0=60.0, auto_dims=False,
-                         zd=[(RSB.Z0, RSB.BOSS_Z0), (RSB.BOSS_Z0, RSB.BOSS_Z1), (RSB.RS.LIP_Z0, RSB.RS.LID_Z0), (RSB.RS.LID_Z0, RSB.Z1), (RSB.Z0, RSB.Z1)],
+                         zd=[(RSB.Z0, RSB.BOSS_Z0), (RSB.BOSS_Z0, RSB.BOSS_Z1)] + ([(RSB.BOSS_Z0, round(RSB.NUT_NOTCH_Z1, 2)), (round(RSB.NUT_NOTCH_Z1, 2), RSB.BOSS_Z1)] if RB.SP_A_TOP_FLAT else []) + [ (RSB.RS.LIP_Z0, RSB.RS.LID_Z0), (RSB.RS.LID_Z0, RSB.Z1), (RSB.Z0, RSB.Z1)],
                          rd=[(RSB.R0, RSB.R1, f"罩壁 {F(RSB.R1 - RSB.R0)}")]),
                 holes=[dict(tag="M", pts=mp, spec=f"耳 Φ3.4 通 Z{F(RSB.BOSS_Z0)}–{F(RSB.BOSS_Z1)} + 上方 Φ{F(RSB.ACC_D)} 起子孔穿到罩顶 (只切到罩壁内面 R{F(RSB.R0)})",
                             where=ring_txt(mp) + f"  DIN912 M3×{F(RSB.MNT_L)} 头坐耳顶 Z{F(RSB.BOSS_Z1)}, 尾 Z{F(RSB.SCR_TIP)}, 螺母在支撑件底 Z{F(RSB.NUT_Z[0])}–{F(RSB.NUT_Z[1])}"),
                        dict(tag="W", pts=wp, spec=f"配重孔 Φ3.4 + Φ{F(RSB.RS.W_CB_D)} 沉孔 (从罩顶穿顶盖到唇 Z{F(RSB.RS.W_BEAR)})",
                             where=f"r{F(RSB.RS.W_R)} ×{len(wp)}  M3×{F(RSB.RS.W_L)} 从罩顶插, 唇下挂 M3 螺母配重 (最多 {RSB.RS.W_NUT_MAX} 颗)")],
                 notes=[f"11-21 耳朵 8 个坐屏幕支撑件顶: A 件 (0/180°) 本地 ({F(RB.LOCK_A_LOC[0][0])}, ±{F(RB.LOCK_A_LOC[0][1])}) r{F(RB.SHR_LOCK_R['a'])} / B 件 (90/270°) ({F(RB.SHR_LOC_X)}, ±{F(RB.SHR_LOC_Y)}) r{F(RB.SHR_LOCK_R['b'])}; 世界角 " + "/".join(F(round(a, 2)) for a in RSB.MNT_A) + "°",
-                       f"耳 = 支撑件局部沿 x 长条 (锁点内 {F(RSB.EAR_IN)} → 罩壁, 宽 {F(RSB.BOSS_W)}, 厚 {F(RSB.BOSS_T)}), 上面 45° 斜撑从锁点外 {F(RSB.GUSSET_X0)} 起接罩壁; A 件耳悬伸约 18 但整条坐在支撑件顶上",
+                       f"耳 = 支撑件局部沿 x 长条 (锁点内 {F(RSB.EAR_IN)} → 罩壁, 宽 {F(RSB.BOSS_W)}, 厚 {F(RSB.BOSS_T)}), 上面 45° 斜撑从锁点外 {F(RSB.GUSSET_X0)} 起接罩壁",
+                       f"11-24 A 件耳底让位口 (外圈螺母): 局部 x{F(round(RSB.NUT_NOTCH_X0, 2))} → 罩壁, 全耳宽, Z{F(RSB.BOSS_Z0)}–{F(round(RSB.NUT_NOTCH_Z1, 2))}, 上方最薄 {F(RSB.NUT_NOTCH_T)}; 内段坐支撑件顶",
                        "配重孔避让起子孔: 取消 " + ("/".join(F(a) for a in RSB.W_DROP) or "无") + f"°, 现 {len(RSB.W_A)} 个",
                        f"各层高度: 罩壁底 Z{F(RSB.Z0)} (坐承载盘) / 耳 Z{F(RSB.BOSS_Z0)}–{F(RSB.BOSS_Z1)} (坐支撑件顶) / 配重唇 Z{F(RSB.RS.LIP_Z0)}–{F(RSB.RS.LID_Z0)} / 顶盖 Z{F(RSB.RS.LID_Z0)}–{F(RSB.Z1)}",
                        f"两端竖缝 y{F(RSB.SLOT_Y0)}…{F(RSB.SLOT_Y1)} (灯板/夹条端头; 11-21 上边 +0.35 让灯板 A 端 MIP) 就是两半之间的缝; 顶盖内边比 V1.2 再退 {F(RSB.LID_YIN_ADD)} (离灯板 ≥0.3)",

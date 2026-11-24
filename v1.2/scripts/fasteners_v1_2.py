@@ -291,7 +291,7 @@ if B.ROTOR_B:
             add(f"M3 法兰螺母 屏幕支撑件B 顶面 (法兰朝下) 外圈 #{i}", _nut_at(flange_nut, x, y, RB.OUT_NUT_Z_B[0]), "#707070")
             continue
         screw(f"M3x{RB.OUT_SCR_L:g} 超薄头 玻纤板→承载盘→屏幕支撑件 外圈", i, x, y, _FB, RB.OUT_SCR_L, True, engage=("M3 法兰螺母", *RB.OUT_NUT_Z))   # 支承 Z23 ⇒ 尾低于支撑件顶 0.5
-        add(f"M3 法兰螺母 屏幕支撑件A 主体顶面浅沉孔 (法兰朝下) 外圈 #{i}", _nut_at(flange_nut, x, y, RB.OUT_NUT_Z[0]), "#707070")   # 11-23 圆沉孔 Φ8
+        add(f"M3 法兰螺母 屏幕支撑件A 块顶面 (法兰朝下) 外圈 #{i}", _nut_at(flange_nut, x, y, RB.OUT_NUT_Z[0]), "#707070")   # 11-23 圆沉孔 Φ8
     for i, (x, y) in enumerate(RB.SHR_LOCK_PTS):  # 11-21 罩子锁点 ×8: DIN912 从罩耳顶往下, 穿罩耳 + 支撑件, 拧进支撑件底面倒扣的 M3 法兰螺母 (法兰朝下坐承载盘顶); 尾离承载盘顶 0.5
         screw(f"M3x{RSB.MNT_L:g} 内六角 转子罩耳→屏幕支撑件 罩子锁点", i, x, y, RB.SHR_SCR_BEAR, RSB.MNT_L, False, hd=5.5, hh=3.0, engage=("M3 法兰螺母", *RB.LOCK_NUT_Z))
         add(f"M3 法兰螺母 屏幕支撑件底圆沉孔 罩子锁点 #{i}", _nut_at(flange_nut, x, y, RB.LOCK_NUT_Z[0]), "#707070")

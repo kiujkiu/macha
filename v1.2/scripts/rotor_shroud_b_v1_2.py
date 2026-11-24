@@ -53,6 +53,12 @@ SCR_TIP = RB.SHR_SCR_TIP              # 31.0
 ACC_D = 7.0                           # 起子孔 Φ7 (起子/内六角扳手 Φ6 包络 + 0.5/边; DIN912 头 Φ5.5); 与 r<R0 取交, 不切罩壁
 assert ACC_D >= 6.0 + 1.0 - 1e-9 and max(HOLE_R.values()) + ACC_D / 2 <= R0 - 0.5
 GUSSET_X0 = ACC_D / 2 + 0.8           # 45° 斜撑从锁点外侧 4.3 起 (不挡起子孔)
+# 11-24 A 件 N 沉孔取消 ⇒ 外圈法兰螺母坐 A 件块顶 (Z37.5–41.2), 正在 A 件罩耳下 ⇒ 耳底从螺母内侧 NUT_NOTCH_CLR 起到罩壁内面开让位口 (全耳宽), 顶 = 螺母顶 + NUT_NOTCH_TOP; 耳内段 (锁点周围) 照旧坐块顶
+NUT_NOTCH_CLR, NUT_NOTCH_TOP = 0.6, 0.3
+NUT_NOTCH_X0 = RB.pol(RB.R_OUT, 22.5)[0] - RB.NUT_FL_D / 2 - NUT_NOTCH_CLR    # 67.2
+NUT_NOTCH_Z1 = RB.OUT_NUT_Z[1] + NUT_NOTCH_TOP                               # 41.5
+NUT_NOTCH_T = round(BOSS_Z1 + (NUT_NOTCH_X0 - RB.LOCK_A_LOC[0][0] - GUSSET_X0) - NUT_NOTCH_Z1, 2)   # 让位口上方最薄 (斜撑处, 竖直)
+if RB.SP_A_TOP_FLAT: assert RB.SP_A_STYLE == 'ear' and NUT_NOTCH_T >= 3.0 and NUT_NOTCH_X0 - RB.LOCK_A_LOC[0][0] >= RB.SHR_HEAD_D / 2 + 2.0, (NUT_NOTCH_T, NUT_NOTCH_X0)
 OUT_PTS = list(RB.ANCHOR_PTS) + list(RB.OUT_NUT_PTS)   # 外圈 8 颗法兰螺母 (嵌在支撑件顶面, 顶低于件顶 0.3, 罩子之前装; 罩耳可盖过)
 # 配重孔: 候选 原 RS.W_A + 40/140/220/320, 去掉与起子孔相碰的 (中心距 < (ACC_D+5.8)/2 + 1)
 def _wa_ok(a): return all(math.dist(pol(RS.W_R, a), p) >= (ACC_D + RS.W_CB_D) / 2 + 1.0 for p in MNT_PTS)
@@ -118,6 +124,8 @@ def ring_body_b():
             y0, y1 = ly - EAR_HW, ly + EAR_HW
             b = fuse(gbox(lx - EAR_IN, y0, BOSS_Z0, R0 + 0.5, y1, BOSS_Z1),
                      prism_xz([(lx + GUSSET_X0, BOSS_Z1 - 0.01), (R0 + 0.5, BOSS_Z1 - 0.01), (R0 + 0.5, BOSS_Z1 + (R0 + 0.5 - lx - GUSSET_X0))], y0, y1))
+            if RB.SP_A_TOP_FLAT and RB.SP_TYPE[a] == 'a':   # 11-24 外圈螺母让位口
+                b = cut(b, gbox(NUT_NOTCH_X0, y0 - 1, BOSS_Z0 - 1, R0 + 5, y1 + 1, NUT_NOTCH_Z1))   # 只切耳 (融罩壁之前), 罩壁不动
             s = fuse(s, xf(common(b, clip), rotz(a)) if a else common(b, clip))
     s = clean(s)
     for x, y in MNT_PTS:
