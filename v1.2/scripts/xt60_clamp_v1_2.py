@@ -54,6 +54,11 @@ V1.2-h (用户 11-17): 安装法兰 mounting_flange 不再给 XT60 开缺口 (�
      => 两个 Φ2.5 U 口顶只到 z5.85, 削到 z6 会剩 0.15 薄桥 + 悬空中柱 ⇒ 两 U 口合并成一个宽 WIRE_D+WIRE_PITCH = 9.5 的口 (z0..6 打通);
         堵头剩两侧各 3.55 宽 (|x| 4.75..8.3) 挡护套尾, 再加底垫后边框; 拔出仍靠护套台阶。
      => 削切面不是水平而是从堵头内面 z6 往外斜 50° 向下 (压块顶面朝下打印, 水平台阶会悬空 85.5 mm²), 堵头外面剩高 z≈2.4。
+V1.2-i (用户 11-24「定子盘提高之后是不是xt60的壳子可以改回去了」「改吧，按0.5间隙出」): 11-19 定子抬 3.5 ⇒ 外裙/定子盘底 Z8.5 → Z12, V1.2-h 的削切大半不需要了
+     => 撤回 V1.2-h (堵头削到 Z8 + U 口合并), 恢复 V1.2-g 外形 (两个 Φ2.5 U 口分开), 只把堵头上角沿 X 通长削一个 45° 斜角:
+        斜面离安装法兰外裙角 (r85, Z12) 垂直 0.5 (INNER_CLR); 压块顶 Z13 比裙底高 1 ⇒ 不削会吃进外裙 56.5 mm³。
+        堵头高: 外面 (r82.8) 局部 z7.09, 内面 (r85.8) z10.09; 护套槽顶角到斜面垂直 0.63 (= 到裙角 1.13 − 0.5, 间隙不变就不能再厚)。
+        45° 斜面顶面朝下打印免支撑。孔 / 防呆 / 外端 r110 / 底垫都不变 (只重打压块)。
   旧 assert 里依赖长方体外形 / 理论体积 / 6 面外观 / 开口端止口的, 在修剪、加防呆、挖螺母座**之前**的中间体
   (part0 / shim0) 上照跑; 之后另写 V1.2 校核 (单件连通 / 两件零干涉 / 圆角接头就位零干涉 / 反插干涉 / 外端在 r110 /
   M3 杆穿过零干涉 / 法兰螺母坐座零干涉且法兰底全支承 / 底垫被 M3 杆定位)。
@@ -131,7 +136,7 @@ from pathlib import Path
 import numpy as np
 import manifold3d as m3d
 
-VERSION = "V1.2-h"
+VERSION = "V1.2-i"
 
 # ===== 参数 =====
 # 接头 (AMASS 图纸 + 卡尺)
@@ -576,17 +581,20 @@ keys, keys_shim = keys ^ trim, keys_shim ^ trim
 part = (part0 + keys) ^ trim
 shim = (shim0 + keys_shim) ^ trim
 
-# (d) V1.2-h: 安装法兰整圈 ⇒ 全局 Z ≥ INNER_Z_G 处压块不越过堵头内面 (接头尾); U 口合并 (免 0.15 薄桥)
-INNER_Z_G = 8.0                                       # 外裙 / 法兰盘底 Z8.5 − 0.5
-INNER_Z = INNER_Z_G - BASE_T                          # 局部 z6.0 (Z_GLOBAL = BASE_T, 在下面定义)
-WIRE_SPAN = WIRE_PITCH + WIRE_D                       # 9.5 合并后出线口宽
-assert WIRE_ZC + WIRE_D / 2 < INNER_Z, "U 口顶高过削切面"
-CUT_ANG = 50.0                                        # 削切面与水平夹角: 压块顶面朝下打印, 水平削会在离床 5 处悬空 85.5 mm² ⇒ 斜 50° (>45° 免支撑)
-_k = math.tan(math.radians(CUT_ANG)); _y1 = Y_END + 1.0
+# (d) V1.2-i: 定子抬 3.5 后外裙底 Z12 (压块顶 Z13) ⇒ 只削堵头上角 45°, 离外裙角 (r85, Z12) 垂直 INNER_CLR; V1.2-h 的削到 Z8 + U 口合并撤回
+SKIRT_R, SKIRT_Z_G = 85.0, 12.0                       # 安装法兰外裙外圆 / 裙底 (= build_v1_2.FL_Z0 = 定子盘底)
+INNER_CLR = 0.5                                       # 用户 11-24 定
+CUT_ANG = 45.0                                        # 与水平夹角; 顶面朝下打印 45° 免支撑
+_cut_c = (SKIRT_Z_G - BASE_T) + (RC - SKIRT_R) - INNER_CLR * math.sqrt(2)      # 斜面 (局部): y + z = _cut_c (中线 x=0 处裙在 y = RC − 85; 两侧 |x|>0 裙更远)
+CUT_Z_IN, CUT_Z_OUT = _cut_c - Y_CAPI, _cut_c - Y_END                          # 堵头 内面 / 外面 高
+CUT_Y_TOP = _cut_c - HTOP                                                      # 顶面斜角起点 y
+ROOF_MIN = (_cut_c - Y_CAPI - CH_H_S) / math.sqrt(2)                           # 护套槽顶内角到斜面 (垂直)
+assert CUT_Z_OUT - (WIRE_ZC + WIRE_D / 2) >= 1.2, ("U 口顶到斜面太薄", CUT_Z_OUT)
+assert ROOF_MIN >= 0.6, ROOF_MIN
+_y1 = Y_END + 1.0
 _cut_top = m3d.Manifold.hull_points([(x, y, z) for x in (-HALF_L - 1, HALF_L + 1) for (y, z) in
-                                     ((Y_CAPI, INNER_Z), (_y1, INNER_Z - _k * (_y1 - Y_CAPI)), (_y1, HTOP + 1), (Y_CAPI, HTOP + 1))])
-_cut_wire = m3d.Manifold.cube((WIRE_SPAN, CAP_T + 2, INNER_Z + 1), False).translate((-WIRE_SPAN / 2, Y_CAPI - 0.01, -1))
-part = part - _cut_top - _cut_wire
+                                     ((_cut_c - HTOP - 1, HTOP + 1), (_y1, _cut_c - _y1), (_y1, HTOP + 1))])
+part = part - _cut_top
 
 # ===== V1.2 校核 =====
 # 1) 单件连通
@@ -729,18 +737,18 @@ for sx in (-1, 1):
     disk = m3d.CrossSection.circle(NUT_FL_D / 2, SEG).translate((sx * HX, HOLE_Y))
     assert abs((disk - top_face).area() - hole_poly) < 0.01 * hole_poly, "螺母法兰在顶面悬空"
 
-# 6b) V1.2-h: Z8 以上不越过 Y_CAPI; 全局最小半径; 线能过; 堵头两侧仍挡住护套尾 (往里推 0.1 就碰)
+# 6b) V1.2-i: 对安装法兰外裙 (r≤85, Z≥12 实心圆柱, 含里面的定子盘 r82.5) 间隙 = INNER_CLR; 全局最小半径; 线能过; 护套尾被堵头挡住
+_skirt = m3d.Manifold.cylinder(20, SKIRT_R, SKIRT_R, 2880, False).translate((0, RC, SKIRT_Z_G - BASE_T))
+assert inter_vol(_skirt, part) < 1e-9, "压块碰安装法兰外裙"
+SKIRT_GAP = float(part.min_gap(_skirt, 5.0))
+assert abs(SKIRT_GAP - INNER_CLR) < 0.01, SKIRT_GAP
 _pv = np.asarray(part.to_mesh().vert_properties)[:, :3]
-_hi = _pv[:, 2] > INNER_Z + 1e-6
-assert _pv[_hi, 1].max() <= Y_CAPI + 1e-6, f"Z8 以上压块越过堵头内面: {_pv[_hi, 1].max()}"
-R_IN_HI = float(RC - _pv[_hi, 1].max())          # Z8 以上内端是平面 y=Y_CAPI 且跨过 x=0 (顶板) ⇒ 最小全局半径在中线 (顶点法会漏)
-R_IN_LO = float(np.hypot(_pv[:, 0], RC - _pv[:, 1]).min())           # 整件最小全局半径 (Z8 以下堵头)
-assert R_IN_HI >= 85.5, R_IN_HI
-for xc in (-WIRE_PITCH / 2, WIRE_PITCH / 2):
-    assert inter_vol(wire.translate((xc, Y_CAPI - 1, WIRE_ZC)), part) < 1e-9, "V1.2-h 线穿不过"
+R_IN_LO = float(RC - _pv[:, 1].max())                # 内端平面 y=Y_END, 中线全局半径 82.8
+for xc in WIRE_X:
+    assert inter_vol(wire.translate((xc, Y_CAPI - 1, WIRE_ZC)), part) < 1e-9, "线穿不过 U 口"
 PUSH_V = inter_vol(xt60_v12().translate((0, 0.1, 0)), part)
-PUSH_V_EXPECT = 2 * (CH_W_S / 2 - WIRE_SPAN / 2) * (0.1 * (INNER_Z - RIM_H) - _k * 0.1 ** 2 / 2)   # 堵头 z2..6 (z0..2 是底垫后边框位, 另挡)
-assert abs(PUSH_V - PUSH_V_EXPECT) < 0.02, f"堵头两侧挡护套: {PUSH_V} vs {PUSH_V_EXPECT}"
+PUSH_V_EXPECT = 0.1 * (CH_W_S * (CH_H_S - RIM_H) - 2 * (WIRE_D * (WIRE_ZC - RIM_H) + math.pi * WIRE_D ** 2 / 8))   # 堵头 z2..9.2 整面减两个 U 口 (z0..2 是底垫后边框位, 另挡)
+assert abs(PUSH_V - PUSH_V_EXPECT) < 0.05, f"堵头挡护套: {PUSH_V} vs {PUSH_V_EXPECT}"
 
 # 7) 体积: 件 = 中间体 + 防呆
 vol_part, vol_shim = part.volume(), shim.volume()
@@ -812,6 +820,6 @@ print(f"  圆弧 (V1.2-f): r{TRIM_R:g}, 局部圆心 (0,{RC:g}); 顶点最大全
 print(f"        接头口面 r{XT_RF:g} 内接 r{TRIM_R:g}, 不伸出: 本体口面角 r{R_XT_BODY:.3f}, 护套前角 r{R_XT_SHEATH:.3f} (最大 {R_XT_MAX:.3f}); 中线缩进 {RECESS_C:.2f}")
 print(f"        圆弧中线 Y {FRONT_Y_C:.2f} (开口面 {Y_OPEN:g} 外 {Y_OPEN - FRONT_Y_C:.2f}, 不剪); |x| > {X_ARC0:.2f} 开始剪; X 端 Y {FRONT_Y_E:.2f} (剪进 {CUT_E:.2f})")
 print(f"        开口端止口条 (Y {Y_OPEN:g}..{Y_OPEN + RIM_W:g}) X 端剩 {RIM_LEFT_E:.2f} 宽, 体积剩 {FRONT_RIM_V:.2f}/{FRONT_RIM_V0:.2f} ({FRONT_RIM_PCT:.0f}%); 压块 Y 向长 中线 {DEPTH:g} / X 端 {Y_END - FRONT_Y_E:.2f}")
-print(f"  V1.2-h: 全局 Z{INNER_Z_G:g} 以上只到堵头内面 (最小 r{R_IN_HI:.2f}, 外裙 r85 余 {R_IN_HI - 85:.2f}); Z{INNER_Z_G:g} 以下堵头到 r{R_IN_LO:.2f}; "
-      f"出线口合并宽 {WIRE_SPAN:g} 高 {INNER_Z:g}; 堵头两侧挡护套 (推 0.1 吃 {PUSH_V:.3f}/{PUSH_V_EXPECT:.3f})")
+print(f"  V1.2-i: 堵头上角 {CUT_ANG:g}° 斜角, 离外裙角 (r{SKIRT_R:g}, Z{SKIRT_Z_G:g}) {SKIRT_GAP:.3f}; 堵头高 外 {CUT_Z_OUT:.2f} / 内 {CUT_Z_IN:.2f}, 顶面从 y{CUT_Y_TOP:.2f} 起削 ({Y_END - CUT_Y_TOP:.2f} 宽); "
+      f"护套槽顶角到斜面 {ROOF_MIN:.2f}; U 口顶到斜面外边 {CUT_Z_OUT - WIRE_ZC - WIRE_D / 2:.2f}; 最小 r{R_IN_LO:.2f}; 挡护套 (推 0.1 吃 {PUSH_V:.3f}/{PUSH_V_EXPECT:.3f})")
 print(f"  体积: 压块 {vol_part:.2f} (中间体 {vol0_part:.2f}) ≈ {vol_part * 1.24e-3:.1f} g PLA; 底垫 {vol_shim:.2f} (中间体 {vol0_shim:.2f})")

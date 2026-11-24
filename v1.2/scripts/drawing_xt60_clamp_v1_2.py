@@ -1,5 +1,5 @@
 """
-XT60 压块 + 底垫 V1.2 (V1.2-h 11-17: Z8 以上削到接头尾 + 出线口合并; V1.2-g 11-13 晚 M3 孔外移 2.8 对上已打印底盘 x100 孔) A3 工程图, 2 页 PDF (2026-11-12; 11-13 V1.2-f 外端 R110 圆弧, 接头口面 r109.7 内接 R110)
+XT60 压块 + 底垫 V1.2 (V1.2-i 11-24: 定子抬 3.5 后撤回 V1.2-h, 只削堵头上角 45°, 离外裙 0.5; V1.2-g 11-13 晚 M3 孔外移 2.8 对上已打印底盘 x100 孔) A3 工程图, 2 页 PDF (2026-11-12; 11-13 V1.2-f 外端 R110 圆弧, 接头口面 r109.7 内接 R110)
     cd v1.2/scripts && ../../.venv/bin/python drawing_xt60_clamp_v1_2.py
 输出 v1.2/models/xt60_clamp_v1_2/xt60_clamp_v1_2_drawing.pdf (+ _preview.png 第 1 页, _p2_preview.png 第 2 页)
 
@@ -296,7 +296,7 @@ vd(pg, TF(0, 0)[1], TF(0, g.HTOP)[1], TF(-g.HALF_L, 0)[0], TF(-g.HALF_L, 0)[0], 
 hd(pg, TF(-g.CH_W_B / 2, 0)[0], TF(g.CH_W_B / 2, 0)[0], TF(0, 0)[1], TF(0, 0)[1], TF(0, -2)[1] - 7, f"{F(g.CH_W_B)} (本体段槽)")
 hd(pg, TF(-g.HALF_L, 0)[0], TF(g.HALF_L, 0)[0], TF(0, -2)[1], TF(0, -2)[1], TF(0, -2)[1] - 15, F(g.L))
 vd(pg, TF(0, 0)[1], TF(0, g.CH_H_B)[1], TF(g.CH_W_B / 2, 0)[0], TF(g.CH_W_B / 2, 0)[0], TF(g.HALF_L, 0)[0] + 7, F(g.CH_H_B), side="r")
-pg.text(FX, TF(0, -2)[1] - 21, f"从开口端看得到: 本体段槽口 + 两条防呆 (+X 侧), 堵头内面出线口 (两 U 口合并, 宽 {F(g.WIRE_SPAN)} 高 {F(g.INNER_Z)}); 虚线 = 护套段槽 {F(g.CH_W_S)}×{F(g.CH_H_S)}、M3 孔",
+pg.text(FX, TF(0, -2)[1] - 21, f"从开口端看得到: 本体段槽口 + 两条防呆 (+X 侧), 堵头内面两个 U 口; 虚线 = 护套段槽 {F(g.CH_W_S)}×{F(g.CH_H_S)}、M3 孔",
         size=2.2, ha="center")
 
 # ---- 俯视图 ----
@@ -359,7 +359,10 @@ vd(pg, TB(0, 0)[1], TB(0, g.CH_H_S)[1], TB(g.Y_STEP, 0)[0], xR, xR + 15, F(g.CH_
 for _y, _h in (((g.Y_STEP + Y_FC) / 2, g.CH_H_B), ((g.Y_CAPI + g.Y_STEP) / 2, g.CH_H_S)):   # 11-16 链式: 槽顶厚, 标在槽腔里
     _x = TB(_y, 0)[0]
     vd(pg, TB(0, _h)[1], TB(0, g.HTOP)[1], _x, _x, _x, f"顶 {F(g.HTOP - _h)}", side="r", ty=TB(0, _h)[1] - 4.0)
-vd(pg, TB(0, g.RIM_H)[1], TB(0, g.HTOP)[1], xL, xL, xL - 15, F(g.HTOP - g.RIM_H), side="l")
+vd(pg, TB(0, g.RIM_H)[1], TB(0, g.CUT_Z_OUT)[1], xL, xL, xL - 15, F(g.CUT_Z_OUT - g.RIM_H, 2), side="l")          # V1.2-i 堵头外面高
+vd(pg, TB(0, g.CUT_Z_OUT)[1], TB(0, g.HTOP)[1], xL, TB(g.CUT_Y_TOP, 0)[0], xL - 15, F(g.HTOP - g.CUT_Z_OUT, 2), side="l")
+hd(pg, TB(g.Y_END, 0)[0], TB(g.CUT_Y_TOP, 0)[0], TB(0, g.CUT_Z_OUT)[1], TB(0, g.HTOP)[1], TB(0, g.HTOP)[1] + 4.5, f"{F(g.Y_END - g.CUT_Y_TOP, 2)} × {F(g.CUT_ANG)}°", tx=xL - 9)
+leader(pg, TB(g.Y_CAPI - 0.1, g.CH_H_S + 0.1), TB(g.Y_CAPI - 1.6, 5.6), f"槽顶角到斜面 {F(g.ROOF_MIN, 2)}", ha="left", size=2.2)
 leader(pg, TB(g.Y_END - 1.5, g.RIM_H * 0.5), (xL - 4, TB(0, -g.BASE_T)[1] - 2.0),
        f"后边止口: 压块台阶 {F(g.BACK_RIM_W + g.ASSY_CLR)} 宽 × {F(g.RIM_H)} 高\n底垫后边框 {F(g.BACK_RIM_W)}×{F(g.RIM_H)} (0.1 装配隙)", ha="right", size=2.2)
 leader(pg, TB(Y_FC + 1.0, g.HTOP - 0.8), (xR + 2, TB(0, g.HTOP)[1] + 7),
@@ -465,22 +468,25 @@ TA = lambda x, z: (AX + x * DA, AZ + z * DA)  # noqa: E731
 view_title(pg, AX, 177, "详图 A 4:1 (过堵头剖, Y = " + F(YA) + ")", "U 出线口, 从开口端看; 下方 = 底垫后边框 (平底)")
 sec_patch(pg, clip_cs(sec_y(PART, YA), AU0, AU1, AW0, AW1), TA, hatch="////")
 sec_patch(pg, clip_cs(sec_y(SHIM, YA), AU0, AU1, AW0, AW1), TA, hatch="\\\\\\\\", lw=0.3)
-for xc in g.WIRE_X:                                   # 线 (Φ2.5, 圆心 = 针轴线) 只作参考
+for xc in g.WIRE_X:
     chain(pg, TA(xc, AW0 - 1), TA(xc, g.WIRE_ZC + g.WIRE_D / 2 + 1.5))
-    pg.ax.add_patch(MCircle(TA(xc, g.WIRE_ZC), g.WIRE_D / 2 * DA, fill=False, lw=0.18 * MM_PT, ls=(0, (3, 2)), color="0.3", zorder=4))
-hd(pg, TA(-g.WIRE_SPAN / 2, 0)[0], TA(g.WIRE_SPAN / 2, 0)[0], TA(0, g.INNER_Z)[1], TA(0, g.INNER_Z)[1],
-   TA(0, AW1)[1] + 4, f"{F(g.WIRE_SPAN)} 出线口")
-hd(pg, TA(g.WIRE_SPAN / 2, 0)[0], TA(g.CH_W_S / 2, 0)[0], TA(0, g.INNER_Z)[1], TA(0, g.INNER_Z)[1],
-   TA(0, AW1)[1] + 4, F(g.CH_W_S / 2 - g.WIRE_SPAN / 2), tx=TA(AU1, 0)[0] + 4)
+chain(pg, TA(g.WIRE_X[0] - 2.2, g.WIRE_ZC), TA(g.WIRE_X[1] + 2.2, g.WIRE_ZC))
+hd(pg, TA(g.WIRE_X[0], 0)[0], TA(g.WIRE_X[1], 0)[0], TA(0, g.WIRE_ZC + 2.6)[1], TA(0, g.WIRE_ZC + 2.6)[1],
+   TA(0, AW1)[1] + 4, F(g.WIRE_PITCH))
+hd(pg, TA(g.WIRE_X[0] - g.WIRE_D / 2, 0)[0], TA(g.WIRE_X[0] + g.WIRE_D / 2, 0)[0], TA(0, AW0)[1], TA(0, AW0)[1],
+   TA(0, AW0)[1] - 5, F(g.WIRE_D))
 xa = TA(AU0, 0)[0]
-vd(pg, TA(0, 0)[1], TA(0, g.INNER_Z)[1], xa, xa, xa - 6, f"{F(g.INNER_Z)} (全局 Z{F(g.INNER_Z_G)})", side="l")
+vd(pg, TA(0, 0)[1], TA(0, g.WIRE_ZC)[1], xa, xa, xa - 6, F(g.WIRE_ZC), side="l")
 vd(pg, TA(0, 0)[1], TA(0, g.SLOT_BOTTOM)[1], xa, xa, xa - 13, f"{F(g.SLOT_BOTTOM)}", side="l", ty=TA(0, g.SLOT_BOTTOM / 2)[1])
-pg.text(AX, TA(0, AW0)[1] - 12.5, f"V1.2-h: 堵头 {F(g.CAP_T)} 厚只留 z0..{F(g.INNER_Z)} (全局 Z{F(g.INNER_Z_G)} 以下, 在安装法兰外裙 / 法兰盘底 Z8.5 下); 两 U 口合并成宽 {F(g.WIRE_SPAN)} 口;", size=2.2, ha="center")
-pg.text(AX, TA(0, AW0)[1] - 15.8, f"两侧各 {F(g.CH_W_S / 2 - g.WIRE_SPAN / 2)} 挡护套尾 + 底垫后边框 (z0..{F(g.SLOT_BOTTOM)}); 虚线 = 线 Φ{F(g.WIRE_D)} @ {F(g.WIRE_PITCH)}, 圆心高 {F(g.WIRE_ZC)}", size=2.2, ha="center")
+a45 = math.radians(45)
+leader(pg, TA(g.WIRE_X[1] + g.WIRE_D / 2 * math.cos(a45), g.WIRE_ZC + g.WIRE_D / 2 * math.sin(a45)),
+       (TA(AU1, 0)[0] + 3, TA(0, AW1)[1] + 2), f"R{F(g.WIRE_D / 2)}", ha="left", size=2.4)
+pg.text(AX, TA(0, AW0)[1] - 12.5, f"堵头 {F(g.CAP_T)} 厚; U 口 Φ{F(g.WIRE_D)} (= 线径, 零余量) 半圆顶 + 直边, 圆心高 {F(g.WIRE_ZC)} = 针轴线;", size=2.2, ha="center")
+pg.text(AX, TA(0, AW0)[1] - 15.8, f"平底 = 底垫后边框顶 z {F(g.SLOT_BOTTOM)} (线底 {F(g.LEDGE)} 高于边框, 不削); 高度从底板顶面 z 0 起算", size=2.2, ha="center")
 
 # ---- 技术要求 ----
 y = notes(pg, 16, 86, "技术要求 / 说明", [
-    f"1. 尺寸全部来自 xt60_clamp_v1_2.py ({g.VERSION}: 全局 Z{F(g.INNER_Z_G)} 以上只到接头尾 r{F(g.R_IN_HI, 1)}, 安装法兰外裙整圈); 阶梯槽紧配不留余量: 本体段 {F(g.CH_W_B)}×{F(g.CH_H_B)} / 护套段 {F(g.CH_W_S)}×{F(g.CH_H_S)} (= 接头, 间隙 0), "
+    f"1. 尺寸全部来自 xt60_clamp_v1_2.py ({g.VERSION}: 堵头上角 {F(g.CUT_ANG)}° 斜角 (全长), 离安装法兰外裙角 r{F(g.SKIRT_R)} / 全局 Z{F(g.SKIRT_Z_G)} 垂直 {F(g.INNER_CLR)}); 阶梯槽紧配不留余量: 本体段 {F(g.CH_W_B)}×{F(g.CH_H_B)} / 护套段 {F(g.CH_W_S)}×{F(g.CH_H_S)} (= 接头, 间隙 0), "
     f"槽台阶与接头台阶对齐; 压块与底垫嵌套面单边 {F(g.ASSY_CLR)}。",
     f"2. 外端 R{F(g.TRIM_R)} = 底盘/下罩外圆 (与玻璃托融为一体)。接头口面 r{F(g.XT_RF)} 内接 R{F(g.TRIM_R)}, 不伸出: 口面角 r{F(g.R_XT_BODY, 2)}, 中线缩进 {F(g.RECESS_C)}; "
     f"|x| < {F(g.X_ARC0)} 段圆弧在开口面外不剪, X 端剪进 {F(g.CUT_E)} (长 中线 {F(LEN_C)} / X 端 {F(LEN_E)})。",
