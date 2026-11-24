@@ -1,4 +1,4 @@
-"""A3 横向图纸: plate_20x40x1_x (俯视 4:1 + 侧视 4:1), 几何从 build_stl 导入。"""
+"""A3 横向图纸: plate_20x40x1_x_v1_2 (俯视 4:1 + 侧视 4:1), 几何从 build_stl 导入。"""
 import math
 from pathlib import Path
 from fpdf import FPDF
@@ -104,8 +104,8 @@ def vdim(y1, y2, xg, xd, label):
 
 
 _w(0.3); pdf.rect(5, 5, PAGE_W-10, PAGE_H-10, style="D")
-text(PAGE_W/2, 15, "X 字框片 plate_20x40x1_x   20 × 40 × 1", size=14, anchor="middle")
-text(PAGE_W/2, 22, "薄板挖 4 个三角通孔: 四边外框宽 3 + 两条对角筋宽 3 (垂直于筋量)", size=8, anchor="middle")
+text(PAGE_W/2, 15, "X 字框片 plate_20x40x1_x_v1_2   20 × 40 × 1", size=14, anchor="middle")
+text(PAGE_W/2, 22, f"薄板挖 4 个三角通孔: 四边外框宽 {RIB:g} + 两条对角筋宽 {RIB:g} (垂直于筋量)", size=8, anchor="middle")
 S = 4.0; cx, cy = 150, 142
 def tv(x, y): return (cx + x*S, cy - y*S)
 text(cx, 36, "俯视图 Top View (4:1)   尺寸单位: mm", size=11, anchor="middle")
@@ -145,7 +145,7 @@ d = (nx, -ny)
 arrow(*pa, -d[0], -d[1]); arrow(*pb, d[0], d[1])
 line(pb[0]-d[0]*9, pb[1]-d[1]*9, *pb)
 q = (pa[0]+d[0]*36, pa[1]+d[1]*36); line(*pa, *q); line(*q, q[0]+6, q[1])
-text(q[0]+7, q[1]+1.2, "筋宽 3 mm (垂直于筋)", size=TXT)
+text(q[0]+7, q[1]+1.2, f"筋宽 {RIB:g} mm (垂直于筋)", size=TXT)
 # 侧视
 sx, sy = 310, 142
 text(sx, 36, "侧视图 Side View (4:1)", size=11, anchor="middle")
@@ -153,5 +153,5 @@ _w(GEOM_W); pdf.rect(sx-T*S/2, sy-H/2*S, T*S, H*S, style="D")
 H_(sx-T*S/2, sx+T*S/2, yt, yt-9, f"{T:g} mm")
 V_(yt, yb, sx-T*S/2, sx-20, f"{H:g} mm")
 _w(0.3); pdf.rect(20, PAGE_H-32, PAGE_W-40, 18, style="D")
-text(26, PAGE_H-20.5, "plate_20x40x1_x   数量 1   单位 mm   第一角   2026-11-24   打印: 平放, 免支撑, 100% 填充", size=10)
-out = Path(__file__).with_name("plate_20x40x1_x_drawing.pdf"); pdf.output(str(out)); print("wrote", out)
+text(26, PAGE_H-20.5, "plate_20x40x1_x_v1_2   数量 1   POV3D V1.2   单位 mm   第一角   2026-11-24   打印: 平放, 免支撑, 100% 填充", size=10)
+out = Path(__file__).with_name("plate_20x40x1_x_v1_2_drawing.pdf"); pdf.output(str(out)); print("wrote", out)

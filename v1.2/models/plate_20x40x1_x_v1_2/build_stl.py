@@ -1,8 +1,8 @@
 """
-plate_20x40x1_x X 字框片 (2026-11-24, 用户指定; 非 POV3D 件)
+plate_20x40x1_x_v1_2 X 字框片 (2026-11-24, 用户指定; 同日筋宽 3 → 2 并移入 V1.2)
 
 20×40×1 薄板, 挖 4 个三角形通孔 ⇒ 四边外框 + 两条对角筋 (X)。
-  - 外框边宽 / 对角筋宽 都是 3 (平面内, 对角筋按垂直于筋的方向量)
+  - 外框边宽 / 对角筋宽 都是 2 (平面内, 对角筋按垂直于筋的方向量)
   - 对角筋中线 = 外轮廓角到角
 """
 import math, struct
@@ -11,7 +11,7 @@ import numpy as np
 import manifold3d as m3d
 
 W, H, T = 20.0, 40.0, 1.0
-RIB = 3.0
+RIB = 2.0
 
 # ===== 三角孔: 内框 (W-2RIB)×(H-2RIB) 减去两条对角筋 =====
 IX, IY = W / 2 - RIB, H / 2 - RIB                 # 内框半宽 / 半高
@@ -28,9 +28,9 @@ if __name__ == "__main__":
         plate = plate - m3d.Manifold.extrude(cs, T + 2).translate((0, 0, -1))
     mesh = plate.to_mesh()
     v = np.asarray(mesh.vert_properties)[:, :3]; tr = np.asarray(mesh.tri_verts)
-    out = Path(__file__).with_name("plate_20x40x1_x.stl")
+    out = Path(__file__).with_name("plate_20x40x1_x_v1_2.stl")
     with out.open("wb") as f:
-        f.write(b"plate 20x40x1 X rib 3".ljust(80, b" ")); f.write(struct.pack("<I", len(tr)))
+        f.write(b"plate 20x40x1 X rib 2".ljust(80, b" ")); f.write(struct.pack("<I", len(tr)))
         for t in tr:
             a, b, c = v[t]; n = np.cross(b - a, c - a); L = np.linalg.norm(n); n = n / L if L > 0 else n
             f.write(struct.pack("<12fH", *n, *a, *b, *c, 0))
