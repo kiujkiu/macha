@@ -196,6 +196,9 @@ def _radial(sh, a, z):    # 局部 z 轴 → 径向 x 轴, 再抬到 Z, 转到�
 for i, a in enumerate(B.GS_ANG):
     add(f"M3x{B.GS_L:g} 超薄头 玻璃上横锁 #{i}", _radial(screw_down(0, 0, B.GS_SEAT, B.GS_L, hd=7.0, hh=1.5), a, B.GS_Z), "#C0C0C0")
     add(f"M3 法兰螺母 玻璃上弧形件 #{i}", _radial(flange_nut(0, 0, B.GL_R0), a, B.GS_Z), "#707070")
+    # 玻璃下横锁 (11-25): 外卡环 → 玻璃 Φ5 → 玻璃座内卡加厚块 (法兰螺母 r88.5)
+    add(f"M3x{B.GS_L:g} 超薄头 玻璃下横锁 #{i}", _radial(screw_down(0, 0, B.GS_SEAT, B.GS_L, hd=7.0, hh=1.5), a, B.GB_Z), "#C0C0C0")
+    add(f"M3 法兰螺母 玻璃下玻璃座内卡 #{i}", _radial(flange_nut(0, 0, B.GL_R0), a, B.GB_Z), "#707070")
 
 # 11 V2 灯板支撑 (11-16 晚 偏心 SCR_ECC + 耳朵脚, led_support_v1_2): 中间 T 件取消;
 #    两端立板耳朵 4×M3×14 内六角 (头支承 = 耳朵顶 Z36) 穿耳朵 + 承载盘 Φ3.4 → 毂盘底 M3×4 铜螺母 (= 外圈锁盘 k=0/3/4/7, 铜螺母在下面外圈循环里一起放, 不重复计);

@@ -554,7 +554,8 @@ if ROTOR_B: Z_RIM_TOP = ROTOR_TOP + 3.0 + 2.8 + 3.2   # 11-18 用户: 转子盘B
 SH_OUT = DISC_D / 2                                # 用户草图 11-11: 外面与底盘外缘齐平 r110
 SPIG_T = 4.0                                       # 用户 11-11 嫌内卡薄: 2.8 → 4.0, 往里加 (内卡 r90.8–94.8, 离承载盘外缘 1.8)
 GL_CLR = 0.2                                       # 玻璃单边间隙
-IN_DEPTH, OUT_DEPTH = 20.0, 10.0                   # 内卡 20, 外卡贴玻璃处 10, 顶面 45° 往外降
+IN_DEPTH, OUT_DEPTH = 20.0, 14.0                   # 内卡 20, 外卡贴玻璃处 14 (11-25 横锁 10 → 14), 斜面往外降
+OUT_FOOT = 3.0                                     # 外卡顶平带 r100.2–103.2 (11-25 横锁: 螺丝头座 r102.7 整圈有料; 原 0 尖顶)
 # 用户 11-13 晚: V2 灯板 (LED_V0.2.0 11-13, 板高 208, LED 在上部); SoC+WiFi 同一平面 = 转接板 (POV3D_V2_BaseBoard 140×80×1.6,
 #   器件全在顶面, 底面只有插件脚) + MLK CZ06 核心板 (60×35, DF40 合高 3.0 + 板 1.6 + 顶面器件 ≈2.0 = 6.6, 转接板 README), 转接板出 2 根 FPC 给桥板;
 #   玻璃下加高, 内卡顶 (不透光部分的最高点) = LED 下沿 − VIEW_MARGIN
@@ -579,8 +580,8 @@ gi, go = GL_OD / 2 - GL_T - GL_CLR, GL_OD / 2 + GL_CLR    # 94.8 / 100.2
 SPIG_IN = gi - SPIG_T                              # 用户 11-12: 墙内面 = 内卡内面 r90.8 一条直线到底 (原 r92 有 1.2 台阶); 控制板最外角 r90.4, 承载盘 r89
 from OCP.BRepPrimAPI import BRepPrimAPI_MakeCone
 LIP_EDGE = 1.5                                     # 外卡外缘留 1.5 直边 (分体环不出 0.2 薄边), 斜面 ≈41°
-_r1 = SH_OUT + LIP_EDGE * (SH_OUT - go) / (OUT_DEPTH - LIP_EDGE)
-_cone = BRepPrimAPI_MakeCone(gp_Ax2(gp_Pnt(0, 0, Z_G), gp_Dir(0, 0, 1)), _r1, go, OUT_DEPTH).Shape()
+_r1 = SH_OUT + LIP_EDGE * (SH_OUT - go - OUT_FOOT) / (OUT_DEPTH - LIP_EDGE)
+_cone = BRepPrimAPI_MakeCone(gp_Ax2(gp_Pnt(0, 0, Z_G), gp_Dir(0, 0, 1)), _r1, go + OUT_FOOT, OUT_DEPTH).Shape()
 s_ = ann(SPIG_IN, SH_OUT, 0, Z_G)                                              # 实心墙 r92–110
 s_ = fuse(s_, ann(gi - SPIG_T, gi, Z_G, Z_G + IN_DEPTH))                       # 内卡 (z32 以上, 内面比墙内面往里 1.2)
 s_ = fuse(s_, op(BRepAlgoAPI_Common, ann(go, SH_OUT, Z_G - 1, Z_G + OUT_DEPTH), _cone))   # 外卡 45° 斜顶
@@ -754,6 +755,35 @@ TG_R0, TG_W, TG_H, TG_CLR = 105.0, 2.0, 2.0, 0.1   # 11-17 晚 用户: 凸筋改
 _lip = ann(go, SH_OUT + 1, Z_G, Z_G + OUT_DEPTH + 1)
 clamp_ring = clean(cut(op(BRepAlgoAPI_Common, seat, _lip), ann(TG_R0 - TG_CLR, TG_R0 + TG_W + TG_CLR, Z_G - 1, Z_G + TG_H + TG_CLR)))   # 底面槽
 shroud_split = clean(fuse(cut(seat, _lip), ann(TG_R0, TG_R0 + TG_W, Z_G - 0.5, Z_G + TG_H)))                                      # 顶面凸筋
+# 11-25 用户「玻璃下边连接也需要锁螺丝」「从外往里锁试一下」: 玻璃下横锁 ×8 (同玻璃上) —— 外卡环 Φ3.4 + 外面 Φ7.4 平座 r102.7 → 玻璃管 Φ5 (孔心离下端 8) →
+#   玻璃座内卡 8 处局部往里加厚到 r88.5 (宽 16 高 13, 底 45°), 内面法兰窝 Φ8×1 + 六角 AF6.0×2.8 (法兰朝轴心与内面齐平); 离转子罩 r85 3.5; 外面松螺丝 ⇒ 外卡环/玻璃直接往上拿, 不动转子
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakePolygon as _MP0, BRepBuilderAPI_MakeFace as _MF0
+from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism as _PR0
+def _xc(z, d, x0, x1):                             # 沿 x 的圆柱
+    return BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(x0, 0, z), gp_Dir(1, 0, 0)), d / 2, x1 - x0).Shape()
+def _xhex(z, af, x0, x1):                          # 六角沿 x (平边朝 ±y)
+    pg = _MP0(); rc = af / math.sqrt(3)
+    for k in range(6): pg.Add(gp_Pnt(x0, rc * math.cos(math.radians(90 + 30 + 60 * k)), z + rc * math.sin(math.radians(90 + 30 + 60 * k))))
+    pg.Close()
+    return _PR0(_MF0(pg.Wire()).Face(), gp_Vec(x1 - x0, 0, 0)).Shape()
+GS_ANG = tuple(45.0 * k for k in range(8))         # 玻璃上 / 下横锁角度 (11-25 用户「改成8个」)
+GS_SEAT, GS_CB_D, GS_HOLE, GS_GLASS_D, GS_L = 102.7, 7.4, 3.4, 5.0, 14.0   # 头座 r / 座径 / 孔 / 玻璃孔 / M3×14 超薄头
+GS_TIP = GS_SEAT - GS_L                            # r88.7
+GL_FL_D, GL_FL_H, GL_HEX_AF, GL_HEX_H = 8.0, 1.0, 6.0, 2.8           # 法兰窝 / 六角窝
+GL_R0 = 88.5                                       # 螺母内面 (法兰) r
+GB_Z = Z_G + 8.0                                   # 下横锁孔心 61.08
+GB_HW, GB_HH = 8.0, 6.5                            # 加厚块半宽 / 半高
+def _boss_lo():
+    pg = _MP0(); z0, z1, d = GB_Z - GB_HH, GB_Z + GB_HH, 91.5 - GL_R0
+    for x, z in ((GL_R0, z0), (91.5, z0 - d), (91.5, z1), (GL_R0, z1)): pg.Add(gp_Pnt(x, -GB_HW, z))
+    pg.Close()
+    return _PR0(_MF0(pg.Wire()).Face(), gp_Vec(0, 2 * GB_HW, 0)).Shape()
+assert GB_Z + GB_HH <= Z_VIEW0 - 0.5 and GB_Z - GS_CB_D / 2 >= Z_G + TG_H + TG_CLR + 1.0 and GB_Z + GS_CB_D / 2 <= Z_G + OUT_DEPTH - 2.0 and GS_SEAT + 0.4 <= go + OUT_FOOT
+for _a in GS_ANG:
+    _t = rotz(_a)
+    clamp_ring = cut(clamp_ring, xf(fuse(_xc(GB_Z, GS_HOLE, 98, 112), _xc(GB_Z, GS_CB_D, GS_SEAT, 112)), _t))
+    shroud_split = cut(fuse(shroud_split, xf(_boss_lo(), _t)), xf(fuse(_xc(GB_Z, GS_HOLE, GL_R0 - 1, gi + 1), _xc(GB_Z, GL_FL_D, GL_R0 - 1, GL_R0 + GL_FL_H), _xhex(GB_Z, GL_HEX_AF, GL_R0 - 1, GL_R0 + GL_FL_H + GL_HEX_H)), _t))
+clamp_ring, shroud_split = clean(clamp_ring), clean(shroud_split)
 LOG['split'] = dict(ring=vol(clamp_ring), shroud=vol(shroud_split))
 # 用户 11-14: 分体下罩太高, 做错要全部重来 ⇒ 在承载盘顶 Z32 横切成上下两段, 8×M3 锁 (上段沉孔往下; (二) 改穿通到下段底面法兰螺母)。
 #   Z32 以下 = 原 32 高下罩 (三角块/筋/按键舌片 Z≤30/XT60 井/按键腔顶 Z23.3 都在下面), 以后改可视高度只重打上段。
@@ -783,7 +813,9 @@ assert JN_BEAR - SPLIT_Z >= 10, '上段沉孔下面肉太薄'
 _lo_box = cyl(0, 0, 2 * SH_OUT + 10, -5, SPLIT_Z)
 _s = cut(op(BRepAlgoAPI_Common, shroud_split, _lo_box), *[fuse(cyl(x, y, JN_D, -1, SPLIT_Z + 1), cyl(x, y, JN_NUT_FD, -1, JN_NUT_Z1)) for x, y in JN_PTS])
 _kb = KEY['pocket_bbox']                           # 11-14: 按键让位腔竖直打通到 Z32 ⇒ 止口凸筋在按键段断开 (不然凸筋悬空跨腔)
-shroud_lo = clean(fuse(_s, cut(ann(RG_R0, RG_R0 + RG_W, SPLIT_Z - 0.5, SPLIT_Z + RG_H), gbox(_kb[0] - 0.5, _kb[2], SPLIT_Z - 1, _kb[1] + 0.5, SH_OUT + 1, SPLIT_Z + RG_H + 1))))
+shroud_lo0 = fuse(_s, cut(ann(RG_R0, RG_R0 + RG_W, SPLIT_Z - 0.5, SPLIT_Z + RG_H), gbox(_kb[0] - 0.5, _kb[2], SPLIT_Z - 1, _kb[1] + 0.5, SH_OUT + 1, SPLIT_Z + RG_H + 1)))
+shroud_lo = clean(shroud_lo0)
+if not BRepCheck_Analyzer(shroud_lo).IsValid(): shroud_lo = shroud_lo0   # 11-25: A 孔加厚圆台后 clean 出无效面 (求交会失败) ⇒ 用未合并面的, 形状相同
 _s = cut(shroud_split, _lo_box, ann(RG_R0 - RG_CLR, RG_R0 + RG_W + RG_CLR, SPLIT_Z - 1, SPLIT_Z + RG_H + RG_CLR))
 for x, y in JN_PTS: _s = cut(_s, cyl(x, y, JN_D, SPLIT_Z - 1, JN_BEAR + 0.01), cyl(x, y, JN_CB, JN_BEAR, Z_G + 0.01))
 shroud_hi = clean(_s)
@@ -846,27 +878,15 @@ glass_top_clamp = clean(cut(revol([(GD_POCKET_R + 0.5, GC_Z0), (SH_OUT, GC_Z0), 
 # 11-25 用户「需要这样锁一个螺丝…玻璃我钻孔, 然后你需要做一个内壁弧形转接的一个件我锁法兰螺母在里面」: 顶盖横锁 ×8 (径向) ——
 #   红件外卡 Φ3.4 + 外面 Φ7.4 平座 (头沉斜面) → 玻璃管 Φ5 (现场钻, 孔心离管端 8; 用户图画 ≈4, 玻璃 5 厚孔边离端 ≥5 才不易崩) → 管内弧形件 glass_top_lug_v1_2 ×8 (弧 r94.5, 与玻璃间垫 0.5 硅胶片)
 #   弧形件内面六角窝 AF6.0 + 法兰浅窝 (法兰朝轴心, 与内面齐平, 螺母不跟转); 角度 45k (竖螺丝 22.5+45k 正中)
-GS_ANG = tuple(45.0 * k for k in range(8))        # 11-25 用户「改成8个」(原 4 个 45+90k)
-GS_Z = Z_GT - 8.0                                  # 290.08
-GS_SEAT, GS_CB_D, GS_HOLE, GS_GLASS_D = 102.7, 7.4, 3.4, 5.0
-GS_L = 14.0                                        # M3×14 超薄头
-GS_TIP = GS_SEAT - GS_L                            # r88.7
-GL_R, GL_R0, GL_HW, GL_HH = GL_OD / 2 - GL_T - 0.5, 88.5, 8.0, 6.5   # 弧形件 弧 r94.5 / 内面 x88.5 / 半宽 / 半高
-GL_FL_D, GL_FL_H, GL_HEX_AF, GL_HEX_H = 8.0, 1.0, 6.0, 2.8           # 法兰窝 / 六角窝
+GS_Z = Z_GT - 8.0                                  # 290.08 (GS_* 通用尺寸见玻璃下横锁)
+GL_R, GL_HW, GL_HH = GL_OD / 2 - GL_T - 0.5, 8.0, 6.5                # 弧形件 弧 r94.5 / 半宽 / 半高 (内面 GL_R0 88.5)
 GL_NUT_R = (GL_R0, GL_R0 + 3.7)                    # 法兰螺母 r88.5 (法兰) – 92.2
 GS_ENG = round(GL_NUT_R[1] - GS_TIP, 2)            # 3.5
 GL_WEB = round(GL_R - (GL_R0 + GL_FL_H + GL_HEX_H), 2)   # 2.2
 assert GS_ENG >= 3.0 and GS_TIP >= GL_R0 and GS_SEAT + 0.4 <= go + GT_FOOT and GS_Z - GS_CB_D / 2 - GT_Z0 >= 2.0
-def _xc(z, d, x0, x1):
-    return BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(x0, 0, z), gp_Dir(1, 0, 0)), d / 2, x1 - x0).Shape()
-def _xhex(z, af, x0, x1):                          # 六角沿 x (平边朝 ±y)
-    pg = _MP(); rc = af / math.sqrt(3)
-    for k in range(6): pg.Add(gp_Pnt(x0, rc * math.cos(math.radians(90 + 30 + 60 * k)), z + rc * math.sin(math.radians(90 + 30 + 60 * k))))
-    pg.Close()
-    return BRepPrimAPI_MakePrism(_MF(pg.Wire()).Face(), gp_Vec(x1 - x0, 0, 0)).Shape()
 for _a in GS_ANG:
     glass_top = cut(glass_top, xf(fuse(_xc(GS_Z, GS_HOLE, 98, 112), _xc(GS_Z, GS_CB_D, GS_SEAT, 112)), rotz(_a)))
-    tube = cut(tube, xf(_xc(GS_Z, GS_GLASS_D, 93, 102), rotz(_a)))
+    tube = cut(tube, xf(_xc(GS_Z, GS_GLASS_D, 93, 102), rotz(_a)), xf(_xc(GB_Z, GS_GLASS_D, 93, 102), rotz(_a)))   # 上 / 下各 8 孔
 glass_top = clean(glass_top)
 glass_top_lug = clean(cut(op(BRepAlgoAPI_Common, gbox(GL_R0, -GL_HW, GS_Z - GL_HH, GL_R + 1, GL_HW, GS_Z + GL_HH), cyl(0, 0, 2 * GL_R, GS_Z - GL_HH - 1, GS_Z + GL_HH + 1)),
                           _xc(GS_Z, GS_HOLE, GL_R0 - 1, GL_R + 1), _xc(GS_Z, GL_FL_D, GL_R0 - 1, GL_R0 + GL_FL_H), _xhex(GS_Z, GL_HEX_AF, GL_R0 - 1, GL_R0 + GL_FL_H + GL_HEX_H)))
