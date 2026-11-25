@@ -60,10 +60,10 @@ if B.ROTOR_B:
     with _cl.redirect_stdout(_io.StringIO()):
         import rotor_shroud_b_v1_2 as RSB
     RB = RSB.RB
-    SHR_N = ('转子罩 +y 半 rotor_shroud_b_a_v1_2b', '转子罩 -y 半 rotor_shroud_b_b_v1_2b')
+    SHR_N = ('转子罩 +y 侧环 rotor_shroud_b_a_v1_2b', '转子罩 -y 侧环 rotor_shroud_b_b_v1_2b')
     _new = {'转子毂盘': [('玻纤板 fr4_plate_v1_2b Φ165×3', RB.fr4, '#C9B458', 0.05)], '承载盘 rim_ring': [('承载盘 rim_ring_v1_2b (转子盘B)', RB.rim, '#6AA84F', 0.05)],
             '灯板支撑 +x': [(n, sh, c, 0.03) for n, sh, c in RB.SCREEN_PARTS], '灯板支撑 -x': [],   # 11-21 屏幕支撑件 A ×2 + B ×2 (取代玻纤板 ×4 + 侧立件 ×2)
-            '转子罩 a ': [(SHR_N[0], RSB.shr_a, '#A4C2F4', 0.05)], '转子罩 b ': [(SHR_N[1], RSB.shr_b, '#B6D7A8', 0.05)], '转子罩顶盖': []}
+            '转子罩 a ': [(SHR_N[0], RSB.shr_a, '#A4C2F4', 0.05), ('转子罩 +y 顶盖 rotor_shroud_lid_a_v1_2b', RSB.lid_a, '#CFE2F3', 0.05)], '转子罩 b ': [(SHR_N[1], RSB.shr_b, '#B6D7A8', 0.05), ('转子罩 -y 顶盖 rotor_shroud_lid_b_v1_2b', RSB.lid_b, '#D9EAD3', 0.05)], '转子罩顶盖': []}
     _P = []
     for p_ in PARTS:
         k = next((k for k in _new if p_[0].startswith(k)), None)
@@ -175,8 +175,8 @@ note = [f'玻璃罩 OD{B.GL_OD:g}×{B.GL_T:g}×{B.GL_H:g} / 玻璃上 / 圆环�
 if B.ROTOR_B:
     note[2] = (f'灯板背靠背 (F 面 y=±{L.GAP_HALF:g}); 偏心 SCR_ECC {B.SCR_ECC:g}; 转子盘B: 玻纤板 Φ165×3 + 承载盘单件 (并入毂盘, 线圈腔深 {RB.CAV_H:g}); '
                f'屏幕支撑件 PETG 打印 A ×2 (0/180°, 托灯板) + B ×2 (90/270°), Z{RB.SP_Z0:g}–{RB.SP_Z1:g}; 外圈 8×M3×{RB.OUT_SCR_L:g} 从玻纤板底穿上来 (承载盘+支撑件) 进支撑件顶面嵌入法兰螺母; 夹条 / 顶部件 / 梳齿同前')
-    note[3] = (f'转子罩 2 片 (沿灯板线 y{RSB.SPLIT_Y:g} 分, 各带顶盖; r{RSB.R0:g}–{RSB.R1:g}, Z{RSB.Z0:g}–{RSB.Z1:g}): '
-               f'8 耳坐支撑件顶 (A 件本地 (61, ±30.5) / B 件 ({RB.SHR_LOC_X:g}, ±{RB.SHR_LOC_Y:g})), DIN912 M3×{RSB.MNT_L:g} 从耳顶往下进支撑件底面倒扣法兰螺母; 配重唇 {len(RSB.W_A)} 孔 M3×{RS.W_L:g} 从罩顶插, 按需')
+    note[3] = (f'转子罩 侧环 ×2 + 顶盖 ×2 (沿灯板线 y{RSB.SPLIT_Y:g} 分, 顶盖每片 3×M3×8 单独拆; r{RSB.R0:g}–{RSB.R1:g}, Z{RSB.Z0:g}–{RSB.Z1:g}): '
+               f'8 耳坐支撑件顶 (A 件本地 ({RB.LOCK_A_LOC[0][0]:g}, ±{RB.LOCK_A_LOC[0][1]:g}) / B 件 ({RB.SHR_LOC_X:g}, ±{RB.SHR_LOC_Y:g})), DIN912 M3×{RSB.MNT_L:g} 从耳顶往下进支撑件底面倒扣法兰螺母; 配重唇 {len(RSB.W_A)} 孔 M3×{RS.W_L:g} 从罩顶插, 按需')
 fig.text(0.03, 0.025, '\n'.join('· ' + s for s in note), fontsize=8, va='bottom')
 fig.text(0.98, 0.012, f'v1.2/scripts/assembly_noglass_v1_2.py  2026-11-18 (转子盘B)' if B.ROTOR_B else 'v1.2/scripts/assembly_noglass_v1_2.py  2026-11-16', fontsize=7, ha='right', color='#666')
 OUT2 = B.V12 / 'assembly_v1_2_不装玻璃_装配图'

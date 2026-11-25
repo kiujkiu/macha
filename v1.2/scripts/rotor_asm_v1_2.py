@@ -33,7 +33,7 @@ PARTS = [('电机 Φ55×21.5 (占位, 参考)', B.motor, '#333333', 'M'),
          ('天线软板 ×2', L.comp([L.ant_a, L.ant_b]), '#C0392B', 'U'),
          ('V2 底板 (交付 STEP)', L.bb_step, '#1E8449', 'U'),
          ('无线托盘 wireless_holder_v1_2', WH.H, '#FFD966', 'U'), ('无线供电模块 (占位)', WH.module, '#3D85C6', 'U'),
-         ('转子罩 +y 半 rotor_shroud_b_a_v1_2b', RSB.shr_a, '#A4C2F4', 'C'), ('转子罩 -y 半 rotor_shroud_b_b_v1_2b', RSB.shr_b, '#B6D7A8', 'C')]
+         *[(f'{t} {n}', sh, c, 'C') for n, t, sh, c in RSB.PARTS4]]
 NP = len(PARTS)
 for n, sh, c in FS.F:
     if '玻璃' in n: continue

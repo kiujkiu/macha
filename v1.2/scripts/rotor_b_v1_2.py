@@ -205,14 +205,16 @@ SP_ANG = (0.0, 90.0, 180.0, 270.0)
 SP_TYPE = {0.0: 'a', 90.0: 'b', 180.0: 'a', 270.0: 'b'}
 SP_HOLE_A = (22.5, -22.5)                         # 外圈螺丝 (承载盘 r77.5 @22.5+45k 全 8 颗都穿支撑件)
 # A 件外形: 主体 x66–81.2 × |y|≤37 ∩ r81.7 + 内伸翼 x54.5–66 × 22≤|y|≤37 (包住罩锁螺母窝, 壁 ≥2.4); B 件: x66.5–81.2 × |y|≤35 ∩ r81.7
-SP_A_X0, SP_A_HY, SP_A_WING = 66.0, 37.0, (54.5, 22.0)     # 翼 x0 / 翼内边 |y|
+# 11-25 用户「挪到边上是不是会好一点」「改吧」: A 件罩锁挪到外圈螺丝外侧的盘边 ⇒ 默认 'rim' = 主体直条 x66–81.2 + 两端块 x58.5 起 |y|≥32 (包住罩锁螺母窝); 高度分界 |y|≥22 满高 7 不变, 锁 (64.8, ±38.8) r75.53; 罩耳不再盖外圈螺母
+SP_A_STYLE = __import__('os').environ.get('SP_A_STYLE', 'rim')   # 'ear' = 11-23/24 两翼耳朵 (锁 (61, ±30.5)); 'bar' = 直条 (同 B 不伸翼, 锁 (72.5, ±20.5), 两头 |y|≥SP_A_BAR_KEEP 满高)
+assert SP_A_STYLE in ('rim', 'ear', 'bar'), SP_A_STYLE
+SP_A_X0, SP_A_HY, SP_A_WING = (66.0, 45.3, (58.5, 32.0)) if SP_A_STYLE == 'rim' else (66.0, 37.0, (54.5, 22.0))     # 翼 x0 / 翼内边 |y|
+SP_A_KEEP = 22.0                                  # |y|≥22 满高 SP_T (外圈螺母 N y29.66 坐这里), 中段 SP_A_LOW
 SP_A_LOW = round(LS.Z0 - SP_Z0, 3)                # A 件中段高 = 灯板下沿 − 承载盘顶 (托灯板); 11-23 21:4x 用户「sup a只有蓝色这个区域高度是7mm，别的都是4mm高度」: 只有两翼罩锁块 (x54.5–66, 22≤|y|≤37) 满高 SP_T, 其余 Z SP_Z0 → SP_Z0+4
 SP_B_X0, SP_B_HY = 66.5, 35.0                     # 66 → 66.5: 放 90° 时内边 y66 离 CZ06 包络 (y≤65.82, Z35.1–41.7) 只 0.18 (件变高 8 后 Z 重叠); 放 270° 离无线夹块 2.9
 SP_X0, SP_HY = SP_A_X0, SP_A_HY                   # 兼容旧名
-SP_A_STYLE = __import__('os').environ.get('SP_A_STYLE', 'ear')   # 11-24 对比: 'ear' = 两翼耳朵 (锁 (61, ±30.5)); 'bar' = 直条 (同 B 不伸翼, 锁 (72.5, ±20.5), 两头 |y|≥SP_A_BAR_KEEP 满高)
-assert SP_A_STYLE in ('ear', 'bar'), SP_A_STYLE
 SP_A_BAR_KEEP = 16.0                              # 直条: 用户黑框 |y|≥16 做满高 (罩锁 S Φ8 @y20.5 内边 16.5)
-LOCK_A_LOC = [(61.0, 30.5), (61.0, -30.5)] if SP_A_STYLE == 'ear' else [(72.5, 20.5), (72.5, -20.5)]   # 73→72.5: 锁窝外壁到 r81.7 1.78→2.26        # A 件罩锁 (用户图上量 (±61, ±30.5), r68.20; 原 (73, ±19.5) 在 A 件上删 —— 原 −x 端套筒 Φ9 离灯板B 0.33)
+LOCK_A_LOC = {'rim': [(64.8, 38.8), (64.8, -38.8)], 'ear': [(61.0, 30.5), (61.0, -30.5)], 'bar': [(72.5, 20.5), (72.5, -20.5)]}[SP_A_STYLE]   # rim: y38.8 = 罩耳 (半宽 4.5) 避开外圈螺母 Φ7.6 0.84; 73→72.5: 锁窝外壁到 r81.7 1.78→2.26        # A 件罩锁 (用户图上量 (±61, ±30.5), r68.20; 原 (73, ±19.5) 在 A 件上删 —— 原 −x 端套筒 Φ9 离灯板B 0.33)
 SHR_LOC_X, SHR_LOC_Y = 73.0, 19.5                 # B 件罩锁 (保持)
 LOCK_B_LOC = [(SHR_LOC_X, SHR_LOC_Y), (SHR_LOC_X, -SHR_LOC_Y)]
 SHR_LOCK_SET = {a: (LOCK_A_LOC if SP_TYPE[a] == 'a' else LOCK_B_LOC) for a in SP_ANG}
@@ -230,7 +232,7 @@ WELL_AF_OUT = 6.1                                 # 外圈螺母 (从件顶放�
 WELL_TOP_CLR = 0.1                                # 罩锁螺母六角顶 ↔ 窝顶 (拧紧后贴死)
 LOCK_NUT_Z = (SP_Z0, SP_Z0 + NUT_T)               # 30.5–34.2 法兰朝下坐承载盘顶
 OUT_NUT_Z = (SP_Z1 - 0.3 - NUT_T, SP_Z1 - 0.3)   # 11-23 22:1x N 在 7 高螺母块里: 顶面 Φ8 圆沉孔 (朝外开口), 螺母顶低于块顶/罩耳底 0.3 (Z33.5–37.2)
-SP_A_TOP_FLAT = True                              # 11-24 用户「这个沉孔去掉，sup_a的」: A 件 N 顶面沉孔取消, 只留 Φ3.4 通; 螺母 (法兰朝下) 坐块顶 Z SP_Z1 → +NUT_T, 罩耳底开让位口 (rotor_shroud_b NUT_NOTCH_*)
+SP_A_TOP_FLAT = True                              # 11-24 用户「这个沉孔去掉，sup_a的」: A 件 N 顶面沉孔取消, 只留 Φ3.4 通; 螺母 (法兰朝下) 坐块顶 Z SP_Z1 → +NUT_T (11-25 'rim' 罩耳不在螺母上方, 不开让位口; 'ear' 时罩耳底开让位口 rotor_shroud_b NUT_NOTCH_*)
 if SP_A_TOP_FLAT: OUT_NUT_Z = (SP_Z1, SP_Z1 + NUT_T)
 OUT_NUT_TOP = OUT_NUT_Z[1]
 # 罩锁螺丝: DIN912 M3 内六角圆柱头 (头 Φ5.5×3, 2.5 内六角, 起子 Φ6 包络) 从罩耳顶往下; 罩耳厚按选定长度反推, 尾离承载盘顶 SHR_TIP_CLR
@@ -427,7 +429,8 @@ def screen_sup_local(kind):
     if kind == 'a':
         s = gbox(SP_A_X0, -SP_A_HY, SP_Z0, SP_X1, SP_A_HY, SP_Z1)
         if SP_A_STYLE == 'ear': s = fuse(s, gbox(SP_A_WING[0], -SP_A_HY, SP_Z0, SP_A_X0 + 0.01, SP_A_HY, SP_Z1))   # 11-23 用户「这里连上」: 两翼之间补满, 内边 x SP_A_WING[0] 一条直线 (原两翼 |y|≥22 分开)
-        _kp = SP_A_WING[1] if SP_A_STYLE == 'ear' else SP_A_BAR_KEEP
+        if SP_A_STYLE == 'rim': s = fuse(s, *[gbox(SP_A_WING[0], min(sy * SP_A_WING[1], sy * SP_A_HY), SP_Z0, SP_A_X0 + 0.01, max(sy * SP_A_WING[1], sy * SP_A_HY), SP_Z1) for sy in (1, -1)])   # 11-25 两端块
+        _kp = SP_A_BAR_KEEP if SP_A_STYLE == 'bar' else SP_A_KEEP
         _low = gbox(SP_A_WING[0] - 1, -SP_A_HY - 1, SP_Z0 + SP_A_LOW, SP_R1 + 2, SP_A_HY + 1, SP_Z1 + 1)
         _keep = [gbox(SP_A_WING[0] - 1, min(sy * _kp, sy * (SP_A_HY + 1)), SP_Z0, SP_R1 + 2, max(sy * _kp, sy * (SP_A_HY + 1)), SP_Z1 + 2) for sy in (1, -1)]   # 11-23 22:1x 两头整块 (|y|≥22, 含 S + N) 满高
         s = cut(s, cut(_low, *_keep))                 # 11-23 其余削到 SP_A_LOW
@@ -458,7 +461,7 @@ SCREEN_KEYS = ['scr_sup_0', 'scr_sup_90', 'scr_sup_180', 'scr_sup_270']   # 校�
 def _edge(kind, x, y, rh):
     """孔 (半径 rh) 到件外形的最小边距 (近似: 直边 + r81.7)"""
     if kind == 'a':
-        x0 = SP_A_WING[0] if SP_A_STYLE == 'ear' else SP_A_X0                         # 11-23 两翼连成整块, 内边全长 x54.5
+        x0 = SP_A_X0 if SP_A_STYLE == 'bar' else SP_A_WING[0]                         # 11-23 两翼连成整块, 内边全长 x54.5
         return min(x - rh - x0, SP_X1 - x - rh, SP_A_HY - abs(y) - rh, SP_R1 - math.hypot(x, y) - rh)
     return min(x - rh - SP_B_X0, SP_X1 - x - rh, SP_B_HY - abs(y) - rh, SP_R1 - math.hypot(x, y) - rh)
 SP_EDGE = dict(a_lock_well=round(min(_edge('a', x, y, WELL_FL_D / 2) for x, y in LOCK_A_LOC), 2),

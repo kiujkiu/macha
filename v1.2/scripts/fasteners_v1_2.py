@@ -295,6 +295,10 @@ if B.ROTOR_B:
     for i, (x, y) in enumerate(RB.SHR_LOCK_PTS):  # 11-21 罩子锁点 ×8: DIN912 从罩耳顶往下, 穿罩耳 + 支撑件, 拧进支撑件底面倒扣的 M3 法兰螺母 (法兰朝下坐承载盘顶); 尾离承载盘顶 0.5
         screw(f"M3x{RSB.MNT_L:g} 内六角 转子罩耳→屏幕支撑件 罩子锁点", i, x, y, RB.SHR_SCR_BEAR, RSB.MNT_L, False, hd=5.5, hh=3.0, engage=("M3 法兰螺母", *RB.LOCK_NUT_Z))
         add(f"M3 法兰螺母 屏幕支撑件底圆沉孔 罩子锁点 #{i}", _nut_at(flange_nut, x, y, RB.LOCK_NUT_Z[0]), "#707070")
+    for i, a in enumerate(RSB.LS_ALL):            # 11-25 顶盖单独拆: 每片 3×M3×8 超薄头从盖面沉孔往下, 法兰螺母从环凸块底面塞六角窝 (法兰朝下贴凸块底)
+        x, y = RSB.LS_PTS[a]
+        screw(f"M3x{RSB.LS_L:g} 超薄头 转子罩顶盖→侧环", i, x, y, RSB.LS_BEAR, RSB.LS_L, False, hd=7.0, hh=1.5, engage=("M3 法兰螺母", *RSB.LS_NUT_Z))
+        add(f"M3 法兰螺母 转子罩侧环凸块底 (法兰朝下) 顶盖 #{i}", _nut_at(flange_nut, x, y, RSB.LS_NUT_Z[0]), "#707070")
     for i, (x, y) in enumerate(RB.BAR_SCR_PTS):   # 屏幕螺丝: 超薄头从 A 件底 Φ7.6×1.5 沉孔 (支承 Z32) 穿 A 件 → 中缝, 拧进灯板 F 面开窗焊的六角铜螺柱 (每端下颗)
         screw(f"M3x{RB.BAR_SCR_L:g} 超薄头 屏幕支撑件→灯板铜螺柱", i, x, y, RB.BAR_SCR_BEAR, RB.BAR_SCR_L, True, engage=("M3 六角铜螺柱", L.SO_Z0, L.SO_Z1))
     for n_, sh_ in L.SO:                          # 灯板 F 面开窗焊的 M3 六角铜螺柱 (对边 4.6 长 5, 横躺) ×8: 下部+中部开窗, 每端板A/板B 各 1 颗上下错开; 螺丝拧每端下颗
@@ -336,7 +340,7 @@ if __name__ == '__main__' or _os_f.environ.get('FASTENERS_REPORT'):
              "MR30座": MW_SEAT, "电机线夹": MW_CLAMP}   # 11-16 新件; 11-16 晚 中间 T 件取消, +MR30 座 / 线夹
     if B.ROTOR_B:   # 11-18 转子盘B
         for _k in ("灯板立板+x", "灯板立板-x", "转子毂盘", "承载盘", "转子罩a", "转子罩b", "转子罩顶盖+y", "转子罩顶盖-y"): PARTS.pop(_k)
-        PARTS.update({"玻纤板": RB.fr4, "承载盘B": RB.rim, **{n: sh for n, sh, _ in RB.SCREEN_PARTS}, "转子罩B+y": RSB.shr_a, "转子罩B-y": RSB.shr_b})
+        PARTS.update({"玻纤板": RB.fr4, "承载盘B": RB.rim, **{n: sh for n, sh, _ in RB.SCREEN_PARTS}, "转子罩B+y": RSB.shr_a, "转子罩B-y": RSB.shr_b, "转子罩顶盖B+y": RSB.lid_a, "转子罩顶盖B-y": RSB.lid_b})
     for i, p in enumerate(B.posts):
         PARTS[f"立柱{i}"] = p
     PB = {k: bbox(v) for k, v in PARTS.items()}
@@ -493,7 +497,7 @@ if __name__ == '__main__' or _os_f.environ.get('FASTENERS_REPORT'):
         _drop = ('转子毂盘', '承载盘 rim_ring', '灯板支撑', '转子罩')
         P_ = [p for p in P_ if not p[0].startswith(_drop)] + [('玻纤板 fr4_plate_v1_2b', RB.fr4, '#C9B458', 0.05), ('承载盘 rim_ring_v1_2b', RB.rim, '#6AA84F', 0.05),
               *[(n, sh, c, 0.03) for n, sh, c in RB.SCREEN_PARTS],
-              ('转子罩 +y 半 rotor_shroud_b_a_v1_2b', RSB.shr_a, '#6FA8DC', 0.05), ('转子罩 −y 半 rotor_shroud_b_b_v1_2b', RSB.shr_b, '#93C47D', 0.05)]
+              *[(f'{t} {n}', sh, c, 0.05) for n, t, sh, c in RSB.PARTS4]]
     out = f"{B.V12 / 'assembly_v1_2'}_整机+螺丝.3mf"
     write3mf(out, P_ + FAST)
     print("wrote", out)

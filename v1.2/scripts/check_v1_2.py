@@ -59,8 +59,8 @@ if ROTOR_B:
         import rotor_shroud_b_v1_2 as RSB
     RB=RSB.RB
     for k in ('hub','rim','led_post_a','led_post_b','rotor_shroud_a','rotor_shroud_b','rotor_lid_a','rotor_lid_b'): S.pop(k)
-    S.update({'fr4':RB.fr4,'rim_b':RB.rim,**{k:sh for k,(_,sh,_) in zip(RB.SCREEN_KEYS,RB.SCREEN_PARTS)},'shroud_b_a':RSB.shr_a,'shroud_b_b':RSB.shr_b,'coil':RB.coil})   # 11-21 屏幕支撑件 A ×2 (0/180°) + B ×2 (90/270°)
-    RMAP={'hub':'fr4','rim':'rim_b','led_post_a':'scr_sup_0','led_post_b':'scr_sup_180','rotor_shroud_a':'shroud_b_a','rotor_shroud_b':'shroud_b_b','rotor_lid_a':'shroud_b_a','rotor_lid_b':'shroud_b_b'}
+    S.update({'fr4':RB.fr4,'rim_b':RB.rim,**{k:sh for k,(_,sh,_) in zip(RB.SCREEN_KEYS,RB.SCREEN_PARTS)},'shroud_b_a':RSB.shr_a,'shroud_b_b':RSB.shr_b,'lid_b_a':RSB.lid_a,'lid_b_b':RSB.lid_b,'coil':RB.coil})   # 11-21 屏幕支撑件 A ×2 (0/180°) + B ×2 (90/270°)
+    RMAP={'hub':'fr4','rim':'rim_b','led_post_a':'scr_sup_0','led_post_b':'scr_sup_180','rotor_shroud_a':'shroud_b_a','rotor_shroud_b':'shroud_b_b','rotor_lid_a':'lid_b_a','rotor_lid_b':'lid_b_b'}
 _KEY={k:GC.key(v) if GC.ON else k for k,v in S.items()}; _BB={k:bbox(v) for k,v in S.items()}
 _P={}; _K={}
 def _p(k):

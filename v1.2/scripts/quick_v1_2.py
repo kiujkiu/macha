@@ -45,7 +45,7 @@ S_PARTS = {
     'mr30_seat_v1_2_old': 'motor_wire_v1_2.py', 'motor_wire_clamp_v1_2_old': 'motor_wire_v1_2.py',   # 11-18 旧一体底盘版
     'mr30_floor_v1_2': 'motor_wire_v1_2.py', 'mr30_floor_v1_2_old': 'motor_wire_v1_2.py',   # 11-18 MR30 座下片 (拆 2 件)
     'rim_ring_v1_2b': 'rotor_b_v1_2.py', 'screen_sup_a_v1_2b': 'rotor_b_v1_2.py', 'screen_sup_b_v1_2b': 'rotor_b_v1_2.py',   # 11-21 屏幕支撑件 PETG 打印 A ×2 + B ×2 (取代 11-20 玻纤板 ×4 + 侧立件 ×2; rotor_b 一次写全部)
-    'rotor_shroud_b_a_v1_2b': 'rotor_shroud_b_v1_2.py', 'rotor_shroud_b_b_v1_2b': 'rotor_shroud_b_v1_2.py',
+    'rotor_shroud_b_a_v1_2b': 'rotor_shroud_b_v1_2.py', 'rotor_shroud_b_b_v1_2b': 'rotor_shroud_b_v1_2.py', 'rotor_shroud_lid_a_v1_2b': 'rotor_shroud_b_v1_2.py', 'rotor_shroud_lid_b_v1_2b': 'rotor_shroud_b_v1_2.py',
     'base_fr4_v1_2': 'fr4_base_v1_2.py',
     'mos_clamp_v1_2': 'mos_clamp_v1_2.py', 'cap_clamp_v1_2': 'cap_clamp_v1_2.py',
     'key_bracket_v1_2': 'key_bracket_v1_2.py', 'key_cap_v1_2': 'key_cap_v1_2.py', 'light_pipe_v1_2': 'light_pipe_v1_2.py',
