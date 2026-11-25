@@ -4,7 +4,7 @@
     ① 底盘组      全部静止件: 打印底盘 + 玻纤底板 + 电机 + 控制板 + 线圈驱动 + 按键 + XT60/MR30 + 线圈环 + 定子盘 + 安装法兰
     ② 转子盘组    灯以下的旋转件: 转子玻纤板 + 承载盘B + 屏幕固定件 + 无线夹块/模块 + 底板 + 转子罩
     ③ 灯组件      灯板 ×2 + 夹条 + 梳齿 + 顶部件 + Φ8 轴/688 + 桥板 + FPC + 天线
-    ④ 玻璃及上盖  分体下罩 (底座 + 玻璃座 + 外卡环) + 玻璃罩 + 玻璃上 + 圆环玻璃 + 堵头 + 硅胶垫
+    ④ 玻璃及上盖  分体下罩 (底座 + 玻璃座 + 外卡环) + 玻璃罩 + 玻璃上 + 圆环玻璃 + 堵头
 组间接口 (螺丝归后装的那组): ①→② 承载盘→电机 4×M3; ②→③ 屏幕固定件 / 夹条螺丝; ③→④ Φ8 轴进堵头 688; ④→① 下罩 4×M3 从盘底。
 
     cd v1.2/scripts && ../../.venv/bin/python group_asm_v1_2.py [1 2 3 4 | all] [--no-fig] [--no-copy] [--force]
@@ -104,8 +104,6 @@ GROUPS = {
         ('管内弧形件 glass_top_lug ×8', lambda: M.LS.comp(B.glass_top_lugs), '#F1C232', 'glass_top_lug_v1_2', 8, 'P'),   # 11-25 横锁
         ('中心堵头 glass_top_hub', lambda: B.glass_top_hub, '#2E86C1', 'glass_top_hub_v1_2', 1, 'P'),
         ('圆环玻璃 OD180×10 (外购)', lambda: B.glass_disc, '#AED6F1', None, 1, 'E'),
-        ('硅胶垫 上 (外购)', lambda: B.glass_gasket_top, '#E5E7E9', None, 1, 'E'),
-        ('硅胶垫 下 (外购)', lambda: B.glass_gasket_bot, '#E5E7E9', None, 1, 'E'),
     ]),
 }
 CODE_GROUP = {code: g for g, (_, _, items) in GROUPS.items() for _, _, _, code, _, _ in items if code}

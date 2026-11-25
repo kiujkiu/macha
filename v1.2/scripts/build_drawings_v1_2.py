@@ -316,7 +316,7 @@ SPECS.append(dict(
 SPECS.append(dict(
     code="glass_top_v1_2", shape=B.glass_top, short="玻璃上 下件 (红, 平板环 + 外卡)", qty="1", date="2026-11-25", stl_asm=True,
     title=f"玻璃上 下件 (红): 平板环 r{F(B.GT_LEDGE_R)}–{F(B.SH_OUT)} 厚 {F(B.GT_TOP_T)} + 外卡 r{F(B.go)} 起深 {F(B.GT_DEPTH)}, {B.GC_N}× 法兰螺母沉孔",
-    subtitle=f"底面坐玻璃管上端 Z{F(round(B.Z_GT, 2))}; 顶面 Z{F(round(B.GT_Z1, 2))} 托圆环玻璃 (下垫 {F(B.GK_T)}) 并承绿件",
+    subtitle=f"底面坐玻璃管上端 Z{F(round(B.Z_GT, 2))}; 顶面 Z{F(round(B.GT_Z1, 2))} 直接托圆环玻璃 (无垫) 并承绿件",
     orient="翻面: 顶面整面贴床, 外卡和螺母沉孔朝上, 免支撑; Φ220 要大床",
     phi=[2 * B.GT_LEDGE_R, 2 * B.GC_R, 2 * B.go, 2 * B.SH_OUT],
     sec=dict(ang=0, r0=80.0, zd=[(B.GT_Z0, B.Z_GT), (B.Z_GT, B.GT_Z1), (B.GT_Z1 - B.LIP_EDGE, B.GT_Z1), (B.GT_Z0, B.GT_Z1)],
@@ -341,9 +341,9 @@ SPECS.append(dict(
              rd=[(B.GC_R0, B.GD_POCKET_R), (B.GD_POCKET_R, B.SH_OUT)]),
     holes=[dict(tag="C", pts=B.GC_PTS, spec=f"Φ{F(B.GC_HOLE)} 通 + 顶面沉孔 Φ{F(B.GC_CB_D)} 深 {F(B.GC_CB_H)}", where=ring_txt(B.GC_PTS) + f"  M3×{F(B.GC_SCREW_L)} 超薄头 (Φ{F(B.GC_HEAD_D)}×{F(B.GC_HEAD_H)}) 往下进红件底法兰螺母, 吃 {F(B.GC_ENG)}, 尾离玻璃管端面 {F(round(B.GC_TIP - B.Z_GT, 2))}",
                 det=dict(kind="cb", d=B.GC_HOLE, D=B.GC_CB_D, h=B.GC_CB_H, side="top", z=(B.GC_Z0, B.GC_Z1), pt=B.GC_PTS[0], title="螺丝沉孔 C"))],
-    notes=[f"玻璃窝 r{F(B.GD_POCKET_R)} 深 {F(round(B.GC_ZP - B.GC_Z0, 2))} = 下垫 {F(B.GK_H)} + 玻璃 {F(B.GD_T)} + 上垫 {F(B.GK_H)}; 窝口倒角 0.5; 顶外缘倒角 {F(B.GC_CH)}, 内缘 {F(B.GC_IN_CH)}",
-           f"配 2 片硅胶/TPU 环垫 OD{F(B.GD_OD)}×ID{F(2 * B.GT_LEDGE_R)}×{F(B.GK_T)} (玻璃上下各 1, 压缩固定 {B.GK_COMP * 100:.0f}%)",
-           "装配 (桌上): 红件翻面塞 8 颗法兰螺母 (点胶防掉) → 翻正 → 下垫 → 圆环玻璃 (带堵头) → 上垫 → 本件 → 8 颗对角拧到贴死 → 整组套上玻璃管"]))
+    notes=[f"玻璃窝 r{F(B.GD_POCKET_R)} 深 {F(round(B.GC_ZP - B.GC_Z0, 2))} = 玻璃 {F(B.GD_T)} + 余量 {F(B.GC_GAP)}; 窝口倒角 0.5; 顶外缘倒角 {F(B.GC_CH)}, 内缘 {F(B.GC_IN_CH)}",
+           f"11-25 用户取消硅胶垫: 窝深 11.6 → {F(round(B.GC_ZP - B.GC_Z0, 2))}, 顶板 4 → {F(B.GC_T)} (总高不变); 螺丝拧到绿件贴红件即止",
+           "装配 (桌上): 红件翻面塞 8 颗法兰螺母 (点胶防掉) → 翻正 → 圆环玻璃 (带堵头) → 本件 → 8 颗对角拧到贴死 → 整组套上玻璃管"]))
 SPECS.append(dict(
     code="glass_top_lug_v1_2", shape=B.glass_top_lug, short="玻璃上 管内弧形件 ×8 (横锁)", qty="8", date="2026-11-25", material="PETG", stl_asm=True,
     title=f"玻璃上 管内弧形件: 宽 {F(2 * B.GL_HW)} × 高 {F(2 * B.GL_HH)} × 厚 {F(B.GL_R - B.GL_R0)}, 外弧 R{F(B.GL_R)}, 内面法兰螺母窝",

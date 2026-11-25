@@ -843,22 +843,21 @@ LOG['screen'] = dict(z_board=(Z_SCR0, Z_SCR1), z_led0=round(Z_LED0, 2), z_view0=
 GT_FOOT = 3.0                                      # 外卡底平带 (r100.2–103.2; 1 → 3: 横锁螺丝头座 r102.7 整圈有料), 斜面 → r110 处
 GT_CH = 1.0                                        # 顶面外缘倒角
 GD_OD, GD_ID, GD_T = 180.0, 20.0, 10.0             # 圆环玻璃 (用户 11-13: t5 → t10)
-# 11-17 用户: 圆环玻璃要夹住 (原只靠自重) ⇒ 整圈压圈 glass_top_clamp_v1_2, 8×M3 锁到环顶铜螺母; 玻璃上下各垫 1 厚硅胶/TPU 环垫 r85.5–90,
-#   压圈底面直接落在环顶 = 硬限位 ⇒ 垫子压缩量固定 GK_COMP (拧多紧都不会再多压玻璃); 上下垫同半径 ⇒ 玻璃只受压不受弯
-GK_T, GK_COMP = 1.0, 0.2                           # 环垫厚 / 压缩率 (压后 0.8)
-GK_H = GK_T * (1 - GK_COMP)                        # 0.8
+# 11-17 用户: 圆环玻璃要夹住 ⇒ 整圈压圈 glass_top_clamp_v1_2; 绿件底面落红件顶 = 硬限位 (拧多紧都不压玻璃)
+# 11-25 用户「取消垫，保存我重新打」: 上下 1 厚硅胶垫取消 ⇒ 玻璃直接放红件顶, 绿件玻璃窝 11.6 → 10 + GC_GAP
+GC_GAP = 0.2                                       # 玻璃顶 ↔ 绿件顶板 (装配余量)
 GD_CLR = 0.3                                       # 玻璃外圈 ↔ 绿件径向单边
-GD_Z0 = GT_Z1 + GK_H                               # 玻璃底 = 红件顶 + 下垫压后
+GD_Z0 = GT_Z1                                      # 玻璃底 = 红件顶 306.08 (11-25 取消垫)
 GD_Z1 = GD_Z0 + GD_T
-GD_LIFT = round(GD_Z0 - (Z_GT - 6.2), 3)           # 15.0 = 比 11-17 版 (玻璃底低于管端 6.2) 抬高; led_support 轴长 / 轴座间隙跟着加, led_top 不变
+GD_LIFT = round(GD_Z0 - (Z_GT - 6.2), 3)           # 14.2 (取消垫前 15.0) = 比 11-17 版 (玻璃底低于管端 6.2) 抬高; led_support 轴座间隙跟着加, led_top 不变 (轴长固定 65)
 GT_LEDGE_Z = GT_Z1                                 # 托台顶 = 红件顶面
 GD_POCKET_R = GD_OD / 2 + GD_CLR                   # 90.3 (绿件内孔)
 GT_LEDGE_R = 85.5                                  # 红件内缘 (搭玻璃 4.5)
 GT_RZ = [(GT_LEDGE_R, Z_GT), (go, Z_GT), (go, GT_Z0), (go + GT_FOOT, GT_Z0), (SH_OUT, GT_Z1 - LIP_EDGE), (SH_OUT, GT_Z1), (GT_LEDGE_R, GT_Z1)]
 GT_CONE_DEG = math.degrees(math.atan2(GT_Z1 - LIP_EDGE - GT_Z0, SH_OUT - go - GT_FOOT))   # 外卡斜面与水平 (倒放往里收, 免支撑)
-# 绿件 glass_top_clamp_v1_2: L 形环 —— 外圈 r90.3–110 从红件顶到绿顶 + 顶板 r85.5 起厚 GC_T 压上垫; 底面落红件顶 = 硬限位 (垫子压缩固定)
-GC_R0, GC_T, GC_CH, GC_IN_CH = GT_LEDGE_R, 4.0, 1.0, 0.5   # 顶板 4 (上4下8)
-GC_Z0, GC_ZP, GC_Z1 = GT_Z1, GD_Z1 + GK_H, GD_Z1 + GK_H + GC_T   # 底 (= 红件顶) / 玻璃窝顶 / 顶
+# 绿件 glass_top_clamp_v1_2: L 形环 —— 外圈 r90.3–110 从红件顶到绿顶 + 顶板 r85.5 起厚 GC_T 压玻璃; 底面落红件顶 = 硬限位
+GC_R0, GC_T, GC_CH, GC_IN_CH = GT_LEDGE_R, 5.4, 1.0, 0.5   # 顶板 4 → 5.4 (11-25 取消垫; 绿件总高 15.6 / M3×20 不变)
+GC_Z0, GC_ZP, GC_Z1 = GT_Z1, GD_Z1 + GC_GAP, round(GD_Z1 + GC_GAP + GC_T, 6)   # 底 (= 红件顶) / 玻璃窝顶 / 顶
 GC_N, GC_R, GC_ANG0, GC_HOLE = 8, 96.0, 22.5, 3.4  # r96 (玻璃管壁 r95–100 上方)
 GC_HEAD_D, GC_HEAD_H = 7.0, 1.5                    # M3 超薄头 Φ7×1.5
 GC_CB_D, GC_CB_H = 7.4, 1.8                        # 绿件顶面沉孔 (头低于顶面 0.3; 11-25 用户「1.8吧」「螺丝头沉孔深度」)
@@ -891,8 +890,6 @@ glass_top = clean(glass_top)
 glass_top_lug = clean(cut(op(BRepAlgoAPI_Common, gbox(GL_R0, -GL_HW, GS_Z - GL_HH, GL_R + 1, GL_HW, GS_Z + GL_HH), cyl(0, 0, 2 * GL_R, GS_Z - GL_HH - 1, GS_Z + GL_HH + 1)),
                           _xc(GS_Z, GS_HOLE, GL_R0 - 1, GL_R + 1), _xc(GS_Z, GL_FL_D, GL_R0 - 1, GL_R0 + GL_FL_H), _xhex(GS_Z, GL_HEX_AF, GL_R0 - 1, GL_R0 + GL_FL_H + GL_HEX_H)))
 glass_top_lugs = [xf(glass_top_lug, rotz(a)) for a in GS_ANG]
-glass_gasket_bot = ann(GT_LEDGE_R, GD_OD / 2, GT_LEDGE_Z, GD_Z0)               # 外购/裁切 硅胶垫 OD180×ID171×1 (画压后 0.8)
-glass_gasket_top = ann(GT_LEDGE_R, GD_OD / 2, GD_Z1, GD_Z1 + GK_H)
 glass_disc = ann(GD_ID / 2, GD_OD / 2, GD_Z0, GD_Z1)                           # 外购圆环玻璃 (装配用实体)
 # 中心堵头 (一件): 顶法兰 Φ32 压玻璃顶; 管 r8.2–9.8 穿 Φ20 孔 (单边 0.2); 孔下 30° 倒钩到 r11 (钩 1.0), 45° 导入到 r9; 6 条 2 宽槽 → 6 爪
 GT_BEARING = bool(int(os.environ.get('GT_BEARING', '1')))   # 11-14: 灯板顶轴进 688 ⇒ 默认开轴承窝   # 默认堵头; 1 = 法兰内开 688 轴承窝 (Φ8 轴从下穿爪内孔进来)
@@ -920,7 +917,7 @@ GH_STRAIN = 1.5 * (GH_R1 - GH_R0) * GH_BARB / GH_L ** 2   # 悬臂根部应变 �
 LOG['glass_top'] = dict(v=vol(glass_top), z=(GT_Z0, GT_Z1), z_tube_top=Z_GT, cone_deg=round(GT_CONE_DEG, 1), disc_z=(GD_Z0, GD_Z1), disc_mass_g=round(vol(glass_disc) * 2.5e-3),
                         hub_v=vol(glass_top_hub), hub_z=(round(_zt, 2), GD_Z1 + _fl_t), finger_L=round(GH_L, 2), finger_strain=round(GH_STRAIN, 4), bearing=GT_BEARING,
                         valid=(BRepCheck_Analyzer(glass_top).IsValid(), BRepCheck_Analyzer(glass_top_hub).IsValid(), BRepCheck_Analyzer(glass_top_clamp).IsValid()),
-                        clamp_v=vol(glass_top_clamp), clamp_z=(GC_Z0, GC_Z1), ledge_z=GT_LEDGE_Z, gasket=(GK_T, GK_COMP), clamp_pts=[(round(x, 2), round(y, 2)) for x, y in GC_PTS],
+                        clamp_v=vol(glass_top_clamp), clamp_z=(GC_Z0, GC_Z1), ledge_z=GT_LEDGE_Z, glass_gap=GC_GAP, clamp_pts=[(round(x, 2), round(y, 2)) for x, y in GC_PTS],
                         nut_web=round(GT_TOP_T - GC_NUT_H, 2), screw_tip=round(GC_TIP, 2), screw_engage=GC_ENG)
 nuts = []
 seat_nuts = [cyl(x, y, SH_NUT_D, NUT_Z0, NUT_Z0 + NUT_T) for x, y in SH_M6]
