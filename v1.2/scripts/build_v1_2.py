@@ -803,12 +803,12 @@ def revol(rz):                                     # (r,z) 闭合折线绕 Z 轴
 Z_GT = Z_G + GL_H                                  # 玻璃上端 (11-13 晚 Z_G 53.08 ⇒ 298.08; 原 277.0)
 # 11-25 用户草图 (红/绿/法兰螺母): 圆环玻璃整块抬到管端以上 —— 红 = 平板环 r85.5–110 (坐管端面, 内段即托台) + 外卡 (管外斜边); 绿 = L 形环 (盖玻璃顶 + 包玻璃外圈);
 #   螺丝从绿件顶面沉孔往下, M3 法兰螺母从红件底面 Φ8 圆沉孔塞进 (法兰朝上顶沉孔底, 装好后被管端面挡住); 内卡 / 铜螺母取消
-GT_DEPTH = 10.0                                    # 外卡包玻璃管深 (原内外卡 12.8)
+GT_DEPTH = 14.0                                    # 外卡包玻璃管深 (10 → 14: 横锁螺丝孔心离管端 8, 头下留 2.3)
 GT_TOP_T = 8.0                                     # 红件管端以上厚 (螺母沉孔 4.0 + 4.0); 11-25 用户「上4下8吧，螺丝长度问题」
 GT_Z0, GT_Z1 = Z_GT - GT_DEPTH, Z_GT + GT_TOP_T
 assert Z_SCR1 + 3.0 <= GT_Z0, f'灯板上沿 Z{Z_SCR1} 离玻璃上最低处 Z{GT_Z0} 不足 3'
 LOG['screen'] = dict(z_board=(Z_SCR0, Z_SCR1), z_led0=round(Z_LED0, 2), z_view0=round(Z_VIEW0, 2), z_g=Z_G, z_gt=Z_GT, top_clear=round(GT_Z0 - Z_SCR1, 2), min_gl_h=round(Z_SCR1 + 3.0 + GT_DEPTH - Z_G, 2))
-GT_FOOT = 1.0                                      # 外卡底平带 (r100.2–101.2, 落床), 斜面 → r110 处
+GT_FOOT = 3.0                                      # 外卡底平带 (r100.2–103.2; 1 → 3: 横锁螺丝头座 r102.7 整圈有料), 斜面 → r110 处
 GT_CH = 1.0                                        # 顶面外缘倒角
 GD_OD, GD_ID, GD_T = 180.0, 20.0, 10.0             # 圆环玻璃 (用户 11-13: t5 → t10)
 # 11-17 用户: 圆环玻璃要夹住 (原只靠自重) ⇒ 整圈压圈 glass_top_clamp_v1_2, 8×M3 锁到环顶铜螺母; 玻璃上下各垫 1 厚硅胶/TPU 环垫 r85.5–90,
@@ -843,6 +843,34 @@ glass_top = clean(cut(revol(GT_RZ), *[fuse(cyl(x, y, GC_HOLE, Z_GT - 1, GT_Z1 + 
 glass_top_clamp = clean(cut(revol([(GD_POCKET_R + 0.5, GC_Z0), (SH_OUT, GC_Z0), (SH_OUT, GC_Z1 - GC_CH), (SH_OUT - GC_CH, GC_Z1), (GC_R0 + GC_IN_CH, GC_Z1), (GC_R0, GC_Z1 - GC_IN_CH),
                                    (GC_R0, GC_ZP), (GD_POCKET_R, GC_ZP), (GD_POCKET_R, GC_Z0 + 0.5)]),
                             *[fuse(cyl(x, y, GC_HOLE, GC_Z0 - 1, GC_Z1 + 1), cyl(x, y, GC_CB_D, GC_BEAR, GC_Z1 + 1)) for x, y in GC_PTS]))
+# 11-25 用户「需要这样锁一个螺丝…玻璃我钻孔, 然后你需要做一个内壁弧形转接的一个件我锁法兰螺母在里面」: 顶盖横锁 ×4 (径向) ——
+#   红件外卡 Φ3.4 + 外面 Φ7.4 平座 (头沉斜面) → 玻璃管 Φ5 (现场钻, 孔心离管端 8; 用户图画 ≈4, 玻璃 5 厚孔边离端 ≥5 才不易崩) → 管内弧形件 glass_top_lug_v1_2 ×4 (弧 r94.5, 与玻璃间垫 0.5 硅胶片)
+#   弧形件内面六角窝 AF6.0 + 法兰浅窝 (法兰朝轴心, 与内面齐平, 螺母不跟转); 角度 45+90k (竖螺丝 22.5+45k 正中)
+GS_ANG = (45.0, 135.0, 225.0, 315.0)
+GS_Z = Z_GT - 8.0                                  # 290.08
+GS_SEAT, GS_CB_D, GS_HOLE, GS_GLASS_D = 102.7, 7.4, 3.4, 5.0
+GS_L = 14.0                                        # M3×14 超薄头
+GS_TIP = GS_SEAT - GS_L                            # r88.7
+GL_R, GL_R0, GL_HW, GL_HH = GL_OD / 2 - GL_T - 0.5, 88.5, 8.0, 6.5   # 弧形件 弧 r94.5 / 内面 x88.5 / 半宽 / 半高
+GL_FL_D, GL_FL_H, GL_HEX_AF, GL_HEX_H = 8.0, 1.0, 6.0, 2.8           # 法兰窝 / 六角窝
+GL_NUT_R = (GL_R0, GL_R0 + 3.7)                    # 法兰螺母 r88.5 (法兰) – 92.2
+GS_ENG = round(GL_NUT_R[1] - GS_TIP, 2)            # 3.5
+GL_WEB = round(GL_R - (GL_R0 + GL_FL_H + GL_HEX_H), 2)   # 2.2
+assert GS_ENG >= 3.0 and GS_TIP >= GL_R0 and GS_SEAT + 0.4 <= go + GT_FOOT and GS_Z - GS_CB_D / 2 - GT_Z0 >= 2.0
+def _xc(z, d, x0, x1):
+    return BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(x0, 0, z), gp_Dir(1, 0, 0)), d / 2, x1 - x0).Shape()
+def _xhex(z, af, x0, x1):                          # 六角沿 x (平边朝 ±y)
+    pg = _MP(); rc = af / math.sqrt(3)
+    for k in range(6): pg.Add(gp_Pnt(x0, rc * math.cos(math.radians(90 + 30 + 60 * k)), z + rc * math.sin(math.radians(90 + 30 + 60 * k))))
+    pg.Close()
+    return BRepPrimAPI_MakePrism(_MF(pg.Wire()).Face(), gp_Vec(x1 - x0, 0, 0)).Shape()
+for _a in GS_ANG:
+    glass_top = cut(glass_top, xf(fuse(_xc(GS_Z, GS_HOLE, 98, 112), _xc(GS_Z, GS_CB_D, GS_SEAT, 112)), rotz(_a)))
+    tube = cut(tube, xf(_xc(GS_Z, GS_GLASS_D, 93, 102), rotz(_a)))
+glass_top = clean(glass_top)
+glass_top_lug = clean(cut(op(BRepAlgoAPI_Common, gbox(GL_R0, -GL_HW, GS_Z - GL_HH, GL_R + 1, GL_HW, GS_Z + GL_HH), cyl(0, 0, 2 * GL_R, GS_Z - GL_HH - 1, GS_Z + GL_HH + 1)),
+                          _xc(GS_Z, GS_HOLE, GL_R0 - 1, GL_R + 1), _xc(GS_Z, GL_FL_D, GL_R0 - 1, GL_R0 + GL_FL_H), _xhex(GS_Z, GL_HEX_AF, GL_R0 - 1, GL_R0 + GL_FL_H + GL_HEX_H)))
+glass_top_lugs = [xf(glass_top_lug, rotz(a)) for a in GS_ANG]
 glass_gasket_bot = ann(GT_LEDGE_R, GD_OD / 2, GT_LEDGE_Z, GD_Z0)               # 外购/裁切 硅胶垫 OD180×ID171×1 (画压后 0.8)
 glass_gasket_top = ann(GT_LEDGE_R, GD_OD / 2, GD_Z1, GD_Z1 + GK_H)
 glass_disc = ann(GD_ID / 2, GD_OD / 2, GD_Z0, GD_Z1)                           # 外购圆环玻璃 (装配用实体)

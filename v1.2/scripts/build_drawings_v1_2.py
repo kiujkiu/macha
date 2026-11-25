@@ -307,11 +307,16 @@ SPECS.append(dict(
     orient="翻面: 顶面整面贴床, 外卡和螺母沉孔朝上, 免支撑; Φ220 要大床",
     phi=[2 * B.GT_LEDGE_R, 2 * B.GC_R, 2 * B.go, 2 * B.SH_OUT],
     sec=dict(ang=0, r0=80.0, zd=[(B.GT_Z0, B.Z_GT), (B.Z_GT, B.GT_Z1), (B.GT_Z1 - B.LIP_EDGE, B.GT_Z1), (B.GT_Z0, B.GT_Z1)],
-             rd=[(B.GT_LEDGE_R, B.go), (B.go, B.go + B.GT_FOOT), (B.go, B.SH_OUT)]),
+             rd=[(B.GT_LEDGE_R, B.go), (B.go, B.go + B.GT_FOOT), (B.go, B.SH_OUT)], auto_dims=False),
     holes=[dict(tag="N", pts=B.GC_PTS, spec=f"Φ{F(B.GC_HOLE)} 通 + 底面圆沉孔 Φ{F(B.GC_NUT_D)} 深 {F(B.GC_NUT_H)} (M3 法兰螺母)", where=ring_txt(B.GC_PTS) + "  螺母法兰朝上顶沉孔底, 从底面塞进; 套上玻璃管后被管端面挡住",
-                det=dict(kind="cb", d=B.GC_HOLE, D=B.GC_NUT_D, h=B.GC_NUT_H, side="bot", z=(B.Z_GT, B.GT_Z1), pt=B.GC_PTS[0], title="法兰螺母沉孔 N"))],
+                det=dict(kind="cb", d=B.GC_HOLE, D=B.GC_NUT_D, h=B.GC_NUT_H, side="bot", z=(B.Z_GT, B.GT_Z1), pt=B.GC_PTS[0], title="法兰螺母沉孔 N")),
+           dict(tag="H", pts=[(B.GS_SEAT * math.cos(math.radians(a)), B.GS_SEAT * math.sin(math.radians(a))) for a in B.GS_ANG], spec=f"径向横锁孔 Φ{F(B.GS_HOLE)} 通 + 外面 Φ{F(B.GS_CB_D)} 平座 (r{F(B.GS_SEAT)})", where=f"45/135/225/315°  孔心 Z{F(round(B.GS_Z, 2))} (管端下 {F(round(B.Z_GT - B.GS_Z, 2))}, 外卡底上 {F(round(B.GS_Z - B.GT_Z0, 2))})",
+                det=dict(kind="free", z=(B.GT_Z0, B.Z_GT + 2), pt=(102.7 * math.cos(math.pi / 4), 102.7 * math.sin(math.pi / 4)), W=7.0, title="横锁孔 H (过 45° 径向剖, 右 = 外)",
+                         zd=[(B.GT_Z0, B.GS_Z, F(round(B.GS_Z - B.GT_Z0, 2)), 0), (B.GS_Z, B.Z_GT, F(round(B.Z_GT - B.GS_Z, 2)), 0)], ud=[(B.go - B.GS_SEAT, 0, F(round(B.GS_SEAT - B.go, 2)), 0)]))],
     notes=[f"外卡内面 r{F(B.go)} 贴玻璃管外壁 (单边 {F(B.GL_CLR)}); 斜面 (r{F(B.go + B.GT_FOOT)}, Z{F(round(B.GT_Z0, 2))}) → (r{F(B.SH_OUT)}, Z{F(round(B.GT_Z1 - B.LIP_EDGE, 2))}) {B.GT_CONE_DEG:.0f}°, 外缘直边 {F(B.LIP_EDGE)}",
            f"沉孔底以上剩 {F(round(B.GT_TOP_T - B.GC_NUT_H, 2))}; 内缘搭玻璃 {F(B.GD_OD / 2 - B.GT_LEDGE_R)}",
+           f"横锁孔 ×{len(B.GS_ANG)} (径向, 45+90k°, 详图 H): Φ{F(B.GS_HOLE)} 通 + 外面 Φ{F(B.GS_CB_D)} 平座 r{F(B.GS_SEAT)}, 孔心 Z{F(round(B.GS_Z, 2))} = 管端下 {F(round(B.Z_GT - B.GS_Z, 2))}; M3×{F(B.GS_L)} 超薄头",
+           f"玻璃管 4 孔 Φ{F(B.GS_GLASS_D)} 同角同高 (孔心离管端 {F(round(B.Z_GT - B.GS_Z, 2))}); 本件套上管子当钻模划线",
            "11-25 用户草图: 内卡 / 铜螺母取消, 外卡由绿件并到本件"]))
 SPECS.append(dict(
     code="glass_top_clamp_v1_2", shape=B.glass_top_clamp, short="玻璃上 上件 (绿, L 形压环)", qty="1", date="2026-11-25", stl_asm=True,
@@ -326,6 +331,16 @@ SPECS.append(dict(
     notes=[f"玻璃窝 r{F(B.GD_POCKET_R)} 深 {F(round(B.GC_ZP - B.GC_Z0, 2))} = 下垫 {F(B.GK_H)} + 玻璃 {F(B.GD_T)} + 上垫 {F(B.GK_H)}; 窝口倒角 0.5; 顶外缘倒角 {F(B.GC_CH)}, 内缘 {F(B.GC_IN_CH)}",
            f"配 2 片硅胶/TPU 环垫 OD{F(B.GD_OD)}×ID{F(2 * B.GT_LEDGE_R)}×{F(B.GK_T)} (玻璃上下各 1, 压缩固定 {B.GK_COMP * 100:.0f}%)",
            "装配 (桌上): 红件翻面塞 8 颗法兰螺母 (点胶防掉) → 翻正 → 下垫 → 圆环玻璃 (带堵头) → 上垫 → 本件 → 8 颗对角拧到贴死 → 整组套上玻璃管"]))
+SPECS.append(dict(
+    code="glass_top_lug_v1_2", shape=B.glass_top_lug, short="玻璃上 管内弧形件 ×4 (横锁)", qty="4", date="2026-11-25", material="PETG", stl_asm=True,
+    title=f"玻璃上 管内弧形件: 宽 {F(2 * B.GL_HW)} × 高 {F(2 * B.GL_HH)} × 厚 {F(B.GL_R - B.GL_R0)}, 外弧 R{F(B.GL_R)}, 内面法兰螺母窝",
+    subtitle=f"贴玻璃管内壁 (管内 R{F(B.GL_OD / 2 - B.GL_T)}, 中间垫 0.5 硅胶片); M3×{F(B.GS_L)} 超薄头从管外锁进来",
+    orient="内平面 (螺母窝面) 贴床, 外弧朝上, 免支撑",
+    sec=dict(ang=0, r0=80.0, auto_dims=False, zd=[(B.GS_Z - B.GL_HH, B.GS_Z + B.GL_HH)], rd=[(B.GL_R0, B.GL_R0 + B.GL_FL_H), (B.GL_R0, B.GL_R0 + B.GL_FL_H + B.GL_HEX_H), (B.GL_R0, B.GL_R)]),
+    holes=[],
+    notes=[f"孔 Φ{F(B.GS_HOLE)} 通, 孔心在件中心; 内面窝 = 法兰 Φ{F(B.GL_FL_D)} 深 {F(B.GL_FL_H)} + 六角 AF{F(B.GL_HEX_AF)} 再深 {F(B.GL_HEX_H)} (螺母不跟转, 法兰与内面齐平), 到外弧剩 {F(B.GL_WEB)}",
+           f"螺丝: 支承 r{F(B.GS_SEAT)} → 尾 r{F(round(B.GS_TIP, 2))} (不出内面 r{F(B.GL_R0)}), 吃 {F(B.GS_ENG)}",
+           "装配: 顶盖整组先在桌上锁好, 套上玻璃管, 从管子下口伸手进去贴住本件, 外面拧螺丝 (轻拧, 点螺纹胶)"]))
 SPECS.append(dict(
     code="glass_top_hub_v1_2", shape=B.glass_top_hub, short="中心堵头 (卡扣)", qty="1", material="PETG (建议; PLA 先试)",
     title=f"中心堵头: 法兰 Φ{F(B.GH_FL_D)} + {B.GH_SLOTS} 爪卡扣穿圆环玻璃 Φ{F(B.GD_ID)} 孔" + (" + 688 轴承窝" if B.GT_BEARING else ""),

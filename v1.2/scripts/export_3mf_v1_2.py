@@ -38,7 +38,7 @@ if ROTOR_B:
     ROT = [*[(n,sh,c,0.03) for n,sh,c in RB.SCREEN_PARTS],   # 11-21 屏幕支撑件 A ×2 + B ×2 (原 屏幕玻纤板 ×4 + 侧立件 ×2)
            *[r for r in ROT if not r[0].startswith(('灯板支撑','转子罩'))],
            *[(f'{t} {n}',sh,c,0.05) for n,t,sh,c in RSB.PARTS4]]
-GTOP=[('玻璃上 glass_top_v1_2',glass_top,'#7FB3D5',0.05),('圆环玻璃 OD180×ID20×10 (外购)',glass_disc,'#AED6F1',0.1),('中心堵头 glass_top_hub_v1_2',glass_top_hub,'#2E86C1',0.02),('玻璃压圈 glass_top_clamp_v1_2',glass_top_clamp,'#1B4F72',0.05),('硅胶垫 上 OD180×ID171×1 (外购, 压后 0.8)',glass_gasket_top,'#E5E7E9',0.05),('硅胶垫 下 OD180×ID171×1 (外购, 压后 0.8)',glass_gasket_bot,'#E5E7E9',0.05)]
+GTOP=[('玻璃上 glass_top_v1_2',glass_top,'#7FB3D5',0.05),*[(f'管内弧形件 glass_top_lug_v1_2 #{i}',s_,'#F1C232',0.05) for i,s_ in enumerate(glass_top_lugs)],('圆环玻璃 OD180×ID20×10 (外购)',glass_disc,'#AED6F1',0.1),('中心堵头 glass_top_hub_v1_2',glass_top_hub,'#2E86C1',0.02),('玻璃压圈 glass_top_clamp_v1_2',glass_top_clamp,'#1B4F72',0.05),('硅胶垫 上 OD180×ID171×1 (外购, 压后 0.8)',glass_gasket_top,'#E5E7E9',0.05),('硅胶垫 下 OD180×ID171×1 (外购, 压后 0.8)',glass_gasket_bot,'#E5E7E9',0.05)]
 write3mf(f'{A}_底盘+线圈环+电机+控制板.3mf',P_)
 write3mf(f'{A}_含法兰+转子盘.3mf',P_+EXT)
 write3mf(f'{A}_含法兰+转子盘+玻璃罩定位环.3mf',P_+EXT+[('玻璃下 (下罩+定位环) glass_shroud_v1_2',seat,'#7FB3D5',0.05),('XT60 压块',xt_clamp,'#F1C232',0.05),('XT60 底垫',xt_shim,'#E69138',0.05)])

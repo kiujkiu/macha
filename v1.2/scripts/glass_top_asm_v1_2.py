@@ -17,18 +17,21 @@ from matplotlib import font_manager, colors as mcolors
 font_manager.fontManager.addfont('/mnt/c/Windows/Fonts/simhei.ttf'); plt.rcParams['font.family'] = 'SimHei'; plt.rcParams['axes.unicode_minus'] = False
 
 TUBE_L = 30.0
-tube = B.ann(B.gi, B.go, B.Z_GT - TUBE_L, B.Z_GT)
+tube = BRepAlgoAPI_Common(B.tube, B.gbox(-120, -120, B.Z_GT - TUBE_L, 120, 120, B.Z_GT + 1)).Shape()
 # 层: T 玻璃罩 / R 红件 / D 玻璃+垫 / H 堵头 / C 绿件 / S 螺丝 / N 法兰螺母
 PARTS = [(f'玻璃罩 Φ{B.GL_OD:g}×{B.GL_T:g} 上端 (截 {TUBE_L:g})', tube, '#A9CCE3', 'T'),
          ('红: 玻璃上环 glass_top_v1_2', B.glass_top, '#D9534F', 'R'),
          ('下硅胶垫 OD180×ID171×1', B.glass_gasket_bot, '#333333', 'D'),
+         *[(f'管内弧形件 glass_top_lug #{i}', s_, '#F1C232', 'L') for i, s_ in enumerate(B.glass_top_lugs)],
          (f'圆环玻璃 OD{B.GD_OD:g}/ID{B.GD_ID:g}/t{B.GD_T:g} (外购)', B.glass_disc, '#BFE3F2', 'D'),
          ('上硅胶垫 OD180×ID171×1', B.glass_gasket_top, '#333333', 'D2'),
          ('中心堵头 glass_top_hub_v1_2', B.glass_top_hub, '#F1C232', 'H'),
          ('绿: 压圈 glass_top_clamp_v1_2', B.glass_top_clamp, '#5CB85C', 'C')]
 NP = len(PARTS)
 for n, sh, c in FS.F:
-    if '玻璃上绿件' in n: PARTS.append((n, sh, '#B0B0B0', 'S'))
+    if '玻璃上横锁' in n: PARTS.append((n, sh, '#B0B0B0', 'S2'))
+    elif '玻璃上弧形件' in n: PARTS.append((n, sh, c, 'N2'))
+    elif '玻璃上绿件' in n: PARTS.append((n, sh, '#B0B0B0', 'S'))
     elif '玻璃上红件底' in n: PARTS.append((n, sh, c, 'N'))
 cnt = lambda L_: sum(1 for p in PARTS if p[3] == L_)
 
@@ -59,7 +62,7 @@ def render(ax, items, az, el, lim=None):
     if lim: ax.set_xlim(*lim[:2]); ax.set_ylim(*lim[2:])
     else: ax.autoscale_view(); ax.margins(0.02)
 
-EXP = {'T': -45.0, 'R': -15.0, 'D': 10.0, 'D2': 22.0, 'H': 45.0, 'C': 35.0, 'S': 60.0, 'N': -15.0}
+EXP = {'T': -45.0, 'R': -15.0, 'D': 10.0, 'D2': 22.0, 'H': 45.0, 'C': 35.0, 'S': 60.0, 'N': -15.0, 'L': -45.0, 'S2': -15.0, 'N2': -45.0}
 fig = plt.figure(figsize=(16.54, 11.69))
 fig.suptitle('POV3D V1.2 — 玻璃上 2 件组合 (红 顶环 glass_top + 绿 压圈 glass_top_clamp)', fontsize=15, y=0.985)
 AZ, EL = -60.0, 25.0
@@ -80,10 +83,13 @@ for z, t in [(B.Z_GT, f'玻璃罩上端 Z{B.Z_GT:.2f}'), (B.GD_Z0, f'玻璃底 Z
 for r in (B.gi, B.go, B.GD_OD / 2, B.GC_R):
     axS.axvline(r, color='#c00', lw=0.3, ls='-.'); axS.text(r + 0.1, z0 + 0.3, f'r{r:.2f}'.rstrip('0').rstrip('.'), fontsize=7, color='#c00', rotation=90)
 axS.axis('on'); axS.tick_params(labelsize=7)
-render(axR, [(P, c) for n, P, c, _ in MESH if n.startswith(('红', '玻璃罩'))], AZ, EL); axR.set_title('红件坐在玻璃罩上端 (无绿件/玻璃)', fontsize=11)
+rt2 = gp_Trsf(); rt2.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), math.radians(-45.0))   # 11-25 过横锁螺丝剖面
+SEC2 = [(tris(half(B.xf(sh_, rt2)), 0.05), np.array(mcolors.to_rgb(c))) for n, sh_, c, L_ in PARTS]
+render(axR, SEC2, -90.0, 0.01, lim=(78, 113, B.GT_Z0 - 4, B.GT_Z1 + 4)); axR.set_title('剖面局部 (过横锁螺丝 45°)', fontsize=11); axR.axis('on'); axR.tick_params(labelsize=7)
 
 tx = fig.add_axes([0.81, 0.04, 0.18, 0.90]); tx.axis('off')
 T = ['件'] + [f'  · {n}' for n, _, _, _ in PARTS[:NP]]
+T += ['', f'横锁: M3×{B.GS_L:g} 超薄头 ×4 径向 (45+90k°), Z{B.GS_Z:.2f}', f'  红外卡 → 玻璃 Φ{B.GS_GLASS_D:g} 孔 → 弧形件螺母, 吃 {B.GS_ENG:g}']
 T += ['', f'螺丝: M3×{B.GC_SCREW_L:g} 超薄头 Φ{B.GC_HEAD_D:g}×{B.GC_HEAD_H:g} ×{cnt("S")}', f'  r{B.GC_R:.2f} @22.5°+45°k, 从绿件顶往下', f'  支承 Z{B.GC_BEAR:.2f} → 尖 Z{B.GC_TIP:.2f}',
       f'M3 法兰螺母 ×{cnt("N")} (红件底面圆沉孔 Φ{B.GC_NUT_D:g}×{B.GC_NUT_H:g}, 法兰朝上)', f'  Z{B.GC_NUT_Z[0]:.2f}–{B.GC_NUT_Z[1]:.2f}, 吃 {B.GC_ENG:g}; 被管端面挡住',
       '', f'硅胶垫 厚 {B.GK_T:g}, 压后 {B.GK_H:g} (压缩 {B.GK_COMP*100:g}%)', '  绿件底落红件顶 = 硬限位, 压缩量固定', '',

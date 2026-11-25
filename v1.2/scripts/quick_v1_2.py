@@ -33,6 +33,7 @@ B_PARTS = {
     'glass_clamp_ring_v1_2': ('clamp_ring', None, False),
     'glass_top_v1_2': ('glass_top', None, False),
     'glass_top_hub_v1_2': ('glass_top_hub', None, False),
+    'glass_top_lug_v1_2': ('glass_top_lug', None, False),
     'glass_top_clamp_v1_2': ('glass_top_clamp', None, False),
 }
 NO_MODELS = {'hub_disc_v1_2'}            # 同 export_3mf: 毂盘只写 out/ (图纸自己写装配 STL)

@@ -101,6 +101,7 @@ GROUPS = {
         ('玻璃罩 OD200×5 (外购)', lambda: B.tube, '#D6EAF8', None, 1, 'E'),
         ('玻璃上 下件 (红) glass_top', lambda: B.glass_top, '#7FB3D5', 'glass_top_v1_2', 1, 'P'),
         ('玻璃上 上件 (绿) glass_top_clamp', lambda: B.glass_top_clamp, '#1B4F72', 'glass_top_clamp_v1_2', 1, 'P'),
+        ('管内弧形件 glass_top_lug ×4', lambda: M.LS.comp(B.glass_top_lugs), '#F1C232', 'glass_top_lug_v1_2', 4, 'P'),   # 11-25 横锁
         ('中心堵头 glass_top_hub', lambda: B.glass_top_hub, '#2E86C1', 'glass_top_hub_v1_2', 1, 'P'),
         ('圆环玻璃 OD180×10 (外购)', lambda: B.glass_disc, '#AED6F1', None, 1, 'E'),
         ('硅胶垫 上 (外购)', lambda: B.glass_gasket_top, '#E5E7E9', None, 1, 'E'),

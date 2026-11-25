@@ -188,6 +188,15 @@ for i, (x, y) in enumerate(B.GC_PTS):
     screw(f"M3x{B.GC_SCREW_L:g} 超薄头 玻璃上绿件→红件", i, x, y, B.GC_BEAR, B.GC_SCREW_L, False, hd=B.GC_HEAD_D, hh=B.GC_HEAD_H, engage=("M3 法兰螺母", *B.GC_NUT_Z))
     add(f"M3 法兰螺母 玻璃上红件底 (法兰朝上) #{i}", flange_nut_inv(x, y, B.GC_NUT_Z[0]), "#707070")
 
+# 7c 玻璃上 横锁 (11-25): 4×M3×14 超薄头 径向从外往里 (支承 r102.7), 穿红件外卡 + 玻璃管 Φ5 孔 → 管内弧形件 M3 法兰螺母 (法兰朝轴心 r88.5)
+from OCP.gp import gp_Trsf as _GT, gp_Ax1 as _GA, gp_Pnt as _GP, gp_Dir as _GD, gp_Vec as _GV
+def _radial(sh, a, z):    # 局部 z 轴 → 径向 x 轴, 再抬到 Z, 转到角度 a
+    r1 = _GT(); r1.SetRotation(_GA(_GP(0, 0, 0), _GD(0, 1, 0)), math.pi / 2); t1 = _GT(); t1.SetTranslation(_GV(0, 0, z))
+    return B.xf(B.xf(B.xf(sh, r1), t1), B.rotz(a))
+for i, a in enumerate(B.GS_ANG):
+    add(f"M3x{B.GS_L:g} 超薄头 玻璃上横锁 #{i}", _radial(screw_down(0, 0, B.GS_SEAT, B.GS_L, hd=7.0, hh=1.5), a, B.GS_Z), "#C0C0C0")
+    add(f"M3 法兰螺母 玻璃上弧形件 #{i}", _radial(flange_nut(0, 0, B.GL_R0), a, B.GS_Z), "#707070")
+
 # 11 V2 灯板支撑 (11-16 晚 偏心 SCR_ECC + 耳朵脚, led_support_v1_2): 中间 T 件取消;
 #    两端立板耳朵 4×M3×14 内六角 (头支承 = 耳朵顶 Z36) 穿耳朵 + 承载盘 Φ3.4 → 毂盘底 M3×4 铜螺母 (= 外圈锁盘 k=0/3/4/7, 铜螺母在下面外圈循环里一起放, 不重复计);
 #    立板底面 Φ6×3 沉孔 2×M3×8 从下往上自攻进夹条 (x=±73, y=ECC); 梳齿 → 帽 2×M3×8 进帽内铜螺母 (y=ECC);
