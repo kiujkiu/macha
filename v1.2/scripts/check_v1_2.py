@@ -77,7 +77,7 @@ def md(a,b):
 print('shapes keyed',f'{time.time()-T0:.0f}s',flush=True)
 _CC=('cd_capclamp',) if CD.HAS_CC else ()
 _MC=('cd_clamp',) if CD.HAS_MC else ()
-PAIRS=[(f'gt_lug{i}',x) for i in range(4) for x in ('tube','glass_top','led_top','led_a','led_b','rod')]+[('board',x) for x in ('ring','flange_disc','mounting_flange','motor','seat','tube','post0','post1','post2','post3')]+\
+PAIRS=[(f'gt_lug{i}',x) for i in range(len(B_lugs)) for x in ('tube','glass_top','led_top','led_a','led_b','rod')]+[('board',x) for x in ('ring','flange_disc','mounting_flange','motor','seat','tube','post0','post1','post2','post3')]+\
  [('ring',x) for x in ('disc','flange_disc','mounting_flange','motor','seat')]+[('motor',x) for x in ('disc','hub','flange_disc','mounting_flange')]+\
  [('hub','mounting_flange'),('hub','flange_disc'),('rim','mounting_flange'),('seat','mounting_flange'),('seat','flange_disc'),('seat','rim'),('seat','hub')]+\
  [(f'seat_nut{i}',x) for i in range(4) for x in ('mounting_flange','flange_disc')]+[('heatsink','disc')]+[('clamp_ring','shroud_split'),('shroud_lo','shroud_hi'),('clamp_ring','shroud_hi'),('shroud_hi','tube'),('shroud_hi','rim'),('shroud_hi','hub'),('clamp_ring','tube'),('shroud_split','tube')]+[('xt60',x) for x in ('board','seat','mounting_flange','flange_disc','disc','ring')]+\

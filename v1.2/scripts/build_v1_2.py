@@ -843,10 +843,10 @@ glass_top = clean(cut(revol(GT_RZ), *[fuse(cyl(x, y, GC_HOLE, Z_GT - 1, GT_Z1 + 
 glass_top_clamp = clean(cut(revol([(GD_POCKET_R + 0.5, GC_Z0), (SH_OUT, GC_Z0), (SH_OUT, GC_Z1 - GC_CH), (SH_OUT - GC_CH, GC_Z1), (GC_R0 + GC_IN_CH, GC_Z1), (GC_R0, GC_Z1 - GC_IN_CH),
                                    (GC_R0, GC_ZP), (GD_POCKET_R, GC_ZP), (GD_POCKET_R, GC_Z0 + 0.5)]),
                             *[fuse(cyl(x, y, GC_HOLE, GC_Z0 - 1, GC_Z1 + 1), cyl(x, y, GC_CB_D, GC_BEAR, GC_Z1 + 1)) for x, y in GC_PTS]))
-# 11-25 用户「需要这样锁一个螺丝…玻璃我钻孔, 然后你需要做一个内壁弧形转接的一个件我锁法兰螺母在里面」: 顶盖横锁 ×4 (径向) ——
-#   红件外卡 Φ3.4 + 外面 Φ7.4 平座 (头沉斜面) → 玻璃管 Φ5 (现场钻, 孔心离管端 8; 用户图画 ≈4, 玻璃 5 厚孔边离端 ≥5 才不易崩) → 管内弧形件 glass_top_lug_v1_2 ×4 (弧 r94.5, 与玻璃间垫 0.5 硅胶片)
-#   弧形件内面六角窝 AF6.0 + 法兰浅窝 (法兰朝轴心, 与内面齐平, 螺母不跟转); 角度 45+90k (竖螺丝 22.5+45k 正中)
-GS_ANG = (45.0, 135.0, 225.0, 315.0)
+# 11-25 用户「需要这样锁一个螺丝…玻璃我钻孔, 然后你需要做一个内壁弧形转接的一个件我锁法兰螺母在里面」: 顶盖横锁 ×8 (径向) ——
+#   红件外卡 Φ3.4 + 外面 Φ7.4 平座 (头沉斜面) → 玻璃管 Φ5 (现场钻, 孔心离管端 8; 用户图画 ≈4, 玻璃 5 厚孔边离端 ≥5 才不易崩) → 管内弧形件 glass_top_lug_v1_2 ×8 (弧 r94.5, 与玻璃间垫 0.5 硅胶片)
+#   弧形件内面六角窝 AF6.0 + 法兰浅窝 (法兰朝轴心, 与内面齐平, 螺母不跟转); 角度 45k (竖螺丝 22.5+45k 正中)
+GS_ANG = tuple(45.0 * k for k in range(8))        # 11-25 用户「改成8个」(原 4 个 45+90k)
 GS_Z = Z_GT - 8.0                                  # 290.08
 GS_SEAT, GS_CB_D, GS_HOLE, GS_GLASS_D = 102.7, 7.4, 3.4, 5.0
 GS_L = 14.0                                        # M3×14 超薄头

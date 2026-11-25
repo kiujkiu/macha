@@ -188,7 +188,7 @@ for i, (x, y) in enumerate(B.GC_PTS):
     screw(f"M3x{B.GC_SCREW_L:g} 超薄头 玻璃上绿件→红件", i, x, y, B.GC_BEAR, B.GC_SCREW_L, False, hd=B.GC_HEAD_D, hh=B.GC_HEAD_H, engage=("M3 法兰螺母", *B.GC_NUT_Z))
     add(f"M3 法兰螺母 玻璃上红件底 (法兰朝上) #{i}", flange_nut_inv(x, y, B.GC_NUT_Z[0]), "#707070")
 
-# 7c 玻璃上 横锁 (11-25): 4×M3×14 超薄头 径向从外往里 (支承 r102.7), 穿红件外卡 + 玻璃管 Φ5 孔 → 管内弧形件 M3 法兰螺母 (法兰朝轴心 r88.5)
+# 7c 玻璃上 横锁 (11-25): 8×M3×14 超薄头 径向从外往里 (支承 r102.7), 穿红件外卡 + 玻璃管 Φ5 孔 → 管内弧形件 M3 法兰螺母 (法兰朝轴心 r88.5)
 from OCP.gp import gp_Trsf as _GT, gp_Ax1 as _GA, gp_Pnt as _GP, gp_Dir as _GD, gp_Vec as _GV
 def _radial(sh, a, z):    # 局部 z 轴 → 径向 x 轴, 再抬到 Z, 转到角度 a
     r1 = _GT(); r1.SetRotation(_GA(_GP(0, 0, 0), _GD(0, 1, 0)), math.pi / 2); t1 = _GT(); t1.SetTranslation(_GV(0, 0, z))

@@ -89,7 +89,7 @@ render(axR, SEC2, -90.0, 0.01, lim=(78, 113, B.GT_Z0 - 4, B.GT_Z1 + 4)); axR.set
 
 tx = fig.add_axes([0.81, 0.04, 0.18, 0.90]); tx.axis('off')
 T = ['件'] + [f'  · {n}' for n, _, _, _ in PARTS[:NP]]
-T += ['', f'横锁: M3×{B.GS_L:g} 超薄头 ×4 径向 (45+90k°), Z{B.GS_Z:.2f}', f'  红外卡 → 玻璃 Φ{B.GS_GLASS_D:g} 孔 → 弧形件螺母, 吃 {B.GS_ENG:g}']
+T += ['', f'横锁: M3×{B.GS_L:g} 超薄头 ×{len(B.GS_ANG)} 径向 (45k°), Z{B.GS_Z:.2f}', f'  红外卡 → 玻璃 Φ{B.GS_GLASS_D:g} 孔 → 弧形件螺母, 吃 {B.GS_ENG:g}']
 T += ['', f'螺丝: M3×{B.GC_SCREW_L:g} 超薄头 Φ{B.GC_HEAD_D:g}×{B.GC_HEAD_H:g} ×{cnt("S")}', f'  r{B.GC_R:.2f} @22.5°+45°k, 从绿件顶往下', f'  支承 Z{B.GC_BEAR:.2f} → 尖 Z{B.GC_TIP:.2f}',
       f'M3 法兰螺母 ×{cnt("N")} (红件底面圆沉孔 Φ{B.GC_NUT_D:g}×{B.GC_NUT_H:g}, 法兰朝上)', f'  Z{B.GC_NUT_Z[0]:.2f}–{B.GC_NUT_Z[1]:.2f}, 吃 {B.GC_ENG:g}; 被管端面挡住',
       '', f'硅胶垫 厚 {B.GK_T:g}, 压后 {B.GK_H:g} (压缩 {B.GK_COMP*100:g}%)', '  绿件底落红件顶 = 硬限位, 压缩量固定', '',
