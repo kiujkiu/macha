@@ -804,7 +804,7 @@ Z_GT = Z_G + GL_H                                  # 玻璃上端 (11-13 晚 Z_G
 # 11-25 用户草图 (红/绿/法兰螺母): 圆环玻璃整块抬到管端以上 —— 红 = 平板环 r85.5–110 (坐管端面, 内段即托台) + 外卡 (管外斜边); 绿 = L 形环 (盖玻璃顶 + 包玻璃外圈);
 #   螺丝从绿件顶面沉孔往下, M3 法兰螺母从红件底面 Φ8 圆沉孔塞进 (法兰朝上顶沉孔底, 装好后被管端面挡住); 内卡 / 铜螺母取消
 GT_DEPTH = 10.0                                    # 外卡包玻璃管深 (原内外卡 12.8)
-GT_TOP_T = 6.0                                     # 红件管端以上厚 (螺母沉孔 3.8 + 2.2)
+GT_TOP_T = 8.0                                     # 红件管端以上厚 (螺母沉孔 5.0 + 3.0); 11-25 用户「上4下8吧，螺丝长度问题」
 GT_Z0, GT_Z1 = Z_GT - GT_DEPTH, Z_GT + GT_TOP_T
 assert Z_SCR1 + 3.0 <= GT_Z0, f'灯板上沿 Z{Z_SCR1} 离玻璃上最低处 Z{GT_Z0} 不足 3'
 LOG['screen'] = dict(z_board=(Z_SCR0, Z_SCR1), z_led0=round(Z_LED0, 2), z_view0=round(Z_VIEW0, 2), z_g=Z_G, z_gt=Z_GT, top_clear=round(GT_Z0 - Z_SCR1, 2), min_gl_h=round(Z_SCR1 + 3.0 + GT_DEPTH - Z_G, 2))
@@ -818,24 +818,24 @@ GK_H = GK_T * (1 - GK_COMP)                        # 0.8
 GD_CLR = 0.3                                       # 玻璃外圈 ↔ 绿件径向单边
 GD_Z0 = GT_Z1 + GK_H                               # 玻璃底 = 红件顶 + 下垫压后
 GD_Z1 = GD_Z0 + GD_T
-GD_LIFT = round(GD_Z0 - (Z_GT - 6.2), 3)           # 13.0 = 比 11-17 版 (玻璃底低于管端 6.2) 抬高; led_support 轴长 / 轴座间隙跟着加, led_top 不变
+GD_LIFT = round(GD_Z0 - (Z_GT - 6.2), 3)           # 15.0 = 比 11-17 版 (玻璃底低于管端 6.2) 抬高; led_support 轴长 / 轴座间隙跟着加, led_top 不变
 GT_LEDGE_Z = GT_Z1                                 # 托台顶 = 红件顶面
 GD_POCKET_R = GD_OD / 2 + GD_CLR                   # 90.3 (绿件内孔)
 GT_LEDGE_R = 85.5                                  # 红件内缘 (搭玻璃 4.5)
 GT_RZ = [(GT_LEDGE_R, Z_GT), (go, Z_GT), (go, GT_Z0), (go + GT_FOOT, GT_Z0), (SH_OUT, GT_Z1 - LIP_EDGE), (SH_OUT, GT_Z1), (GT_LEDGE_R, GT_Z1)]
 GT_CONE_DEG = math.degrees(math.atan2(GT_Z1 - LIP_EDGE - GT_Z0, SH_OUT - go - GT_FOOT))   # 外卡斜面与水平 (倒放往里收, 免支撑)
 # 绿件 glass_top_clamp_v1_2: L 形环 —— 外圈 r90.3–110 从红件顶到绿顶 + 顶板 r85.5 起厚 GC_T 压上垫; 底面落红件顶 = 硬限位 (垫子压缩固定)
-GC_R0, GC_T, GC_CH, GC_IN_CH = GT_LEDGE_R, 3.0, 1.0, 0.5
+GC_R0, GC_T, GC_CH, GC_IN_CH = GT_LEDGE_R, 4.0, 1.0, 0.5   # 顶板 4 (上4下8)
 GC_Z0, GC_ZP, GC_Z1 = GT_Z1, GD_Z1 + GK_H, GD_Z1 + GK_H + GC_T   # 底 (= 红件顶) / 玻璃窝顶 / 顶
 GC_N, GC_R, GC_ANG0, GC_HOLE = 8, 96.0, 22.5, 3.4  # r96 (玻璃管壁 r95–100 上方)
 GC_HEAD_D, GC_HEAD_H = 7.0, 1.5                    # M3 超薄头 Φ7×1.5
 GC_CB_D, GC_CB_H = 7.4, 2.0                        # 绿件顶面沉孔 (头低于顶面 0.5)
 GC_BEAR = GC_Z1 - GC_CB_H
-GC_SCREW_L = 18.0                                  # M3×18
-GC_TIP = GC_BEAR - GC_SCREW_L                      # 管端面上 0.6
-GC_NUT_D, GC_NUT_T, GC_NUT_H = 8.0, 3.7, 3.8       # 红件底面圆沉孔 Φ8 深 3.8 (M3 法兰螺母 Φ7.6×3.7, 同承载盘 Q; 法兰朝上)
+GC_SCREW_L = 20.0                                  # M3×20
+GC_TIP = GC_BEAR - GC_SCREW_L                      # 管端面上 1.6
+GC_NUT_D, GC_NUT_T, GC_NUT_H = 8.0, 3.7, 5.0       # 红件底面圆沉孔 Φ8 深 5.0 (螺母上移配 M3×20, 尾离玻璃 1.6; M3 法兰螺母 Φ7.6×3.7, 同承载盘 Q; 法兰朝上)
 GC_NUT_Z = (Z_GT + GC_NUT_H - GC_NUT_T, Z_GT + GC_NUT_H)
-GC_ENG = round(GC_NUT_Z[1] - GC_TIP, 2)            # 3.2
+GC_ENG = round(GC_NUT_Z[1] - GC_TIP, 2)            # 3.4
 GC_PTS = [(GC_R * math.cos(math.radians(GC_ANG0 + 45 * k)), GC_R * math.sin(math.radians(GC_ANG0 + 45 * k))) for k in range(GC_N)]
 assert GC_ENG >= 3.0 and GC_TIP >= Z_GT + 0.5, ('M3 啮合 / 尾离玻璃管端面', GC_ENG, GC_TIP - Z_GT)
 assert GC_R - GC_CB_D / 2 >= GD_POCKET_R + 1.5 and GC_R + GC_NUT_D / 2 <= go and GT_TOP_T - GC_NUT_H >= 2.0

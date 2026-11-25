@@ -87,9 +87,11 @@ T = ['件'] + [f'  · {n}' for n, _, _, _ in PARTS[:NP]]
 T += ['', f'螺丝: M3×{B.GC_SCREW_L:g} 超薄头 Φ{B.GC_HEAD_D:g}×{B.GC_HEAD_H:g} ×{cnt("S")}', f'  r{B.GC_R:.2f} @22.5°+45°k, 从绿件顶往下', f'  支承 Z{B.GC_BEAR:.2f} → 尖 Z{B.GC_TIP:.2f}',
       f'M3 法兰螺母 ×{cnt("N")} (红件底面圆沉孔 Φ{B.GC_NUT_D:g}×{B.GC_NUT_H:g}, 法兰朝上)', f'  Z{B.GC_NUT_Z[0]:.2f}–{B.GC_NUT_Z[1]:.2f}, 吃 {B.GC_ENG:g}; 被管端面挡住',
       '', f'硅胶垫 厚 {B.GK_T:g}, 压后 {B.GK_H:g} (压缩 {B.GK_COMP*100:g}%)', '  绿件底落红件顶 = 硬限位, 压缩量固定', '',
-      '装配:', '  1 红件翻面塞 8 颗法兰螺母 (点胶)', '  2 翻正: 下垫 → 圆环玻璃 (带堵头) → 上垫', '  3 绿件盖上, 8×M3×18 拧到底', '  4 整组套上玻璃罩上端 (轴进 688)']
+      '装配:', '  1 红件翻面塞 8 颗法兰螺母 (点胶)', '  2 翻正: 下垫 → 圆环玻璃 (带堵头) → 上垫', '  3 绿件盖上, 8×M3×20 拧到底', '  4 整组套上玻璃罩上端 (轴进 688)']
 tx.text(0, 1, '\n'.join(T), va='top', fontsize=8, linespacing=1.5)
 fig.text(0.99, 0.008, 'v1.2/scripts/glass_top_asm_v1_2.py  2026-11-25', fontsize=7, ha='right', color='#666')
-fig.savefig(B.V12 / 'assembly_v1_2_玻璃上_组合图.pdf', dpi=200); fig.savefig(B.V12 / 'assembly_v1_2_玻璃上_组合图.png', dpi=110)
+try: fig.savefig(B.V12 / 'assembly_v1_2_玻璃上_组合图.pdf', dpi=200)
+except PermissionError: fig.savefig(B.V12 / 'assembly_v1_2_玻璃上_组合图.NEW.pdf', dpi=200); print('组合图 PDF 被占用, 另存 .NEW.pdf')   # 正被阅读器打开
+fig.savefig(B.V12 / 'assembly_v1_2_玻璃上_组合图.png', dpi=110)
 write3mf(str(B.V12 / 'assembly_v1_2_玻璃上.3mf'), [(n, s, c, 0.05) for n, s, c, _ in PARTS])
 print('件', NP, '螺丝', cnt('S'), '法兰螺母', cnt('N'))
