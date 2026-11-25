@@ -342,7 +342,7 @@ SPECS.append(dict(
     holes=[dict(tag="C", pts=B.GC_PTS, spec=f"Φ{F(B.GC_HOLE)} 通 + 顶面沉孔 Φ{F(B.GC_CB_D)} 深 {F(B.GC_CB_H)}", where=ring_txt(B.GC_PTS) + f"  M3×{F(B.GC_SCREW_L)} 超薄头 (Φ{F(B.GC_HEAD_D)}×{F(B.GC_HEAD_H)}) 往下进红件底法兰螺母, 吃 {F(B.GC_ENG)}, 尾离玻璃管端面 {F(round(B.GC_TIP - B.Z_GT, 2))}",
                 det=dict(kind="cb", d=B.GC_HOLE, D=B.GC_CB_D, h=B.GC_CB_H, side="top", z=(B.GC_Z0, B.GC_Z1), pt=B.GC_PTS[0], title="螺丝沉孔 C"))],
     notes=[f"玻璃窝 r{F(B.GD_POCKET_R)} 深 {F(round(B.GC_ZP - B.GC_Z0, 2))} = 玻璃 {F(B.GD_T)} + 余量 {F(B.GC_GAP)}; 窝口倒角 0.5; 顶外缘倒角 {F(B.GC_CH)}, 内缘 {F(B.GC_IN_CH)}",
-           f"11-25 用户取消硅胶垫: 窝深 11.6 → {F(round(B.GC_ZP - B.GC_Z0, 2))}, 顶板 4 → {F(B.GC_T)} (总高不变); 螺丝拧到绿件贴红件即止",
+           f"11-25 用户取消硅胶垫: 窝深 11.6 → {F(round(B.GC_ZP - B.GC_Z0, 2))}, 顶板 4 → {F(B.GC_T)} (红件 + 本件 = {F(round(B.GT_TOP_T + B.GC_Z1 - B.GC_Z0, 2))}); 螺丝拧到绿件贴红件即止, 套玻璃管前看螺丝尾不凸出红件底面",
            "装配 (桌上): 红件翻面塞 8 颗法兰螺母 (点胶防掉) → 翻正 → 圆环玻璃 (带堵头) → 本件 → 8 颗对角拧到贴死 → 整组套上玻璃管"]))
 SPECS.append(dict(
     code="glass_top_lug_v1_2", shape=B.glass_top_lug, short="玻璃上 管内弧形件 ×8 (横锁)", qty="8", date="2026-11-25", material="PETG", stl_asm=True,

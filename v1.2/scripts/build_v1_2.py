@@ -856,19 +856,19 @@ GT_LEDGE_R = 85.5                                  # 红件内缘 (搭玻璃 4.5
 GT_RZ = [(GT_LEDGE_R, Z_GT), (go, Z_GT), (go, GT_Z0), (go + GT_FOOT, GT_Z0), (SH_OUT, GT_Z1 - LIP_EDGE), (SH_OUT, GT_Z1), (GT_LEDGE_R, GT_Z1)]
 GT_CONE_DEG = math.degrees(math.atan2(GT_Z1 - LIP_EDGE - GT_Z0, SH_OUT - go - GT_FOOT))   # 外卡斜面与水平 (倒放往里收, 免支撑)
 # 绿件 glass_top_clamp_v1_2: L 形环 —— 外圈 r90.3–110 从红件顶到绿顶 + 顶板 r85.5 起厚 GC_T 压玻璃; 底面落红件顶 = 硬限位
-GC_R0, GC_T, GC_CH, GC_IN_CH = GT_LEDGE_R, 5.4, 1.0, 0.5   # 顶板 4 → 5.4 (11-25 取消垫; 绿件总高 15.6 / M3×20 不变)
+GC_R0, GC_T, GC_CH, GC_IN_CH = GT_LEDGE_R, 3.8, 1.0, 0.5   # 顶板 3.8 (11-25 晚用户「螺丝都锁不到，改成22mm」: 红 8 + 窝 10.2 + 3.8 = 22; 原 5.4)
 GC_Z0, GC_ZP, GC_Z1 = GT_Z1, GD_Z1 + GC_GAP, round(GD_Z1 + GC_GAP + GC_T, 6)   # 底 (= 红件顶) / 玻璃窝顶 / 顶
 GC_N, GC_R, GC_ANG0, GC_HOLE = 8, 96.0, 22.5, 3.4  # r96 (玻璃管壁 r95–100 上方)
 GC_HEAD_D, GC_HEAD_H = 7.0, 1.5                    # M3 超薄头 Φ7×1.5
 GC_CB_D, GC_CB_H = 7.4, 1.8                        # 绿件顶面沉孔 (头低于顶面 0.3; 11-25 用户「1.8吧」「螺丝头沉孔深度」)
 GC_BEAR = GC_Z1 - GC_CB_H
 GC_SCREW_L = 20.0                                  # M3×20
-GC_TIP = GC_BEAR - GC_SCREW_L                      # 管端面上 1.8
+GC_TIP = GC_BEAR - GC_SCREW_L                      # 298.28 = 管端面上 0.2 (装上管子前螺丝尾不得凸出红件底面)
 GC_NUT_D, GC_NUT_T, GC_NUT_H = 8.0, 3.7, 4.0       # 红件底面圆沉孔 Φ8 深 4.0 (11-25 用户「沉孔深度改成4mm」; M3 法兰螺母 Φ7.6×3.7, 同承载盘 Q; 法兰朝上)
 GC_NUT_Z = (Z_GT + GC_NUT_H - GC_NUT_T, Z_GT + GC_NUT_H)
-GC_ENG = round(GC_NUT_Z[1] - GC_TIP, 2)            # 2.2 (螺母沉孔 4 + 头沉孔 1.8, 用户定; M3 ~4.4 牙)
+GC_ENG = round(GC_NUT_Z[1] - max(GC_TIP, GC_NUT_Z[0]), 2)   # 3.7 = 螺母吃满
 GC_PTS = [(GC_R * math.cos(math.radians(GC_ANG0 + 45 * k)), GC_R * math.sin(math.radians(GC_ANG0 + 45 * k))) for k in range(GC_N)]
-assert GC_ENG >= 2.2 - 1e-6 and GC_TIP >= Z_GT + 0.5, ('M3 啮合 / 尾离玻璃管端面', GC_ENG, GC_TIP - Z_GT)
+assert GC_ENG >= 2.2 - 1e-6 and GC_TIP >= Z_GT + 0.2 - 1e-6, ('M3 啮合 / 尾离玻璃管端面', GC_ENG, GC_TIP - Z_GT)
 assert GC_R - GC_CB_D / 2 >= GD_POCKET_R + 1.5 and GC_R + GC_NUT_D / 2 <= go and GT_TOP_T - GC_NUT_H >= 2.0
 glass_top = clean(cut(revol(GT_RZ), *[fuse(cyl(x, y, GC_HOLE, Z_GT - 1, GT_Z1 + 1), cyl(x, y, GC_NUT_D, Z_GT - 1, Z_GT + GC_NUT_H)) for x, y in GC_PTS]))
 glass_top_clamp = clean(cut(revol([(GD_POCKET_R + 0.5, GC_Z0), (SH_OUT, GC_Z0), (SH_OUT, GC_Z1 - GC_CH), (SH_OUT - GC_CH, GC_Z1), (GC_R0 + GC_IN_CH, GC_Z1), (GC_R0, GC_Z1 - GC_IN_CH),
