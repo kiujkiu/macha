@@ -843,6 +843,10 @@ LOG['screen'] = dict(z_board=(Z_SCR0, Z_SCR1), z_led0=round(Z_LED0, 2), z_view0=
 GT_FOOT = 3.0                                      # 外卡底平带 (r100.2–103.2; 1 → 3: 横锁螺丝头座 r102.7 整圈有料), 斜面 → r110 处
 GT_CH = 1.0                                        # 顶面外缘倒角
 GD_OD, GD_ID, GD_T = 180.0, 20.0, 10.0             # 圆环玻璃 (用户 11-13: t5 → t10)
+# 11-26 用户「顶部玻璃改成外径200，内径20，厚度5mm，出一个版本」: 开关 GT_DISC=200 出另一版 (默认仍 180×10; 顶部连接设计区读这里)
+#   玻璃盖住原 r96 螺丝 ⇒ 8×M3 外移到 r105.2 (红件外卡斜面里, 螺母从下面六角窝塞, 螺丝尾落进窝不碰管); M3×16; 堵头爪往下加长 5 (玻璃薄了爪太短)
+GT_DISC = int(os.environ.get('GT_DISC', '180'))
+if GT_DISC == 200: GD_OD, GD_ID, GD_T = 200.0, 20.0, 5.0
 # 11-17 用户: 圆环玻璃要夹住 ⇒ 整圈压圈 glass_top_clamp_v1_2; 绿件底面落红件顶 = 硬限位 (拧多紧都不压玻璃)
 # 11-25 用户「取消垫，保存我重新打」: 上下 1 厚硅胶垫取消 ⇒ 玻璃直接放红件顶, 绿件玻璃窝 11.6 → 10 + GC_GAP
 GC_GAP = 0.2                                       # 玻璃顶 ↔ 绿件顶板 (装配余量)
@@ -858,19 +862,30 @@ GT_CONE_DEG = math.degrees(math.atan2(GT_Z1 - LIP_EDGE - GT_Z0, SH_OUT - go - GT
 # 绿件 glass_top_clamp_v1_2: L 形环 —— 外圈 r90.3–110 从红件顶到绿顶 + 顶板 r85.5 起厚 GC_T 压玻璃; 底面落红件顶 = 硬限位
 GC_R0, GC_T, GC_CH, GC_IN_CH = GT_LEDGE_R, 3.8, 1.0, 0.5   # 顶板 3.8 (11-25 晚用户「螺丝都锁不到，改成22mm」: 红 8 + 窝 10.2 + 3.8 = 22; 原 5.4)
 GC_Z0, GC_ZP, GC_Z1 = GT_Z1, GD_Z1 + GC_GAP, round(GD_Z1 + GC_GAP + GC_T, 6)   # 底 (= 红件顶) / 玻璃窝顶 / 顶
-GC_N, GC_R, GC_ANG0, GC_HOLE = 8, 96.0, 22.5, 3.4  # r96 (玻璃管壁 r95–100 上方)
+GC_N, GC_R, GC_ANG0, GC_HOLE = 8, (105.2 if GT_DISC == 200 else 96.0), 22.5, 3.4  # r96 (玻璃管壁 r95–100 上方); 200 版 r105.2 (外卡斜面里)
 GC_HEAD_D, GC_HEAD_H = 7.0, 1.5                    # M3 超薄头 Φ7×1.5
 GC_CB_D, GC_CB_H = 7.4, 1.8                        # 绿件顶面沉孔 (头低于顶面 0.3; 11-25 用户「1.8吧」「螺丝头沉孔深度」)
 GC_BEAR = GC_Z1 - GC_CB_H
-GC_SCREW_L = 20.0                                  # M3×20
+GC_SCREW_L = 16.0 if GT_DISC == 200 else 20.0      # M3×20 (200 版 M3×16)
 GC_TIP = GC_BEAR - GC_SCREW_L                      # 298.28 = 管端面上 0.2 (装上管子前螺丝尾不得凸出红件底面)
 GC_NUT_D, GC_NUT_T, GC_NUT_H = 8.0, 3.7, 4.0       # 红件底面圆沉孔 Φ8 深 4.0 (11-25 用户「沉孔深度改成4mm」; M3 法兰螺母 Φ7.6×3.7, 同承载盘 Q; 法兰朝上)
 GC_NUT_Z = (Z_GT + GC_NUT_H - GC_NUT_T, Z_GT + GC_NUT_H)
+GC_NUT_FL_H, GC_NUT_AF = 1.0, 6.0                  # 200 版: 窝 = 顶 Φ8×1 (法兰) + 下面六角 AF6.0 一直通到斜面 (平边朝径向, 螺母不转)
 GC_ENG = round(GC_NUT_Z[1] - max(GC_TIP, GC_NUT_Z[0]), 2)   # 3.7 = 螺母吃满
 GC_PTS = [(GC_R * math.cos(math.radians(GC_ANG0 + 45 * k)), GC_R * math.sin(math.radians(GC_ANG0 + 45 * k))) for k in range(GC_N)]
-assert GC_ENG >= 2.2 - 1e-6 and GC_TIP >= Z_GT + 0.2 - 1e-6, ('M3 啮合 / 尾离玻璃管端面', GC_ENG, GC_TIP - Z_GT)
-assert GC_R - GC_CB_D / 2 >= GD_POCKET_R + 1.5 and GC_R + GC_NUT_D / 2 <= go and GT_TOP_T - GC_NUT_H >= 2.0
-glass_top = clean(cut(revol(GT_RZ), *[fuse(cyl(x, y, GC_HOLE, Z_GT - 1, GT_Z1 + 1), cyl(x, y, GC_NUT_D, Z_GT - 1, Z_GT + GC_NUT_H)) for x, y in GC_PTS]))
+def _zhex(x, y, af, z0, z1):                       # 竖六角柱, 平边朝径向
+    pg = _MP0(); rc = af / math.sqrt(3); a0 = math.atan2(y, x)
+    for k in range(6): pg.Add(gp_Pnt(x + rc * math.cos(a0 + math.radians(30 + 60 * k)), y + rc * math.sin(a0 + math.radians(30 + 60 * k)), z0))
+    pg.Close()
+    return _PR0(_MF0(pg.Wire()).Face(), gp_Vec(0, 0, z1 - z0)).Shape()
+if GT_DISC == 200:
+    assert GC_ENG >= 3.7 - 1e-6 and GC_TIP > GT_Z0 + 2 and GC_R - GC_NUT_D / 2 >= go + 0.9 and GC_R - GC_CB_D / 2 >= GD_POCKET_R + 1.1 and GC_R + GC_CB_D / 2 <= SH_OUT - 1.0, (GC_ENG, GC_TIP)
+    _nut_cut = lambda x, y: fuse(cyl(x, y, GC_HOLE, GT_Z0 - 1, GT_Z1 + 1), cyl(x, y, GC_NUT_D, GC_NUT_Z[1] - GC_NUT_FL_H, GC_NUT_Z[1]), _zhex(x, y, GC_NUT_AF, GT_Z0 - 1, GC_NUT_Z[1] - GC_NUT_FL_H + 0.01))
+else:
+    assert GC_ENG >= 2.2 - 1e-6 and GC_TIP >= Z_GT + 0.2 - 1e-6, ('M3 啮合 / 尾离玻璃管端面', GC_ENG, GC_TIP - Z_GT)
+    assert GC_R - GC_CB_D / 2 >= GD_POCKET_R + 1.5 and GC_R + GC_NUT_D / 2 <= go and GT_TOP_T - GC_NUT_H >= 2.0
+    _nut_cut = lambda x, y: fuse(cyl(x, y, GC_HOLE, Z_GT - 1, GT_Z1 + 1), cyl(x, y, GC_NUT_D, Z_GT - 1, Z_GT + GC_NUT_H))
+glass_top = clean(cut(revol(GT_RZ), *[_nut_cut(x, y) for x, y in GC_PTS]))
 glass_top_clamp = clean(cut(revol([(GD_POCKET_R + 0.5, GC_Z0), (SH_OUT, GC_Z0), (SH_OUT, GC_Z1 - GC_CH), (SH_OUT - GC_CH, GC_Z1), (GC_R0 + GC_IN_CH, GC_Z1), (GC_R0, GC_Z1 - GC_IN_CH),
                                    (GC_R0, GC_ZP), (GD_POCKET_R, GC_ZP), (GD_POCKET_R, GC_Z0 + 0.5)]),
                             *[fuse(cyl(x, y, GC_HOLE, GC_Z0 - 1, GC_Z1 + 1), cyl(x, y, GC_CB_D, GC_BEAR, GC_Z1 + 1)) for x, y in GC_PTS]))
@@ -902,7 +917,8 @@ BRG_RELIEF_D, BRG_RELIEF_H = 9.0, 2.5
 _fl_t = (BRG_H + BRG_ROOF) if GT_BEARING else GH_FL_T
 _rb = GD_ID / 2 + GH_BARB                          # 11.0
 _zc = GD_Z0 - GH_CATCH_DZ                          # 钩面外端
-_zt = _zc - 0.5 - (_rb - GH_TIP_R)                 # 爪尖底
+GH_EXT = 5.0 if GT_DISC == 200 else 0.0            # 200 版 (玻璃 5 厚) 爪往下加长 5, 爪长同 10 厚版; 导入斜面变缓
+_zt = _zc - 0.5 - (_rb - GH_TIP_R) - GH_EXT       # 爪尖底
 GH_RZ = [(GH_R0, _zt), (GH_TIP_R, _zt), (_rb, _zc - 0.5), (_rb, _zc), (GH_R1, GD_Z0), (GH_R1, GD_Z1),
          (GH_FL_D / 2, GD_Z1), (GH_FL_D / 2, GD_Z1 + _fl_t - 1.0), (GH_FL_D / 2 - 1.0, GD_Z1 + _fl_t), (0, GD_Z1 + _fl_t), (0, GD_Z1), (GH_R0, GD_Z1)]
 _gh = revol(GH_RZ)

@@ -67,6 +67,11 @@ def flange_nut(x, y, z0):
                cyl(x, y, 3.0, z0 - 1, z0 + NUT_T + 1))
 
 
+def _tr(x, y):
+    from OCP.gp import gp_Trsf as _T, gp_Vec as _V
+    t = _T(); t.SetTranslation(_V(x, y, 0)); return t
+
+
 def flange_nut_inv(x, y, z0):
     """M3 法兰螺母倒放 (MOS 压块 / 电容卡件螺母井): 六角朝下坐井底 z0, 法兰朝上。"""
     return cut(fuse(hexprism(x, y, NUT_AF, z0, z0 + NUT_T - NUT_FL_H), cyl(x, y, NUT_FL_D, z0 + NUT_T - NUT_FL_H, z0 + NUT_T)),
@@ -186,7 +191,8 @@ for i, (x, y) in enumerate(B.JN_PTS):
 # 7b 玻璃上 (11-25): 8×M3×20 超薄头 (头沉绿件顶面 Φ7.4×1.8) 穿绿 + 红 → 红件底面 Φ8×4 圆沉孔里 M3 法兰螺母 (法兰朝上)
 for i, (x, y) in enumerate(B.GC_PTS):
     screw(f"M3x{B.GC_SCREW_L:g} 超薄头 玻璃上绿件→红件", i, x, y, B.GC_BEAR, B.GC_SCREW_L, False, hd=B.GC_HEAD_D, hh=B.GC_HEAD_H, engage=("M3 法兰螺母", *B.GC_NUT_Z))
-    add(f"M3 法兰螺母 玻璃上红件底 (法兰朝上) #{i}", flange_nut_inv(x, y, B.GC_NUT_Z[0]), "#707070")
+    _gn = B.xf(B.xf(flange_nut_inv(0, 0, B.GC_NUT_Z[0]), B.rotz(math.degrees(math.atan2(y, x)))), _tr(x, y)) if B.GT_DISC == 200 else flange_nut_inv(x, y, B.GC_NUT_Z[0])   # 200 版六角窝平边朝径向
+    add(f"M3 法兰螺母 玻璃上红件底 (法兰朝上) #{i}", _gn, "#707070")
 
 # 7c 玻璃上 横锁 (11-25): 8×M3×14 超薄头 径向从外往里 (支承 r102.7), 穿红件外卡 + 玻璃管 Φ5 孔 → 管内弧形件 M3 法兰螺母 (法兰朝轴心 r88.5)
 from OCP.gp import gp_Trsf as _GT, gp_Ax1 as _GA, gp_Pnt as _GP, gp_Dir as _GD, gp_Vec as _GV
