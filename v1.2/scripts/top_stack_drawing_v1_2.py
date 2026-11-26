@@ -160,8 +160,8 @@ def notes(hd, L_):
     y -= 2
 notes('件号', ['1 绿  屏幕顶长条 led_top_bar (打印)', '2 蓝  螺柱衔接件 post_holder (打印)', '3 紫  M3 螺柱 Φ5×60, 阳牙 6', '4 轴承 695ZZ 5×13×4', '5 中心堵头 glass_top_hub (打印, 改)', '6 配平梳齿 led_comb (打印, 锁孔改 ±21)', '7 旋母 hub_nut (打印, 拧紧夹玻璃)'])
 notes('螺丝', ['3× M3×20 超薄头 头 Φ7×1.5 (绿, 左中右)', '2× M3×16 超薄头 (梳齿+蓝+绿)', '   不装梳齿用 M3×12', '1× M3×8 超薄头 (螺柱顶)', '3× M3 法兰螺母 (Φ8 沉孔)', '3× 定位套 Φ8×2 (防螺母转)'])
-notes('装配顺序', ['1. 两颗法兰螺母 + 定位套压进绿件底', '2. 绿件放两屏顶, 3 根 M3×20 锁屏', '3. 法兰螺母 + 定位套压进蓝件底', '4. 螺柱插进外套, 拧进螺母到肩', '5. 蓝件 (+梳齿) 用 2 根 M3 锁绿件', '6. 堵头穿玻璃孔, 下面旋母拧紧, 整块落上', '7. 695 从堵头上口套进螺柱', '8. 顶螺丝锁螺柱 (压柱端, 不压死轴承)'])
-notes('配合', ['外套内 Φ5.2 / 螺柱 Φ5 (单边 0.1)', '695 座 Φ13.0, 放入口 Φ13.4', '旋母螺纹径向间隙 0.2', '筋厚 4.6 = 两屏间隙 = 螺母对边', '法兰螺母沉孔 Φ8 (绿 3.7 / 蓝 4.0)'])
+notes('装配顺序', ['1. 两颗法兰螺母 + 定位套压进绿件底', '2. 绿件放两屏顶, 3 根 M3×20 锁屏', '3. 法兰螺母从蓝件底推到沉孔顶 (深 ' + F(P['post_fn_h']) + '), 再压定位套', '4. 螺柱插进外套, 拧进螺母到肩', '5. 蓝件 (+梳齿) 用 2 根 M3 锁绿件', '6. 堵头穿玻璃孔, 下面旋母拧紧, 整块落上', '7. 695 从堵头顶面按进 (齐平)', '8. 顶螺丝锁螺柱 (压柱端, 不压死轴承)'])
+notes('配合', ['外套内 Φ5.2 / 螺柱 Φ5 (单边 0.1)', '695 座 Φ13.0, 顶齐堵头面, 口倒角 0.5', '旋母螺纹径向间隙 0.2', '筋厚 4.6 = 两屏间隙 = 螺母对边', '法兰螺母沉孔 Φ8 (绿 3.7 / 蓝 4.0)'])
 frame('顶部连接 第二版 装配', 'POV3D V1.2  (设计区, 未合回主模型)', '数量: 1 套', '顶部连接_装配_2D图')
 
 # ================= 零件 =================
@@ -188,7 +188,7 @@ E = endsec(172, 160, 0, '绿 剖 x=0   3:1'); vchain(pg, [E.y(v) for v in (z1, z
 H = V(74, 62, 1.5, 0, zc, (0, -160)); H.y_top = 34                      # 蓝 阶梯剖
 for a, b, yy in ((-9, 9, 0), (-40, -9, ecc), (9, 40, ecc)):
     for f in sec(clipx(S['post_holder'], a, b), 'y', yy): H.face(f, COL['post_holder'], HATCH['post_holder'], 'post_holder')
-title(74, 112, '蓝 ② post_holder  阶梯剖 (中 y=0, 两侧 y=-4.69)   1.5:1', H); H.cl((0, zc - 2), (0, zb + 3)); [H.cl((s * fx, zc - 2), (s * fx, zp + 3)) for s in (1, -1)]
+title(74, 122, '蓝 ② post_holder  阶梯剖 (中 y=0, 两侧 y=-4.69)   1.5:1', H); H.cl((0, zc - 2), (0, zb + 3)); [H.cl((s * fx, zc - 2), (s * fx, zp + 3)) for s in (1, -1)]
 vchain(pg, [H.y(v) for v in (zc, zc + P['post_fn_h'], zs, zb)], ['沉孔 ' + F(P['post_fn_h']), '隔板 ' + F(P['web']), '套 ' + F(P['sleeve'])], H.x(10), H.x(29), size=2.3); vdim(pg, H.y(zc), H.y(zb), H.x(-9), H.x(-31), '总高 ' + F(zb - zc), size=2.4); vdim(pg, H.y(zc), H.y(zp), H.x(-27), H.x(-28) - 0.5, F(P['pl_t']), size=2.2)
 hchain(pg, [H.x(v) for v in (-4, 4)], ['Φ8'], H.y(zc), H.y(zc) - 4.5, size=2.3); hdim(pg, H.x(-fx), H.x(fx), H.y(zc), H.y(zc) - 10.5, '2× Φ3.4  距 ' + F(2 * fx), size=2.4); hdim(pg, H.x(-7), H.x(7), H.y(zb), H.y(zb) + 4, f'Φ{F(P["boss_d"])} / 内 Φ{F(P["bore"])}', size=2.4); lab(H, 0.8, zs - 1, 14, zs + 9, 'Φ3.4')
 U = V(178, 74, 1.5, 0, ecc, (90, -160)); U.y_top = 16                   # 蓝 俯视
@@ -202,9 +202,9 @@ for k in ('hub', 'hub_nut'):
 for a, b in ((-22, -rh), (rh, 22)): Q.box(a, b, g0, g1, COL['glass'], 'glass', z=1.1)
 for f in sec(S['brg695'], 'x', 0): Q.face(f, COL['brg695'], 'xxxx', 'brg695', z=1.3, lw=0.15)
 Q.cl((0, h0 - 2), (0, h1 + 3)); title(300, 274, '紫 ⑤ 堵头 + 绿 ⑦ 旋母  剖 x=0 (含 695、玻璃)   2.5:1', Q)
-hdim(pg, Q.x(-16), Q.x(16), Q.y(h1), Q.y(h1) + 12, 'Φ' + F(P['fl_d']), size=2.4); hdim(pg, Q.x(-P['well_d'] / 2), Q.x(P['well_d'] / 2), Q.y(h1), Q.y(h1) + 5, 'Φ' + F(P['well_d']), size=2.3)
+hdim(pg, Q.x(-16), Q.x(16), Q.y(h1), Q.y(h1) + 12, 'Φ' + F(P['fl_d']), size=2.4); hdim(pg, Q.x(-P['seat_d'] / 2 - 0.5), Q.x(P['seat_d'] / 2 + 0.5), Q.y(h1), Q.y(h1) + 5, '口倒角 0.5 → Φ' + F(P['seat_d'] + 1), size=2.3)
 yb = Q.y(h0); hdim(pg, Q.x(-P['lip_d'] / 2), Q.x(P['lip_d'] / 2), yb, yb - 5, '内孔 Φ' + F(P['lip_d']), size=2.3); hdim(pg, Q.x(-P['th_d'] / 2), Q.x(P['th_d'] / 2), yb, yb - 11, f'外螺纹 大径 Φ{F(P["th_d"])} 小径 Φ{F(P["th_d"] - 2 * P["th_h"])} 螺距 {F(P["th_p"])}', size=2.3); hdim(pg, Q.x(-16), Q.x(16), yb, yb - 17, f'旋母 Φ{F(P["nut_od"])}', size=2.3)
-vchain(pg, [Q.y(v) for v in (h0, bz0, bz1, g1, h1)], [F(bz0 - h0), '695 座 4 (Φ13.0)', F(g1 - bz1), '盖 ' + F(P['fl_t'])], Q.x(22), Q.x(22) + 6, size=2.3); vchain(pg, [Q.y(v) for v in (h0, g0, g0 + P['th_up'], g1)], ['旋母 ' + F(P['nut_t']), '螺纹到 ' + F(P['th_up']), f'筒 Φ{F(P["body_d"])}  ' + F(g1 - g0 - P['th_up'])], Q.x(-22), Q.x(-22) - 22, size=2.3)
+vchain(pg, [Q.y(v) for v in (h0, bz0, bz1)], [F(bz0 - h0), '695 座 4 (Φ13.0, 顶齐盖面)'], Q.x(22), Q.x(22) + 6, size=2.3); vchain(pg, [Q.y(v) for v in (h0, g0, g0 + P['th_up'], g1)], ['旋母 ' + F(P['nut_t']), '螺纹到 ' + F(P['th_up']), f'筒 Φ{F(P["body_d"])}  ' + F(g1 - g0 - P['th_up'])], Q.x(-22), Q.x(-22) - 22, size=2.3)
 for X, k, d, t in ((268, 'hub', (0, 0, -1), '堵头 仰视   1.5:1'), (340, 'hub_nut', (0, 0, 1), '旋母 俯视 (12 指槽 R2.5)   1.5:1')):
     Y_ = V(X, 134, 1.5, 0, 0, (X, -80)); Y_.y_top = 18
     for q in hlr([S[k]], d, (1, 0, 0))[0]: Y_.pl(q, lw=0.25, lay=k)

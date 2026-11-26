@@ -27,14 +27,15 @@ DY = (2 * L.GAP_HALF - IF['gap']) / 2            # 本设计区两屏间隙 4.6 
 P = dict(bar_t=5.0, bar_hx=83.0, bar_hy=4.5, rib_t=4.6, rib_h=3.0, rib_hx=81.5, hole=3.4, slot=0.3, nut_x=L.SO_X, nut_af=L.SO_AF, nut_l=L.SO_L,
          scr_l=20.0, head_d=7.0, head_h=1.5, cb_d=7.0, cb_h=2.0,                                # 长条 3 根 M3×20 超薄头; 中间沉孔 Φ7×2
          fx=21.0, pad_w=12.0, disc_d=18.0, fn_d=8.0, fn_h=3.7, fn_fl=7.6, fn_af=5.5,            # 蓝件锁点 ±21 / 圆端条宽 / 中央圆 / 法兰螺母沉孔
-         pl_t=6.0, web=2.0, post_fn_h=4.0, bore=5.2, boss_d=14.0, sleeve=20.0,                   # 蓝件: 底板 / 隔板 / 螺柱螺母沉孔深 / 外套内径 / 外径 / 套长
+         pl_t=6.0, web=2.0, post_fn_h=None, bore=5.2, boss_d=14.0, sleeve=20.0,                   # 蓝件: 底板 / 隔板 / 螺柱螺母沉孔深 / 外套内径 / 外径 / 套长
          post_d=5.0, post_l=60.0, post_m=6.0, over=0.5, brg=(5.0, 13.0, 4.0), top_scr=8.0,       # 螺柱 / 伸出轴承 / 695ZZ / 顶螺丝 M3×8
          fix_l=16.0, comb_t=4.0, comb_hole=14.2, comb_ring=22.0, comb_beam_y=4.0, comb_teeth=[16.0, 26.0, 36.0, 46.0], tooth_w=6.0, tooth_y=15.0, slots_y=[6.5, 12.0],
          fl_d=32.0, fl_t=3.0, body_d=19.6, seat_d=13.0, well_d=13.4, lip_d=10.5,                 # 堵头: 盖 / 过玻璃孔的筒 / 695 座 / 放入口 / 底唇孔 (通到底)
          th_d=19.4, th_p=2.5, th_h=0.8, th_flat=0.45, th_clr=0.2, th_up=1.5, nut_t=7.0, nut_od=32.0, n_grip=12, grip_d=5.0, seat_gap=0.0)   # 11-25 21:42 用户「不能用卡扣, 能做螺纹吗, 下边一个件旋转卡住」
 WIN = dict(top=(L.Z0 + 166 + 27.97375, L.Z0 + 166 + 37.97375), mid=L.SO_WIN_MID_Z, bot=L.SO_WIN_Z)
-z1, ecc = IF['z_led'], IF['ecc']; zc = z1 + P['bar_t']; zp = zc + P['pl_t']; zs = zc + P['post_fn_h'] + P['web']; zb = zs + P['sleeve']
-pt = zs + P['post_l']; bz1 = pt - P['over']; bz0 = bz1 - P['brg'][2]; g0, g1 = IF['z_glass0'], IF['z_glass1']; zt = zp + P['comb_t']
+# 11-26 用户「轴承位置太深了，我放不进去」: 695 顶面 = 堵头顶面 (原低 6.07) ⇒ 螺柱整体抬 6.07, 蓝件底螺母沉孔由 4 加深 (螺母仍贴隔板)
+z1, ecc = IF['z_led'], IF['ecc']; g0, g1 = IF['z_glass0'], IF['z_glass1']; zc = z1 + P['bar_t']; zp = zc + P['pl_t']
+bz1 = g1 + P['fl_t']; bz0 = bz1 - P['brg'][2]; pt = bz1 + P['over']; zs = pt - P['post_l']; P['post_fn_h'] = round(zs - P['web'] - zc, 4); zb = zs + P['sleeve']; zt = zp + P['comb_t']
 NUTS = []
 for row, (w0, w1) in WIN.items():
     for bd, sy in (('A', 1), ('B', -1)):
@@ -92,7 +93,7 @@ def hub():                                        # 圆环玻璃中心堵头 (�
     ft = P['fl_t']; rf = P['fl_d'] / 2; zu = g0 + P['th_up']; rt = P['th_d'] / 2; ri = rt - P['th_h']
     t = fz(BRepAlgoAPI_Cut, thread(0, ZT0, zu + 0.01), revol([(ri - 0.2, ZT0 - 1), (rt + 5, ZT0 - 1), (rt + 5, ZT0 + P['th_h'] + 5.2), (rt, ZT0 + P['th_h'] + 0.2), (ri - 0.2, ZT0)]))
     s = fuse(t, cyl(0, 0, P['body_d'], zu, g1 + 0.01), revol([(0, g1), (rf, g1), (rf, g1 + ft - 1), (rf - 1, g1 + ft), (0, g1 + ft)]))
-    return cut(s, cyl(0, 0, P['lip_d'], ZT0 - 1, g1 + ft + 1), cyl(0, 0, P['seat_d'], bz0, bz1 + 0.01), cyl(0, 0, P['well_d'], bz1, g1 + ft + 1)), ZT0, g1 + ft
+    return cut(s, cyl(0, 0, P['lip_d'], ZT0 - 1, g1 + ft + 1), cyl(0, 0, P['seat_d'], bz0, bz1 + 0.01), revol([(0, bz1 - 0.5), (P['seat_d'] / 2, bz1 - 0.5), (P['seat_d'] / 2 + 0.5, bz1), (P['seat_d'] / 2 + 0.5, bz1 + 1), (0, bz1 + 1)])), ZT0, g1 + ft
 def hub_nut():                                    # 旋母 (绿): 玻璃下面拧紧夹玻璃, 外圆 12 个指槽
     g = P['th_clr']; r = P['nut_od'] / 2; ro = P['th_d'] / 2 + g; bl = cyl(0, 0, P['nut_od'], ZT0, g0); c = thread(g, ZT0 - 1, g0 + 1)
     s = fz(BRepAlgoAPI_Cut, bl, c); v0 = vol(bl) - vol(s); ref = L.common_v(bl, c); assert abs(v0 - ref) < 2 and v0 > math.pi * (ro - P['th_h']) ** 2 * P['nut_t'] + 150, (v0, ref)
