@@ -89,6 +89,7 @@ DEFAULTS = dict(
     TROUGH_EXT=0.5,      # 槽沿 Y 两端各长出电容
     GROOVE_MAX=3.0,      # 槽深上限 (底盘 6 剩 ≥3)
     # 底盘 / 上方限高
+    DISC_T_REF=None,         # 11-25: 选螺丝按这个底座厚 (None = DISC_T); 件不改形, 尖上移
     DISC_T=6.0,          # 底盘 Z −6..0
     Z_LIMIT=8.35,        # 用户 11-12 夜: 法兰盘底 9.5 → 8.5, 槽深挖到上限 3 后卡件顶 = 电容顶 7 + 0.15 + 1.2 = 8.35 ⇒ 卡件单独放宽到 8.35 (离定子盘底只剩 0.15); 整机由 coil_drv_geom 传
     STATOR_Z0=8.5,       # 定子盘 (法兰盘) 底, 只用于预览画线 (用户 11-12 夜 9.5 → 8.5); 整机由 coil_drv_geom 按 B.FL_Z0 传
@@ -238,7 +239,7 @@ def make_cap_clamp(p=None):
     CLR, T = P['CLR'], P['T_TOP']
     R0, R1 = R + CLR, R + CLR + T
     ZL, DT = P['Z_LIMIT'], P['DISC_T']
-    BEAR_Z = -DT + P['M3_CB_H']                           # 螺丝头支承面 −4
+    BEAR_ACT = -DT + P['M3_CB_H']; BEAR_Z = -(P['DISC_T_REF'] or DT) + P['M3_CB_H']                           # 螺丝头支承面 −4
     assert abs((P['CAP_Y1'] - P['CAP_Y0']) - P['CAP_L']) < 1e-6, 'CAP_Y1−CAP_Y0 ≠ CAP_L'
 
     # ---- 槽深: 卡件顶 = 2R − g + CLR + T ≤ Z_LIMIT ----
@@ -282,6 +283,7 @@ def make_cap_clamp(p=None):
         assert choice, '没有可用的 M3 长度 (尖 ≤ Z_LIMIT 且耳厚 ≥ EAR_MIN)'
         SCREW_L, TIP, EAR_TOP = choice
         NUT_Z0, NUT_Z1 = EAR_TOP, EAR_TOP + P['NUT_T']
+    TIP_REF, BEAR_Z = TIP, BEAR_ACT; TIP = BEAR_Z + SCREW_L       # 实际支承面 / 尖
     ENGAGE = min(TIP, NUT_Z1) - NUT_Z0
 
     # ---- 平面位置 ----
@@ -398,10 +400,10 @@ def make_cap_clamp(p=None):
     _g = 0.0 if INS else min((P['WELL_AF'] - P['NUT_AF']) / 2, (P['WELL_D'] - P['NUT_FL_D']) / 2) if P['NUT_HEX_WELL'] else 0.25
     assert C['gap_nut_saddle'] >= _g - 1e-6, (f'螺母离井壁 <{_g}', C['gap_nut_saddle'])
     assert C['wall_well_groove'] >= WWALL - 1e-6, ('螺母井离半圆槽太近', C['wall_well_groove'])
-    assert TIP <= TOP + 1e-9, '螺尖冒出卡件顶面'
+    assert TIP_REF <= TOP + 1e-9, '螺尖冒出卡件顶面'
     if C['wall_well_yend'] < 1.0: print(f"  [注意] 螺母井离 Y 端面壁 {C['wall_well_yend']:.2f} (CLAMP_LEN {P['CLAMP_LEN']:g} / 井 Φ{P['WELL_D']:g})")
     assert C['nut_support'] > 0.999, ('法兰底支承不全', C['nut_support'])
-    assert TOP <= ZL + 1e-9 and NUT_Z1 <= ZL + 1e-9 and TIP <= ZL + 1e-9, ('超高', TOP, NUT_Z1, TIP)
+    assert TOP <= ZL + 1e-9 and NUT_Z1 <= ZL + 1e-9 and TIP_REF <= ZL + 1e-9, ('超高', TOP, NUT_Z1, TIP)
     if INS:
         assert ENGAGE >= P['INSERT_ENGAGE_MIN'] - 1e-9, ('铜螺母啮合不足', ENGAGE)
         assert EAR_TOP > 0, '铜螺母孔底低于 Z0'

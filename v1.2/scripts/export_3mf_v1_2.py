@@ -58,7 +58,7 @@ from OCP.gp import gp_Trsf, gp_Vec, gp_Ax1, gp_Pnt, gp_Dir
 RIM_NAME = 'rim_ring_v1_2_D170'
 _fx = gp_Trsf(); _fx.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), math.pi)
 _ROT_OUT = ((('rim_ring_v1_2b', RB.rim, True),) if ROTOR_B else (('hub_disc_v1_2', hub, False), (RIM_NAME, rim, True)))
-for n, sh, flip in (('base_disc_D220x5_v1_2_gf', disc_print, False), *_ROT_OUT):   # 11-18 玻纤板方案 (旧一体底盘 base_disc_D220x6 冻结不再写)
+for n, sh, flip in (('base_disc_D220x5.5_v1_2_gf', disc_print, False), *_ROT_OUT):   # 11-18 玻纤板方案 (旧一体底盘 base_disc_D220x6 冻结不再写)
     write_doc([(n, sh, '#8A8F98', None, False)], OUT / '零件' / f'{n}.step', n)
     t = xf(sh, _fx) if flip else sh
     _tt = gp_Trsf(); _tt.SetTranslation(gp_Vec(0, 0, -bbox(t)[2])); t = xf(t, _tt)

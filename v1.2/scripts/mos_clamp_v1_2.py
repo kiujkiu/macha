@@ -99,6 +99,7 @@ DEFAULTS = dict(
     INSERT_ENGAGE_MIN=3.0,                        # 螺丝进铜螺母最少长度
     INSERT_WALL=1.0,                              # Φ4.2 孔 ↔ 槽 最小壁
     # 底盘 / 限高
+    DISC_T_REF=None,   # 11-25: 选螺丝/件高按这个底座厚 (None = DISC_T); 底座减薄后件不改形, 尖上移 DISC_T_REF − DISC_T
     DISC_T=6.0, Z_LIMIT=8.0,   # 用户 11-12 夜: 法兰盘底 9.5 → 8.5 ⇒ Z_LIMIT = FL_Z0 − 0.5 = 8.0 (整机由 coil_drv_geom 按 B.FL_Z0 传)
     STATOR_Z0=8.5,       # 定子盘 (法兰盘) 底, 只用于预览画线 (用户 11-12 夜 9.5 → 8.5); 整机由 coil_drv_geom 按 B.FL_Z0 传
     # 紧固件 (同 fasteners_v1_2)
@@ -219,7 +220,7 @@ def make_mos_clamp(p=None):
     s = 1 if P['MOS_DIR'] >= 0 else -1
     XPC = P['XPC']; XB = XPC + P['MOS_DX']
     ZL, DT = P['Z_LIMIT'], P['DISC_T']
-    BEAR_Z = -DT + P['M3_CB_H']
+    BEAR_ACT = -DT + P['M3_CB_H']; BEAR_Z = -(P['DISC_T_REF'] or DT) + P['M3_CB_H']     # 选长用参考支承面
     E, A, A1, D, H1 = P['MOS_E'], P['MOS_A'], P['MOS_A1'], P['MOS_D'], P['MOS_H1']
     Y_TIP = P['MOS_Y_TIP']; Y_ROOT = Y_TIP - s * D; Y_BODY = Y_ROOT + s * (D - H1)   # 塑封体全高段 根..Y_BODY
 
@@ -260,6 +261,7 @@ def make_mos_clamp(p=None):
         NUT_Z0 = NUT_Z1 - P['NUT_T']
         EAR_TOP = NUT_Z0                                       # 井底 = 螺母底
         assert EAR_TOP >= P['EAR_MIN'] - 1e-9
+    TIP_REF, BEAR_Z = TIP, BEAR_ACT; TIP = BEAR_Z + SCREW_L       # 实际支承面 / 尖
     ENGAGE = min(TIP, NUT_Z1) - NUT_Z0
     T_TOP = TOP - CH_H
 
@@ -395,9 +397,9 @@ def make_mos_clamp(p=None):
     assert C['nut_support'] > 0.999, ('法兰底支承不全', C['nut_support'])
     assert C['wall_cb_slot'] >= P['MIN_WALL'] - 1e-6, ('沉孔离散热片槽太近', C['wall_cb_slot'])
     assert T_TOP >= P['T_TOP_MIN'] - 1e-9
-    assert TOP <= ZL + 1e-9 and NUT_Z1 <= ZL + 1e-9 and TIP <= ZL + 1e-9, ('超高', TOP, NUT_Z1, TIP)
+    assert TOP <= ZL + 1e-9 and NUT_Z1 <= ZL + 1e-9 and TIP_REF <= ZL + 1e-9, ('超高', TOP, NUT_Z1, TIP)
     if INS:
-        assert ENGAGE >= P['INSERT_ENGAGE_MIN'] - 1e-9 and TIP <= TOP + 1e-9, ('铜螺母啮合不足或螺尖冒出件顶', ENGAGE, TIP, TOP)
+        assert ENGAGE >= P['INSERT_ENGAGE_MIN'] - 1e-9 and TIP_REF <= TOP + 1e-9, ('铜螺母啮合不足或螺尖冒出件顶', ENGAGE, TIP, TOP)
         assert EAR_TOP > 0, '铜螺母孔底穿到槽底面'
     else:
         assert ENGAGE >= P['NUT_T'] - 1e-9, '螺母没吃满'

@@ -65,8 +65,10 @@ SCR_ECC = -4.69                        # 11-18 夜 用户: 灯板间距 5 / 板�
 DISC_D = 220.0
 # 用户 11-18: 底座 = 3 mm 玻纤板 (FR4, 顶 Z0) + 打印底盘 4.5 (Z-7.5..-3) [11-20 改 5.0, Z-8..-3], 上面所有件 Z 不变。
 #   建模时仍按一整块 Z-7.5..0 的 disc 造 (底面沉孔/铜螺母孔相对底面, 顶面槽相对 Z0), 最后拆成 disc_print + fr4。
-FR4_T, PRINT_T = 3.0, 5.0   # 11-20 用户「底盘向上加厚0.5mm, coil锁下来的法兰螺母的位置太薄了」: 4.5→5.0, 底面沉孔深度不变 ⇒ 中央 G 法兰螺母窝顶 Z−4.3, 到玻纤板剩 1.3 (原 0.8)
-DISC_T = FR4_T + PRINT_T                # 7.5 (原一体底盘 6)
+BOARD_OLD = os.environ.get('BOARD_OLD', '0') == '1'   # 11-25 用户要两版打印底盘: 1 = 控制板老位置 (配 11-25 前的 FR4), 底盘 4.5 厚, 只用来出 base_disc_v1_2_gf_old
+FR4_T, PRINT_T = (3.0, 4.5) if BOARD_OLD else (2.0, 5.5)   # 11-25 用户: 新 FR4 2 厚 ⇒ 新版底盘 5.5 (底 Z−7.5) + G 窝 4.3 (窝顶 Z−3.2, 剩 1.2); 老位置版 _old 配 3 厚 FR4: 底盘 4.5 + G 窝 3.8 (剩 0.7); 两版中央 M3×25 尖 Z−7.2 都低于底面 0.3。旧: 11-20 用户「底盘向上加厚0.5mm, coil锁下来的法兰螺母的位置太薄了」: 4.5→5.0, 底面沉孔深度不变 ⇒ 中央 G 法兰螺母窝顶 Z−4.3, 到玻纤板剩 1.3 (原 0.8)
+DISC_T = FR4_T + PRINT_T                # 7.5 (两版同; 一体底盘 6)
+DISC_T_REF = 8.0                        # 11-25: MOS 压块 / 电容卡件 / MR30 座 / 线夹 的螺丝选长与件高仍按 8 厚底座算 (件不改形, 螺丝长度不变 ⇒ 尖上移 DISC_T_REF − DISC_T)
 M6_D, CB_D, CB_H = 6.4, 13.0, 3.0
 COLLAR_M6 = [(sx * 37.5, sy * 37.5) for sx in (1, -1) for sy in (1, -1)]
 POSTS = [(87.5, 37.5), (-37.5, 87.5), (-87.5, -37.5), (37.5, -87.5)]   # V0.4 柱位 R95.197
@@ -84,7 +86,7 @@ FL_UP = 1.2 + STATOR_LIFT                                    # 用户 11-11 上�
 FL_Z0 = 15.5 + FL_THIN - DROP + FL_UP          # 法兰盘底 12.0 (11-19 抬 3.5; 11-12 夜 8.5, 原 9.5)
 FL_Z0_BASE = FL_Z0 - STATOR_LIFT                # 8.5 旧定子盘底: 底盘上件 (线圈驱动夹块/MR30 座/下罩筋) 的高度上限仍按它, 已打件不改形
 MF_THIN = 0.5                                  # 用户 11-11: mounting_flange 板厚 3→2.5 (顶面去 0.5)
-MF_CB = 1.5                                    # 用户 11-11: 安装法兰 16 个 Φ7 沉孔深 2.0→1.5
+MF_CB = 1.7                                    # 11-25 用户 1.5→1.7 (16 个, 剩 0.8; 头支承 Z18 → 17.8); 用户 11-11: 安装法兰 16 个 Φ7 沉孔深 2.0→1.5
 FL_TOP = 22.5 - DROP + FL_UP                   # 法兰盘顶 13.5 (= 安装法兰底)
 MF_TOP = 25.5 - MF_THIN - DROP + FL_UP         # 安装法兰顶 16.0
 # 11-23 光电对射发射板 (定子侧, 发射管朝上; 接收管在转子盘B 朝下, 转子通光孔 Φ3.4 @ r77.5)。
@@ -372,7 +374,7 @@ LOG['rim_new_holes_solid'] = {f'{n_}{i}': round(vol(op(BRepAlgoAPI_Common, _rim_
 #    板本地 x20..100 y10..50 (= 板系 +20,+10); 外长边 (板系 y0) 朝外, 内长边离轴 BOARD_IN; XT60/MR30 不焊 (直接焊线)
 BOARD_F = V12.parent / 'v1.0' / 'boards' / 'step' / 'motor_ctrl_2026-10-23.step'  # 与交付包 _待确认 版逐字节相同
 BOARD_DX = 3.5                                   # 往 +X 让 3.5: 铜螺母/散热片槽让开立柱孔 (−37.5,87.5)
-BOARD_Z, BOARD_IN = 0.0, COLLAR_FLAT + 0.75     # 内边离套环削平面 0.75 (11-11: 36.25; 原 39.25 / 42.75)
+BOARD_Z, BOARD_IN = 0.0, COLLAR_FLAT + (0.75 if BOARD_OLD else 1.75)     # 内边离套环削平面 1.75 (11-25 用户「电机板向外挪1mm」36.25 → 37.25; 11-11: 36.25; 原 39.25 / 42.75)
 def board_trsf():
     t1 = gp_Trsf(); t1.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1)), math.pi)          # (x,y)->(-x,-y)
     t2 = gp_Trsf(); t2.SetTranslation(gp_Vec(60 + BOARD_DX, BOARD_IN + 50, BOARD_Z))                        # -> (60-x, IN+50-y)
@@ -494,8 +496,8 @@ d = cut(d, cyl(0, 0, 12.0, -3.0, 1))                                            
 for x, y in RING_M3:                                                                      # 线圈环四角 4×M3x10: 盘底沉孔, 穿四角 (5 厚) 通孔顶面上螺母
     d = cut(d, cyl(x, y, M3_D, -DISC_T - 1, 1), cyl(x, y, M3_CB_D, -DISC_T - 1, -DISC_T + M3_CB_H))
 assert all(math.hypot(x - a, y - b) >= CB_D / 2 + M3_CB_D / 2 + 1.0 for x, y in RING_M3 for a, b in FIXED + EXTRA), '线圈环 M3 沉孔离 M6 沉孔太近'
-G_NUT_D, G_NUT_H = 8.0, 3.7                    # 11-19 用户「底板最下边8个热熔螺母换成法兰螺母吧也」(同承载盘内圈 d5747d2): 底面 Φ8×3.7 沉孔放 M3 法兰螺母 (法兰朝下齐底面), 原 Φ4.2×4.2 铜螺母孔作废
-assert G_NUT_H <= PRINT_T - 0.5                     # 沉孔只在打印底盘里 (Z-7.5..-3.8), 不进玻纤板
+G_NUT_D, G_NUT_H = 8.0, (3.8 if BOARD_OLD else 4.3)                    # 11-19 用户「底板最下边8个热熔螺母换成法兰螺母吧也」(同承载盘内圈 d5747d2): 底面 Φ8×3.7 沉孔放 M3 法兰螺母 (法兰朝下齐底面), 原 Φ4.2×4.2 铜螺母孔作废
+assert G_NUT_H <= PRINT_T - 0.5                     # 沉孔只在打印底盘里, 不进玻纤板
 for x, y in FLANGE_SCREWS:                                                                 # 线圈环/法兰 8×M3 (从安装法兰顶往下): 盘底沉孔里法兰螺母
     d = cut(d, cyl(x, y, 3.2, -DISC_T - 1, 1), cyl(x, y, G_NUT_D, -DISC_T - 1, -DISC_T + G_NUT_H))
 for x, y in SH_M6:                                                                         # 下罩 4×M3x10: 盘底沉孔往上, 螺母压三角块顶

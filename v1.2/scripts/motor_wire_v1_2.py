@@ -65,7 +65,7 @@ INS_D, INS_H = B.INS_HOLE_D, 4.0                   # M3×4 铜螺母孔 Φ4.2 �
 PASS_D = 3.4                                       # 件内 M3 过孔
 BEAR_Z = -B.DISC_T + CB_H                          # −4 头支承
 def screw_len(top):                                # 尖 = 件顶 (铜螺母全啮合 4)
-    return top - BEAR_Z
+    return top + B.DISC_T_REF - CB_H              # 11-25: 按 8 厚参考底座选长 (底座减 1 ⇒ 尖高出件顶 1, 螺丝不换)
 
 # ===== 1 MR30 座 =====
 SHEATH_W, SHEATH_H, SHEATH_L = 12.3, 5.3, 6.9      # 护套 (出线侧)
@@ -186,7 +186,7 @@ MW_TOP = [SEAT_H] * len(MR_INS) + [CL_H] * len(CL_INS)
 SCREW_L = [screw_len(t) for t in MW_TOP]           # MR30 座 M3×12 / 线夹 M3×10
 assert SCREW_L == [14.0, 14.0, 12.0, 12.0], SCREW_L   # 11-18 玻纤板底座 (支承 Z-6): 原 12/10 各 +2
 def screws():
-    sc = [cyl(x, y, 3.0, BEAR_Z, t) for (x, y), t in zip(MW_M3, MW_TOP)] + [cyl(x, y, 5.5, BEAR_Z - 3.0, BEAR_Z) for x, y in MW_M3]
+    sc = [cyl(x, y, 3.0, BEAR_Z, BEAR_Z + L_) for (x, y), L_ in zip(MW_M3, SCREW_L)] + [cyl(x, y, 5.5, BEAR_Z - 3.0, BEAR_Z) for x, y in MW_M3]
     ins = [cyl(x, y, INS_D, t - INS_H, t) for (x, y), t in zip(MW_M3, MW_TOP)]
     return sc, ins
 

@@ -42,7 +42,7 @@ def _leds():
 # (名称, 取形体, 颜色, 件代号 (models/<代号>/ 有打印件文件) 或 None, 数量, 类别 P 打印 / E 外购·电子·参考)
 GROUPS = {
     1: ('底盘组', '全部静止件 (定子以下, 不含玻璃)', [
-        ('打印底盘 Φ220×4.5', lambda: B.disc_print, '#8A8F98', 'base_disc_v1_2_gf', 1, 'P'),
+        (f'打印底盘 Φ220×{B.PRINT_T:g}', lambda: B.disc_print, '#8A8F98', 'base_disc_v1_2_gf', 1, 'P'),
         ('玻纤底板 FR4 Φ220×3 (板厂件)', lambda: B.fr4, '#C8D86A', 'base_fr4_v1_2', 1, 'E'),
         ('电机 Φ55×21.5', lambda: B.motor, '#333333', None, 1, 'E'),
         ('电机控制板', lambda: B.board, '#2E7D32', None, 1, 'E'),

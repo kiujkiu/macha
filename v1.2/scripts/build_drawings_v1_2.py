@@ -119,7 +119,7 @@ COMMON = dict(date=DATE, proj="V1.2")
 ORIG = "原点 = 轴心, Z = 装配高度 (底盘顶面 Z0); 图示为装配姿态。"
 
 # ---------------- base_disc_v1_2_gf (11-18 玻纤板方案) ----------------
-FS_L = dict(MOTOR=10.0, RING=14.0, SH=16.0, C=22.0, BD=12.0, XT=22.0)   # 同 fasteners_v1_2.py L_* (改一处两处都改)
+FS_L = dict(MOTOR=10.0, RING=14.0, SH=16.0, C=25.0, BD=12.0, XT=22.0)   # 同 fasteners_v1_2.py L_* (改一处两处都改)
 BH = [gp_Pnt(x, y, 0).Transformed(B.BT) for x, y in B.BHOLES]
 BH = [(p.X(), p.Y()) for p in BH]
 _rl = B.RELIEFS[0]
@@ -130,9 +130,9 @@ cb6 = f"Φ{F(B.M6_D)} 通 + 底面 Φ{F(B.CB_D)}×{F(B.CB_H)} 沉孔"
 cb3 = f"Φ{F(B.M3_D)} 通 + 底面 Φ{F(B.M3_CB_D)}×{F(B.M3_CB_H)} 沉孔"
 ins = f"Φ3.2 通 + 底面 Φ{F(B.INS_HOLE_D)}×{F(B.INS_HOLE_H)} 铜螺母孔 (M3×4 铜螺母齐底面)"
 SPECS.append(dict(
-    code="base_disc_v1_2_gf", shape=B.disc_print, short=f"打印底盘 Φ{F(B.DISC_D)}×{F(B.PRINT_T)}", qty="1",
+    code="base_disc_v1_2_gf" + ("_old" if B.BOARD_OLD else ""), shape=B.disc_print, short=f"打印底盘 Φ{F(B.DISC_D)}×{F(B.PRINT_T)}" + (" 旧控制板位" if B.BOARD_OLD else ""), qty="1",
     title=f"打印底盘 Φ{F(B.DISC_D)}×{F(B.PRINT_T)} (玻纤板方案, 上压 FR4 {F(B.FR4_T)} 厚 base_fr4_v1_2)",
-    subtitle=f"Z{F(-B.DISC_T)}..{F(-B.FR4_T)}; 顶面平 (贴玻纤板底), 沉孔 / 铜螺母孔全部开在底面; 顶面槽 (电容/让位/盘心) 都移到玻纤板上做通孔",
+    subtitle=f"Z{F(-B.DISC_T)}..{F(-B.FR4_T)}; 沉孔全部开在底面; " + ("顶面平 (贴玻纤板底), 顶面槽 (电容/让位/盘心) 都在玻纤板上做通孔" if B.FR4_T >= 3 else f"顶面槽 (电容/让位/盘心 Φ12) 总深 3 = 玻纤板 {F(B.FR4_T)} + 本件顶面 {F(3 - B.FR4_T)}"),
     orient="顶面 (贴玻纤板那面) 贴床",
     phi=[24, 2 * B.R_SCREW, 2 * B.STATOR_R, (2 * B.RING_M3_XY, f"{F(2 * B.RING_M3_XY)} (方)"), 2 * B.SH_R, B.DISC_D],
     det_h=38.0,
@@ -156,11 +156,13 @@ SPECS.append(dict(
              where=xy(B.MW_M3, 2) + f"  MR30 座 M3×14 / 线夹 M3×12 往上, 进件顶热压 M3×4 铜螺母"),
         dict(tag="K", pts=B.KEY_M3, spec=cb3 + "  同详图 D (按键支架脚)", where=xy(B.KEY_M3) + f"  M3×{F(B.KEY['params']['FOOT_SCREW_L'])} 往上, 法兰螺母坐脚顶"),
     ],
-    date="2026-11-18",
-    notes=[f"11-18 玻纤板方案: 底座 = 本件 {F(B.PRINT_T)} + FR4 {F(B.FR4_T)} (板顶 Z0, 上面所有件 Z 不变)",
-           f"盘底往上的 M3 沉孔 Φ7×{F(B.M3_CB_H)} (超薄头齐底面), 支承 Z{F(-B.DISC_T + B.M3_CB_H)}: 螺丝比原一体底盘各 +2, 尖位置不变",
+    date="2026-11-25",
+    notes=[f"11-25: 厚 5 → {F(B.PRINT_T)}, 配 FR4 {F(B.FR4_T)} 厚 (底 Z{F(-B.DISC_T)}); G 法兰螺母沉孔 3.7 → {F(B.G_NUT_H)}, 窝顶剩 {F(B.PRINT_T - B.G_NUT_H)}; 螺丝长度不变 (盘底往上的尖上移 0.5)",
+           ("控制板老位置版: 配 11-25 之前的 FR4 (控制板没外挪)" if B.BOARD_OLD else "11-25: 控制板整组 (H 4 孔 / 散热片槽 / 排针槽) 往 +Y (向外) 挪 1, 配 11-25 新 FR4"),
+           f"11-18 玻纤板方案: 底座 = 本件 {F(B.PRINT_T)} + FR4 {F(B.FR4_T)} (板顶 Z0, 上面所有件 Z 不变)",
+           f"盘底往上的 M3 沉孔 Φ7×{F(B.M3_CB_H)} (超薄头齐底面), 支承 Z{F(-B.DISC_T + B.M3_CB_H)}: 螺丝长度见孔表",
            f"通槽: 散热片 20×40 ×2 (控制板 1; 线圈驱动板 x{F(B.CD.SINK_X0)}..{F(B.CD.SINK_X1)} y{F(B.CD.SINK_Y0)}..{F(B.CD.SINK_Y1)}) + 下载排针背面焊脚通槽 {F(B.RELIEFS[2][1] - B.RELIEFS[2][0])}×{F(B.RELIEFS[2][3] - B.RELIEFS[2][2])}",
-           "原顶面 3 深的槽 (盘心 Φ12 / 控制板背面让位 / 电容弧形槽) 全在玻纤板层里, 本件顶面平",
+           "原顶面 3 深的槽 (盘心 Φ12 / 控制板背面让位 / 电容弧形槽) " + ("全在玻纤板层里, 本件顶面平" if B.FR4_T >= 3 else f"穿玻纤板后还进本件顶面 {F(3 - B.FR4_T)}"),
            "旧一体底盘 base_disc_v1_2 (Φ220×6) 图纸/模型冻结在 models/base_disc_v1_2/, 不再更新"],
 ))
 
@@ -216,9 +218,9 @@ SPECS.append(dict(
     phi=[2 * B.MF_HOLE_R, 2 * B.R_SCREW, 2 * 78.0, 165.0, 170.0],
     sec=dict(ang=22.5, zd=[(MF_Z0, B.FL_TOP), (B.FL_TOP, B.MF_TOP), (MF_Z0, B.MF_TOP)]),
     holes=[
-        dict(tag="A", pts=B.FLANGE_SCREWS, spec=f"Φ3.2 通 + 顶面 Φ7×{F(B.MF_CB)} 沉孔", where=ring_txt(B.FLANGE_SCREWS) + "  M3×20",
+        dict(tag="A", pts=B.FLANGE_SCREWS, spec=f"Φ3.2 通 + 顶面 Φ7×{F(B.MF_CB)} 沉孔", where=ring_txt(B.FLANGE_SCREWS) + f"  M3×{F(FS_L['C'])} 到底盘 G 法兰螺母",
              det=dict(kind="cb", d=3.2, D=7.0, h=B.MF_CB, side="top", z=(B.FL_TOP, B.MF_TOP), pt=B.FLANGE_SCREWS[0], title="M3 沉孔 (A/B 同)")),
-        dict(tag="B", pts=B.LID_SCREWS, spec=f"Φ3.2 通 + 顶面 Φ7×{F(B.MF_CB)} 沉孔  同详图 A", where=ring_txt(B.LID_SCREWS) + "  M3×6 锁定子盘 B"),
+        dict(tag="B", pts=B.LID_SCREWS, spec=f"Φ3.2 通 + 顶面 Φ7×{F(B.MF_CB)} 沉孔  同详图 A", where=ring_txt(B.LID_SCREWS) + "  M3×10 + 定子盘底下挂 M3 法兰螺母"),
     ],
     dets=[dict(tag="D", kind="free", z=(MF_Z0, B.MF_TOP), pt=(83.75 * math.cos(math.radians(22.5)), 83.75 * math.sin(math.radians(22.5))), ang=22.5, W=5.0,
                title="外裙 r82.5–85 (中心 r83.75)", zd=[(MF_Z0, B.FL_TOP, F(B.FL_TOP - MF_Z0), 0), (B.FL_TOP, B.MF_TOP, F(B.MF_TOP - B.FL_TOP), 0)], ud=[(-1.25, 1.25, "2.5")])],

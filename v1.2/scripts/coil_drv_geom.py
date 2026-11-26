@@ -185,7 +185,7 @@ def make(B):
           and math.hypot(*g) >= B.COLLAR_D / 2 + B.M6_D / 2 + 1.0]          # 同 build 网格跳孔: 线圈环下的不开
     KEEPOUT = ([(x, y, B.CB_D / 2) for x, y in gr] + [(x, y, B.M3_CB_D / 2) for x, y in list(B.SH_M6) + list(B.RING_M3) + list(B.MOTOR_HOLES)]
                + [(x, y, 2.1) for x, y in list(B.OUT_SCREWS) + list(B.FLANGE_SCREWS)])          # 底盘已有孔/沉孔 (x, y, r)
-    COMMON = dict(XPC=XPC, DISC_T=B.DISC_T, Z_LIMIT=Z_LIMIT, STATOR_Z0=STATOR_Z0, M3_D=B.M3_D, M3_CB_D=B.M3_CB_D, M3_CB_H=B.M3_CB_H,
+    COMMON = dict(XPC=XPC, DISC_T=B.DISC_T, DISC_T_REF=B.DISC_T_REF, Z_LIMIT=Z_LIMIT, STATOR_Z0=STATOR_Z0, M3_D=B.M3_D, M3_CB_D=B.M3_CB_D, M3_CB_H=B.M3_CB_H,
                   HEAD_D=HEAD_D, HEAD_H=HEAD_H, NUT_FL_D=NUT_FL_D, NUT_FL_H=NUT_FL_H, NUT_AF=NUT_AF, NUT_T=NUT_T, KEEPOUT=KEEPOUT)
     MC_PARAMS = dict(COMMON, MOS_DX=round(XB - XPC, 6), MOS_X=XB, MOS_Y_LEAD=MOS_Y_LEAD, MOS_Y_TIP=MOS_Y_TIP, MOS_DIR=1, MOS_TIP_DIR='+Y', SINK_W=SINK_LX, SINK_Y0=SINK_Y0, SINK_Y1=SINK_Y1, MOS_A=MOS_T, MOS_A1=MOS_TAB_T, MOS_E=MOS_W, MOS_D=MOS_L, MOS_H1=MOS_TAB_L,
                      MOS_P=MOS_HOLE_D, MOS_Q=MOS_HOLE_Y, LEAD_Z=MOS_LEAD_Z, LEAD_L=LEAD_L,

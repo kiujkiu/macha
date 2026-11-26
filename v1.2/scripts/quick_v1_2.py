@@ -19,10 +19,11 @@ sys.path.insert(0, str(HERE))
 
 # 1) build_v1_2 里直接有形体的件: 代号 → (build_v1_2 变量名, out/ 下的旧名或 None, out 打印姿态翻面?)
 B_PARTS = {
-    'base_disc_v1_2_gf': ('disc_print', 'base_disc_D220x5_v1_2_gf', False),   # 11-18 玻纤板方案 (旧 base_disc_v1_2 一体 6 厚冻结)
+    'base_disc_v1_2_gf': ('disc_print', 'base_disc_D220x5.5_v1_2_gf', False),   # 11-18 玻纤板方案 (旧 base_disc_v1_2 一体 6 厚冻结)
     'coil_ring_v1_2': ('ring', None, False),
     'flange_disc_v1_2': ('flange_disc', None, False),
     'mounting_flange_v1_2': ('mounting_flange', None, False),
+    'base_disc_v1_2_gf_old': ('disc_print', 'base_disc_D220x4.5_v1_2_gf_old', False),   # 11-25 控制板老位置 (配旧 FR4): BOARD_OLD=1 单独跑, 自动设
     'ir_clamp_v1_2': ('ir_clamp', None, False),   # 11-23 光电发射板压片 (定子盘底面, 2 颗 B 螺丝夹住)
     'hub_disc_v1_2': ('hub', 'hub_disc_v1_2', False),
     'rim_ring_v1_2_D170': ('rim', 'rim_ring_v1_2_D170', True),
@@ -60,6 +61,11 @@ if '--list' in sys.argv or not args:
 bad = [a for a in args if a not in B_PARTS and a not in S_PARTS]
 if bad: sys.exit(f'不认识的件: {bad}  (--list 看列表)')
 DRAW = '--no-draw' not in sys.argv
+if 'base_disc_v1_2_gf_old' in args:
+    import os
+    if len(args) > 1: sys.exit('base_disc_v1_2_gf_old 要单独跑 (几何按老位置建, 不能混写别的件)')
+    os.environ['BOARD_OLD'] = '1'
+elif __import__('os').environ.get('BOARD_OLD') == '1': sys.exit('BOARD_OLD=1 只能出 base_disc_v1_2_gf_old')
 
 T0 = time.time()
 def lap(msg): print(f'[{time.time() - T0:5.1f}s] {msg}', flush=True)
