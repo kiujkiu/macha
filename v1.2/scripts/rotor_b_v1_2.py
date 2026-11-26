@@ -220,8 +220,12 @@ LOCK_B_LOC = [(SHR_LOC_X, SHR_LOC_Y), (SHR_LOC_X, -SHR_LOC_Y)]
 SHR_LOCK_SET = {a: (LOCK_A_LOC if SP_TYPE[a] == 'a' else LOCK_B_LOC) for a in SP_ANG}
 # 屏幕螺丝 (A 件): 灯板铜螺柱 x=±78.88, 放 0° 用局部 (78.88, −4.89), 放 180° 用 (78.88, +4.49) ⇒ 孔 Φ3.4 腰形 中心 ±4.69 沿 y ±0.2 (两个孔都开, 同件), 底面沉孔 Φ7.6
 SP_SCR_X, SP_SCR_DY = LS.SO_X, abs(LS.ECC)
-SP_SCR_SL = LS.SO_YL                              # 腰形半长 0.2
-SP_SCR_CB_D = 7.2 + 2 * SP_SCR_SL                 # 7.6 (外缘 x82.68 破出件外边 1.48, 该处罩壁是两端竖缝)
+SP_SCR_SL = LS.SO_YL                              # 腰形半长 0.2 (11-26 起不再用腰形, 只留给旧引用)
+# 11-26 用户「为啥红色这里不是圆形」: 每个孔其实只在一个装配位用到 (y− 孔 = 放 0° 拧板B 下颗 y−4.89; y+ 孔 = 放 180° 拧板A 下颗, 局部 y+4.49),
+#   ⇒ 两孔改 Φ3.4 圆孔各对准自己那颗螺柱 (不再 ±4.69 腰形); 沉孔回到 Φ7.2
+SP_SCR_ROUND = True
+SP_SCR_LOC = [(LS.SO_PTS[0][0], LS.SO_PTS[0][1]), (-LS.SO_PTS[1][0], -LS.SO_PTS[1][1])] if SP_SCR_ROUND else [(SP_SCR_X, -SP_SCR_DY), (SP_SCR_X, SP_SCR_DY)]   # 局部: 放 0° 用 [0], 放 180° 用 [1]
+SP_SCR_CB_D = 7.2 if SP_SCR_ROUND else 7.2 + 2 * SP_SCR_SL   # 7.2 (外缘破出件外边, 该处罩壁是两端竖缝)
 SP_CB_H = 1.5                                     # 屏幕螺丝底面沉孔深 (超薄头 Φ7×1.2~1.5; 用户说 ≈2, 但 2 深时 M3×16 吃牙 2.8 / M3×18 尾顶上颗 ⇒ 1.5, 见 BAR_SCR_*)
 SP_CB_D = 7.2                                     # 兼容旧名
 # 法兰螺母 (同 fasteners_v1_2: 法兰 Φ7.6×1.0, 六角对边 5.9, 总高 3.7) 的窝 (参考 cap_clamp cap-c NUT_HEX_WELL: 六角窝 AF6.1 + 法兰窝 Φ8.2)
@@ -388,7 +392,7 @@ def _rot(p, a): c, s_ = math.cos(math.radians(a)), math.sin(math.radians(a)); re
 SHR_LOCK_PTS = sorted([_rot(p, a) for a in SP_ANG for p in SHR_LOCK_SET[a]], key=lambda p: math.atan2(p[1], p[0]) % (2 * math.pi))   # 世界 8 点
 SHR_LOCK_ANG = tuple(round(math.degrees(math.atan2(y, x)) % 360, 3) for x, y in SHR_LOCK_PTS)
 SHR_LOCK_R = {k: round(math.hypot(*L[0]), 3) for k, L in (('a', LOCK_A_LOC), ('b', LOCK_B_LOC))}   # a 68.20 / b 75.56
-SP_HOLES_LOC = dict(out=[pol(R_OUT, a) for a in SP_HOLE_A], scr=[(SP_SCR_X, SP_SCR_DY), (SP_SCR_X, -SP_SCR_DY)], lock_a=LOCK_A_LOC, lock_b=LOCK_B_LOC,
+SP_HOLES_LOC = dict(out=[pol(R_OUT, a) for a in SP_HOLE_A], scr=list(SP_SCR_LOC), lock_a=LOCK_A_LOC, lock_b=LOCK_B_LOC,
                     lock=LOCK_B_LOC)              # lock: 兼容旧名
 
 def _hexp(x, y, af, z0, z1, ang=0.0):
@@ -423,6 +427,15 @@ def out_nut_well(x, y):
     cb = fuse(cyl(x, y, SP_NUT_CB_D, OUT_NUT_Z[0], SP_Z1 + 1), xf(gbox(math.hypot(x, y), -SP_NUT_CB_D / 2, OUT_NUT_Z[0], SP_R1 + 2, SP_NUT_CB_D / 2, SP_Z1 + 1), rotz(a)))
     return fuse(cb, cyl(x, y, 3.4, SP_Z0 - 1, SP_Z1 + 1))
 
+SP_A_GUSSET = True                                # 11-26 端块↔主体 斜边三角补料
+def _xy_prism(pts, z0, z1):
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakePolygon, BRepBuilderAPI_MakeFace
+    from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism
+    pg = BRepBuilderAPI_MakePolygon()
+    for x, y in pts: pg.Add(gp_Pnt(x, y, z0))
+    pg.Close()
+    return BRepPrimAPI_MakePrism(BRepBuilderAPI_MakeFace(pg.Wire()).Face(), gp_Vec(0, 0, z1 - z0)).Shape()
+
 def screen_sup_local(kind):
     """kind 'a' = 屏幕支架件 (放 0°/180°), 'b' = 上下件 (放 90°/270°); 局部 = 放 0° 时的世界坐标"""
     clip = cyl(0, 0, 2 * SP_R1, SP_Z0 - 1, SP_Z1 + 1)
@@ -430,6 +443,7 @@ def screen_sup_local(kind):
         s = gbox(SP_A_X0, -SP_A_HY, SP_Z0, SP_X1, SP_A_HY, SP_Z1)
         if SP_A_STYLE == 'ear': s = fuse(s, gbox(SP_A_WING[0], -SP_A_HY, SP_Z0, SP_A_X0 + 0.01, SP_A_HY, SP_Z1))   # 11-23 用户「这里连上」: 两翼之间补满, 内边 x SP_A_WING[0] 一条直线 (原两翼 |y|≥22 分开)
         if SP_A_STYLE == 'rim': s = fuse(s, *[gbox(SP_A_WING[0], min(sy * SP_A_WING[1], sy * SP_A_HY), SP_Z0, SP_A_X0 + 0.01, max(sy * SP_A_WING[1], sy * SP_A_HY), SP_Z1) for sy in (1, -1)])   # 11-25 两端块
+        if SP_A_STYLE == 'rim' and SP_A_GUSSET: s = fuse(s, *[_xy_prism([(SP_A_WING[0], sy * SP_A_WING[1]), (SP_A_X0 + 0.01, sy * SP_A_WING[1]), (SP_A_X0 + 0.01, sy * SP_A_KEEP)], SP_Z0, SP_Z1) for sy in (1, -1)])   # 11-26 用户「蓝色这里连上」: 端块内角 (58.5, ±32) → 主体 (66, ±22) 斜边补三角, 全在 |y|≥22 满高段
         _kp = SP_A_BAR_KEEP if SP_A_STYLE == 'bar' else SP_A_KEEP
         _low = gbox(SP_A_WING[0] - 1, -SP_A_HY - 1, SP_Z0 + SP_A_LOW, SP_R1 + 2, SP_A_HY + 1, SP_Z1 + 1)
         _keep = [gbox(SP_A_WING[0] - 1, min(sy * _kp, sy * (SP_A_HY + 1)), SP_Z0, SP_R1 + 2, max(sy * _kp, sy * (SP_A_HY + 1)), SP_Z1 + 2) for sy in (1, -1)]   # 11-23 22:1x 两头整块 (|y|≥22, 含 S + N) 满高
@@ -440,7 +454,7 @@ def screen_sup_local(kind):
     s = _ocm(s, clip)
     cuts = [out_nut_well(x, y) if not (SP_A_TOP_FLAT if kind == 'a' else SP_B_TOP_FLAT) else cyl(x, y, 3.4, SP_Z0 - 1, SP_Z1 + 1) for x, y in SP_HOLES_LOC['out']] + [lock_nut_well(x, y) for x, y in locks]   # 11-23 B 件 N 只留 Φ3.4 通
     if kind == 'a':
-        cuts += [_slot(x, y, SP_Z0 - 1, SP_Z1 + 1) for x, y in SP_HOLES_LOC['scr']] + [cyl(x, y, SP_SCR_CB_D, SP_Z0 - 1, SP_Z0 + SP_CB_H) for x, y in SP_HOLES_LOC['scr']]
+        cuts += [(cyl(x, y, 3.4, SP_Z0 - 1, SP_Z1 + 1) if SP_SCR_ROUND else _slot(x, y, SP_Z0 - 1, SP_Z1 + 1)) for x, y in SP_HOLES_LOC['scr']] + [cyl(x, y, SP_SCR_CB_D, SP_Z0 - 1, SP_Z0 + SP_CB_H) for x, y in SP_HOLES_LOC['scr']]
     cuts += [gbox(x0, y0, SP_Z0 + SP_POCKET_FLOOR, x1, y1, SP_Z1 + 1) for x0, y0, x1, y1 in SP_POCKETS[kind]]
     if kind == 'b': cuts += rx_cuts()             # 11-23 底面接收板槽 + 线槽
     s = cut(s, *cuts)

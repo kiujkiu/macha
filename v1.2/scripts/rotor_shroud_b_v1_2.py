@@ -78,8 +78,12 @@ LS_TIP = LS_BEAR - LS_L                           # 62.08 = 螺母底
 LS_BOSS_D, LS_BOSS_H = 9.0, 1.5                   # 盖底圆凸台 (定位 + 加厚到 2)
 LS_SEAT_D, LS_SEAT_H = 9.3, 1.6                   # 环上凸台窝 (每边 0.15, 底 0.1)
 LS_NUT_Z = (LS_TIP, LS_TIP + RB.NUT_T)            # 62.08–65.78
-LS_PAD_Z0 = LS_TIP + RB.NUT_FL_H                  # 63.08 凸块底 (法兰贴这里)
-LS_HEX_AF, LS_HEX_Z1 = RB.WELL_AF_LOCK, LS_TIP + RB.NUT_T + 0.1   # 六角窝 AF6.0 到 Z65.88
+# 11-26 用户 (红框 L)「这个位置，用法兰盘螺母，就是通孔加沉孔那个，深度3.8mm的那个」: 六角窝 → 底面 Φ8 圆沉孔深 3.8 (同 sup_a S / SP_NUT_CB_D),
+#   螺母整颗进沉孔 (法兰齐凸块底); 凸块底下移 1 (63.08 → 62.08) 保持窝间壁 2.1, 螺母 / M3×8 位置不变; 圆孔螺母会跟转, 拧时扳手卡住
+LS_NUT_CB = True
+LS_CB_NUT_D, LS_CB_NUT_H = RB.SP_NUT_CB_D, 3.8   # Φ8 × 3.8
+LS_PAD_Z0 = LS_TIP if LS_NUT_CB else LS_TIP + RB.NUT_FL_H   # 62.08 凸块底 (原 63.08, 法兰贴这里)
+LS_HEX_AF, LS_HEX_Z1 = RB.WELL_AF_LOCK, (LS_PAD_Z0 + LS_CB_NUT_H) if LS_NUT_CB else LS_TIP + RB.NUT_T + 0.1   # 窝顶 Z65.88 (圆沉孔 / 原六角窝 AF6.0)
 LS_WEB = round(LID_Z0 - LS_SEAT_H - LS_HEX_Z1, 2) # 凸台窝底 ↔ 六角窝顶 2.1
 LIP_TRIM = 3.0                                    # 唇两端各收 3° (33 → 36°, 盖螺丝凸块 40±4.7° 接上), 免被 A 件起子孔 (30.9°) 啃出尖角
 LS_PAD_HW, LS_PAD_R0 = 6.3, 70.7                  # 凸块半宽 / 内端 r
@@ -95,6 +99,16 @@ def acc_cut(x, y, z0, z1):
 W_DROP = [a for a in W_CAND if not _wa_ok(a)]
 # 11-20 夜 两端竖缝收窄: 原 y RS.SLOT_Y0…SLOT_Y1 (−14.79…5.41, 让天线板) → 只让灯板 + 夹条端头 (两端 x±81.88 处 y −8.79…−0.59, 外角 r82.35 进罩壁) 各 0.4
 SLOT_Y0, SLOT_Y1 = -8.79 - 0.4, 0.0 + 0.35     # −9.19…+0.35 (跨分缝 y=ECC −4.69); 11-21 上边 −0.19 → +0.35: 灯板 A 两端 MIP 顶到 y0.0 (v2_boards 灯板, x80.4–81.88), 原缝边离它 0.12
+# 11-26 用户「两个罩子可以是一个造型吗」「侧环做成一个，顶盖不动」: 侧环竖缝改关于 y=0 对称 (±9.19), +y 环两端各切掉 y0.35–9.19 一条 ⇒ −y 环 = +y 环转 180° (同件 ×2);
+#   顶盖仍按 SLOT_Y0/SLOT_Y1 (两种); 天线槽被新缝吃掉 ⇒ LS.ANT_B_ANG rim 改 15.5/195.5
+RING_SYM = True
+# 11-26 用户「顶盖是不是只留安装的3个螺丝孔就够了，顶盖是嵌合到罩子会不会好一点」「改吧，按外裙做」:
+#   顶盖去掉配重孔 / 起子孔 (调平衡、拆罩先拆盖), 只留 3 盖螺丝 + 桥板让位槽; 盖外缘下垂外裙 R(R1−SK_T)…R1 高 SK_H−SK_CLR, 罩住环顶外半 (箍住两半侧环防离心外张, 接缝藏裙下)
+#   侧环顶外半削台阶 R(R1−SK_T−SK_CLR)…外 × 深 SK_H (径向单边 0.1, 裙底留 0.1)
+LID_HOLES = False                     # True = 恢复 11-25 顶盖配重孔 + 起子孔
+LID_SKIRT = True
+SK_T, SK_H, SK_CLR = 1.5, 2.0, 0.1
+RING_SLOT_Y = (SLOT_Y0, -SLOT_Y0) if RING_SYM else (SLOT_Y0, SLOT_Y1)
 # 11-20 夜 天线 FPC 18.5×37.7 改贴罩子内壁 (用户「贴到罩子吧」「罩子天然有这个侧立面」「这个天线是fpc的」), 定位浅槽 38.1×18.9×0.3, 长边沿 Z, 槽底 = 圆柱面 r82.3
 #   位置 (LS.ANT_B_ANG): 两端 0°/180° 附近罩壁被竖缝 + 罩耳 (板本地 y 15.5…24.5 接壁处 ±17.38°) 夹住只剩弧长 ~15 < 18.9 ⇒ 挪到 罩耳外侧 ~ 唇 (33°) 之间, 中心 25.2° (+y 半) / 205.2° (−y 半)
 # 11-21 A 件罩耳 (板本地 y 26…35, 接壁 18.5°…25.3°) 正好压在原天线位 25.2° ± 6.6° ⇒ 天线挪到 竖缝 (≈0°) 与 A 件罩耳之间: 中心 ANT_ANG_NEW
@@ -104,7 +118,7 @@ ANT_ANG = (ANT_ANG_NEW, ANT_ANG_NEW + 180.0)
 ANT_HA = math.degrees(LS.ANT_W / 2 / R0)         # 6.60° 半角 (弧长 18.9 @r82)
 ANT_Z0, ANT_Z1 = LS.ANT_B_ZC - LS.ANT_L / 2, LS.ANT_B_ZC + LS.ANT_L / 2   # 32.68–70.78 (顶离顶盖底 Z71.08 0.3)
 _EAR_A_IN = math.degrees(math.asin((RB.LOCK_A_LOC[0][1] - EAR_HW) / R0))     # A 件 +y 罩耳下边接壁角 18.5°
-_SLOT_A = math.degrees(math.atan2(SLOT_Y1, R0))                               # 竖缝上边 (y +0.35) ≈ 0.24°
+_SLOT_A = math.degrees(math.atan2(RING_SLOT_Y[1], R0))                               # 竖缝上边 (y +0.35) ≈ 0.24°
 ANT_MARGIN = dict(ear=round(_EAR_A_IN - (ANT_ANG[0] + ANT_HA), 2),          # 槽边 ↔ A 件罩耳 (度)
                   slot=round((ANT_ANG[0] - ANT_HA) - _SLOT_A, 2)) if RB.SP_A_STYLE in ('ear', 'rim') else \
              dict(ear=round((ANT_ANG[0] - ANT_HA) - math.degrees(math.asin((RB.LOCK_A_LOC[0][1] + EAR_HW) / R0)), 2),   # 11-24 直条: 天线在 A 罩耳上边之外
@@ -157,7 +171,7 @@ def ring_body_b():
     s = clean(s)
     for a in LS_ALL:
         x, y = LS_PTS[a]
-        s = cut(s, cyl(x, y, 3.4, LS_PAD_Z0 - 1, Z1 + 1), cyl(x, y, LS_SEAT_D, LID_Z0 - LS_SEAT_H, LID_Z0 + 0.01), RB._hexp(x, y, LS_HEX_AF, LS_PAD_Z0 - 1, LS_HEX_Z1, a))
+        s = cut(s, cyl(x, y, 3.4, LS_PAD_Z0 - 1, Z1 + 1), cyl(x, y, LS_SEAT_D, LID_Z0 - LS_SEAT_H, LID_Z0 + 0.01), cyl(x, y, LS_CB_NUT_D, LS_PAD_Z0 - 1, LS_HEX_Z1) if LS_NUT_CB else RB._hexp(x, y, LS_HEX_AF, LS_PAD_Z0 - 1, LS_HEX_Z1, a))
     for x, y in MNT_PTS:
         s = cut(s, cyl(x, y, 3.4, BOSS_Z0 - 1, BOSS_Z1 + 0.01), acc_cut(x, y, BOSS_Z1, Z1 + 1))
     for a in W_A:                     # 配重孔 (原顶盖螺丝位也改成配重孔; 11-20 按新锁点增删)
@@ -165,7 +179,8 @@ def ring_body_b():
         s = cut(s, cyl(x, y, 3.4, RS.LIP_Z0 - 1, Z1 + 1), cyl(x, y, RS.W_CB_D, RS.W_BEAR, Z1 + 1))
     for sx in (1, -1):                # 两端竖缝 (11-20 夜 天线板取消, 缝收窄到只让灯板/夹条端头)
         x0, x1 = (RS.SLOT_X0, R1 + 1) if sx > 0 else (-R1 - 1, -RS.SLOT_X0)
-        s = cut(s, gbox(x0, SLOT_Y0, Z0 - 1, x1, SLOT_Y1, Z1 + 1))
+        s = cut(s, gbox(x0, RING_SLOT_Y[0], Z0 - 1, x1, RING_SLOT_Y[1], Z1 + 1))
+    if LID_SKIRT: s = cut(s, B.ann(R1 - SK_T - SK_CLR, R1 + 1, LID_Z0 - SK_H, LID_Z0 + 1))   # 11-26 环顶外半台阶 (顶盖外裙落进来)
     for a in ANT_ANG:                 # 天线 FPC 定位浅槽 (罩内壁 r82 → r82.3, 弧长 ANT_W × 高 ANT_L, 槽底仍是圆柱面)
         s = cut(s, sector(R0 - 0.2, R0 + LS.ANT_REC, ANT_Z0, ANT_Z1, a - ANT_HA, a + ANT_HA))
     return clean(s)
@@ -201,15 +216,21 @@ def lid(k):
     s = fuse(lid_plain(k), edge)
     s = fuse(s, *[cyl(*LS_PTS[a], LS_BOSS_D, LID_Z0 - LS_BOSS_H, LID_Z0 + 0.5) for a in LS_ANG[k]])
     for a in LS_ANG[k]: s = cut(s, cyl(*LS_PTS[a], 3.4, LID_Z0 - 5, Z1 + 1), cyl(*LS_PTS[a], LS_CB_D, LS_BEAR, Z1 + 1))
-    for a in W_A:                     # 配重孔上方顶盖开孔 (配重螺丝从罩顶插)
+    if LID_SKIRT:                     # 11-26 外裙 (盖同侧半圆, 竖缝处随盖内边截止)
+        s = fuse(s, common(B.ann(R1 - SK_T, R1, LID_Z0 - SK_H + SK_CLR, LID_Z0 + 0.01), gbox(-100, yi, LID_Z0 - SK_H - 1, 100, 100, Z1) if sy > 0 else gbox(-100, -100, LID_Z0 - SK_H - 1, 100, yi, Z1)))
+    for a in (W_A if LID_HOLES else []):   # 配重孔上方顶盖开孔 (配重螺丝从罩顶插); 11-26 起默认不开
         x, y = pol(RS.W_R, a)
         if (y > SPLIT_Y) == (sy > 0): s = cut(s, cyl(x, y, RS.W_CB_D, LID_Z0 - 1, Z1 + 1))
-    for x, y in MNT_PTS:              # 起子孔穿顶盖
+    for x, y in (MNT_PTS if LID_HOLES else []):   # 起子孔穿顶盖; 11-26 起默认不开
         if (y > SPLIT_Y) == (sy > 0): s = cut(s, acc_cut(x, y, LID_Z0 - 3, Z1 + 1))
     return clean(s)
 
 
 shr_a, shr_b = half('a'), half('b')
+if RING_SYM:                          # 11-26 同件: 校核 −y 环 = +y 环转 180° (对称差 ≈0), 然后直接用转出来的, 保证两个文件逐位同形
+    _r = xf(shr_a, rotz(180)); RING_SYM_DIFF = round(vol(cut(_r, shr_b)) + vol(cut(shr_b, _r)), 3)
+    assert RING_SYM_DIFF < 0.5, RING_SYM_DIFF
+    shr_b = _r
 lid_a, lid_b = lid('a'), lid('b')
 PARTS4 = [('rotor_shroud_b_a_v1_2b', '转子罩 +y 侧环', shr_a, '#6FA8DC'), ('rotor_shroud_b_b_v1_2b', '转子罩 −y 侧环', shr_b, '#93C47D'),
           ('rotor_shroud_lid_a_v1_2b', '转子罩 +y 顶盖', lid_a, '#CFE2F3'), ('rotor_shroud_lid_b_v1_2b', '转子罩 −y 顶盖', lid_b, '#D9EAD3')]
