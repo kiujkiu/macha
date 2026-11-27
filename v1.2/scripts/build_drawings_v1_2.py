@@ -814,6 +814,14 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
             holes.append(dict(tag="T", pts=_H["scr"], spec=(f"屏幕螺丝 Φ3.4 圆孔 (各对准一颗螺柱, 不对称)" if RB.SP_SCR_ROUND else f"屏幕螺丝 Φ3.4 腰形 (沿 y 长 {F(3.4 + 2 * RB.SP_SCR_SL)})") + f" 通 + 底面 Φ{F(RB.SP_SCR_CB_D)}×{F(RB.SP_CB_H)} 沉孔 ×2 (沉孔外沿破出件外边)",
                               where=xy(_H["scr"]) + f"  放 0° 用 y−, 180° 用 y+; M3×{F(RB.BAR_SCR_L)} 超薄头 (支承 Z{F(RB.BAR_SCR_BEAR)}) 拧进灯板 F 面每端下颗铜螺柱, 吃 {F(RB.BAR_SCR_ENG)}, 尾离上颗 {F(round(RB.LS.SO_Z1 - RB.BAR_SCR_BEAR - RB.BAR_SCR_L, 2))}",
                               det=hole_det(sh, _H["scr"][0], "屏幕螺丝孔 T (底面沉孔, 件边破口)", W=5.0, z=(RB.SP_Z0, RB.SP_Z1))))
+        if not A and RB.RX_CONN == 'pads':   # 11-24 电阻让位坑加大加深 (接收板槽 + 坑 径向剖)
+            _bx = RB.RX_R_BOX; _pk = RB.RX_PCB_T + RB.RX_PCB_TOP_CLR
+            holes.append(dict(tag="R", pts=[((_bx[0] + _bx[2]) / 2, 0.0)], spec=f"底面接收板槽 {F(RB.RX_X1 - RB.RX_X0)}×{F(RB.RX_Y1 - RB.RX_Y0)} 深 {F(_pk)} + 电阻让位坑 切向宽 {F(_bx[3] - _bx[1])} 深 {F(_pk + RB.RX_R_DEEP)} (比槽底深 {F(RB.RX_R_DEEP)})",
+                              where=f"坑径向 穿线槽外边 x{F(RB.RX_HOLE['x1'] + RB.RX_HOLE['w'] / 2)} → 板槽外壁 x{F(_bx[2])}; 4 销 Φ{F(RB.RX_PIN_D)} 高 {F(RB.RX_PIN_H + RB.RX_PCB_TOP_CLR)}; 定子件 ir_clamp_b 同坑 (3 厚切片, 该处开通)",
+                              det=dict(kind="free", z=(RB.SP_Z0, RB.SP_Z1), pt=(74.1, 0.0), W=8.0, title="接收板槽 + 电阻让位坑 R (径向剖, 右 = 外)",
+                                       zd=[(RB.SP_Z0, RB.SP_Z0 + _pk, F(_pk), 0), (RB.SP_Z0 + _pk, RB.SP_Z0 + _pk + RB.RX_R_DEEP, F(RB.RX_R_DEEP), 0), (RB.SP_Z0 + _pk + RB.RX_R_DEEP, RB.SP_Z1, F(RB.SP_Z1 - RB.SP_Z0 - _pk - RB.RX_R_DEEP), 0), (RB.SP_Z0, RB.SP_Z1, F(RB.SP_T), 8)],
+                                       ud=[(RB.RX_HOLE['x0'] - RB.RX_HOLE['w'] / 2 - 74.1, RB.RX_HOLE['x1'] + RB.RX_HOLE['w'] / 2 - 74.1, F(RB.RX_HOLE['w']), 0),
+                                           (RB.RX_HOLE['x1'] + RB.RX_HOLE['w'] / 2 - 74.1, _bx[2] - 74.1, F(_bx[2] - RB.RX_HOLE['x1'] - RB.RX_HOLE['w'] / 2), 0), (RB.RX_X0 - 74.1, RB.RX_X1 - 74.1, F(RB.RX_X1 - RB.RX_X0), 5)])))
         return dict(
             code=f"screen_sup_{k}_v1_2b", shape=sh, stl_asm=True, date="2026-11-25" if A else "2026-11-21", qty="2", material="PETG",
             short=("屏幕支架件 A ×2 (0°/180° 同件, 托灯板)" if A else "上下件 B ×2 (90°/270° 同件)"),

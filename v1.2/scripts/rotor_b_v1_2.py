@@ -137,6 +137,7 @@ RX_YS = +1                                        # u → y 方向 (板对称, �
 RX_CU_EDGE = 0.2                                  # 铜 ↔ 板边
 RX_NPTH_EDGE, RX_NPTH_CU = 0.3, 0.25              # NPTH 孔边 ↔ 板边 / ↔ 铜 (r4 规则)
 RX_SP_DRILL = 0.5                                 # 焊盘金属化孔径
+RX_R_HY, RX_R_DEEP = 1.5, 1.5                      # 11-24 用户「给电阻留空的位置，大一点，深一点」(定子转子一样): 电阻让位坑 切向半宽 (原 0.775 ⇒ 宽 1.55→3.0, 离 Φ1.8 销 0.6) / 比板槽底深 (原 0.6); 径向外端开到板槽外壁 (原 79.0→79.3), 内端通穿线槽
 RX_WSLOT_W = 3.0                                  # 11-24 用户「这个口加大1.5倍」2.0 → 3.0; B 件长圆穿线槽宽 (径向); 长轴沿切向, 长 = 焊盘排 + 宽 (盖住 3 焊点; 离 Φ2 销 0.83)
 
 # ---------------- 玻纤板 (装配体, 与 models/fr4_plate_v1_2b/build.py 同参数) ----------------
@@ -303,8 +304,7 @@ if RX_CONN == 'pads':
     assert math.dist(RX_PT_XY, (OPT_R, 0.0)) < 1e-9
     RX_SP_PTS = [rx_uv2xy(u, v) for u, v in RX_SP_UV.values()]
     RX_LOC_PTS = [rx_uv2xy(u, v) for u, v in RX_LOC_UV.values()] if RX_LOC else []
-    RX_R_BOX = (RX_PT_XY[0] - RX_0603_EXT[1] / 2 - RX_CLR, RX_PT_XY[1] - RX_0603_EXT[0] / 2 - RX_CLR,
-                RX_PT_XY[0] + RX_0603_EXT[1] / 2 + RX_CLR, RX_PT_XY[1] + RX_0603_EXT[0] / 2 + RX_CLR)   # 47k 让位 (长轴沿 x)
+    RX_R_BOX = (RX_PT_XY[0] - RX_0603_EXT[1] / 2 - RX_CLR, RX_PT_XY[1] - RX_R_HY, RX_PCB_X1 + RX_PCB_CLR, RX_PT_XY[1] + RX_R_HY)   # 电阻让位 (长轴沿 x): x76.0 (在穿线槽内) … 板槽外壁 79.3, |y|≤RX_R_HY
     RX_R_X0, RX_R_X1 = RX_R_BOX[0], RX_R_BOX[2]
     RX_PAD_X0, RX_PAD_X1 = min(p[0] for p in RX_SP_PTS) - RX_SP_D / 2, max(p[0] for p in RX_SP_PTS) + RX_SP_D / 2
     RX_PCB_LOCAL = dict(外形_uv=(RX_PCB_U, RX_PCB_V), 光敏管_47k=RX_PT_UV, **{f'焊盘{n}': p for n, p in RX_SP_UV.items()}, **RX_LOC_UV,
@@ -369,7 +369,7 @@ def rx_cuts():
     if RX_CONN == 'pads':                         # 板外形浅槽 (压板顶) + 47k 让位 + 焊盘排焊点让位 + Φ3 穿线孔到件顶
         h = RX_HOLE
         return [gbox(RX_X0, RX_Y0, SP_Z0 - 1, RX_X1, RX_Y1, zb),
-                gbox(RX_R_BOX[0], RX_R_BOX[1], SP_Z0 - 1, RX_R_BOX[2], RX_R_BOX[3], RX_Z_PCB[1] + RX_R_H + 0.2),   # 47k (含焊点) 让位
+                gbox(RX_R_BOX[0], RX_R_BOX[1], SP_Z0 - 1, RX_R_BOX[2], RX_R_BOX[3], zb + RX_R_DEEP),   # 47k (含焊点) 让位; 定子件 3 厚切片 ⇒ 该处开通
                 *[cyl(x, y, RX_SP_D + 2 * RX_CLR, SP_Z0 - 1, RX_Z1) for x, y in RX_SP_PTS],     # 每个焊盘焊点让位
                 _slot_seg(h['x0'], h['y0'], h['x1'], h['y1'], RX_Z_PCB[1], SP_Z1 + 1, h['w'])]   # 长圆穿线槽 (焊盘排正上方, 长轴沿切向) 贯穿到件顶
     c = [gbox(RX_PCB_X0 - RX_CLR, -RX_PCB_W / 2 - RX_CLR, SP_Z0 - 1, RX_PCB_X1 + RX_CLR, RX_PCB_W / 2 + RX_CLR, zb),             # 板外形浅槽 (槽顶压板顶)
