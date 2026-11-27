@@ -75,8 +75,7 @@ GROUPS = {
         ('无线模块夹块 ×2 (同一件)', lambda: M.WH.H, '#FFD966', 'wireless_holder_v1_2', 2, 'P'),
         ('无线供电模块 (占位)', lambda: M.WH.module, '#3D85C6', None, 1, 'E'),
         ('V2 底板 (交付 STEP)', lambda: M.LS.bb_step, '#1E8449', None, 1, 'E'),
-        ('转子罩 +y 侧环', lambda: M.RSB.shr_a, '#A4C2F4', 'rotor_shroud_b_a_v1_2b', 1, 'P'),
-        ('转子罩 −y 侧环', lambda: M.RSB.shr_b, '#B6D7A8', 'rotor_shroud_b_b_v1_2b', 1, 'P'),
+        ('转子罩 侧环 (整圈)', lambda: M.RSB.shr_a, '#A4C2F4', 'rotor_shroud_b_a_v1_2b', 1, 'P'),   # 11-27 侧环整圈一件 (原 ±y 两半, −y 件 rotor_shroud_b_b_v1_2b 取消)
         ('转子罩 +y 顶盖', lambda: M.RSB.lid_a, '#CFE2F3', 'rotor_shroud_lid_a_v1_2b', 1, 'P'),   # 11-25 侧环 / 顶盖分开
         ('转子罩 −y 顶盖', lambda: M.RSB.lid_b, '#D9EAD3', 'rotor_shroud_lid_b_v1_2b', 1, 'P'),
     ]),

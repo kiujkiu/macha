@@ -275,8 +275,9 @@ for sy in (() if B.ROTOR_B else (1, -1)):   # 转子盘B 罩子沿灯板线分 2
 #    配重唇 M3×18 (24 孔, 按需装): 只放 1 个示例 (W_A[0]) + 唇下 1 颗锁紧螺母 (Z65.1..67.5)
 _wa = next(a for a in RS.W_A if a not in RS.LID_SCR_ALL)   # 第一个真正的配重孔 (盖螺丝占的 4 个除外)
 _wx, _wy = RS.pol(RS.W_R, _wa)
-screw(f"M3x{RS.W_L:g} 内六角 转子罩配重 (示例)", 0, _wx, _wy, RS.W_BEAR, RS.W_L, False, hd=5.5, hh=3.0, engage=("M3 螺母", RS.LIP_Z0 - RS.NUT_T, RS.LIP_Z0))
-add("M3 螺母 转子罩配重 (示例) #0", RS.hexnut_z(_wa, RS.W_R, RS.LIP_Z0 - RS.NUT_T, RS.LIP_Z0 - 0.01), "#707070")   # 平边朝罩壁
+if not B.ROTOR_B:   # 11-27 转子盘B 的配重示例在 RSB 段 (Φ8 沉孔 r77.6 + 唇下法兰螺母)
+  screw(f"M3x{RS.W_L:g} 内六角 转子罩配重 (示例)", 0, _wx, _wy, RS.W_BEAR, RS.W_L, False, hd=5.5, hh=3.0, engage=("M3 螺母", RS.LIP_Z0 - RS.NUT_T, RS.LIP_Z0))
+  add("M3 螺母 转子罩配重 (示例) #0", RS.hexnut_z(_wa, RS.W_R, RS.LIP_Z0 - RS.NUT_T, RS.LIP_Z0 - 0.01), "#707070")   # 平边朝罩壁
 #    顶盖 (11-16 晚: +y 盖 rotor_lid_v1_2 / −y 盖 rotor_lid_b_v1_2 两件不同): 每片 2×M3×8 内六角 (平底沉孔, 头顶齐盖顶 Z73.08) 穿盖凸块 + 配重唇, 唇下 M3 螺母
 #    LID_SCR_ALL = +y 片 LID_SCR_A (47.5/132.5°) + −y 片 (+180 = 227.5/312.5°)
 for i, (a, sh, nt) in enumerate([] if B.ROTOR_B else zip(RS.LID_SCR_ALL, RS.FAST['M3×8 内六角 (顶盖)'], RS.FAST['M3 螺母 (顶盖, 唇下)'])):
@@ -318,6 +319,9 @@ if B.ROTOR_B:
         x, y = RSB.LS_PTS[a]
         screw(f"M3x{RSB.LS_L:g} 超薄头 转子罩顶盖→侧环", i, x, y, RSB.LS_BEAR, RSB.LS_L, False, hd=7.0, hh=1.5, engage=("M3 法兰螺母", *RSB.LS_NUT_Z))
         add(f"M3 法兰螺母 转子罩侧环凸块底 (法兰朝下) 顶盖 #{i}", _nut_at(flange_nut, x, y, RSB.LS_NUT_Z[0]), "#707070")
+    _wx, _wy = RSB.pol(RSB.W_R_B, RSB.W_A[0])   # 11-27 配重示例: M3×16 内六角从环顶 Φ8 沉孔往下, 唇底 M3 法兰螺母 (法兰朝上贴唇底)
+    screw(f"M3x{RSB.RS.W_L:g} 内六角 转子罩配重 (示例)", 0, _wx, _wy, RSB.RS.W_BEAR, RSB.RS.W_L, False, hd=5.5, hh=3.0, engage=("M3 法兰螺母", *RSB.W_NUT_Z))
+    add("M3 法兰螺母 转子罩配重唇底 (法兰朝上) (示例) #0", flange_nut_inv(_wx, _wy, RSB.W_NUT_Z[0]), "#707070")
     for i, (x, y) in enumerate(RB.BAR_SCR_PTS):   # 屏幕螺丝: 超薄头从 A 件底 Φ7.6×1.5 沉孔 (支承 Z32) 穿 A 件 → 中缝, 拧进灯板 F 面开窗焊的六角铜螺柱 (每端下颗)
         screw(f"M3x{RB.BAR_SCR_L:g} 超薄头 屏幕支撑件→灯板铜螺柱", i, x, y, RB.BAR_SCR_BEAR, RB.BAR_SCR_L, True, engage=("M3 六角铜螺柱", L.SO_Z0, L.SO_Z1))
     for n_, sh_ in L.SO:                          # 灯板 F 面开窗焊的 M3 六角铜螺柱 (对边 4.6 长 5, 横躺) ×8: 下部+中部开窗, 每端板A/板B 各 1 颗上下错开; 螺丝拧每端下颗
@@ -360,6 +364,7 @@ if __name__ == '__main__' or _os_f.environ.get('FASTENERS_REPORT'):
     if B.ROTOR_B:   # 11-18 转子盘B
         for _k in ("灯板立板+x", "灯板立板-x", "转子毂盘", "承载盘", "转子罩a", "转子罩b", "转子罩顶盖+y", "转子罩顶盖-y"): PARTS.pop(_k)
         PARTS.update({"玻纤板": RB.fr4, "承载盘B": RB.rim, **{n: sh for n, sh, _ in RB.SCREEN_PARTS}, "转子罩B+y": RSB.shr_a, "转子罩B-y": RSB.shr_b, "转子罩顶盖B+y": RSB.lid_a, "转子罩顶盖B-y": RSB.lid_b})
+        if RSB.shr_b is None: PARTS.pop("转子罩B-y")   # 11-27 侧环整圈一件
     for i, p in enumerate(B.posts):
         PARTS[f"立柱{i}"] = p
     PB = {k: bbox(v) for k, v in PARTS.items()}

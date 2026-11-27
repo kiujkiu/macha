@@ -88,9 +88,17 @@ LS_WEB = round(LID_Z0 - LS_SEAT_H - LS_HEX_Z1, 2) # 凸台窝底 ↔ 六角窝�
 LIP_TRIM = 3.0                                    # 唇两端各收 3° (33 → 36°, 盖螺丝凸块 40±4.7° 接上), 免被 A 件起子孔 (30.9°) 啃出尖角
 LS_PAD_HW, LS_PAD_R0 = 6.3, 70.7                  # 凸块半宽 / 内端 r
 assert LS_WEB >= 2.0 and LS_R + LS_CB_D / 2 <= R0 - 0.5
+# 11-27 用户「罩子配重的螺丝是从上往下锁吧，这个沉孔直径应该是螺丝头的8mm吧」「下边应该锁法兰螺母吧m3的，现在距离也不够」:
+#   沉孔 Φ5.8 → Φ8 (深不变 3.2, 头在盖底下); 唇下改挂 M3 法兰螺母 (法兰 Φ7.6): 原 r79 时法兰外沿 r82.8 顶进罩壁 ⇒ 孔圈内移到 W_R_B, 法兰离罩壁内面 0.6;
+#   唇内沿 RS.LIP_R0 r76 → LIP_R0_B (Φ8 沉孔内沿外再留 1.1)
+W_NEW = True
+W_CB_D_B = 8.0 if W_NEW else RS.W_CB_D
+W_R_B = round(R0 - RB.NUT_FL_D / 2 - 0.6, 2) if W_NEW else RS.W_R      # 77.6
+LIP_R0_B = round(W_R_B - W_CB_D_B / 2 - 1.1, 2) if W_NEW else RS.LIP_R0  # 72.5
+W_NUT_Z = (RS.LIP_Z0 - RB.NUT_T, RS.LIP_Z0)                             # 法兰朝上贴唇底
 def _wa_ok(a):
-    p0 = pol(RS.W_R, a)
-    return all(math.dist(p0, p) >= (ACC_D + RS.W_CB_D) / 2 + 1.0 for p in MNT_PTS) and all(math.dist(p0, p) >= LS_PAD_HW + RS.W_CB_D / 2 + 0.8 for p in LS_PTS.values())
+    p0 = pol(W_R_B, a)
+    return all(math.dist(p0, p) >= (ACC_D + W_CB_D_B) / 2 + 1.0 for p in MNT_PTS) and all(math.dist(p0, p) >= LS_PAD_HW + W_CB_D_B / 2 + 0.8 for p in LS_PTS.values())
 W_CAND = sorted(set(RS.W_A) | {40.0, 140.0, 220.0, 320.0})
 W_A = sorted(a for a in W_CAND if _wa_ok(a))
 def acc_cut(x, y, z0, z1):
@@ -106,8 +114,13 @@ RING_SYM = True
 #   顶盖去掉配重孔 / 起子孔 (调平衡、拆罩先拆盖), 只留 3 盖螺丝 + 桥板让位槽; 盖外缘下垂外裙 R(R1−SK_T)…R1 高 SK_H−SK_CLR, 罩住环顶外半 (箍住两半侧环防离心外张, 接缝藏裙下)
 #   侧环顶外半削台阶 R(R1−SK_T−SK_CLR)…外 × 深 SK_H (径向单边 0.1, 裙底留 0.1)
 LID_HOLES = False                     # True = 恢复 11-25 顶盖配重孔 + 起子孔
-LID_SKIRT = True
+LID_SKIRT = False                     # 11-27 用户「盖子和罩子不嵌合也行」(外裙打印边缘差) ⇒ 取消外裙/台阶, 盖平放在环顶
 SK_T, SK_H, SK_CLR = 1.5, 2.0, 0.1
+# 11-27 用户「这个圆形的罩子现在不是一个圆，是不是可以闭合了」: 侧环做成整圈一件 (RING_ONE), 两端竖缝 → 罩壁内面浅槽 (只让灯板/夹条端头, 外角 r82.35 + 0.4),
+#   槽 y SLOT_Y0…SLOT_Y1 全高, 槽底 r GROOVE_R, 外面剩壁 R1−GROOVE_R; 整圈从上往下套 (槽通到环顶), shr_b = None
+RING_ONE = True
+GROOVE_R = 82.75
+if RING_ONE: RING_SYM = False
 RING_SLOT_Y = (SLOT_Y0, -SLOT_Y0) if RING_SYM else (SLOT_Y0, SLOT_Y1)
 # 11-20 夜 天线 FPC 18.5×37.7 改贴罩子内壁 (用户「贴到罩子吧」「罩子天然有这个侧立面」「这个天线是fpc的」), 定位浅槽 38.1×18.9×0.3, 长边沿 Z, 槽底 = 圆柱面 r82.3
 #   位置 (LS.ANT_B_ANG): 两端 0°/180° 附近罩壁被竖缝 + 罩耳 (板本地 y 15.5…24.5 接壁处 ±17.38°) 夹住只剩弧长 ~15 < 18.9 ⇒ 挪到 罩耳外侧 ~ 唇 (33°) 之间, 中心 25.2° (+y 半) / 205.2° (−y 半)
@@ -156,7 +169,7 @@ def bb_notch():
 
 def ring_body_b():
     s = B.ann(R0, R1, Z0, Z1)
-    for a0, a1 in RS.LIP_ARCS: s = fuse(s, sector(RS.LIP_R0, R0 + 0.5, RS.LIP_Z0, RS.LID_Z0, a0 + LIP_TRIM, a1 - LIP_TRIM))
+    for a0, a1 in RS.LIP_ARCS: s = fuse(s, sector(LIP_R0_B, R0 + 0.5, RS.LIP_Z0, RS.LID_Z0, a0 + LIP_TRIM, a1 - LIP_TRIM))
     clip = cyl(0, 0, 2 * (R0 + 0.5), BOSS_Z0 - 1, Z1 + 1)
     for a in RB.SP_ANG:               # 耳坐支撑件顶 (局部沿 x 的长条: 锁点内侧 EAR_IN → 罩壁, 宽 9, 耳顶平) + 45° 斜撑 (从锁点外 GUSSET_X0 起) 接罩壁
         for lx, ly in RB.SHR_LOCK_SET[a]:
@@ -175,11 +188,12 @@ def ring_body_b():
     for x, y in MNT_PTS:
         s = cut(s, cyl(x, y, 3.4, BOSS_Z0 - 1, BOSS_Z1 + 0.01), acc_cut(x, y, BOSS_Z1, Z1 + 1))
     for a in W_A:                     # 配重孔 (原顶盖螺丝位也改成配重孔; 11-20 按新锁点增删)
-        x, y = pol(RS.W_R, a)
-        s = cut(s, cyl(x, y, 3.4, RS.LIP_Z0 - 1, Z1 + 1), cyl(x, y, RS.W_CB_D, RS.W_BEAR, Z1 + 1))
-    for sx in (1, -1):                # 两端竖缝 (11-20 夜 天线板取消, 缝收窄到只让灯板/夹条端头)
+        x, y = pol(W_R_B, a)
+        s = cut(s, cyl(x, y, 3.4, RS.LIP_Z0 - 1, Z1 + 1), cyl(x, y, W_CB_D_B, RS.W_BEAR, Z1 + 1))
+    for sx in (1, -1):                # 两端竖缝 (11-20 夜 天线板取消, 缝收窄到只让灯板/夹条端头); 11-27 整圈: 只切到 GROOVE_R 的内面槽
         x0, x1 = (RS.SLOT_X0, R1 + 1) if sx > 0 else (-R1 - 1, -RS.SLOT_X0)
-        s = cut(s, gbox(x0, RING_SLOT_Y[0], Z0 - 1, x1, RING_SLOT_Y[1], Z1 + 1))
+        g = gbox(x0, RING_SLOT_Y[0], Z0 - 1, x1, RING_SLOT_Y[1], Z1 + 1)
+        s = cut(s, common(g, cyl(0, 0, 2 * GROOVE_R, Z0 - 2, Z1 + 2)) if RING_ONE else g)
     if LID_SKIRT: s = cut(s, B.ann(R1 - SK_T - SK_CLR, R1 + 1, LID_Z0 - SK_H, LID_Z0 + 1))   # 11-26 环顶外半台阶 (顶盖外裙落进来)
     for a in ANT_ANG:                 # 天线 FPC 定位浅槽 (罩内壁 r82 → r82.3, 弧长 ANT_W × 高 ANT_L, 槽底仍是圆柱面)
         s = cut(s, sector(R0 - 0.2, R0 + LS.ANT_REC, ANT_Z0, ANT_Z1, a - ANT_HA, a + ANT_HA))
@@ -226,13 +240,16 @@ def lid(k):
     return clean(s)
 
 
-shr_a, shr_b = half('a'), half('b')
+if RING_ONE:
+    shr_a, shr_b = clean(common(ring_body_b(), gbox(-100, -100, Z0 - 1, 100, 100, LID_Z0))), None
+else:
+    shr_a, shr_b = half('a'), half('b')
 if RING_SYM:                          # 11-26 同件: 校核 −y 环 = +y 环转 180° (对称差 ≈0), 然后直接用转出来的, 保证两个文件逐位同形
     _r = xf(shr_a, rotz(180)); RING_SYM_DIFF = round(vol(cut(_r, shr_b)) + vol(cut(shr_b, _r)), 3)
     assert RING_SYM_DIFF < 0.5, RING_SYM_DIFF
     shr_b = _r
 lid_a, lid_b = lid('a'), lid('b')
-PARTS4 = [('rotor_shroud_b_a_v1_2b', '转子罩 +y 侧环', shr_a, '#6FA8DC'), ('rotor_shroud_b_b_v1_2b', '转子罩 −y 侧环', shr_b, '#93C47D'),
+PARTS4 = [('rotor_shroud_b_a_v1_2b', '转子罩 侧环 (整圈)' if RING_ONE else '转子罩 +y 侧环', shr_a, '#6FA8DC')] + ([] if RING_ONE else [('rotor_shroud_b_b_v1_2b', '转子罩 −y 侧环', shr_b, '#93C47D')]) + [
           ('rotor_shroud_lid_a_v1_2b', '转子罩 +y 顶盖', lid_a, '#CFE2F3'), ('rotor_shroud_lid_b_v1_2b', '转子罩 −y 顶盖', lid_b, '#D9EAD3')]
 
 def balance():
@@ -241,6 +258,7 @@ def balance():
     from OCP.BRepGProp import BRepGProp
     out = {}; tx = ty = 0.0
     for k, sh in (('a', shr_a), ('b', shr_b), ('lid_a', lid_a), ('lid_b', lid_b)):
+        if sh is None: continue
         g = GProp_GProps(); BRepGProp.VolumeProperties_s(sh, g); c = g.CentreOfMass(); m = g.Mass() * 1.24e-3
         out[k] = dict(m=round(m, 2), cx=round(c.X(), 3), cy=round(c.Y(), 3), Ux=round(m * c.X(), 1), Uy=round(m * c.Y(), 1)); tx += m * c.X(); ty += m * c.Y()
     out['U'] = dict(x=round(tx, 1), y=round(ty, 1), abs=round(math.hypot(tx, ty), 1))
@@ -249,7 +267,7 @@ def balance():
 
 def report():
     _fpc = RB.load_fpc()
-    _P = dict(a=shr_a, b=shr_b, lid_a=lid_a, lid_b=lid_b)
+    _P = {k: v for k, v in dict(a=shr_a, b=shr_b, lid_a=lid_a, lid_b=lid_b).items() if v is not None}
     rep = dict(vol={k: round(vol(v), 1) for k, v in _P.items()}, mass_g={k: round(vol(v) * 1.24e-3, 1) for k, v in _P.items()},
                valid={k: BRepCheck_Analyzer(v).IsValid() for k, v in _P.items()}, solids={k: len(solids(v)) for k, v in _P.items()},
                lid=dict(scr=f'M3×{LS_L:g} 超薄头 r{LS_R:g}', ang=LS_ALL, bear=LS_BEAR, tip=LS_TIP, nut_z=LS_NUT_Z, web=LS_WEB),
@@ -260,7 +278,9 @@ def report():
                   灯板=RB.VB['led'], 夹条=LS.bar_s, 顶部件=LS.top, 无线托盘=RB.WH.H, FPC_A=_fpc['fpc_a_v1_2'], FPC_B=_fpc['fpc_b_v1_2'],
                   桥板A=_fpc['bridge_a_v1_2'], 桥板B=_fpc['bridge_b_v1_2'], FPC座=_fpc['bb_fpc_seats_v1_2'], 天线a=ant_new_a, 天线b=ant_new_b)
     inter = {}
-    for n1, s1 in (('环A(+y)', shr_a), ('环B(-y)', shr_b), ('盖A(+y)', lid_a), ('盖B(-y)', lid_b)):
+    w_nuts = [cyl(*pol(W_R_B, a), RB.NUT_FL_D, *W_NUT_Z) for a in W_A]   # 11-27 唇下法兰螺母 (包络 Φ7.6)
+    for n1, s1 in (('环A(+y)', shr_a), ('环B(-y)', shr_b), ('盖A(+y)', lid_a), ('盖B(-y)', lid_b), *[(f'配重螺母{a:g}°', n) for a, n in zip(W_A, w_nuts)]):
+        if s1 is None: continue
         for n2, s2 in others.items():
             v = common_v(s1, s2)
             if v > 1e-3: inter[f'{n1} × {n2}'] = round(v, 3)

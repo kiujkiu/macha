@@ -844,15 +844,17 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
         def _shrb_spec(k):
             sy = 1 if k == "a" else -1
             sh = RSB.shr_a if k == "a" else RSB.shr_b
-            side = "+y" if sy > 0 else "−y"
-            mp = [p for p in RSB.MNT_PTS if (p[1] > RSB.SPLIT_Y) == (sy > 0)]
-            wp = [RSB.pol(RSB.RS.W_R, a) for a in RSB.W_A if (RSB.pol(RSB.RS.W_R, a)[1] > RSB.SPLIT_Y) == (sy > 0)]
-            ls = [RSB.LS_PTS[a] for a in RSB.LS_ANG[k]]
-            a0 = [a for a, p in zip(RSB.MNT_A, RSB.MNT_PTS) if (p[1] > RSB.SPLIT_Y) == (sy > 0)][0]
+            one = RSB.RING_ONE
+            side = "整圈" if one else ("+y" if sy > 0 else "−y")
+            _in = lambda p: one or (p[1] > RSB.SPLIT_Y) == (sy > 0)
+            mp = [p for p in RSB.MNT_PTS if _in(p)]
+            wp = [RSB.pol(RSB.W_R_B, a) for a in RSB.W_A if _in(RSB.pol(RSB.W_R_B, a))]
+            ls = [RSB.LS_PTS[a] for a in (RSB.LS_ALL if one else RSB.LS_ANG[k])]
+            a0 = [a for a, p in zip(RSB.MNT_A, RSB.MNT_PTS) if _in(p)][0]
             return dict(
-                code=f"rotor_shroud_b_{k}_v1_2b", shape=sh, stl_asm=True, date="2026-11-26" if RSB.RING_SYM else "2026-11-25", qty="2 (两半同件)" if RSB.RING_SYM else "1", material="PETG (建议) / PLA",
+                code=f"rotor_shroud_b_{k}_v1_2b", shape=sh, stl_asm=True, date="2026-11-27" if one else ("2026-11-26" if RSB.RING_SYM else "2026-11-25"), qty="1" if one else ("2 (两半同件)" if RSB.RING_SYM else "1"), material="PETG (建议) / PLA",
                 short=f"转子罩 {side} 侧环 (不含顶盖, 转子盘B)" + (" — 两半同件, 打 2 个" if RSB.RING_SYM else ""),
-                title=f"转子盘B 转子罩 {side} 侧环: 罩壁 R{F(RSB.R0)}–{F(RSB.R1)} Z{F(RSB.Z0)}–{F(RSB.LID_Z0)} + 配重唇 + 盖螺丝凸块 ×3; 顶盖另件",
+                title=f"转子盘B 转子罩 {side} 侧环: 罩壁 R{F(RSB.R0)}–{F(RSB.R1)} Z{F(RSB.Z0)}–{F(RSB.LID_Z0)} + 配重唇 + 盖螺丝凸块 ×{len(ls)}; 顶盖另件",
                 subtitle=f"罩底 {len(mp)} 个耳朵 (宽 {F(RSB.BOSS_W)}) 坐屏幕支撑件顶 Z{F(RSB.BOSS_Z0)}–{F(RSB.BOSS_Z1)}, DIN912 M3×{F(RSB.MNT_L)} 从耳顶往下; 罩壁平底坐承载盘顶 Z{F(RSB.Z0)}",
                 orient=f"倒放: 环顶 (Z{F(RSB.LID_Z0)}) 整面贴床, 凸台斜撑 45° 免支撑",
                 sec=dict(ang=a0, r0=60.0, auto_dims=False,
@@ -865,14 +867,15 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
                             det=dict(hole_det(sh, ls[0], "盖螺丝凸块 L", W=8.0, z=(RSB.LS_PAD_Z0 - 2, RSB.LID_Z0)),
                                      zd=[(RSB.LS_PAD_Z0, RSB.LS_HEX_Z1, F(round(RSB.LS_HEX_Z1 - RSB.LS_PAD_Z0, 2)), 0), (RSB.LS_HEX_Z1, RSB.LID_Z0 - RSB.LS_SEAT_H, F(RSB.LS_WEB), 0),
                                          (RSB.LID_Z0 - RSB.LS_SEAT_H, RSB.LID_Z0, F(RSB.LS_SEAT_H), 0), (RSB.LS_PAD_Z0, RSB.LID_Z0, F(round(RSB.LID_Z0 - RSB.LS_PAD_Z0, 2)), 8)])),
-                       dict(tag="W", pts=wp, spec=f"配重孔 Φ3.4 + Φ{F(RSB.RS.W_CB_D)} 沉孔 (到唇 Z{F(RSB.RS.W_BEAR)})",
-                            where=f"r{F(RSB.RS.W_R)} ×{len(wp)}  M3×{F(RSB.RS.W_L)} 从盖顶插, 唇下挂 M3 螺母配重 (最多 {RSB.RS.W_NUT_MAX} 颗)")],
+                       dict(tag="W", pts=wp, spec=f"配重孔 Φ3.4 + 顶面 Φ{F(RSB.W_CB_D_B)} 沉孔深 {F(RSB.RS.W_CB_H)} (到唇 Z{F(RSB.RS.W_BEAR)})",
+                            where=f"r{F(RSB.W_R_B)} ×{len(wp)}  M3×{F(RSB.RS.W_L)} 从环顶往下 (装盖前), 唇底 Z{F(RSB.RS.LIP_Z0)} 拧 M3 法兰螺母 (法兰 Φ{F(RB.NUT_FL_D)} 离罩壁 {F(round(RSB.R0 - RSB.W_R_B - RB.NUT_FL_D / 2, 2))}), 配重垫片夹在螺母下")],
                 notes=[f"11-25 用户「侧面环形和上面盖子能分开装吗」: 顶盖拆成另件 rotor_shroud_lid_{k}_v1_2b, 调试只拆盖",
                        f"耳坐支撑件顶: A 件本地 ({F(RB.LOCK_A_LOC[0][0])}, ±{F(RB.LOCK_A_LOC[0][1])}) / B 件 ({F(RB.SHR_LOC_X)}, ±{F(RB.SHR_LOC_Y)}); 世界角 " + "/".join(F(round(a, 2)) for a in RSB.MNT_A) + "°",
                        f"耳 = 支撑件局部沿 x 长条 (锁点内 {F(RSB.EAR_IN)} → 罩壁, 宽 {F(RSB.BOSS_W)}, 厚 {F(RSB.BOSS_T)}), 上面 45° 斜撑从锁点外 {F(RSB.GUSSET_X0)} 起接罩壁; 耳底平 (11-25 无螺母让位口)",
-                       "配重孔避让起子孔 / 盖螺丝: 取消 " + ("/".join(F(a) for a in RSB.W_DROP) or "无") + f"°, 现 {len(RSB.W_A)} 个 (两半合计)",
+                       *([f"11-27 配重孔圈 r{F(RSB.RS.W_R)} → {F(RSB.W_R_B)}, 沉孔 Φ{F(RSB.RS.W_CB_D)} → {F(RSB.W_CB_D_B)}, 唇内沿 r{F(RSB.RS.LIP_R0)} → {F(RSB.LIP_R0_B)} (唇下法兰螺母不顶罩壁)"] if RSB.W_NEW else []),
+                       "配重孔避让起子孔 / 盖螺丝: 取消 " + ("/".join(F(a) for a in RSB.W_DROP) or "无") + f"°, 现 {len(RSB.W_A)} 个" + ("" if one else " (两半合计)"),
                        f"各层高度: 罩壁底 Z{F(RSB.Z0)} (坐承载盘) / 耳 Z{F(RSB.BOSS_Z0)}–{F(RSB.BOSS_Z1)} / 配重唇 Z{F(RSB.RS.LIP_Z0)}–{F(RSB.LID_Z0)}; 环顶 Z{F(RSB.LID_Z0)} 全平",
-                       (f"11-26 两端竖缝 y{F(RSB.RING_SLOT_Y[0])}…{F(RSB.RING_SLOT_Y[1])} 关于 y=0 对称 → 两半侧环同件 (转 180°); 灯板/夹条只占 y{F(RSB.SLOT_Y0)}…{F(RSB.SLOT_Y1)}, +y 侧多出的缝由顶盖盖住顶面" if RSB.RING_SYM else f"两端竖缝 y{F(RSB.SLOT_Y0)}…{F(RSB.SLOT_Y1)} (灯板/夹条端头) 就是两半之间的缝"),
+                       (f"11-27 整圈一件: 两端只在罩壁内面开浅槽 y{F(RSB.SLOT_Y0)}…{F(RSB.SLOT_Y1)} 全高, 槽底 r{F(RSB.GROOVE_R)} (灯板/夹条端头外角 r82.35 + 0.4), 外面剩壁 {F(round(RSB.R1 - RSB.GROOVE_R, 2))}; 整圈从上往下套" if one else f"11-26 两端竖缝 y{F(RSB.RING_SLOT_Y[0])}…{F(RSB.RING_SLOT_Y[1])} 关于 y=0 对称 → 两半侧环同件 (转 180°); 灯板/夹条只占 y{F(RSB.SLOT_Y0)}…{F(RSB.SLOT_Y1)}, +y 侧多出的缝由顶盖盖住顶面" if RSB.RING_SYM else f"两端竖缝 y{F(RSB.SLOT_Y0)}…{F(RSB.SLOT_Y1)} (灯板/夹条端头) 就是两半之间的缝"),
                        f"天线 FPC 18.5×37.7 贴本件内壁: 定位浅槽 {F(RB.LS.ANT_L)}×{F(RB.LS.ANT_W)}×{F(RB.LS.ANT_REC)} @" + "/".join(F(a) for a in RSB.ANT_ANG) + f"° Z{F(round(RSB.ANT_Z0, 2))}–{F(round(RSB.ANT_Z1, 2))}",
                        f"装配: 桌上先塞 3 颗盖螺母 → 竖直下放 → 罩锁 DIN912 (起子 ≤Φ6) → 盖上顶盖",
                        *([f"11-26 环顶外半台阶: R{F(RSB.R1 - RSB.SK_T - RSB.SK_CLR)}–{F(RSB.R1)} 深 {F(RSB.SK_H)} (顶盖外裙落进来), 顶部罩壁剩 {F(round(RSB.R1 - RSB.SK_T - RSB.SK_CLR - RSB.R0, 2))}"] if RSB.LID_SKIRT else [])])
@@ -881,14 +884,14 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
             sh = RSB.lid_a if k == "a" else RSB.lid_b
             side = "+y" if sy > 0 else "−y"
             mp = [p for p in RSB.MNT_PTS if (p[1] > RSB.SPLIT_Y) == (sy > 0)]
-            wp = [RSB.pol(RSB.RS.W_R, a) for a in RSB.W_A if (RSB.pol(RSB.RS.W_R, a)[1] > RSB.SPLIT_Y) == (sy > 0)]
+            wp = [RSB.pol(RSB.W_R_B, a) for a in RSB.W_A if (RSB.pol(RSB.W_R_B, a)[1] > RSB.SPLIT_Y) == (sy > 0)]
             ls = [RSB.LS_PTS[a] for a in RSB.LS_ANG[k]]
             _zb = RSB.LID_Z0 - RSB.LS_BOSS_H
             return dict(
-                code=f"rotor_shroud_lid_{k}_v1_2b", shape=sh, stl_asm=True, date="2026-11-26" if RSB.LID_SKIRT else "2026-11-25", qty="1", material="PETG (建议) / PLA",
+                code=f"rotor_shroud_lid_{k}_v1_2b", shape=sh, stl_asm=True, date="2026-11-27", qty="1", material="PETG (建议) / PLA",
                 short=f"转子罩 {side} 顶盖 (转子盘B)",
                 title=f"转子盘B 转子罩 {side} 顶盖: 外圆 R{F(RSB.R1)} 厚 {F(RSB.LID_T)} (Z{F(RSB.LID_Z0)}–{F(RSB.Z1)}), 底面 3 个定位圆凸台 Φ{F(RSB.LS_BOSS_D)}×{F(RSB.LS_BOSS_H)}",
-                subtitle=f"盖在侧环 rotor_shroud_b_{k}_v1_2b 的罩壁顶 + 配重唇上; 3×M3×{F(RSB.LS_L)} 超薄头从上往下, 头沉盖面",
+                subtitle=f"盖在侧环 rotor_shroud_b_{'a' if RSB.RING_ONE else k}_v1_2b 的罩壁顶 + 配重唇上; 3×M3×{F(RSB.LS_L)} 超薄头从上往下, 头沉盖面",
                 orient=f"翻面: 顶面 (Z{F(RSB.Z1)}) 贴床, 凸台朝上, 免支撑",
                 sec=dict(ang=RSB.LS_ANG[k][1], r0=60.0, auto_dims=False,
                          zd=[(_zb, RSB.LID_Z0), (RSB.LID_Z0, RSB.Z1), (_zb, RSB.LS_BEAR), (RSB.LS_BEAR, RSB.Z1)], rd=[]),
@@ -897,14 +900,15 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
                             det=dict(hole_det(sh, ls[0], "盖螺丝孔 L", W=7.0, z=(_zb, RSB.Z1)),
                                      zd=[(_zb, RSB.LS_BEAR, F(round(RSB.LS_BEAR - _zb, 2)), 0), (RSB.LS_BEAR, RSB.Z1, F(RSB.LS_CB_H), 0), (_zb, RSB.Z1, F(round(RSB.Z1 - _zb, 2)), 8)])),
                        *([dict(tag="M", pts=mp, spec=f"起子孔 Φ{F(RSB.ACC_D)} 通 (罩锁 DIN912)", where=ring_txt(mp)),
-                          dict(tag="W", pts=wp, spec=f"配重孔 Φ{F(RSB.RS.W_CB_D)} 通", where=f"r{F(RSB.RS.W_R)} ×{len(wp)}")] if RSB.LID_HOLES else [])],
+                          dict(tag="W", pts=wp, spec=f"配重孔 Φ{F(RSB.W_CB_D_B)} 通", where=f"r{F(RSB.W_R_B)} ×{len(wp)}")] if RSB.LID_HOLES else [])],
                 notes=[f"定位: 凸台 Φ{F(RSB.LS_BOSS_D)} 落进环上 Φ{F(RSB.LS_SEAT_D)} 窝 (单边 {F(round((RSB.LS_SEAT_D - RSB.LS_BOSS_D) / 2, 2))}, 底隙 {F(round(RSB.LS_SEAT_H - RSB.LS_BOSS_H, 2))})",
                        f"桥板让位通槽: x{F(-RSB.RS.BR_SLOT_HX)}…{F(RSB.RS.BR_SLOT_HX)}, 通到 y{F(round(RSB.BR_POCKET[k][1], 3))}, 全通",
                        f"内边离灯板 ≥0.3; 拆盖: 松 3 颗螺丝 → 抬 5 → 往{'+y' if sy > 0 else '−y'} 平移取出, 不碰灯板/桥板/FPC (先取下玻璃管)",
                        ("不拆盖也能: 从起子孔拆整半罩 / 从配重孔加减配重; 动平衡装着盖做" if RSB.LID_HOLES else "11-26 顶盖只留 3 颗盖螺丝 + 桥板槽 (配重孔/起子孔取消): 调配重、拆罩锁都先拆盖, 动平衡最后装盖复测"),
+                       *(["11-27 用户「盖子和罩子不嵌合也行」: 外裙取消, 盖底平, 平放在环顶 (靠 3 个凸台定位)"] if not RSB.LID_SKIRT else []),
                        *([f"11-26 外裙: R{F(RSB.R1 - RSB.SK_T)}–{F(RSB.R1)} 下垂 {F(RSB.SK_H - RSB.SK_CLR)} (Z{F(round(RSB.LID_Z0 - RSB.SK_H + RSB.SK_CLR, 2))}–{F(RSB.LID_Z0)}), 罩住侧环顶外半台阶 (径向单边 {F(RSB.SK_CLR)}, 裙底隙 {F(RSB.SK_CLR)}), 箍住两半侧环"] if RSB.LID_SKIRT else [])])
         SPECS += [_lid_spec("a"), _lid_spec("b")]
-        SPECS += [_shrb_spec("a"), _shrb_spec("b")]
+        SPECS += [_shrb_spec("a")] + ([] if RSB.RING_ONE else [_shrb_spec("b")])
     _FOLDER_B = {"rim_ring_v1_2b": "转子盘B", "screen_sup_a_v1_2b": "转子盘B", "screen_sup_b_v1_2b": "转子盘B", "rotor_shroud_b_a_v1_2b": "转子盘B", "rotor_shroud_b_b_v1_2b": "转子盘B", "rotor_shroud_lid_a_v1_2b": "转子盘B", "rotor_shroud_lid_b_v1_2b": "转子盘B"}
 else:
     _FOLDER_B = {}

@@ -60,10 +60,10 @@ if B.ROTOR_B:
     with _cl.redirect_stdout(_io.StringIO()):
         import rotor_shroud_b_v1_2 as RSB
     RB = RSB.RB
-    SHR_N = ('转子罩 +y 侧环 rotor_shroud_b_a_v1_2b', '转子罩 -y 侧环 rotor_shroud_b_b_v1_2b')
+    SHR_N = ('转子罩 侧环 (整圈) rotor_shroud_b_a_v1_2b' if RSB.RING_ONE else '转子罩 +y 侧环 rotor_shroud_b_a_v1_2b', '转子罩 -y 侧环 rotor_shroud_b_b_v1_2b')
     _new = {'转子毂盘': [('玻纤板 fr4_plate_v1_2b Φ165×3', RB.fr4, '#C9B458', 0.05)], '承载盘 rim_ring': [('承载盘 rim_ring_v1_2b (转子盘B)', RB.rim, '#6AA84F', 0.05)],
             '灯板支撑 +x': [(n, sh, c, 0.03) for n, sh, c in RB.SCREEN_PARTS], '灯板支撑 -x': [],   # 11-21 屏幕支撑件 A ×2 + B ×2 (取代玻纤板 ×4 + 侧立件 ×2)
-            '转子罩 a ': [(SHR_N[0], RSB.shr_a, '#A4C2F4', 0.05), ('转子罩 +y 顶盖 rotor_shroud_lid_a_v1_2b', RSB.lid_a, '#CFE2F3', 0.05)], '转子罩 b ': [(SHR_N[1], RSB.shr_b, '#B6D7A8', 0.05), ('转子罩 -y 顶盖 rotor_shroud_lid_b_v1_2b', RSB.lid_b, '#D9EAD3', 0.05)], '转子罩顶盖': []}
+            '转子罩 a ': [(SHR_N[0], RSB.shr_a, '#A4C2F4', 0.05), ('转子罩 +y 顶盖 rotor_shroud_lid_a_v1_2b', RSB.lid_a, '#CFE2F3', 0.05)], '转子罩 b ': ([] if RSB.shr_b is None else [(SHR_N[1], RSB.shr_b, '#B6D7A8', 0.05)]) + [('转子罩 -y 顶盖 rotor_shroud_lid_b_v1_2b', RSB.lid_b, '#D9EAD3', 0.05)], '转子罩顶盖': []}
     _P = []
     for p_ in PARTS:
         k = next((k for k in _new if p_[0].startswith(k)), None)
@@ -160,8 +160,8 @@ _LED2 = L.comp([L.led_a, L.led_b])
 D_BB, D_CZ = _dist(_LED2, L.bb_step), _dist(_LED2, VB['cz06'])
 D_WH = _dist(_LED2, L.comp([WH.H, WH.module]))
 _M = dict((n, P) for n, P, _ in MESH)
-R_LED = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in ('灯板 A (+y)', '灯板 B (-y)', *POST_N, '天线 18.5×37.7 软板 ×2'))
-R_SHR = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in SHR_N)
+R_LED = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in ('灯板 A (+y)', '灯板 B (-y)', *POST_N, '天线 18.5×37.7 软板 ×2') if k in _M)   # 11-27 转子盘B 无 T 脚 (led_post) 件
+R_SHR = max(float(np.hypot(_M[k][:, :, 0], _M[k][:, :, 1]).max()) for k in SHR_N if k in _M)
 assert R_SHR < B.SPIG_IN - 1.0 and R_LED < RS.R1 - 0.1 + 1e-6 and D_BB > 0.5 and D_CZ > 0.5 and D_WH > 0.5, (R_SHR, R_LED, D_BB, D_CZ, D_WH)
 print('clearance', D_BB, D_CZ, D_WH, R_LED, R_SHR)
 from matplotlib.patches import Patch

@@ -226,7 +226,7 @@ SP_SCR_SL = LS.SO_YL                              # 腰形半长 0.2 (11-26 起�
 SP_SCR_ROUND = True
 SP_SCR_LOC = [(LS.SO_PTS[0][0], LS.SO_PTS[0][1]), (-LS.SO_PTS[1][0], -LS.SO_PTS[1][1])] if SP_SCR_ROUND else [(SP_SCR_X, -SP_SCR_DY), (SP_SCR_X, SP_SCR_DY)]   # 局部: 放 0° 用 [0], 放 180° 用 [1]
 SP_SCR_CB_D = 7.2 if SP_SCR_ROUND else 7.2 + 2 * SP_SCR_SL   # 7.2 (外缘破出件外边, 该处罩壁是两端竖缝)
-SP_CB_H = 1.5                                     # 屏幕螺丝底面沉孔深 (超薄头 Φ7×1.2~1.5; 用户说 ≈2, 但 2 深时 M3×16 吃牙 2.8 / M3×18 尾顶上颗 ⇒ 1.5, 见 BAR_SCR_*)
+SP_CB_H = 2.0                                     # 屏幕螺丝底面沉孔深 (超薄头 Φ7×1.2~1.5); 11-27 用户「沉孔深度现在是1.5吧 改为2」⇒ 2.0, M3×12 吃牙 2.8 (M3×14 尾离上颗只 0.2), 吃牙下限放到 2.8 (铜螺柱, 0.93d)
 SP_CB_D = 7.2                                     # 兼容旧名
 # 法兰螺母 (同 fasteners_v1_2: 法兰 Φ7.6×1.0, 六角对边 5.9, 总高 3.7) 的窝 (参考 cap_clamp cap-c NUT_HEX_WELL: 六角窝 AF6.1 + 法兰窝 Φ8.2)
 NUT_FL_D, NUT_FL_H, NUT_AF, NUT_T = 7.6, 1.0, 5.9, 3.7
@@ -256,9 +256,10 @@ OUT_ENG = round(OUT_SCR_BEAR + OUT_SCR_L - OUT_NUT_Z[0], 2)
 assert OUT_ENG >= 3.0 and OUT_NUT_Z[0] > SP_Z0 + 2.5, (OUT_SCR_L, OUT_ENG, OUT_NUT_Z)
 # 屏幕螺丝 M3 超薄头 从 A 件底沉孔往上 (支承 Z_TOP + SP_CB_H), 拧进每端下颗铜螺柱: 吃牙 ≥3, 尾离上颗底 ≥0.5
 BAR_SCR_BEAR = SP_Z0 + SP_CB_H                    # 32.0
-BAR_SCR_L = float(min(L for L in (12, 14, 16, 18, 20, 22) if BAR_SCR_BEAR + L - LS.SO_Z0 >= 3.0))
+BAR_ENG_MIN = 2.8 if SP_CB_H >= 2.0 else 3.0
+BAR_SCR_L = float(min(L for L in (12, 14, 16, 18, 20, 22) if BAR_SCR_BEAR + L - LS.SO_Z0 >= BAR_ENG_MIN - 1e-6))
 BAR_SCR_ENG = round(BAR_SCR_BEAR + BAR_SCR_L - LS.SO_Z0, 2)
-assert 3.0 <= BAR_SCR_ENG and BAR_SCR_BEAR + BAR_SCR_L <= LS.SO_Z1 - 0.5, (BAR_SCR_L, BAR_SCR_ENG)
+assert BAR_ENG_MIN - 1e-6 <= BAR_SCR_ENG and BAR_SCR_BEAR + BAR_SCR_L <= LS.SO_Z1 - 0.5, (BAR_SCR_L, BAR_SCR_ENG)
 BAR_SCR_PTS = list(LS.SO_PTS)                     # 世界: (78.88, ECC−0.2) 板B 下颗 / (−78.88, ECC+0.2) 板A 下颗
 # 减重 (动平衡 / 惯量): 顶面开口盲槽, 槽底留 SP_POCKET_FLOOR; 不在灯板/夹条正下方、不在罩耳下、离孔/螺母窝 ≥2
 SP_POCKET_FLOOR = 3.0

@@ -60,8 +60,9 @@ if ROTOR_B:
         import rotor_shroud_b_v1_2 as RSB
     RB=RSB.RB
     for k in ('hub','rim','led_post_a','led_post_b','rotor_shroud_a','rotor_shroud_b','rotor_lid_a','rotor_lid_b'): S.pop(k)
-    S.update({'fr4':RB.fr4,'rim_b':RB.rim,**{k:sh for k,(_,sh,_) in zip(RB.SCREEN_KEYS,RB.SCREEN_PARTS)},'shroud_b_a':RSB.shr_a,'shroud_b_b':RSB.shr_b,'lid_b_a':RSB.lid_a,'lid_b_b':RSB.lid_b,'coil':RB.coil})   # 11-21 屏幕支撑件 A ×2 (0/180°) + B ×2 (90/270°)
-    RMAP={'hub':'fr4','rim':'rim_b','led_post_a':'scr_sup_0','led_post_b':'scr_sup_180','rotor_shroud_a':'shroud_b_a','rotor_shroud_b':'shroud_b_b','rotor_lid_a':'lid_b_a','rotor_lid_b':'lid_b_b'}
+    S.update({'fr4':RB.fr4,'rim_b':RB.rim,**{k:sh for k,(_,sh,_) in zip(RB.SCREEN_KEYS,RB.SCREEN_PARTS)},'shroud_b_a':RSB.shr_a,'shroud_b_b':RSB.shr_b,'lid_b_a':RSB.lid_a,'lid_b_b':RSB.lid_b,'coil':RB.coil})
+    if RSB.shr_b is None: S.pop('shroud_b_b')   # 11-27 侧环整圈一件   # 11-21 屏幕支撑件 A ×2 (0/180°) + B ×2 (90/270°)
+    RMAP={'hub':'fr4','rim':'rim_b','led_post_a':'scr_sup_0','led_post_b':'scr_sup_180','rotor_shroud_a':'shroud_b_a','rotor_shroud_b':'shroud_b_b' if RSB.shr_b is not None else 'shroud_b_a','rotor_lid_a':'lid_b_a','rotor_lid_b':'lid_b_b'}
 _KEY={k:GC.key(v) if GC.ON else k for k,v in S.items()}; _BB={k:bbox(v) for k,v in S.items()}
 _P={}; _K={}
 def _p(k):
@@ -106,7 +107,7 @@ if ROTOR_B:
                [(h,z) for h in RB.SCREEN_KEYS for z in ('led_top',)]:   # 11-21 侧立件取消 (原 post_b_a/b 配对并进上面支撑件)
         if frozenset((x,y)) in _seen: continue
         _seen.add(frozenset((x,y))); _np.append((x,y))
-    PAIRS=_np
+    PAIRS=[(x,y) for x,y in _np if x in S and y in S]   # 11-27 侧环整圈时没有 shroud_b_b
     print(f'转子盘B: 配对 {len(PAIRS)} 组',flush=True)
 _HIT0=set(_PAIRC)
 for a,b in PAIRS:
