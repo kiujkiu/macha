@@ -31,9 +31,9 @@ OUT = Path(__file__).resolve().parents[1] / '顶部连接'
 J = json.loads((OUT / '参数.json').read_text(encoding='utf-8')); IF, P, D = J['IF'], J['P'], J['D']
 def load(k):
     r = STEPControl_Reader(); r.ReadFile(str(OUT / '零件' / f'{k}.step')); r.TransferRoots(); return r.OneShape()
-KEYS = ('led_top_bar', 'post_holder', 'post', 'brg695', 'hub', 'led_comb', 'hub_nut'); S = {k: load(k) for k in KEYS}
-COL = dict(led_top_bar='#D5E8CC', post_holder='#CFE2F3', post='#DCCBE6', brg695='#C9C9C9', hub='#FBEBB5', led_comb='#D0E0E3', hub_nut='#BFE5CC', glass='#E6F4FA', led='#CFE5D3')
-HATCH = dict(led_top_bar='////', post_holder='\\\\\\\\', post=None, brg695='xxxx', hub='////', led_comb='....', hub_nut='\\\\\\\\')
+KEYS = ('led_top_bar', 'post_holder', 'post', 'mr105', 'ref_top_cap', 'led_comb', 'ref_acrylic'); S = {k: load(k) for k in KEYS}   # 11-27 亚克力方案: ref_* = 主模型件 (亚克力只取中心 ±30)
+COL = dict(led_top_bar='#D5E8CC', post_holder='#CFE2F3', post='#DCCBE6', mr105='#C9C9C9', ref_top_cap='#FBEBB5', led_comb='#D0E0E3', ref_acrylic='#E6F4FA', glass='#E6F4FA', led='#CFE5D3')
+HATCH = dict(led_top_bar='////', post_holder='\\\\\\\\', post=None, mr105='xxxx', ref_top_cap='////', led_comb='....', ref_acrylic=None)
 ecc, z1 = IF['ecc'], IF['z_led']; g0, g1 = IF['z_glass0'], IF['z_glass1']
 def _pts(e, rev=False):
     g = GCPnts_QuasiUniformDeflection(BRepAdaptor_Curve(e), 0.01)
@@ -71,7 +71,7 @@ def hlr(shapes, d, xdir):                        # 从 d 方向看 (d 指向观�
 def newpage():
     global pg, ax, doc, msp
     pg = Page(); ax = pg.ax; doc = ezdxf.new('R2010', setup=True); doc.units = 4; msp = doc.modelspace()
-    for n, c in (('led_top_bar', 3), ('post_holder', 5), ('post', 6), ('brg695', 9), ('hub', 2), ('led_comb', 4), ('hub_nut', 3), ('glass', 150), ('led', 94), ('screw', 8), ('nut', 30), ('center', 1), ('text', 7)): doc.layers.add(n, color=c)
+    for n, c in (('led_top_bar', 3), ('post_holder', 5), ('post', 6), ('mr105', 9), ('ref_top_cap', 2), ('led_comb', 4), ('ref_acrylic', 150), ('glass', 150), ('led', 94), ('screw', 8), ('nut', 30), ('center', 1), ('text', 7)): doc.layers.add(n, color=c)
 newpage()
 DX = {}                                          # 视图 → DXF 偏移
 class V:                                         # 视图: 模型 (u,w) → 页面
@@ -103,7 +103,9 @@ def ref(x, y, n, tx, ty):                        # 件号引线
 
 from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox
 def clipx(s, a, b): return BRepAlgoAPI_Common(s, BRepPrimAPI_MakeBox(gp_Pnt(a, -100, 100), gp_Pnt(b, 100, 400)).Shape()).Shape()
-zc, zp, zs, zb, pt, bz0, bz1, h0, h1, zt = (D[k] for k in ('zc', 'zp', 'zs', 'zb', 'pt', 'bz0', 'bz1', 'h0', 'h1', 'zt'))
+def clipy(s, a, b): return BRepAlgoAPI_Common(s, BRepPrimAPI_MakeBox(gp_Pnt(-100, a, 100), gp_Pnt(100, b, 400)).Shape()).Shape()
+def clipz(s, a, b): return BRepAlgoAPI_Common(s, BRepPrimAPI_MakeBox(gp_Pnt(-100, -100, a), gp_Pnt(100, 100, b)).Shape()).Shape()
+zc, zp, zs, zb, pt, bz0, bz1, zt = (D[k] for k in ('zc', 'zp', 'zs', 'zb', 'pt', 'bz0', 'bz1', 'zt'))
 fx, nx, bx, by = P['fx'], P['nut_x'], P['bar_hx'], P['bar_hy']; zr = z1 - P['rib_h']; w0, w1 = J['WIN']['top']; zm = w0 + P['nut_l']; e0 = IF['gap'] / 2; t16 = D['led_t']; rc = P['nut_af'] / math.sqrt(3); rh = IF['hole_d'] / 2
 GR, OR, CU = '#EEEEEE', '#F6B26B', '#E3C877'
 def scr(v, x, zh, l, z=3): q, h = P['head_d'] / 2, P['head_h']; v.face([[(x - 1.5, zh - l), (x + 1.5, zh - l), (x + 1.5, zh), (x + q, zh), (x + q, zh + h), (x - q, zh + h), (x - q, zh), (x - 1.5, zh)]], GR, None, 'screw', z=z, lw=0.25)
@@ -120,36 +122,37 @@ def frame(name, l2, qty, fn):
         except PermissionError: f(OUT / f'{fn}.NEW.{ext}')
 
 # ================= 装配 =================
-def glass(v):
-    for a, b in ((-40, -rh), (rh, 40)): v.box(max(a, -26), min(b, 26), g0, g1, COL['glass'], 'glass', z=1.1)
+def glass(v, axis='y', w=26):                   # 亚克力中心段 (剖) + 顶盖
+    for f in sec((clipx if axis == 'y' else clipy)(S['ref_acrylic'], -w, w), axis, 0): v.face(f, COL['glass'], None, 'ref_acrylic', z=1.1, lw=0.25)
+    v.part('ref_top_cap', axis, 0)
 F1 = V(112, 150, 1, 0, w0, (0, 0)); F1.y_top = 320                      # 正视阶梯剖 1:1
 for f in sec(S['led_top_bar'], 'y', ecc): F1.face(f, COL['led_top_bar'], '////', 'led_top_bar')
 for a, b, y in ((-9, 9, 0), (-40, -9, ecc), (9, 40, ecc)):
     for f in sec(clipx(S['post_holder'], a, b), 'y', y): F1.face(f, COL['post_holder'], HATCH['post_holder'], 'post_holder')
 for a, b in ((-60, -9), (9, 60)):
     for f in sec(clipx(S['led_comb'], a, b), 'y', ecc): F1.face(f, COL['led_comb'], None, 'led_comb')
-for k in ('post', 'brg695', 'hub', 'hub_nut'): F1.part(k, 'y', 0)
+for k in ('post', 'mr105'): F1.part(k, 'y', 0)
 glass(F1); stud(F1); fnut(F1, 0, zc + P['post_fn_h']); scr(F1, 0, pt, P['top_scr'])
 for s in (1, -1): fnut(F1, s * fx, z1 + P['fn_h']); scr(F1, s * fx, zt, P['fix_l'])
 for x in (-nx, 0, nx):
     scr(F1, x, zc - (0 if x else P['cb_h']), P['scr_l'])
     for q in (w0, zm): F1.face([[(x - rc, q), (x + rc, q), (x + rc, q + 5), (x - rc, q + 5)]], CU, None, 'nut', z=2, lw=0.25)
     F1.cl((x, w0 - 4), (x, zc + (4 if x else 0)))
-F1.pl([(-81.88, w0 - 8), (-81.88, z1), (81.88, z1), (81.88, w0 - 8)], lw=0.3, color='#222222', lay='led'); F1.cl((0, zp), (0, h1 + 4))
+F1.pl([(-81.88, w0 - 8), (-81.88, z1), (81.88, z1), (81.88, w0 - 8)], lw=0.3, color='#222222', lay='led'); F1.cl((0, zp), (0, g1 + 4))
 title(112, 270, '正视阶梯剖 (长条/锁点剖 y=-4.69, 螺柱处剖 y=0)   1:1', F1)
-vchain(pg, [F1.y(v) for v in (w0, zm, w1, zr, z1, zc, zp, zt, zb, h0, g0, g1, h1)], ['下颗 5', '上颗 5', F(zr - w1), '筋 ' + F(P['rib_h']), '绿 ' + F(P['bar_t']), '蓝板 ' + F(P['pl_t']), '梳齿 ' + F(P['comb_t']), '外套(梳齿上) ' + F(zb - zt), '露出 ' + F(h0 - zb), '旋母 ' + F(g0 - h0), '玻璃 ' + F(g1 - g0), '堵头盖 ' + F(h1 - g1)], F1.x(84), F1.x(93), size=2.2)
-vdim(pg, F1.y(zs), F1.y(pt), F1.x(-16), F1.x(-36), '螺柱 ' + F(P['post_l']), size=2.6); vdim(pg, F1.y(z1), F1.y(h1), F1.x(-60), F1.x(-74), '屏顶到堵头顶 ' + F(h1 - z1), size=2.6)
+vchain(pg, [F1.y(v) for v in (w0, zm, w1, zr, z1, zc, zp, zt, zb, g0, g1)], ['下颗 5', '上颗 5', F(zr - w1), '筋 ' + F(P['rib_h']), '绿 ' + F(P['bar_t']), '蓝板 ' + F(P['pl_t']), '梳齿 ' + F(P['comb_t']), '外套(梳齿上) ' + F(zb - zt), '露出 ' + F(g0 - zb), '亚克力 ' + F(g1 - g0)], F1.x(84), F1.x(93), size=2.2)
+vdim(pg, F1.y(zs), F1.y(pt), F1.x(-16), F1.x(-36), '螺柱 ' + F(P['post_l']), size=2.6); vdim(pg, F1.y(z1), F1.y(g1), F1.x(-60), F1.x(-74), '屏顶到亚克力顶 ' + F(g1 - z1), size=2.6)
 hdim(pg, F1.x(-nx), F1.x(nx), F1.y(w0), F1.y(w0) - 12, '3 根 M3×20: 2×' + F(nx), size=2.5); hdim(pg, F1.x(-fx), F1.x(fx), F1.y(w0), F1.y(w0) - 5.5, '蓝件锁点 ' + F(2 * fx), size=2.4)
-for (u, w), n, (tu, tw) in (((-60, zc - 2), 1, (-60, zc + 16)), ((-24, zc + 1.5), 2, (-46, zc + 22)), ((0.5, zb + 14), 3, (22, zb + 14)), ((5, bz0 + 2), 4, (-31, bz0 - 14)), ((13, h1 - 1.5), 5, (31, h1 + 6)), ((40, zt - 2), 6, (48, zt + 14)), ((13, h0 + 2), 7, (31, h0 - 12))): ref(F1.x(u), F1.y(w), n, F1.x(tu), F1.y(tw))
+for (u, w), n, (tu, tw) in (((-60, zc - 2), 1, (-60, zc + 16)), ((-24, zc + 1.5), 2, (-46, zc + 22)), ((0.5, zb + 14), 3, (22, zb + 14)), ((3.8, bz0 + 1.5), 4, (-31, bz0 - 14)), ((15, g0 + 4), 5, (31, g1 + 8)), ((40, zt - 2), 6, (48, zt + 14)), ((2, g1 - 0.4), 7, (-22, g1 + 10))): ref(F1.x(u), F1.y(w), n, F1.x(tu), F1.y(tw))
 
 G = V(262, 133, 1.5, 0, w0, (160, 0)); G.y_top = 320                    # 侧剖 x=0
-for k in ('led_top_bar', 'post_holder', 'post', 'brg695', 'hub', 'hub_nut', 'led_comb'): G.part(k, 'x', 0)
-glass(G); stud(G); fnut(G, 0, zc + P['post_fn_h']); scr(G, 0, pt, P['top_scr']); scr(G, ecc, zc - P['cb_h'], P['scr_l'])
+for k in ('led_top_bar', 'post_holder', 'post', 'mr105', 'led_comb'): G.part(k, 'x', 0)
+glass(G, 'x'); stud(G); fnut(G, 0, zc + P['post_fn_h']); scr(G, 0, pt, P['top_scr']); scr(G, ecc, zc - P['cb_h'], P['scr_l'])
 for a in (ecc + e0, ecc - e0 - t16): G.box(a, a + t16, w0 - 5, z1, COL['led'], 'led', z=1.5)
 for q in (w0, zm): G.box(ecc - 2.3, ecc + 2.3, q, q + 5, CU, 'nut', z=2)
-G.cl((0, zc - 2), (0, h1 + 4)); G.cl((ecc, w0 - 6), (ecc, zc + 1)); title(262, 284, '侧剖 x=0 (横 = y)   1.5:1', G)
+G.cl((0, zc - 2), (0, g1 + 4)); G.cl((ecc, w0 - 6), (ecc, zc + 1)); title(262, 284, '侧剖 x=0 (横 = y)   1.5:1', G)
 hdim(pg, G.x(ecc), G.x(0), G.y(w0 - 5), G.y(w0 - 5) - 4, '偏心 ' + F(-ecc), size=2.3)
-vchain(pg, [G.y(v) for v in (zr, z1, zc, zc + P['post_fn_h'], zs, zb, bz0, bz1, pt, pt + P['head_h'])], ['筋 3', '绿 5', '螺母沉孔 ' + F(P['post_fn_h']), '隔板 ' + F(P['web']), '外套 ' + F(P['sleeve']), F(bz0 - zb), '695 ' + F(P['brg'][2]), '伸出 ' + F(P['over']), '头 ' + F(P['head_h'])], G.x(27), G.x(30), size=2.3)
+vchain(pg, [G.y(v) for v in (zr, z1, zc, zc + P['post_fn_h'], zs, zb, g0, bz0, bz1, pt, pt + P['head_h'], g1)], ['筋 3', '绿 5', '螺母沉孔 ' + F(P['post_fn_h']), '隔板 ' + F(P['web']), '外套 ' + F(P['sleeve']), '露出 ' + F(g0 - zb), '台肩 ' + F(bz0 - g0), 'MR105 ' + F(P['brg'][2]), '伸出 ' + F(P['over']), '头 ' + F(P['head_h']), '隙+盖 ' + F(g1 - pt - P['head_h'])], G.x(27), G.x(30), size=2.3)
 lab(G, ecc - 2.5, zc - 1, -22, zc - 8, '中间头沉 2', 'right'); lab(G, -3.2, zc + 3.2, -22, zc + 9, '法兰螺母', 'right'); lab(G, 2.6, zb - 2, 12, zb + 6, f'套 Φ{F(P["bore"])} / 柱 Φ5')
 
 x0, y = 330, 284                                                         # 说明
@@ -158,11 +161,11 @@ def notes(hd, L_):
     pg.text(x0, y, hd, size=3.1, weight='bold'); y -= 4.8
     for t in L_: pg.text(x0, y, t, size=2.35); y -= 4.0
     y -= 2
-notes('件号', ['1 绿  屏幕顶长条 led_top_bar (打印)', '2 蓝  螺柱衔接件 post_holder (打印)', '3 紫  M3 螺柱 Φ5×60, 阳牙 6', '4 轴承 695ZZ 5×13×4', '5 中心堵头 glass_top_hub (打印, 改)', '6 配平梳齿 led_comb (打印, 锁孔改 ±21)', '7 旋母 hub_nut (打印, 拧紧夹玻璃)'])
+notes('件号', ['1 绿  屏幕顶长条 led_top_bar (打印)', '2 蓝  螺柱衔接件 post_holder (打印)', f'3 紫  M3 螺柱 Φ5×{F(P["post_l"])}, 阳牙 6, 顶内牙', '4 轴承 MR105ZZ 5×10×3', '5 亚克力 Φ200×8 (主模型; 中心 Φ10.05 深 6 + Φ8.5 通)', '6 配平梳齿 led_comb (打印, 锁孔改 ±21)', '7 顶盖 top_cap (主模型, 顶面齐平)'])
 notes('螺丝', ['3× M3×20 超薄头 头 Φ7×1.5 (绿, 左中右)', '2× M3×16 超薄头 (梳齿+蓝+绿)', '   不装梳齿用 M3×12', '1× M3×8 超薄头 (螺柱顶)', '3× M3 法兰螺母 (绿 Φ8 / 蓝 Φ11 沉孔)', '2× 定位套 Φ8×2 (绿件, 防螺母转)', '蓝件螺母: Φ11 沉孔, Φ8 套不适用'])
-notes('装配顺序', ['1. 两颗法兰螺母 + 定位套压进绿件底', '2. 绿件放两屏顶, 3 根 M3×20 锁屏', '3. 法兰螺母从蓝件底推到沉孔顶 (Φ' + F(P['hfn_d']) + ' 深 ' + F(P['post_fn_h']) + ')', '4. 螺柱插进外套, 拧进螺母到肩', '5. 蓝件 (+梳齿) 用 2 根 M3 锁绿件', '6. 堵头穿玻璃孔, 下面旋母拧紧, 整块落上', '7. 695 从堵头顶面按进 (齐平)', '8. 顶螺丝锁螺柱 (压柱端, 不压死轴承)'])
-notes('配合', ['外套内 Φ5.2 / 螺柱 Φ5 (单边 0.1)', '695 座 Φ13.0, 顶齐堵头面, 口倒角 0.5', '旋母螺纹径向间隙 0.2', '筋厚 4.6 = 两屏间隙 = 螺母对边', f'法兰螺母沉孔 绿 Φ8×3.7 / 蓝 Φ{F(P["hfn_d"])}×{F(P["post_fn_h"])}', f'蓝外套 Φ{F(P["boss_d"])}: 沉孔处壁厚 {F((P["boss_d"] - P["hfn_d"]) / 2)}'])
-frame('顶部连接 第二版 装配', 'POV3D V1.2  (设计区, 未合回主模型)', '数量: 1 套', '顶部连接_装配_2D图')
+notes('装配顺序', ['1. 两颗法兰螺母 + 定位套压进绿件底', '2. 绿件放两屏顶, 3 根 M3×20 锁屏', '3. 法兰螺母从蓝件底推到沉孔顶 (Φ' + F(P['hfn_d']) + ' 深 ' + F(P['post_fn_h']) + ')', '4. 螺柱插进外套, 拧进螺母到肩', '5. 蓝件 (+梳齿) 用 2 根 M3 锁绿件', '6. 亚克力套过螺柱落到管端 (外卡环锁)', '7. MR105 从亚克力顶面放入, 坐台肩、套螺柱', '8. 顶螺丝锁螺柱 (压柱端), 压上顶盖 (齐平)'])
+notes('配合', ['外套内 Φ5.2 / 螺柱 Φ5 (单边 0.1)', f'MR105 Φ10 / 亚克力孔 Φ{F(IF["ac_bore"])}; 螺柱 Φ5 / 通孔 Φ{F(IF["hole_d"])}', '头 Φ7 / 顶盖裙边内 Φ8, 头顶离盖 0.3', '筋厚 4.6 = 两屏间隙 = 螺母对边', f'法兰螺母沉孔 绿 Φ8×3.7 / 蓝 Φ{F(P["hfn_d"])}×{F(P["post_fn_h"])}', f'蓝外套 Φ{F(P["boss_d"])}: 沉孔处壁厚 {F((P["boss_d"] - P["hfn_d"]) / 2)}'])
+frame('顶部连接 第二版 装配', 'POV3D V1.2  (亚克力 8 方案; 亚克力/MR105/顶盖读主模型)', '数量: 1 套', '顶部连接_装配_2D图')
 
 # ================= 零件 =================
 newpage()
@@ -196,20 +199,14 @@ for q in hlr([S['post_holder']], (0, 0, 1), (1, 0, 0))[0]: U.pl(q, lw=0.3, lay='
 U.cl((-30, ecc), (30, ecc)); U.cl((-12, 0), (12, 0)); U.cl((0, -12), (0, 11)); title(172, 112, '蓝 俯视   1.5:1', U)
 yb = U.y(ecc - 6); hdim(pg, U.x(-fx), U.x(fx), yb, yb - 5, F(2 * fx), size=2.4); hdim(pg, U.x(-fx - 6), U.x(fx + 6), yb, yb - 11, '全长 ' + F(2 * fx + 12), size=2.4); vdim(pg, U.y(ecc - 6), U.y(ecc + 6), U.x(27), U.x(27) + 5, F(P['pad_w']), size=2.4); vdim(pg, U.y(ecc), U.y(0), U.x(-9), U.x(-16), F(-ecc), size=2.3); lab(U, 6.5, 6.2, 14, 9, f'Φ{F(P["disc_d"])}')
 
-Q = V(300, 205, 2.5, 0, h0, (230, 0)); Q.y_top = 24                     # 堵头 + 旋母 剖
-for k in ('hub', 'hub_nut'):
-    for f in sec(S[k], 'x', 0): Q.face(f, COL[k], HATCH[k], k)
-for a, b in ((-22, -rh), (rh, 22)): Q.box(a, b, g0, g1, COL['glass'], 'glass', z=1.1)
-for f in sec(S['brg695'], 'x', 0): Q.face(f, COL['brg695'], 'xxxx', 'brg695', z=1.3, lw=0.15)
-Q.cl((0, h0 - 2), (0, h1 + 3)); title(300, 274, '紫 ⑤ 堵头 + 绿 ⑦ 旋母  剖 x=0 (含 695、玻璃)   2.5:1', Q)
-hdim(pg, Q.x(-16), Q.x(16), Q.y(h1), Q.y(h1) + 12, 'Φ' + F(P['fl_d']), size=2.4); hdim(pg, Q.x(-P['seat_d'] / 2 - 0.5), Q.x(P['seat_d'] / 2 + 0.5), Q.y(h1), Q.y(h1) + 5, '口倒角 0.5 → Φ' + F(P['seat_d'] + 1), size=2.3)
-yb = Q.y(h0); hdim(pg, Q.x(-P['lip_d'] / 2), Q.x(P['lip_d'] / 2), yb, yb - 5, '内孔 Φ' + F(P['lip_d']), size=2.3); hdim(pg, Q.x(-P['th_d'] / 2), Q.x(P['th_d'] / 2), yb, yb - 11, f'外螺纹 大径 Φ{F(P["th_d"])} 小径 Φ{F(P["th_d"] - 2 * P["th_h"])} 螺距 {F(P["th_p"])}', size=2.3); hdim(pg, Q.x(-16), Q.x(16), yb, yb - 17, f'旋母 Φ{F(P["nut_od"])}', size=2.3)
-vchain(pg, [Q.y(v) for v in (h0, bz0, bz1)], [F(bz0 - h0), '695 座 4 (Φ13.0, 顶齐盖面)'], Q.x(22), Q.x(22) + 6, size=2.3); vchain(pg, [Q.y(v) for v in (h0, g0, g0 + P['th_up'], g1)], ['旋母 ' + F(P['nut_t']), '螺纹到 ' + F(P['th_up']), f'筒 Φ{F(P["body_d"])}  ' + F(g1 - g0 - P['th_up'])], Q.x(-22), Q.x(-22) - 22, size=2.3)
-for X, k, d, t in ((268, 'hub', (0, 0, -1), '堵头 仰视   1.5:1'), (340, 'hub_nut', (0, 0, 1), '旋母 俯视 (12 指槽 R2.5)   1.5:1')):
-    Y_ = V(X, 134, 1.5, 0, 0, (X, -80)); Y_.y_top = 18
-    for q in hlr([S[k]], d, (1, 0, 0))[0]: Y_.pl(q, lw=0.25, lay=k)
-    title(X, 162, t, Y_)
-hdim(pg, 340 - 1.5 * (P['th_d'] / 2 + P['th_clr']), 340 + 1.5 * (P['th_d'] / 2 + P['th_clr']), 134 - 24, 134 - 28, f'内螺纹 大径 Φ{F(P["th_d"] + 2 * P["th_clr"])} 小径 Φ{F(P["th_d"] - 2 * P["th_h"] + 2 * P["th_clr"])}', size=2.2)
-x0, y = 240, 90
-notes('说明', ['绿: 打印时顶面贴床、筋朝上, 不用支撑', '蓝: 板底贴床; Φ11 沉孔顶是桥接 (11 跨), 不用支撑', '堵头: 盖面贴床, 螺纹朝上; 底唇悬 1.25, 不用支撑', '旋母: 平放; 螺纹牙 45 度, 不用支撑; 右旋单头', '梳齿: 只改锁孔 ±10.5 为 ±21, 其余不变 (STL 已出)', '695 座 / 法兰螺母沉孔按 0 间隙 (打印孔偏小时轻压)', f'轴心 (0,0); 屏中面 y={ecc:g}; Z0 = 底盘顶面, 屏顶 Z{z1:.2f}', '绿件两端腰孔 x 向 ±0.3, 中间圆孔定位'])
-frame('顶部连接 第二版 零件', 'POV3D V1.2  (设计区, 未合回主模型)', '数量: 各 1', '顶部连接_零件_2D图')
+Q = V(300, 205, 4, 0, g0, (230, 0)); Q.y_top = 50                       # 亚克力中心 + MR105 + 顶盖 + 螺柱顶 剖 y=0
+for f in sec(clipx(S['ref_acrylic'], -13, 13), 'y', 0): Q.face(f, COL['glass'], None, 'ref_acrylic', z=1.1, lw=0.3)
+for k in ('mr105', 'ref_top_cap'): Q.part(k, 'y', 0)
+for f in sec(clipz(S['post'], g0 - 3, 400), 'y', 0): Q.face(f, COL['post'], None, 'post')
+scr(Q, 0, pt, P['top_scr'], z=3.5); Q.cl((0, g0 - 4), (0, g1 + 3)); title(300, 255, '亚克力中心 + MR105 + 顶盖  剖 y=0   4:1', Q)
+hdim(pg, Q.x(-IF['ac_bore'] / 2), Q.x(IF['ac_bore'] / 2), Q.y(g1), Q.y(g1) + 6, 'Φ' + F(IF['ac_bore']) + ' 深 ' + F(g1 - g0 - IF['ac_sh']), size=2.4); hdim(pg, Q.x(-P['head_d'] / 2), Q.x(P['head_d'] / 2), Q.y(g1), Q.y(g1) + 12, '头 Φ7 / 顶盖裙边内 Φ8', size=2.3)
+hdim(pg, Q.x(-IF['hole_d'] / 2), Q.x(IF['hole_d'] / 2), Q.y(g0), Q.y(g0) - 6, 'Φ' + F(IF['hole_d']) + ' 通 / 螺柱 Φ5', size=2.4)
+vchain(pg, [Q.y(v) for v in (g0, bz0, bz1, pt, pt + P['head_h'], g1)], ['台肩 ' + F(bz0 - g0), 'MR105 ' + F(P['brg'][2]), '伸出 ' + F(P['over']), '头 ' + F(P['head_h']), '隙 0.3 + 盖 0.7'], Q.x(14), Q.x(17), size=2.3); vdim(pg, Q.y(g0), Q.y(g1), Q.x(-14), Q.x(-20), '亚克力 ' + F(g1 - g0), size=2.4)
+x0, y = 240, 150
+notes('说明', ['绿: 打印时顶面贴床、筋朝上, 不用支撑', '蓝: 板底贴床; Φ11 沉孔顶是桥接 (11 跨), 不用支撑', '梳齿: 只改锁孔 ±10.5 为 ±21, 其余不变 (STL 已出)', '法兰螺母沉孔按 0 间隙 (打印孔偏小时轻压)', f'螺柱 (买件) M3 Φ5×{F(P["post_l"])}: 阳牙 M3×6 + 顶端内牙 (吃 M3×8)', '亚克力 / 顶盖 / MR105 / 外卡环 尺寸以主模型图为准', f'轴心 (0,0); 屏中面 y={ecc:g}; Z0 = 底盘顶面, 屏顶 Z{z1:.2f}', '绿件两端腰孔 x 向 ±0.3, 中间圆孔定位'])
+frame('顶部连接 第二版 零件', 'POV3D V1.2  (亚克力 8 方案)', '数量: 各 1', '顶部连接_零件_2D图')
