@@ -44,6 +44,7 @@ fl=flange_disc; mf=mounting_flange
 from build_v1_2 import glass_top_lugs as B_lugs
 S={**({'cd_clamp':CD.clamp} if CD.HAS_MC else {}),**({'cd_capclamp':CD.cap_clamp} if CD.HAS_CC else {}),'cd_pcb':CD.pcb,'cd_mos':CD.mos,'cd_cap':CD.cap,'cd_sink2':CD.sink2,'board':board,'heatsink':heatsink,'disc':disc,'ring':ring,'flange_disc':fl,'mounting_flange':mf,'motor':motor,'hub':hub,'rim':rim,'seat':seat,'tube':tube,'xt60':xt_env,'shroud_split':shroud_split,'shroud_lo':shroud_lo,'shroud_hi':shroud_hi,'clamp_ring':clamp_ring,'key_bracket':key_bracket,'key_board':key_board,**{f'gt_lug{i}':s_ for i,s_ in enumerate(B_lugs)},'glass_top':glass_top,'glass_disc':glass_disc,'glass_top_hub':glass_top_hub,'glass_top_clamp':glass_top_clamp}
 for i,p in enumerate(posts): S[f'post{i}']=p
+if GT_ACR: S.pop('glass_top_hub'); S.pop('glass_top_clamp'); S['top_cap']=top_cap   # 11-27 亚克力顶: glass_disc = 亚克力, glass_top = 外卡环 (红绿合一), brg688 = MR105
 # 11-16 新转子布局: 灯板支撑 5 件 + Φ8 轴/688, 转子罩两半, 无线托盘 + 模块占位, 底板 r4b (交付 STEP) + 两块灯板
 # 11-16 晚 偏心 + 耳朵脚: 中间 T 件 led_mid_t 取消; 顶盖两片不同件 (rotor_lid_v1_2 +y / rotor_lid_b_v1_2 −y); 底盘加 MR30 座 + 电机线夹 (motor_wire_v1_2)
 import io as _io, contextlib as _cl
@@ -96,6 +97,8 @@ PAIRS=[(f'gt_lug{i}',x) for i in range(len(B_lugs)) for x in ('tube','glass_top'
  [(a,x) for a in ('fpc_a','fpc_b','seat_j5','seat_j6') for x in ('led_a','led_b','bb_r2','hub','rim','led_bar','rotor_lid_a','rotor_lid_b','bridge_a','bridge_b','led_post_a','led_post_b')]+[('fpc_a','fpc_b')]+\
  [(a,x) for a in ('rotor_shroud_a','rotor_shroud_b') for x in ('ant_a','ant_b','led_post_a','led_post_b')]+\
  [(a,x) for a in ('mr30_seat','motor_wire_clamp') for x in ('disc','ring','flange_disc','mounting_flange','motor','board','seat','shroud_split','xt60','cd_pcb','cd_cap','cd_mos','cd_sink2','key_bracket','heatsink')+_MC+_CC]+[('mr30_seat','motor_wire_clamp')]   # 11-13 按键板+支架 / 玻璃上; 11-16 新件 (led_top × rod = Φ8 轴压进 Φ7.85 孔, 过盈预期)
+if GT_ACR: PAIRS+=[('top_cap',x) for x in ('glass_disc','brg688','rod','glass_top')]+[('glass_disc',x) for x in ('rod','brg688','led_top','led_comb')+tuple(f'gt_lug{i}' for i in range(len(B_lugs)))]+[('glass_top','gt_lug0')]
+if GT_ACR: PAIRS=[(x,y) for x,y in PAIRS if not {x,y}&{'glass_top_hub','glass_top_clamp'}]
 if ROTOR_B:
     _seen=set(); _np=[]
     for x,y in PAIRS+[('hub','rim')]:      # 旧表里 hub/rim 没有互配对 (贴面), 新的 fr4/rim_b 要查
@@ -120,6 +123,7 @@ for a,b in PAIRS:
     flag='' if v is None else f'  相交体积 {v:.3f} mm3'
     if _os.environ.get('CHECK_BRIEF') and not (v is not None and v>1e-3) and not (_CK and ck not in _HIT0): continue   # 11-20 quick --check: 只列本次新算的配对 + 所有相交
     if a=='led_top' and b=='rod' and flag: flag+='  (预期: Φ8 轴压入 Φ7.85 孔过盈)'
+    if a=='top_cap' and b=='glass_disc' and flag: flag+='  (预期: 盖子 4 条压紧筋 Ø10.15 压进 Ø10.05 孔)'
     if a=='led_a' and b=='led_b' and flag: flag+='  (待查: 灯板 V0.2.0 STEP 上角 F 面 2 件 6×4 伸出 F 面 6.09 > 间隙 4.6, 各穿进对面板 1.47; 非结构件)'
     print(f'{a:14s} ↔ {b:16s} 最小距离 ≈ {d:6.2f}{flag}',flush=True)
 print(LOG['disc_holes']['grid'],'网格孔;', 'ring',LOG['ring'],flush=True)

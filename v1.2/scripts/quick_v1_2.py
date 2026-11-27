@@ -36,6 +36,9 @@ B_PARTS = {
     'glass_top_hub_v1_2': ('glass_top_hub', None, False),
     'glass_top_lug_v1_2': ('glass_top_lug', None, False),
     'glass_top_clamp_v1_2': ('glass_top_clamp', None, False),
+    'glass_top_ring_v1_2': ('glass_top_ring', None, False),   # 11-27 亚克力顶 (GT_ACR): 外卡环红绿合一
+    'top_cap_v1_2': ('top_cap', None, False),
+    'glass_top_acrylic_v1_2': ('acrylic', None, False),        # 11-27 亚克力 Ø200×8 (外协; 加工图 PDF/DXF 由 顶部连接/亚克力方案_1127/acrylic_disc_drawing.py 出, 拷进 models/)                 # 11-27 亚克力中心盖子 (打印顶面贴床)
 }
 NO_MODELS = {'hub_disc_v1_2'}            # 同 export_3mf: 毂盘只写 out/ (图纸自己写装配 STL)
 # 2) 各自有生成脚本的件: 代号 → 脚本 (跑它的 __main__, build_v1_2 已在内存里不再重建)

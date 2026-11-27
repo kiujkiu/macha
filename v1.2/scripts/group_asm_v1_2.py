@@ -5,6 +5,7 @@
     ② 转子盘组    灯以下的旋转件: 转子玻纤板 + 承载盘B + 屏幕固定件 + 无线夹块/模块 + 底板 + 转子罩
     ③ 灯组件      灯板 ×2 + 夹条 + 梳齿 + 顶部件 + Φ8 轴/688 + 桥板 + FPC + 天线
     ④ 玻璃及上盖  分体下罩 (底座 + 玻璃座 + 外卡环) + 玻璃罩 + 玻璃上 + 圆环玻璃 + 堵头
+                  (11-27 亚克力顶: 玻璃上外卡环红绿合一 + 管内弧形件 + 亚克力 Ø200×8 + MR105 + 中心盖子)
 组间接口 (螺丝归后装的那组): ①→② 承载盘→电机 4×M3; ②→③ 屏幕固定件 / 夹条螺丝; ③→④ Φ8 轴进堵头 688; ④→① 下罩 4×M3 从盘底。
 
     cd v1.2/scripts && ../../.venv/bin/python group_asm_v1_2.py [1 2 3 4 | all] [--no-fig] [--no-copy] [--force]
@@ -87,8 +88,8 @@ GROUPS = {
         ('灯板夹条 led_bar', lambda: M.LS.bar_s, '#8E7CC3', 'led_bar_v1_2', 1, 'P'),
         ('灯板梳齿 led_comb', lambda: M.LS.comb_s, '#9FC5E8', 'led_comb_v1_2', 1, 'P'),
         ('灯板顶部件 led_top', lambda: M.LS.top, '#6FA8DC', 'led_top_v1_2', 1, 'P'),
-        ('Φ8 钢轴', lambda: M.LS.rod, '#999999', None, 1, 'E'),
-        ('688 轴承', lambda: M.LS.brg, '#666666', None, 1, 'E'),
+        ('中心轴 Φ8/Φ5 (占位, 以顶部连接为准)' if B.GT_ACR else 'Φ8 钢轴', lambda: M.LS.rod, '#999999', None, 1, 'E'),
+        *([] if B.GT_ACR else [('688 轴承', lambda: M.LS.brg, '#666666', None, 1, 'E')]),   # 11-27 亚克力顶: 轴承 MR105 归 ④
         ('桥板 A/B', lambda: M.LS.comp([M.F.bridge_a, M.F.bridge_b]), '#1E8449', None, 2, 'E'),
         ('FPC A/B', lambda: M.LS.comp([M.F.fpc_a, M.F.fpc_b]), '#E67E22', 'fpc_v1_2', 2, 'E'),
         ('FPC 座 J5/J6', lambda: M.LS.comp([M.F.seat_j5, M.F.seat_j6]), '#7F8C8D', None, 2, 'E'),
@@ -99,11 +100,17 @@ GROUPS = {
         ('玻璃下-玻璃座 glass_shroud_upper', lambda: B.shroud_hi, '#5DADE2', 'glass_shroud_upper_v1_2', 1, 'P'),
         ('外卡环 glass_clamp_ring', lambda: B.clamp_ring, '#2E86C1', 'glass_clamp_ring_v1_2', 1, 'P'),
         ('玻璃罩 OD200×5 (外购)', lambda: B.tube, '#D6EAF8', None, 1, 'E'),
-        ('玻璃上 下件 (红) glass_top', lambda: B.glass_top, '#7FB3D5', 'glass_top_v1_2', 1, 'P'),
-        ('玻璃上 上件 (绿) glass_top_clamp', lambda: B.glass_top_clamp, '#1B4F72', 'glass_top_clamp_v1_2', 1, 'P'),
-        ('管内弧形件 glass_top_lug ×8', lambda: M.LS.comp(B.glass_top_lugs), '#F1C232', 'glass_top_lug_v1_2', 8, 'P'),   # 11-25 横锁
-        ('中心堵头 glass_top_hub', lambda: B.glass_top_hub, '#2E86C1', 'glass_top_hub_v1_2', 1, 'P'),
-        ('圆环玻璃 OD180×10 (外购)', lambda: B.glass_disc, '#AED6F1', None, 1, 'E'),
+        *([('玻璃上 外卡环 (红绿合一) glass_top_ring', lambda: B.glass_top_ring, '#7FB3D5', 'glass_top_ring_v1_2', 1, 'P'),   # 11-27 亚克力顶 (build_v1_2 GT_ACR)
+           ('管内弧形件 glass_top_lug ×8', lambda: M.LS.comp(B.glass_top_lugs), '#F1C232', 'glass_top_lug_v1_2', 8, 'P'),
+           ('亚克力顶 Ø200×8 (外协)', lambda: B.acrylic, '#AED6F1', 'glass_top_acrylic_v1_2', 1, 'E'),
+           ('MR105ZZ 轴承 (Φ5×Φ10×3)', lambda: B.brg_mr105, '#666666', None, 1, 'E'),
+           ('中心盖子 top_cap', lambda: B.top_cap, '#2E86C1', 'top_cap_v1_2', 1, 'P'),
+           ] if B.GT_ACR else [
+           ('玻璃上 下件 (红) glass_top', lambda: B.glass_top, '#7FB3D5', 'glass_top_v1_2', 1, 'P'),
+           ('玻璃上 上件 (绿) glass_top_clamp', lambda: B.glass_top_clamp, '#1B4F72', 'glass_top_clamp_v1_2', 1, 'P'),
+           ('管内弧形件 glass_top_lug ×8', lambda: M.LS.comp(B.glass_top_lugs), '#F1C232', 'glass_top_lug_v1_2', 8, 'P'),   # 11-25 横锁
+           ('中心堵头 glass_top_hub', lambda: B.glass_top_hub, '#2E86C1', 'glass_top_hub_v1_2', 1, 'P'),
+           ('圆环玻璃 OD180×10 (外购)', lambda: B.glass_disc, '#AED6F1', None, 1, 'E')]),
     ]),
 }
 CODE_GROUP = {code: g for g, (_, _, items) in GROUPS.items() for _, _, _, code, _, _ in items if code}

@@ -190,11 +190,13 @@ for i, (x, y) in enumerate(B.JN_PTS):
     _z0 = B.JN_NUT_Z1 - B.JN_NUT_H                 # 11-16 用户: 法兰朝上 (六角 6.9 在下, 法兰 Φ9.7×1.2 顶窝顶)
     add(f"M4 法兰螺母 玻璃下底座底 #{i}", cut(fuse(hexprism(x, y, 6.9, _z0, B.JN_NUT_Z1 - 1.2), cyl(x, y, 9.7, B.JN_NUT_Z1 - 1.2, B.JN_NUT_Z1)), cyl(x, y, 4.0, -1, 10)), "#707070")
 # 7b 玻璃上 (11-25): 8×M3×20 超薄头 (头沉绿件顶面 Φ7.4×1.8) 穿绿 + 红 → 红件底面 Φ8×4 圆沉孔里 M3 法兰螺母 (法兰朝上)
-for i, (x, y) in enumerate(B.GC_PTS):
+for i, (x, y) in enumerate([] if B.GT_ACR else B.GC_PTS):   # 11-27 亚克力顶: 绿压环 + 竖螺丝取消 (外卡环唇压亚克力, 只靠横锁)
     screw(f"M3x{B.GC_SCREW_L:g} 超薄头 玻璃上绿件→红件", i, x, y, B.GC_BEAR, B.GC_SCREW_L, False, hd=B.GC_HEAD_D, hh=B.GC_HEAD_H, engage=("M3 法兰螺母", *B.GC_NUT_Z))
     _gn = B.xf(B.xf(flange_nut_inv(0, 0, B.GC_NUT_Z[0]), B.rotz(math.degrees(math.atan2(y, x)))), _tr(x, y)) if B.GT_DISC == 200 else flange_nut_inv(x, y, B.GC_NUT_Z[0])   # 200 版六角窝平边朝径向
     add(f"M3 法兰螺母 玻璃上红件底 (法兰朝上) #{i}", _gn, "#707070")
 
+if B.GT_ACR:   # 11-27 亚克力中心: M3x8 超薄头 (Φ7×1.5) 压螺柱端面, 头在 MR105 上方 0.5 随轴转, 盖子顶板下 0.3 (螺柱见 顶部连接 top_stack)
+    screw("M3x8 超薄头 玻璃上中心 压螺柱", 0, 0.0, 0.0, B.AC_POST_TOP, 8.0, False, hd=B.AC_HEAD_D, hh=B.AC_HEAD_H, engage=("螺柱 M3 内牙", B.AC_POST_TOP - 8.0, B.AC_POST_TOP))
 # 7c 玻璃上 横锁 (11-25): 8×M3×14 超薄头 径向从外往里 (支承 r102.7), 穿红件外卡 + 玻璃管 Φ5 孔 → 管内弧形件 M3 法兰螺母 (法兰朝轴心 r88.5)
 from OCP.gp import gp_Trsf as _GT, gp_Ax1 as _GA, gp_Pnt as _GP, gp_Dir as _GD, gp_Vec as _GV
 def _radial(sh, a, z):    # 局部 z 轴 → 径向 x 轴, 再抬到 Z, 转到角度 a

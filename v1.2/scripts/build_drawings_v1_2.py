@@ -924,6 +924,35 @@ else:
 _DIR = {"motor_wire_clamp_v1_2": "mr30_seat_v1_2", "mr30_seat_v1_2_old": "mr30_seat_v1_2", "motor_wire_clamp_v1_2_old": "mr30_seat_v1_2", "mr30_floor_v1_2": "mr30_seat_v1_2", "mr30_floor_v1_2_old": "mr30_seat_v1_2"}   # 11-18 用户: 线夹文件放 MR30 文件夹 (models/<目录>/)
 _D1116 = {"led_post_a_v1_2", "led_post_b_v1_2", "led_bar_v1_2", "led_top_v1_2", "led_comb_v1_2", "rotor_shroud_a_v1_2", "rotor_shroud_b_v1_2",
           "rotor_lid_v1_2", "rotor_lid_b_v1_2", "wireless_holder_v1_2", "rim_ring_v1_2_D170", "hub_disc_v1_2", "base_disc_v1_2", "mr30_seat_v1_2", "motor_wire_clamp_v1_2"}
+if B.GT_ACR:   # 11-27 亚克力顶 (build_v1_2 GT_ACR): 红 / 绿 / 堵头 图纸作废 (旧文件留着), 换外卡环 (红绿合一) + 中心盖子; 亚克力加工图见 v1.2/顶部连接/亚克力方案_1127/
+    _H = next(sp for sp in SPECS if sp["code"] == "glass_top_v1_2")["holes"][1]
+    SPECS = [sp for sp in SPECS if sp["code"] not in ("glass_top_v1_2", "glass_top_clamp_v1_2", "glass_top_hub_v1_2")]
+    _ro = B.AC_OD / 2 + B.AC_EDGE_CLR
+    SPECS.append(dict(
+        code="glass_top_ring_v1_2", shape=B.glass_top_ring, short="玻璃上 外卡环 (红绿合一, 压亚克力)", qty="1", date="2026-11-27", stl_asm=True,
+        title=f"玻璃上 外卡环: 外卡 r{F(B.go)} 包玻璃管深 {F(B.GT_DEPTH)} + 顶唇 r{F(B.AC_LIP_R0)}–{F(_ro)} 厚 {F(B.AC_STEP_D)} 压亚克力台阶, {len(B.GS_ANG)}× M3 径向横锁",
+        subtitle=f"亚克力 Φ{F(B.AC_OD)}×{F(B.AC_T)} 坐管端 Z{F(round(B.AC_Z0, 2))}; 唇底 Z{F(round(B.AC_Z1 - B.AC_STEP_D, 2))} 压台阶, 顶面 Z{F(round(B.AC_Z1, 2))} 与亚克力齐平",
+        orient="翻面: 顶面整面贴床 (顶唇先打), 外卡朝上, 免支撑; Φ220 要大床",
+        phi=[2 * B.AC_LIP_R0, 2 * _ro, 2 * B.go, 2 * B.SH_OUT],
+        sec=dict(ang=22.5, r0=88.0, zd=[(B.GT_Z0, B.Z_GT), (B.Z_GT, B.AC_Z1 - B.AC_STEP_D), (B.AC_Z1 - B.AC_STEP_D, B.AC_Z1), (B.AC_Z1 - B.LIP_EDGE, B.AC_Z1), (B.GT_Z0, B.AC_Z1)],
+                 rd=[(B.AC_LIP_R0, _ro), (B.go, B.go + B.GT_FOOT), (B.go, B.SH_OUT)], auto_dims=False),
+        holes=[_H],
+        notes=[f"外卡内面 r{F(B.go)} 贴玻璃管外壁 (单边 {F(B.GL_CLR)}); 管端以上内面 r{F(_ro)} 让亚克力外圈 (单边 {F(B.AC_EDGE_CLR)}, 亚克力外径 ±0.2)",
+               f"顶唇 r{F(B.AC_LIP_R0)}–{F(_ro)} 厚 {F(B.AC_STEP_D)} 落亚克力外台阶 (台阶 r{F(B.AC_STEP_R)}–{F(B.AC_OD / 2)} 深 {F(B.AC_STEP_D)}, 唇内离台阶壁 0.2); 环轴向由唇压亚克力定位, 环内面不碰管端面",
+               f"横锁 ×{len(B.GS_ANG)} (45k°, 详图 H): Φ{F(B.GS_HOLE)} 通 + 外面 Φ{F(B.GS_CB_D)} 平座 r{F(B.GS_SEAT)}, 孔心 Z{F(round(B.GS_Z, 2))} = 管端下 {F(round(B.Z_GT - B.GS_Z, 2))}; M3×{F(B.GS_L)} 超薄头进管内弧形件法兰螺母",
+               "11-27 取代 红件 + 绿压环 + 中心堵头; 竖向 8×M3×20 / 红件底法兰螺母取消, 亚克力不打螺丝孔",
+               "装配: 亚克力放上管端 → 套本件 (唇压台阶) → 8 颗横锁从外往里轻拧"]))
+    SPECS.append(dict(
+        code="top_cap_v1_2", shape=B.top_cap, short="亚克力中心盖子", qty="1", date="2026-11-27", stl_asm=True, material="PETG / PLA",
+        title=f"亚克力中心盖子: 顶板 Φ{F(B.CAP_D)}×{F(B.CAP_TOP_T)} + 裙边 Φ{F(B.CAP_D)}/Φ{F(B.CAP_SK_IN)} 高 {F(round(B.CAP_Z1 - B.CAP_Z0 - B.CAP_TOP_T, 2))}, {B.CAP_N_RIB} 条压紧筋 Φ{F(B.CAP_RIB_D)}",
+        subtitle=f"压进亚克力 Φ{F(B.AC_BORE)} 沉孔, 裙边底 Z{F(round(B.CAP_Z0, 2))} 坐 MR105 外圈 (同时压住轴承), 顶面 Z{F(round(B.CAP_Z1, 2))} 与亚克力齐平",
+        orient="顶面贴床, 层高 0.1",
+        phi=[B.CAP_SK_IN, B.CAP_D, B.CAP_RIB_D],
+        sec=dict(ang=45, r0=0.0, zd=[(B.CAP_Z0, B.CAP_Z1 - B.CAP_TOP_T), (B.CAP_Z1 - B.CAP_TOP_T, B.CAP_Z1), (B.CAP_Z0, B.CAP_Z1)], rd=[(B.CAP_SK_IN / 2, B.CAP_D / 2)]),
+        holes=[],
+        notes=[f"下面 M3 超薄头 Φ{F(B.AC_HEAD_D)}×{F(B.AC_HEAD_H)} 随轴转: 头顶离顶板 {F(round(B.CAP_Z1 - B.CAP_TOP_T - B.AC_POST_TOP - B.AC_HEAD_H, 2))}, 头外径离裙边内壁 {F((B.CAP_SK_IN - B.AC_HEAD_D) / 2)}",
+               f"亚克力板厚 ±0.2 全落在本件: 量实际板厚, 裙边改长/改短重打 (台肩以亚克力底面为基准, 轴承位置不变)",
+               "MR105 到货先量宽 (按 3 设计; 标准 MR105ZZ 宽 4 → 裙边短 1)"]))
 for sp in SPECS:
     if sp["code"] in _D1116:
         sp.setdefault("date", "2026-11-16")      # 11-16 新转子布局 / 11-16 晚 偏心 + 耳朵脚

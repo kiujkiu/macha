@@ -175,6 +175,12 @@ BRG_Z0 = B.GD_Z1; BRG_Z1 = BRG_Z0 + B.BRG_H       # 688 Z301.88–306.88
 ROD_D, ROD_L = 8.0, (60.0 if B.GT_DISC == 200 else 65.0)   # 200 版 Φ8×60 (688 低 5); 11-25 Φ8×50 → Φ8×65 (取消硅胶垫后玻璃/688 低 0.8, 轴不动);                        # 11-16: Φ8×40 → Φ8×50 (轴座里压入 28.3, 原 18.3)
 ROD_Z1 = round(BRG_Z1 + 1.3, 6)                   # 322.38; 轴顶伸出轴承 1.3 (0.5 + 取消垫 0.8; 上面 Φ9×2.5 让位: 玻璃短 ≤1.2 不顶)
 ROD_Z0 = ROD_Z1 - ROD_L                           # 257.38
+if B.GT_ACR:                                      # 11-27 亚克力顶 (build_v1_2 GT_ACR): 688/堵头取消, 轴承换 MR105 卡在亚克力中心; 轴座压入深度不变 (ROD_Z0 同旧 Φ8×65)
+    ROD_Z0 = round(B.GT_Z1 + 10.0 + B.BRG_H + 1.3 - 65.0, 6)   # 257.38 (旧圆环玻璃 10 厚 + 688 推出来的, 冻结)
+    BRG_Z0, BRG_Z1 = B.MR_Z0, B.MR_Z1             # MR105 Z300.08–303.08
+    ROD_Z1 = B.AC_POST_TOP                        # 303.58: 占位阶梯轴 Φ8 → 亚克力底下 0.5 变 Φ5 穿 MR105 (实际轴系以 顶部连接 top_stack 螺柱为准)
+    ROD_STEP_Z = B.AC_Z0 - 0.5
+    ROD_L = round(ROD_Z1 - ROD_Z0, 2)
 ROD_HOLE_D = 7.85                                 # 压装孔 (打印孔偏小, 试配)
 assert ROD_Z0 > Z1 + CAP_T + 2, ROD_Z0
 COMB_Z0 = Z1 + CAP_T; COMB_T = 4.0; COMB_Z1 = COMB_Z0 + COMB_T   # 梳齿板 Z249.0–253.0, 坐帽顶
@@ -262,8 +268,11 @@ def comb():
 
 COMB_SLOTS = [(sx * tx_, ECC + sy * y) for sx in (1, -1) for tx_ in COMB_TEETH_X for y in COMB_SLOTS_Y for sy in (1, -1)]   # 世界坐标
 post_a, post_b, top, comb_s = post(+1), post(-1), top_piece(), comb()
-rod = cyl(0, 0, ROD_D, ROD_Z0, ROD_Z1)
-brg = cut(cyl(0, 0, 16.0, BRG_Z0, BRG_Z1), cyl(0, 0, 8.0, BRG_Z0 - 1, BRG_Z1 + 1))
+if B.GT_ACR:
+    rod = fuse(cyl(0, 0, ROD_D, ROD_Z0, ROD_STEP_Z), cyl(0, 0, B.MR_D, ROD_STEP_Z - 0.01, ROD_Z1)); brg = B.brg_mr105
+else:
+    rod = cyl(0, 0, ROD_D, ROD_Z0, ROD_Z1)
+    brg = cut(cyl(0, 0, 16.0, BRG_Z0, BRG_Z1), cyl(0, 0, 8.0, BRG_Z0 - 1, BRG_Z1 + 1))
 
 # ---------------- 外购件 ----------------
 def sock(x, y, z_bear, L, down=True, axis='z', sy=1):
@@ -412,8 +421,11 @@ def report():
         for b, sb in (('rim', B.rim), ('hub', B.hub), ('top', top)):
             v = common_v(s, sb)
             if v > 1e-3: rep['fasteners'].setdefault(nm, {})[b] = round(v, 3)
-    rep['fasteners']['rod × glass_top_hub'] = round(common_v(rod, B.glass_top_hub), 4)
-    rep['fasteners']['688 × glass_top_hub'] = round(common_v(brg, B.glass_top_hub), 4)
+    if B.GT_ACR:
+        rep['fasteners']['rod × 亚克力'] = round(common_v(rod, B.glass_disc), 4); rep['fasteners']['MR105 × 亚克力'] = round(common_v(brg, B.glass_disc), 4)
+    else:
+        rep['fasteners']['rod × glass_top_hub'] = round(common_v(rod, B.glass_top_hub), 4)
+        rep['fasteners']['688 × glass_top_hub'] = round(common_v(brg, B.glass_top_hub), 4)
     for nm, s in (('antenna_a', ant_a), ('antenna_b', ant_b)):
         for b in ('shroud_lo', 'shroud_hi', 'bb_r2_step', 'led_a', 'led_b', 'wireless_holder'):
             v = common_v(s, OTHERS[b])
@@ -541,7 +553,7 @@ if __name__ == '__main__':
         BRepMesh_IncrementalMesh(t, 0.02, False, 0.2, True)
         w = StlAPI_Writer(); w.ASCIIMode = False; assert w.Write(t, str(B.OUT / '打印STL' / f'{NAMES[k]}.stl'))
     items = [(NAMES[k], s, COL[k], None, False) for k, s in SUP.items()] + [
-        (f'Φ8×{ROD_L:g} 钢轴', rod, '#999999', None, False), ('688ZZ', brg, '#666666', None, False),
+        ((f'中心轴 Φ8/Φ5 占位 Z{ROD_Z0:.2f}–{ROD_Z1:.2f}' if B.GT_ACR else f'Φ8×{ROD_L:g} 钢轴'), rod, '#999999', None, False), (('MR105ZZ' if B.GT_ACR else '688ZZ'), brg, '#666666', None, False),
         ('灯板 A (+y) 板框', gbox(-HALF_W, ECC + GAP_HALF, Z0, HALF_W, ECC + Y_LED, Z1), '#145A32', None, False), ('灯板 B (−y) 板框', gbox(-HALF_W, ECC - Y_LED, Z0, HALF_W, ECC - GAP_HALF, Z1), '#145A32', None, False),
         ('桥板 A', br_a, '#1E8449', None, False), ('桥板 B', br_b, '#1E8449', None, False),
         ('天线 18.5×37.7 软板 +x 竖', ant_a, '#C0392B', None, False), ('天线 18.5×37.7 软板 −x 竖', ant_b, '#C0392B', None, False),

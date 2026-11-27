@@ -938,6 +938,43 @@ LOG['glass_top'] = dict(v=vol(glass_top), z=(GT_Z0, GT_Z1), z_tube_top=Z_GT, con
                         valid=(BRepCheck_Analyzer(glass_top).IsValid(), BRepCheck_Analyzer(glass_top_hub).IsValid(), BRepCheck_Analyzer(glass_top_clamp).IsValid()),
                         clamp_v=vol(glass_top_clamp), clamp_z=(GC_Z0, GC_Z1), ledge_z=GT_LEDGE_Z, glass_gap=GC_GAP, clamp_pts=[(round(x, 2), round(y, 2)) for x, y in GC_PTS],
                         nut_web=round(GT_TOP_T - GC_NUT_H, 2), screw_tip=round(GC_TIP, 2), screw_engage=GC_ENG)
+# 11-27 用户定版「8mm吧按照2+3+3」+「先合进主模型再发」: 顶部换亚克力 Ø200×8 + 外卡环红绿合一 (GT_ACR=0 退回上面的红/绿/圆环玻璃/堵头)
+#   亚克力 (外协, 加工图 v1.2/顶部连接/亚克力方案_1127/): 底面坐玻璃管上端; 外台阶 r95–100 深 4 (顶面); 中心 Ø8.5 通 + 顶面 Ø10.05 沉孔, 台肩 2 (以底面为基准)
+#   叠层 (从亚克力底): 台肩 0–2 / MR105 (Φ5×Φ10×3) 2–5 / 螺柱伸出 0.5 / M3 超薄头 Φ7×1.5 5.5–7 (随轴转) / 间隙 0.3 / 盖子顶板 7.3–8 (顶面齐平)
+#   外卡环 glass_top_ring_v1_2: 原红件外卡 (r100.2 起包管深 14 + 斜面 + 8×M3×14 径向横锁) + 顶部唇 r95.2–100 厚 4 压亚克力台阶, 顶面与亚克力齐平;
+#     原绿压环 / 8×M3×20 竖螺丝 / 红件底法兰螺母 / 中心堵头 / 688 全取消; 翻面打印 (顶面贴床, 唇先打, 免支撑)
+#   兼容名: glass_top = 外卡环, glass_disc = 亚克力, GD_Z0/GD_Z1/GD_T/GD_OD/GD_ID = 亚克力 底/顶/厚/外径/通孔; glass_top_clamp = glass_top_hub = None
+#     GD_LIFT / GH_* / BRG_* / LOG['glass_top'] 保持旧值 (led_support 轴座高度靠它们算, 打印件 led_top 不变)
+GT_ACR = bool(int(os.environ.get('GT_ACR', '1')))
+if GT_ACR:
+    assert GT_DISC == 180, 'GT_ACR 与 GT_DISC=200 不能同开'
+    AC_OD, AC_T, AC_STEP_R, AC_STEP_D = 200.0, 8.0, 95.0, 4.0
+    AC_HOLE, AC_BORE, AC_SHOULDER = 8.5, 10.05, 2.0
+    AC_Z0 = Z_GT; AC_Z1 = AC_Z0 + AC_T                                  # 298.08 / 306.08
+    MR_D, MR_OD, MR_W = 5.0, 10.0, 3.0                                   # MR105ZZ (用户 L-1050 5×10×3; 到货量宽, 标准 4)
+    MR_Z0, MR_Z1 = AC_Z0 + AC_SHOULDER, AC_Z0 + AC_SHOULDER + MR_W     # 300.08 / 303.08
+    AC_POST_TOP = MR_Z1 + 0.5                                           # 螺柱顶 303.58 (伸出轴承 0.5, 头只压螺柱端面)
+    AC_HEAD_D, AC_HEAD_H = 7.0, 1.5                                     # M3 超薄头 Z303.58–305.08
+    CAP_D, CAP_SK_IN, CAP_TOP_T, CAP_RIB_D, CAP_RIB_W, CAP_N_RIB = 10.0, 8.0, 0.7, 10.15, 0.6, 4
+    CAP_Z0, CAP_Z1 = MR_Z1, AC_Z1                                       # 裙边坐轴承外圈 303.08 → 顶面齐平 306.08
+    assert AC_POST_TOP + AC_HEAD_H + 0.3 <= CAP_Z1 - CAP_TOP_T + 1e-6 and AC_HEAD_D / 2 + 0.5 <= CAP_SK_IN / 2 and AC_HOLE / 2 > 3.2, '头碰盖子 / 通孔碰内圈'
+    acrylic = clean(cut(ann(AC_HOLE / 2, AC_OD / 2, AC_Z0, AC_Z1), ann(AC_STEP_R, AC_OD / 2 + 1, AC_Z1 - AC_STEP_D, AC_Z1 + 1), cyl(0, 0, AC_BORE, MR_Z0, AC_Z1 + 1)))
+    brg_mr105 = ann(MR_D / 2, MR_OD / 2, MR_Z0, MR_Z1)
+    _cap = cut(cyl(0, 0, CAP_D, CAP_Z0, CAP_Z1), cyl(0, 0, CAP_SK_IN, CAP_Z0 - 1, CAP_Z1 - CAP_TOP_T))
+    for k in range(CAP_N_RIB):                                          # 压紧筋 Ø10.15 (过盈 0.05 单边, 顶面下 0.3 起)
+        _cap = fuse(_cap, op(BRepAlgoAPI_Common, xf(gbox(CAP_D / 2 - 0.3, -CAP_RIB_W / 2, CAP_Z0, CAP_RIB_D / 2 + 0.1, CAP_RIB_W / 2, CAP_Z1 - 0.3), rotz(360 / CAP_N_RIB * k)), cyl(0, 0, CAP_RIB_D, CAP_Z0, CAP_Z1)))
+    top_cap = clean(_cap)
+    AC_LIP_R0, AC_EDGE_CLR = AC_STEP_R + 0.2, 0.3                      # 唇内 r95.2 (离台阶壁 0.2); 亚克力外圈 ↔ 环 r100.3
+    GT_RZ2 = [(AC_LIP_R0, AC_Z1), (AC_LIP_R0, AC_Z1 - AC_STEP_D), (AC_OD / 2 + AC_EDGE_CLR, AC_Z1 - AC_STEP_D), (AC_OD / 2 + AC_EDGE_CLR, Z_GT),
+              (go, Z_GT), (go, GT_Z0), (go + GT_FOOT, GT_Z0), (SH_OUT, AC_Z1 - LIP_EDGE), (SH_OUT, AC_Z1)]
+    _r = revol(GT_RZ2)
+    for _a in GS_ANG: _r = cut(_r, xf(fuse(_xc(GS_Z, GS_HOLE, 98, 112), _xc(GS_Z, GS_CB_D, GS_SEAT, 112)), rotz(_a)))
+    glass_top_ring = clean(_r)
+    glass_top, glass_disc, glass_top_clamp, glass_top_hub = glass_top_ring, acrylic, None, None
+    GD_OD, GD_ID, GD_T, GD_Z0, GD_Z1 = AC_OD, AC_HOLE, AC_T, AC_Z0, AC_Z1
+    LOG['acrylic'] = dict(z=(AC_Z0, AC_Z1), step=(AC_STEP_R, AC_STEP_D), hole=AC_HOLE, bore=AC_BORE, mr105_z=(MR_Z0, MR_Z1), post_top=AC_POST_TOP, head_z=(AC_POST_TOP, AC_POST_TOP + AC_HEAD_H),
+                          cap_z=(CAP_Z0, CAP_Z1), ring_z=(GT_Z0, AC_Z1), ring_v=vol(glass_top_ring), acrylic_mass_g=round(vol(acrylic) * 1.19e-3),
+                          valid=(BRepCheck_Analyzer(glass_top_ring).IsValid(), BRepCheck_Analyzer(acrylic).IsValid(), BRepCheck_Analyzer(top_cap).IsValid()))
 nuts = []
 seat_nuts = [cyl(x, y, SH_NUT_D, NUT_Z0, NUT_Z0 + NUT_T) for x, y in SH_M6]
 hang_nuts = [cyl(x, y, 6.35, FL_Z0 - 2.4, FL_Z0) for x, y in OUT_HANG]          # M3 螺母 (对角 6.35 x 2.4) 吊在定子盘底
