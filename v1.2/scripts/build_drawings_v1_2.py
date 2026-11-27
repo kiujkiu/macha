@@ -906,6 +906,7 @@ if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1
                        f"内边离灯板 ≥0.3; 拆盖: 松 3 颗螺丝 → 抬 5 → 往{'+y' if sy > 0 else '−y'} 平移取出, 不碰灯板/桥板/FPC (先取下玻璃管)",
                        ("不拆盖也能: 从起子孔拆整半罩 / 从配重孔加减配重; 动平衡装着盖做" if RSB.LID_HOLES else "11-26 顶盖只留 3 颗盖螺丝 + 桥板槽 (配重孔/起子孔取消): 调配重、拆罩锁都先拆盖, 动平衡最后装盖复测"),
                        *(["11-27 用户「盖子和罩子不嵌合也行」: 外裙取消, 盖底平, 平放在环顶 (靠 3 个凸台定位)"] if not RSB.LID_SKIRT else []),
+                       *([f"11-27 用户「盖住这个pcb, 两个半圆的感觉」: 桥板槽不再通透, 槽上留顶皮 {F(RSB.BR_ROOF_T)} (Z{F(RSB.BR_ROOF_Z0)}–{F(RSB.Z1)}), 桥板顶 Z{F(RSB.BR_TOP)} 离顶皮 {F(round(RSB.BR_ROOF_Z0 - RSB.BR_TOP, 2))}; 倒放打印顶皮贴床"] if getattr(RSB, "LID_BR_ROOF", False) else []),
                        *([f"11-26 外裙: R{F(RSB.R1 - RSB.SK_T)}–{F(RSB.R1)} 下垂 {F(RSB.SK_H - RSB.SK_CLR)} (Z{F(round(RSB.LID_Z0 - RSB.SK_H + RSB.SK_CLR, 2))}–{F(RSB.LID_Z0)}), 罩住侧环顶外半台阶 (径向单边 {F(RSB.SK_CLR)}, 裙底隙 {F(RSB.SK_CLR)}), 箍住两半侧环"] if RSB.LID_SKIRT else [])])
         SPECS += [_lid_spec("a"), _lid_spec("b")]
         SPECS += [_shrb_spec("a")] + ([] if RSB.RING_ONE else [_shrb_spec("b")])

@@ -149,6 +149,12 @@ BR_POCKET_ADD = 0.15
 # 11-21 罩 a ↔ 灯板 A MIP 顶 (x±81.6, Z71–73) 只 0.108: 顶盖内边 (RS.LID_YIN, 板厚按 1.468 算的) 两片各再退 0.2 ⇒ 0.308
 LID_YIN_ADD = 0.2
 BR_POCKET = {k: (x0, yb + (BR_POCKET_ADD if k == 'a' else -BR_POCKET_ADD)) for k, (x0, yb) in RS.BR_POCKET.items()}   # +6.778 / −16.158
+# 11-27 用户「顶盖改一下，盖住这个pcb，就是两个半圆的感觉」: 桥板顶 Z70.5 原来穿出顶盖 (通槽) ⇒ 槽上留顶皮 (盖倒放打印, 顶皮是贴床头几层, 不用搭桥)
+LID_BR_ROOF = True
+BR_TOP = round(B.Z_SCR0 + 36.0, 2)               # 桥板 PCB 上沿 70.5 (fpc_v1_2 bridge_a/b 实测 34.49–70.5)
+BR_ROOF_T = 0.8                                   # 顶皮厚 (0.2 层高 4 层)
+BR_ROOF_Z0 = round(Z1 - BR_ROOF_T, 2)             # 顶皮底 70.78
+assert BR_ROOF_Z0 - BR_TOP >= 0.25, (BR_ROOF_Z0, BR_TOP)
 SPLIT_Y = RS.ECC                      # 分界: 灯板中面 y = SCR_ECC (11-18 夜 −4.69, 原 −4.36; 两端竖缝内)
 # 11-18 夜 用户: 底板上边 R85 圆弧伸出罩壁 r82–85 ⇒ +y 半罩底开缺口 = 底板板框外扩 BB_NOTCH_CLR, 从罩底到板顶 + BB_NOTCH_CLR (伸出的板被玻璃座挡住, 外面看不到)
 BB_NOTCH = False                      # 11-19 用户: 底板回 r4j 矩形 (最远 r76.78 < 罩内壁 r82), 不再开缺口; 要恢复 R85 圆弧时改 True
@@ -209,7 +215,11 @@ def lid_plain(k):
     x0, yb = BR_POCKET[k]; yb0 = RS.BR_POCKET[k][1]   # 桥板让位槽外边外扩 (11-20 夜, 离桥板 ≥0.3)
     yi = RS.LID_YIN[k]                                # 盖内边 (RS 按板厚 1.468 算; 板改 1.6 后离 MIP 顶只剩 0.108) ⇒ 再退 LID_YIN_ADD (11-21, ≥0.3)
     yin_cut = gbox(-100, yi - 1, RS.LID_Z0 - 1, 100, yi + LID_YIN_ADD, Z1 + 1) if k == 'a' else gbox(-100, yi - LID_YIN_ADD, RS.LID_Z0 - 1, 100, yi + 1, Z1 + 1)
-    return clean(cut(fuse(plate, *fill), gbox(x0, min(yb, yb0 - 0.01 * (1 if k == 'a' else -1)), RS.LID_Z0 - 1, -x0, max(yb, yb0 - 0.01 * (1 if k == 'a' else -1)), Z1 + 1), yin_cut))
+    s = cut(fuse(plate, *fill), gbox(x0, min(yb, yb0 - 0.01 * (1 if k == 'a' else -1)), RS.LID_Z0 - 1, -x0, max(yb, yb0 - 0.01 * (1 if k == 'a' else -1)), Z1 + 1), yin_cut)
+    if LID_BR_ROOF:                                   # 桥板槽上补顶皮 (槽内边 = 盖内边, 外边 = 槽外边)
+        lo, hi = (yi + LID_YIN_ADD, yb) if k == 'a' else (yb, yi - LID_YIN_ADD)
+        s = fuse(s, gbox(x0, lo, BR_ROOF_Z0, -x0, hi, Z1))
+    return clean(s)
 
 
 def half(k):
