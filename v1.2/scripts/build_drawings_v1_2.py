@@ -936,7 +936,7 @@ for sp in SPECS:
         sp["src"] = f"v1.2/out/dwg_stl/{sp['code']}.stl (装配坐标; 打印件 models/{sp['code']}/)"
     sp.setdefault("origin_note", ORIG)
 
-_FOLDER = {"rim_ring_v1_2_D170": "转子盘", "hub_disc_v1_2": "转子盘", "flange_disc_v1_2": "定子盘", "mounting_flange_v1_2": "定子盘", "ir_clamp_v1_2": "定子盘", **_FOLDER_B}
+_FOLDER = {}   # 11-27 用户「照这样并吧」: 定子盘/ 转子盘B/ 并进 分组/ (1_底盘组 / 2_转子盘组), 图纸由 quick_v1_2 → group_asm.sync_part 同步; 旧 转子盘/ 改名 转子盘_旧D170 归档不再更新
 
 # 11-18 整机换成转子盘B: 全量出图时不再重出旧转子件 (图纸文件保留, 点名仍可出)
 _SUPERSEDED = {"hub_disc_v1_2", "rim_ring_v1_2_D170", "led_post_a_v1_2", "led_post_b_v1_2", "rotor_shroud_a_v1_2", "rotor_shroud_b_v1_2", "rotor_lid_v1_2", "rotor_lid_b_v1_2"} if B.ROTOR_B else set()

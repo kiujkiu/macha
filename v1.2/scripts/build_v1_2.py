@@ -106,7 +106,7 @@ IR_PAD_D = 1.0
 IR_HOLES_UV = [(2.0, 8.2), (8.0, 8.2), (2.0, 2.5), (8.0, 2.5)]   # NPTH 定位孔 Φ2.2 (M2 通孔): H1/H2 r77.3 ∓3.0 (压片销插这 2 个); H3/H4 r71.6 ∓3.0 (r5 新增, 在压片内边外, 定子侧不用)
 IR_PIN_HOLES = IR_HOLES_UV[:2]                  # 压片定位销只对 H1/H2
 IR_HOLE_D = 2.2                                # 板定位孔 NPTH (r4 第 3 版用户定 M2 通孔; 原 1.5, 曾议 Φ3.4)
-IR_PIN_D = IR_HOLE_D - 0.1                     # 11-24 用户「凸台直径小于孔0.1」Φ2.1; 压片定位销 (r4 第 3 版 M2 孔配 Φ2.0; 原 1.3) ⇒ 销内缘 r76.3, 离压片内边 0.4
+IR_PIN_D = 1.8                                 # 11-24 用户: 销 Φ1.8 (同转子 B 件); 压片定位销 (r4 第 3 版 M2 孔配 Φ2.0; 原 1.3) ⇒ 销内缘 r76.3, 离压片内边 0.4
 IR_PIN_H = IR_PCB_T - 0.1                      # 销高 (从板底面平面起) 0.7, 不顶定子盘
 IR_LED_U = IR_LED_UV[0]                        # (兼容旧名)
 IR_LED_L, IR_LED_W, IR_LED_H = 1.6, 0.8, 0.6   # 0603 发射管本体 (L 沿 IR_FP_ALONG_U 定的轴; 伸进定子盘通光孔, 对角 1.79 < IR_WIN_D)
@@ -606,7 +606,8 @@ NUT_CLR_D = 0.0                                    # 用户 11-12: 螺母 r84–
 #   顶面圆沉孔 Φ SH_NUT_D 底 = 原三角块顶 TRI_T (法兰螺母法兰朝下坐沉孔底, 位置同原 Z5–8.7, 顶低于台顶 0.3) + Φ3.4 通
 SH_BOSS_D = SH_NUT_D + 2 * 5.0                     # 18 (沉孔壁 5; 11-24 用户「这里壁厚做厚2倍」2.5 → 5)
 SH_BOSS_Z1 = NUT_Z0 + 3.7 + 0.3                    # 9.0
-for x, y in SH_M6:
+SH_BOSS_ON = os.environ.get('SH_BOSS', '1') != '0'   # 11-24: SH_BOSS=0 重建旧下罩 (无圆台) 给 sh_insert_v1_2 求补块
+for x, y in (SH_M6 if SH_BOSS_ON else []):
     s_ = fuse(s_, cyl(x, y, SH_BOSS_D, TRI_T - 0.5, SH_BOSS_Z1))
     s_ = cut(s_, cyl(x, y, 3.4, -1, SH_BOSS_Z1 + 1), cyl(x, y, SH_NUT_D, NUT_Z0, SH_BOSS_Z1 + 1))
 # 用户 11-12: 三角块两条直边 (x=±P_N / y=±P_N) 各立一片斜三角筋, 外侧面与直边齐平, 尖角 → 墙内面全长, 与块顶/墙熔一体

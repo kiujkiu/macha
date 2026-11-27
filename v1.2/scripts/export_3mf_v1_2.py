@@ -80,31 +80,8 @@ for f in [OUT / '零件' / 'rim_ring_v1_2_D175.step', OUT / '打印STL' / 'rim_r
     if f.exists(): f.unlink(); print('删除', f)
 for _dd in ('led_mid_t_v1_2', 'rim_ring_v1_2_D175'):
     if (V12 / 'models' / _dd).exists(): shutil.rmtree(V12 / 'models' / _dd); print(f'删除 models/{_dd}/')
-# 11-16 晚 用户: 定子盘 2 件 / 转子盘 2 件 各放一个文件夹 (每次导出都覆盖成最新)
-_GROUPS = {'定子盘': [('flange_disc_v1_2', V12 / 'models' / 'flange_disc_v1_2'), ('mounting_flange_v1_2', V12 / 'models' / 'mounting_flange_v1_2')],
-           '转子盘': [(RIM_NAME, None), ('hub_disc_v1_2', None)]}
-if ROTOR_B:   # 转子盘/ 文件夹 (旧转子) 不再覆盖; 转子盘B/ 由 rotor_b / rotor_shroud_b (STL=打印姿态, STEP=装配) 和出图同步
-    _GROUPS.pop('转子盘')
-    gd = V12 / '转子盘B'; gd.mkdir(exist_ok=True)
-    for n in ('rim_ring_v1_2b', 'screen_sup_a_v1_2b', 'screen_sup_b_v1_2b', 'rotor_shroud_b_a_v1_2b', 'rotor_shroud_b_b_v1_2b', 'rotor_shroud_lid_a_v1_2b', 'rotor_shroud_lid_b_v1_2b'):
-        d = V12 / 'models' / n
-        for f, dst in ((d / f'{n}_print.stl', gd / f'{n}.stl'), (d / f'{n}.step', gd / f'{n}.step'), (d / f'{n}_drawing.pdf', gd / f'{n}_drawing.pdf')):
-            if f.exists():
-                try: shutil.copy2(f, dst)
-                except PermissionError:                     # 11-19 21:30: .NEW 也开着 → 依次 NEW2/NEW3
-                    for _s in ('NEW', 'NEW2', 'NEW3'):
-                        try: shutil.copy2(f, dst.with_name(f'{dst.stem}.{_s}{dst.suffix}')); print('  被占用, 另存', dst.stem + '.' + _s); break
-                        except PermissionError: continue
-    if (V12 / 'models' / 'rim_ring_v1_2b' / 'rotor_b_asm.step').exists(): shutil.copy2(V12 / 'models' / 'rim_ring_v1_2b' / 'rotor_b_asm.step', gd / 'rotor_b_asm.step')
-for g, items in _GROUPS.items():
-    gd = V12 / g; gd.mkdir(exist_ok=True)
-    for n, d in items:
-        srcs = ([d / f'{n}.step', d / f'{n}.stl', d / f'{n}_drawing.pdf'] if d else           # 定子盘: models/ 下 (export 本脚本写)
-                [OUT / '零件' / f'{n}.step', OUT / '打印STL' / f'{n}.stl', V12 / 'models' / n / f'{n}_drawing.pdf'])   # 转子盘: out/零件 + out/打印STL (打印姿态) + 图纸 (有就拷)
-        for f in srcs:
-            if not f.exists(): continue
-            try:
-                shutil.copy2(f, gd / f.name)
-            except PermissionError:                         # 11-16 晚: 用户在阅读器里开着 → 另存 .NEW, 不中断
-                shutil.copy2(f, gd / f'{f.stem}.NEW{f.suffix}'); print('  被占用, 另存', gd / f'{f.stem}.NEW{f.suffix}')
-print('定子盘 / 转子盘 文件夹已更新')
+# 11-27 用户「照这样并吧」: 原 定子盘/ 转子盘/ 转子盘B/ 成品文件夹并进 分组/ (零件由 group_asm_v1_2 同步), 这里只拷转子装配 STEP
+if ROTOR_B and (V12 / 'models' / 'rim_ring_v1_2b' / 'rotor_b_asm.step').exists():
+    _gd = V12 / '分组' / '2_转子盘组'; _gd.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(V12 / 'models' / 'rim_ring_v1_2b' / 'rotor_b_asm.step', _gd / 'rotor_b_asm.step')
+    print('rotor_b_asm.step → 分组/2_转子盘组/')

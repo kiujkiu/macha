@@ -65,6 +65,7 @@ GROUPS = {
         ('电机线束线夹', lambda: M.MW.wire_clamp(), '#E69138', 'motor_wire_clamp_v1_2', 1, 'P'),
         ('定子盘 flange_disc', lambda: B.flange_disc, '#D9A441', 'flange_disc_v1_2', 1, 'P'),
         ('安装法兰 mounting_flange', lambda: B.mounting_flange, '#B5895A', 'mounting_flange_v1_2', 1, 'P'),
+        ('定子光电发射板压片 ir_clamp', lambda: B.ir_clamp, '#E69138', 'ir_clamp_v1_2', 1, 'P'),   # 11-27 原 定子盘/ 文件夹并入
     ]),
     2: ('转子盘组', '灯以下的旋转件', [
         ('转子玻纤板 Φ165×3 (板厂件)', lambda: M.RB.fr4, '#C9B458', 'fr4_plate_v1_2b', 1, 'E'),

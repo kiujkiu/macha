@@ -53,7 +53,7 @@ S_PARTS = {
     'key_bracket_v1_2': 'key_bracket_v1_2.py', 'key_cap_v1_2': 'key_cap_v1_2.py', 'light_pipe_v1_2': 'light_pipe_v1_2.py',
 }
 # 成品文件夹 (同 export_3mf / build_drawings 的 _GROUPS / _FOLDER)
-GROUP = {'flange_disc_v1_2': '定子盘', 'mounting_flange_v1_2': '定子盘', 'rim_ring_v1_2_D170': '转子盘', 'hub_disc_v1_2': '转子盘'}
+GROUP = {}   # 11-27: 定子盘/ 转子盘/ 文件夹并进 分组/ (下面 group_asm.sync_part 同步), 这里不再拷
 
 args = [a for a in sys.argv[1:] if not a.startswith('--')]
 if '--list' in sys.argv or not args:
