@@ -721,7 +721,7 @@ for x, y in _V04_OUT: _mf2 = fuse(_mf2, cyl(x, y, CB7 + 0.4, FL_TOP, MF_TOP))  #
 _mf2 = clean(_mf2)                                 # 11-17 晚: LID_R 改 r77.5 与原孔同轴, 不先 clean 直接挖会布尔失败 (体积 0)
 for x, y in LID_SCREWS: _mf2 = cut(_mf2, cyl(x, y, 3.2, 0, 30), cyl(x, y, CB7, MF_TOP - MF_CB, 40))   # 上盖 r79: Φ3.2 + 顶面 Φ7×1.5
 # 11-17 用户: 安装法兰不再给 XT60 开缺口 (外裙整圈); 改由 XT60 压块 V1.2-h 在全局 Z8 以上削到接头尾 r85.8 (原 11-13 此处 cut 压块外形 +0.5, Z≤13.5)
-for _a in IR_WIN_ANGS: _mf2 = cut(_mf2, xf(cyl(IR_R, 0, IR_WIN_D, FL_TOP - 1, MF_TOP + 1), rotz(_a)))   # 11-23 光电对射通光窗 ×8 (与定子盘通光孔同轴)
+_mf2 = cut(_mf2, xf(cyl(IR_R, 0, IR_WIN_D, FL_TOP - 1, MF_TOP + 1), _irt))   # 11-28 用户「mount flange只开一个孔就行, 因为他可以转」: 只开 IR_ANG 一个通光窗 (原 ×8; 定子盘仍 8 个), 法兰按 45° 转着装对准
 mounting_flange = clean(_mf2)
 # 11-23 光电发射板压片 ir_clamp_v1_2 (打印, 夹在定子盘底面与 2 颗 B 螺丝的下挂法兰螺母之间): 弧形条 r IR_CL_R0–R1 + 两端圆垫,
 #   顶面 (贴定子盘底) 开板槽: 全板外形深 IR_PCB_T (板顶面齐定子盘底), 电阻处再深 IR_BOT_H+IR_BOT_GAP; 板槽底长 2 个定位销插板 NPTH 孔; 板内端伸出压片内边, 焊盘露在外直接焊线 (11-23 取消出线孔/槽)。外形关于 IR_ANG 对称。
