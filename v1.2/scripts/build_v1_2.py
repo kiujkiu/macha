@@ -775,9 +775,12 @@ def _xhex_v(z, af, x0, x1):                        # 六角沿 x, 平边朝 ±y 
     pg.Close()
     return _PR0(_MF0(pg.Wire()).Face(), gp_Vec(x1 - x0, 0, 0)).Shape()
 NUT_FL_OUT = True                                  # 11-28 用户「法兰朝外」: upper + lug 的 M3 法兰螺母法兰朝玻璃 (受力面 = 法兰), 从件顶竖槽立着放入; False = 旧法 (法兰朝轴心从内面塞)
+NUT_ROUND_CB = True                                # 11-28 用户: 圆沉孔 Φ8×3.8 (优先于下面的六角+竖槽); False = 六角+竖槽版
 def _nut_pocket(z, r0, z_top, hole_r1):
     """横锁 M3 法兰螺母窝 (局部 0° 方向, 内面 r0). NUT_FL_OUT: 六角 r0→r0+HEX_H (内面也开口, 可顶出拆) + 法兰 →+FL_H, 两段各开竖槽到 z_top (宽 AF / Φ)"""
     hole = _xc(z, GS_HOLE, r0 - 1, hole_r1)
+    if NUT_ROUND_CB:                               # 11-28 用户「就用我们一直用的那个圆形沉孔」: 内面 Φ8 圆沉孔深 3.8, 螺母法兰朝外塞到底, 无六角/竖槽
+        return fuse(hole, _xc(z, GL_FL_D, r0 - 1, r0 + GL_FL_H + GL_HEX_H))
     if not NUT_FL_OUT:
         return fuse(hole, _xc(z, GL_FL_D, r0 - 1, r0 + GL_FL_H), _xhex(z, GL_HEX_AF, r0 - 1, r0 + GL_FL_H + GL_HEX_H))
     rh = r0 + GL_HEX_H; rf = rh + GL_FL_H
