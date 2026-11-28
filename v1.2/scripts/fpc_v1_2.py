@@ -72,9 +72,13 @@ BR_PCB = BR_R11 / 'ProPrj_ICN2260转接板_V2_2026-11-10.kicad_pcb' if BRIDGE_FL
 #   FPC_BRIDGE_W=<W_*.step> (KiCad 原点导出: STEP (x, y) = (kx, −ky)), FPC_BRIDGE_W_PCB=<final_*.kicad_pcb>,
 #   FPC_BRIDGE_W_DROP=件号,... (从 STEP 里去掉, 例如用 flash STEP 近似 noflash), FPC_OSC1_H=OSC1 高 (STEP 无模型, 默认 1.2 保守)。
 #   W STEP 没有 J1/J2/OSC1/U53/FPC1 模型: J1/J2 借 11-11 简版 STEP (位置未变), OSC1/U53 按 W PCB 封装 Fab/CrtYd 建盒, FPC1 照旧按 Fab 建座。
-BR_W = os.environ.get('FPC_BRIDGE_W')
+# 11-28 用户「桥板不是发板的版本」: 默认改用实际发板的 6 层 v22h (11-25 下单, 76×36, 板厚 1.6); FPC_BRIDGE_W=0 回旧 11-11 简版
+_BR_V22H = Path('/mnt/d/claude_workspace/pov3d/pcb/projects/POV3D_GW5A_Bridge_V2.0/layout/r11/B6F/W')
+BR_W = os.environ.get('FPC_BRIDGE_W', str(_BR_V22H / 'r41' / '桥板V2_6层_v22h.step'))
+if BR_W == '0': BR_W = None
 if BR_W:
-    BR_PCB = Path(os.environ['FPC_BRIDGE_W_PCB'])
+    BR_PCB = Path(os.environ.get('FPC_BRIDGE_W_PCB', str(_BR_V22H / 'final_flash_v22h.kicad_pcb')))
+    os.environ.setdefault('FPC_OSC1_H', '1.1')    # OSC1 = YXC YSO110TR 3225 最大高 1.1 (3e 11-19)
 LED_PCB = Path('/mnt/d/claude_workspace/_led_v020_1113/src/LED_V0.2.0/LED_V0.2.0.kicad_pcb')   # 灯板 V0.2.0 (11-13, 同 MIP json 出处); 板心 KiCad (175, 62)
 LED_C = (175.0, 62.0)
 BR_ORG = (132.0, 118.0)                           # kicad-cli --user-origin 132x118mm ⇒ STEP (x, y) = (kx − 132, 118 − ky)
@@ -236,7 +240,7 @@ _t = T_BR()
 BR_MOUTH = (BR_ORG[1] - (kicad_pad(BR_PCB, 'FPC1', '71')[1] + 1.462)) if BRIDGE_FLIP else BR_SEAT['mouth']   # 口边 = 固定脚 71 + 1.462 (P0: 107.225 → 108.687; W: 106.6 → 108.062)   # 新: 9.313 (口朝 STEP −y) / 旧: 17.887 (口朝 +y)
 _seat_step = seat_box(BR_SEAT['xh'], BR_MOUTH, BR_SEAT['depth'], 1 if BRIDGE_FLIP else -1, BR_F)
 if BRIDGE_FLIP and not BR_W: assert abs(kicad_pad(BR_PCB, 'FPC1', '71')[1] - 107.225) < 0.01 and abs(kicad_pad(BR_PCB, 'FPC1', '1')[1] - 101.575) < 0.01
-if BRIDGE_FLIP and BR_W: assert abs(kicad_pad(BR_PCB, 'FPC1', '71')[1] - kicad_pad(BR_PCB, 'FPC1', '1')[1] - 5.65) < 0.01
+if BRIDGE_FLIP and BR_W: assert abs(kicad_pad(BR_PCB, 'FPC1', '71')[1] - kicad_pad(BR_PCB, 'FPC1', '1')[1] - 5.65) < 0.1   # v22h 1 脚焊盘缩短, 中心挪 0.075 (座位置不变)
 BR_LOC = [(n, xf(s, _t)) for n, s in _br_parts if n != 'FPC1'] + [('FPC1 座 (XW0525512 按 Fab, 高 2.0)', xf(_seat_step, _t))]
 _br_loc = comp([s for _, s in BR_LOC])
 _axk_loc = comp([xf(s, _t) for s in _br_axk.values()])
