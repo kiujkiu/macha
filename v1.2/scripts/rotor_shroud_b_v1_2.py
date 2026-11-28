@@ -68,7 +68,7 @@ OUT_PTS = list(RB.ANCHOR_PTS) + list(RB.OUT_NUT_PTS)   # 外圈 8 颗法兰螺�
 # 配重孔: 候选 原 RS.W_A + 40/140/220/320, 去掉与起子孔相碰的 (中心距 < (ACC_D+5.8)/2 + 1)
 # 11-25 顶盖单独拆: 每片 3 颗 M3×8 超薄头 (Φ7×1.5) 从上往下, 螺母 (M3 法兰) 从环上凸块底面塞进六角窝, 法兰朝下贴凸块底
 LID_T, LID_Z0 = RS.LID_T, RS.LID_Z0              # 2 / 69.58 盖底 = 罩壁顶 = 唇顶 (盖外圆 R1)
-LS_R, LS_ANG = 77.0, {'a': [40.0, 90.0, 140.0], 'b': [220.0, 270.0, 320.0]}
+LS_R, LS_ANG = 77.0, {'a': [40.0, 90.0, 140.0], 'b': [220.0, 270.0, 320.0]}   # 11-28 用户「还是用之前的3个螺丝的方案」(11-27 曾每片 4 颗 137.5/168, 撤回)
 LS_ALL = LS_ANG['a'] + LS_ANG['b']
 LS_PTS = {a: pol(LS_R, a) for a in LS_ALL}
 LS_L = 8.0
@@ -155,6 +155,31 @@ BR_TOP = round(B.Z_SCR0 + 36.0, 2)               # 桥板 PCB 上沿 70.5 (fpc_v
 BR_ROOF_T = 0.8                                   # 顶皮厚 (0.2 层高 4 层)
 BR_ROOF_Z0 = round(Z1 - BR_ROOF_T, 2)             # 顶皮底 70.78
 assert BR_ROOF_Z0 - BR_TOP >= 0.25, (BR_ROOF_Z0, BR_TOP)
+# 11-27 用户「这个盖子内部加一个凸台，卡住外边，现在装上会翘」: 盖底沿罩壁内面一圈止口 (只在没有配重唇的角度段, 避开天线 FPC / 灯板缝)
+LID_SPIGOT = True
+SPG_T, SPG_H, SPG_CLR = 1.5, 6.0, 0.1   # 11-27 用户: 止口加长卡住罩子 2 → 6              # 止口径向厚 / 下伸高 / 离罩壁内面 (同 11-26 外裙间隙)
+SPG_M = 1.5                                         # 离配重唇端 / 天线槽边 留角 (度)
+SPG_MIN_L = 8.0                                     # 11-28 用户「这太离谱了」: 截到本片半平面后短于 8 mm 的碎段不要 (原 b 片 187.3–187.4° 剩 0.1° 薄片)
+def _arcs_minus(arcs, cuts):
+    out = []
+    for a0, a1 in arcs:
+        segs = [(a0, a1)]
+        for c0, c1 in cuts:
+            segs = [x for s0, s1 in segs for x in ((s0, min(s1, c0)), (max(s0, c1), s1)) if x[1] - x[0] > 0.5]
+        out += segs
+    return out
+_PAD_HA = math.degrees(math.asin(LS_PAD_HW / R0))
+_lip = [(a0 + LIP_TRIM - SPG_M, a1 - LIP_TRIM + SPG_M) for a0, a1 in RS.LIP_ARCS]
+SPG_ARCS = _arcs_minus([(0.0, 360.0)], _lip + [(a - ANT_HA - SPG_M, a + ANT_HA + SPG_M) for a in ANT_ANG]
+                        + [(a - _PAD_HA - SPG_M, a + _PAD_HA + SPG_M) for a in LS_ALL])   # 让盖螺丝凸块
+# 11-28 用户「改回3个，然后你增加一些凸台吧」: 配重唇段 (36–144° / 216–324°) 罩壁内面被唇占着放不了外圈止口 ⇒ 沿唇内面 (r LIP_R0_B) 再加一圈内止口,
+#   让开侧环盖螺丝凸块 (40/90/140, 凸块内端 r70.7 伸到唇里面); 每片 2 段 ≈ 46 mm。探测: 唇内面 r70.6–72.4 × Z63.6–69.6 只碰凸块和灯板边 (0/180°)
+LID_SPIGOT_IN = True
+SPI_R1 = LIP_R0_B - SPG_CLR                         # 72.4 内止口外面 (离唇内面 0.1)
+SPI_R0 = SPI_R1 - SPG_T                             # 70.9
+_PAD_HA_IN = math.degrees(math.asin(LS_PAD_HW / SPI_R0))
+SPI_ARCS = _arcs_minus([(a0 + LIP_TRIM, a1 - LIP_TRIM) for a0, a1 in RS.LIP_ARCS], [(a - _PAD_HA_IN - SPG_M, a + _PAD_HA_IN + SPG_M) for a in LS_ALL])
+SPI_ARCS = [(a0, a1) for a0, a1 in SPI_ARCS if math.radians(a1 - a0) * SPI_R0 >= SPG_MIN_L]
 SPLIT_Y = RS.ECC                      # 分界: 灯板中面 y = SCR_ECC (11-18 夜 −4.69, 原 −4.36; 两端竖缝内)
 # 11-18 夜 用户: 底板上边 R85 圆弧伸出罩壁 r82–85 ⇒ +y 半罩底开缺口 = 底板板框外扩 BB_NOTCH_CLR, 从罩底到板顶 + BB_NOTCH_CLR (伸出的板被玻璃座挡住, 外面看不到)
 BB_NOTCH = False                      # 11-19 用户: 底板回 r4j 矩形 (最远 r76.78 < 罩内壁 r82), 不再开缺口; 要恢复 R85 圆弧时改 True
@@ -240,6 +265,18 @@ def lid(k):
     s = fuse(lid_plain(k), edge)
     s = fuse(s, *[cyl(*LS_PTS[a], LS_BOSS_D, LID_Z0 - LS_BOSS_H, LID_Z0 + 0.5) for a in LS_ANG[k]])
     for a in LS_ANG[k]: s = cut(s, cyl(*LS_PTS[a], 3.4, LID_Z0 - 5, Z1 + 1), cyl(*LS_PTS[a], LS_CB_D, LS_BEAR, Z1 + 1))
+    if LID_SPIGOT:                    # 11-27 盖底止口: 罩壁内面 r R0−CLR 往里 SPG_T, 下伸 SPG_H; 只在本片半平面 (离盖内边再退 0.5)
+        hs = gbox(-100, yi + 0.5, LID_Z0 - SPG_H - 1, 100, 100, LID_Z0 + 0.01) if sy > 0 else gbox(-100, -100, LID_Z0 - SPG_H - 1, 100, yi - 0.5, LID_Z0 + 0.01)
+        rm = R0 - SPG_CLR - SPG_T                    # 内面半径 (半平面截角按内面算, 偏保守)
+        h0 = math.degrees(math.asin(min(1.0, abs(yi + sy * 0.5) / rm)))
+        lo, hi = ((h0, 180 - h0) if yi + sy * 0.5 >= 0 else (-h0, 180 + h0)) if sy > 0 else ((180 + h0, 360 - h0) if yi + sy * 0.5 <= 0 else (180 - h0, 360 + h0))
+        arcs = [(max(a0, lo), min(a1, hi)) for a0, a1 in SPG_ARCS]
+        arcs = [(a0, a1) for a0, a1 in arcs if math.radians(a1 - a0) * rm >= SPG_MIN_L]
+        spg = [sector(R0 - SPG_CLR - SPG_T, R0 - SPG_CLR, LID_Z0 - SPG_H, LID_Z0 + 0.01, a0, a1) for a0, a1 in arcs]
+        if spg: s = fuse(s, common(fuse(*spg) if len(spg) > 1 else spg[0], hs))
+    if LID_SPIGOT_IN:                 # 11-28 唇内面内止口 (本片半平面内的段)
+        spi = [sector(SPI_R0, SPI_R1, LID_Z0 - SPG_H, LID_Z0 + 0.01, a0, a1) for a0, a1 in SPI_ARCS if ((a0 + a1) / 2 < 180) == (sy > 0)]
+        if spi: s = fuse(s, *spi)
     if LID_SKIRT:                     # 11-26 外裙 (盖同侧半圆, 竖缝处随盖内边截止)
         s = fuse(s, common(B.ann(R1 - SK_T, R1, LID_Z0 - SK_H + SK_CLR, LID_Z0 + 0.01), gbox(-100, yi, LID_Z0 - SK_H - 1, 100, 100, Z1) if sy > 0 else gbox(-100, -100, LID_Z0 - SK_H - 1, 100, yi, Z1)))
     for a in (W_A if LID_HOLES else []):   # 配重孔上方顶盖开孔 (配重螺丝从罩顶插); 11-26 起默认不开
