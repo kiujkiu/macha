@@ -769,6 +769,20 @@ def _xhex(z, af, x0, x1):                          # 六角沿 x (平边朝 ±y)
     for k in range(6): pg.Add(gp_Pnt(x0, rc * math.cos(math.radians(90 + 30 + 60 * k)), z + rc * math.sin(math.radians(90 + 30 + 60 * k))))
     pg.Close()
     return _PR0(_MF0(pg.Wire()).Face(), gp_Vec(x1 - x0, 0, 0)).Shape()
+def _xhex_v(z, af, x0, x1):                        # 六角沿 x, 平边朝 ±y (角朝上下), 配顶面竖槽
+    pg = _MP0(); rc = af / math.sqrt(3)
+    for k in range(6): pg.Add(gp_Pnt(x0, rc * math.cos(math.radians(30 + 60 * k)), z + rc * math.sin(math.radians(30 + 60 * k))))
+    pg.Close()
+    return _PR0(_MF0(pg.Wire()).Face(), gp_Vec(x1 - x0, 0, 0)).Shape()
+NUT_FL_OUT = True                                  # 11-28 用户「法兰朝外」: upper + lug 的 M3 法兰螺母法兰朝玻璃 (受力面 = 法兰), 从件顶竖槽立着放入; False = 旧法 (法兰朝轴心从内面塞)
+def _nut_pocket(z, r0, z_top, hole_r1):
+    """横锁 M3 法兰螺母窝 (局部 0° 方向, 内面 r0). NUT_FL_OUT: 六角 r0→r0+HEX_H (内面也开口, 可顶出拆) + 法兰 →+FL_H, 两段各开竖槽到 z_top (宽 AF / Φ)"""
+    hole = _xc(z, GS_HOLE, r0 - 1, hole_r1)
+    if not NUT_FL_OUT:
+        return fuse(hole, _xc(z, GL_FL_D, r0 - 1, r0 + GL_FL_H), _xhex(z, GL_HEX_AF, r0 - 1, r0 + GL_FL_H + GL_HEX_H))
+    rh = r0 + GL_HEX_H; rf = rh + GL_FL_H
+    return fuse(hole, _xhex_v(z, GL_HEX_AF, r0 - 1, rh), gbox(r0 - 1, -GL_HEX_AF / 2, z, rh, GL_HEX_AF / 2, z_top + 1),
+                _xc(z, GL_FL_D, rh - 0.01, rf), gbox(rh - 0.01, -GL_FL_D / 2, z, rf, GL_FL_D / 2, z_top + 1))
 GS_ANG = tuple(45.0 * k for k in range(8))         # 玻璃上 / 下横锁角度 (11-25 用户「改成8个」)
 GS_SEAT, GS_CB_D, GS_HOLE, GS_GLASS_D, GS_L = 102.7, 7.4, 3.4, 5.0, 14.0   # 头座 r / 座径 / 孔 / 玻璃孔 / M3×14 超薄头
 GS_TIP = GS_SEAT - GS_L                            # r88.7
@@ -785,7 +799,7 @@ assert GB_Z + GB_HH <= Z_VIEW0 - 0.5 and GB_Z - GS_CB_D / 2 >= Z_G + TG_H + TG_C
 for _a in GS_ANG:
     _t = rotz(_a)
     clamp_ring = cut(clamp_ring, xf(fuse(_xc(GB_Z, GS_HOLE, 98, 112), _xc(GB_Z, GS_CB_D, GS_SEAT, 112)), _t))
-    shroud_split = cut(fuse(shroud_split, xf(_boss_lo(), _t)), xf(fuse(_xc(GB_Z, GS_HOLE, GL_R0 - 1, gi + 1), _xc(GB_Z, GL_FL_D, GL_R0 - 1, GL_R0 + GL_FL_H), _xhex(GB_Z, GL_HEX_AF, GL_R0 - 1, GL_R0 + GL_FL_H + GL_HEX_H)), _t))
+    shroud_split = cut(fuse(shroud_split, xf(_boss_lo(), _t)), xf(_nut_pocket(GB_Z, GL_R0, Z_VIEW0, gi + 1), _t))   # 11-28 法兰朝外: 竖槽开到内卡顶 Z_VIEW0
 clamp_ring, shroud_split = clean(clamp_ring), clean(shroud_split)
 LOG['split'] = dict(ring=vol(clamp_ring), shroud=vol(shroud_split))
 # 用户 11-14: 分体下罩太高, 做错要全部重来 ⇒ 在承载盘顶 Z32 横切成上下两段, 8×M3 锁 (上段沉孔往下; (二) 改穿通到下段底面法兰螺母)。
@@ -894,10 +908,11 @@ glass_top_clamp = clean(cut(revol([(GD_POCKET_R + 0.5, GC_Z0), (SH_OUT, GC_Z0), 
                             *[fuse(cyl(x, y, GC_HOLE, GC_Z0 - 1, GC_Z1 + 1), cyl(x, y, GC_CB_D, GC_BEAR, GC_Z1 + 1)) for x, y in GC_PTS]))
 # 11-25 用户「需要这样锁一个螺丝…玻璃我钻孔, 然后你需要做一个内壁弧形转接的一个件我锁法兰螺母在里面」: 顶盖横锁 ×8 (径向) ——
 #   红件外卡 Φ3.4 + 外面 Φ7.4 平座 (头沉斜面) → 玻璃管 Φ5 (现场钻, 孔心离管端 8; 用户图画 ≈4, 玻璃 5 厚孔边离端 ≥5 才不易崩) → 管内弧形件 glass_top_lug_v1_2 ×8 (弧 r94.5, 与玻璃间垫 0.5 硅胶片)
-#   弧形件内面六角窝 AF6.0 + 法兰浅窝 (法兰朝轴心, 与内面齐平, 螺母不跟转); 角度 45k (竖螺丝 22.5+45k 正中)
-GS_Z = Z_GT - 8.0                                  # 290.08 (GS_* 通用尺寸见玻璃下横锁)
+#   弧形件内面六角窝 AF6.0 + 法兰浅窝 (法兰朝轴心, 与内面齐平, 螺母不跟转; 11-28 改法兰朝外 + 件顶竖槽, 见 _nut_pocket); 角度 45k (竖螺丝 22.5+45k 正中)
+GS_Z = Z_GT - 5.0                                  # 293.08 (11-27 用户「改成离上边缘5mm」, 原 8; 玻璃孔 Φ5 边离管端 2.5) (GS_* 通用尺寸见玻璃下横锁)
 GL_R, GL_HW, GL_HH = GL_OD / 2 - GL_T - 0.5, 8.0, 6.5                # 弧形件 弧 r94.5 / 半宽 / 半高 (内面 GL_R0 88.5)
-GL_NUT_R = (GL_R0, GL_R0 + 3.7)                    # 法兰螺母 r88.5 (法兰) – 92.2
+GL_Z1 = min(GS_Z + GL_HH, Z_GT - 0.5); GL_Z0 = GL_Z1 - 2 * GL_HH      # 11-27 孔心上移到管端下 5: 弧形件顶限在管端下 0.5 (上面是亚克力), 高 13 不变往下长
+GL_NUT_R = (GL_R0 + GL_HEX_H + GL_FL_H - 3.7, GL_R0 + GL_HEX_H + GL_FL_H) if NUT_FL_OUT else (GL_R0, GL_R0 + 3.7)   # 法兰螺母: 11-28 法兰朝外被螺丝拉贴外壁 r88.6–92.3; 旧 r88.5 (法兰)–92.2
 GS_ENG = round(GL_NUT_R[1] - GS_TIP, 2)            # 3.5
 GL_WEB = round(GL_R - (GL_R0 + GL_FL_H + GL_HEX_H), 2)   # 2.2
 assert GS_ENG >= 3.0 and GS_TIP >= GL_R0 and GS_SEAT + 0.4 <= go + GT_FOOT and GS_Z - GS_CB_D / 2 - GT_Z0 >= 2.0
@@ -905,8 +920,8 @@ for _a in GS_ANG:
     glass_top = cut(glass_top, xf(fuse(_xc(GS_Z, GS_HOLE, 98, 112), _xc(GS_Z, GS_CB_D, GS_SEAT, 112)), rotz(_a)))
     tube = cut(tube, xf(_xc(GS_Z, GS_GLASS_D, 93, 102), rotz(_a)), xf(_xc(GB_Z, GS_GLASS_D, 93, 102), rotz(_a)))   # 上 / 下各 8 孔
 glass_top = clean(glass_top)
-glass_top_lug = clean(cut(op(BRepAlgoAPI_Common, gbox(GL_R0, -GL_HW, GS_Z - GL_HH, GL_R + 1, GL_HW, GS_Z + GL_HH), cyl(0, 0, 2 * GL_R, GS_Z - GL_HH - 1, GS_Z + GL_HH + 1)),
-                          _xc(GS_Z, GS_HOLE, GL_R0 - 1, GL_R + 1), _xc(GS_Z, GL_FL_D, GL_R0 - 1, GL_R0 + GL_FL_H), _xhex(GS_Z, GL_HEX_AF, GL_R0 - 1, GL_R0 + GL_FL_H + GL_HEX_H)))
+glass_top_lug = clean(cut(op(BRepAlgoAPI_Common, gbox(GL_R0, -GL_HW, GL_Z0, GL_R + 1, GL_HW, GL_Z1), cyl(0, 0, 2 * GL_R, GL_Z0 - 1, GL_Z1 + 1)),
+                          _nut_pocket(GS_Z, GL_R0, GL_Z1, GL_R + 1)))   # 11-28 法兰朝外, 件顶竖槽放螺母
 glass_top_lugs = [xf(glass_top_lug, rotz(a)) for a in GS_ANG]
 glass_disc = ann(GD_ID / 2, GD_OD / 2, GD_Z0, GD_Z1)                           # 外购圆环玻璃 (装配用实体)
 # 中心堵头 (一件): 顶法兰 Φ32 压玻璃顶; 管 r8.2–9.8 穿 Φ20 孔 (单边 0.2); 孔下 30° 倒钩到 r11 (钩 1.0), 45° 导入到 r9; 6 条 2 宽槽 → 6 爪

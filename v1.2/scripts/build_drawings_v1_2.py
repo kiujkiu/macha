@@ -265,10 +265,10 @@ def _gb_hole(kind):   # 11-25 玻璃下横锁 H: kind 'in' = 玻璃座内卡加�
     c45, rr = math.cos(math.pi / 4), (B.GL_R0 if kind == "in" else B.GS_SEAT)
     pts = [(rr * math.cos(math.radians(a)), rr * math.sin(math.radians(a))) for a in B.GS_ANG]
     if kind == "in":
-        return dict(tag="H", pts=pts, spec=f"内卡加厚块 ×8 (宽 {F(2 * B.GB_HW)} 高 {F(2 * B.GB_HH)}, 内面 r{F(B.GL_R0)}, 底 45°): Φ{F(B.GS_HOLE)} 径向通 + 法兰窝 Φ{F(B.GL_FL_D)}×{F(B.GL_FL_H)} + 六角窝 AF{F(B.GL_HEX_AF)}×{F(B.GL_HEX_H)}",
-                    where=f"0+45k°  孔心 Z{F(round(B.GB_Z, 2))} (玻璃下端上 {F(round(B.GB_Z - B.Z_G, 2))}); M3 法兰螺母从内面塞, 法兰与内面齐平, 到内卡外面剩 {F(round(B.gi - B.GL_R0 - B.GL_FL_H - B.GL_HEX_H, 2))}",
+        return dict(tag="H", pts=pts, spec=f"内卡加厚块 ×8 (宽 {F(2 * B.GB_HW)} 高 {F(2 * B.GB_HH)}, 内面 r{F(B.GL_R0)}, 底 45°): Φ{F(B.GS_HOLE)} 径向通 + 六角窝 AF{F(B.GL_HEX_AF)}×{F(B.GL_HEX_H)} + 法兰窝 Φ{F(B.GL_FL_D)}×{F(B.GL_FL_H)} (内面起)",
+                    where=f"0+45k°  孔心 Z{F(round(B.GB_Z, 2))} (玻璃下端上 {F(round(B.GB_Z - B.Z_G, 2))}); M3 法兰螺母 (11-28 法兰朝外) 立着从竖槽放入, 槽宽 {F(B.GL_HEX_AF)}/{F(B.GL_FL_D)} 通到内卡顶 Z{F(B.Z_VIEW0)}, 到内卡外面剩 {F(round(B.gi - B.GL_R0 - B.GL_FL_H - B.GL_HEX_H, 2))}",
                     det=dict(kind="free", z=(B.GB_Z - 11, B.Z_VIEW0), pt=(91.6 * c45, 91.6 * c45), W=5.0, title="加厚块 H (45° 径向剖, 右 = 外)",
-                             zd=[(B.GB_Z - B.GB_HH, B.GB_Z, F(B.GB_HH), 0), (B.GB_Z, B.GB_Z + B.GB_HH, F(B.GB_HH), 0)], ud=[(B.GL_R0 - 91.6, B.GL_R0 + B.GL_FL_H - 91.6, F(B.GL_FL_H), 0), (B.GL_R0 + B.GL_FL_H - 91.6, B.GL_R0 + B.GL_FL_H + B.GL_HEX_H - 91.6, F(B.GL_HEX_H), 0), (B.GL_R0 - 91.6, B.gi - 91.6, F(round(B.gi - B.GL_R0, 2)), 5)]))
+                             zd=[(B.GB_Z - B.GB_HH, B.GB_Z, F(B.GB_HH), 0), (B.GB_Z, B.GB_Z + B.GB_HH, F(B.GB_HH), 0)], ud=[(B.GL_R0 - 91.6, B.GL_R0 + B.GL_HEX_H - 91.6, F(B.GL_HEX_H), 0), (B.GL_R0 + B.GL_HEX_H - 91.6, B.GL_R0 + B.GL_FL_H + B.GL_HEX_H - 91.6, F(B.GL_FL_H), 0), (B.GL_R0 - 91.6, B.gi - 91.6, F(round(B.gi - B.GL_R0, 2)), 5)]))
     return dict(tag="H", pts=pts, spec=f"径向横锁孔 ×8 Φ{F(B.GS_HOLE)} 通 + 外面 Φ{F(B.GS_CB_D)} 平座 (r{F(B.GS_SEAT)})", where=f"0+45k°  孔心 Z{F(round(B.GB_Z, 2))} (环底上 {F(round(B.GB_Z - B.Z_G, 2))}); M3×{F(B.GS_L)} 超薄头, 吃 {F(B.GS_ENG)}",
                 det=dict(kind="free", z=(B.Z_G, B.Z_G + B.OUT_DEPTH), pt=(B.GS_SEAT * c45, B.GS_SEAT * c45), W=8.0, title="横锁孔 H (45° 径向剖, 右 = 外)",
                          zd=[(B.Z_G, B.GB_Z, F(round(B.GB_Z - B.Z_G, 2)), 0), (B.GB_Z, B.Z_G + B.OUT_DEPTH, F(round(B.Z_G + B.OUT_DEPTH - B.GB_Z, 2)), 0)], ud=[(B.go - B.GS_SEAT, 0, F(round(B.GS_SEAT - B.go, 2)), 0)]))
@@ -348,14 +348,16 @@ SPECS.append(dict(
            "装配 (桌上): 红件翻面塞 8 颗法兰螺母 (点胶防掉) → 翻正 → 圆环玻璃 (带堵头) → 本件 → 8 颗对角拧到贴死 → 整组套上玻璃管"]))
 SPECS.append(dict(
     code="glass_top_lug_v1_2", shape=B.glass_top_lug, short="玻璃上 管内弧形件 ×8 (横锁)", qty="8", date="2026-11-25", material="PETG", stl_asm=True,
-    title=f"玻璃上 管内弧形件: 宽 {F(2 * B.GL_HW)} × 高 {F(2 * B.GL_HH)} × 厚 {F(B.GL_R - B.GL_R0)}, 外弧 R{F(B.GL_R)}, 内面法兰螺母窝",
+    title=f"玻璃上 管内弧形件: 宽 {F(2 * B.GL_HW)} × 高 {F(2 * B.GL_HH)} × 厚 {F(B.GL_R - B.GL_R0)}, 外弧 R{F(B.GL_R)}, 内面六角窝 + 顶面竖槽 (法兰朝外)",
     subtitle=f"贴玻璃管内壁 (管内 R{F(B.GL_OD / 2 - B.GL_T)}, 中间 0.5 双面胶粘在玻璃内壁, 拆螺丝时不掉); M3×{F(B.GS_L)} 超薄头从管外锁进来",
     orient="内平面 (螺母窝面) 贴床, 外弧朝上, 免支撑",
-    sec=dict(ang=0, r0=80.0, auto_dims=False, zd=[(B.GS_Z - B.GL_HH, B.GS_Z + B.GL_HH)], rd=[(B.GL_R0, B.GL_R0 + B.GL_FL_H), (B.GL_R0, B.GL_R0 + B.GL_FL_H + B.GL_HEX_H), (B.GL_R0, B.GL_R)]),
+    sec=dict(ang=0, r0=80.0, auto_dims=False, zd=[(B.GL_Z0, B.GS_Z), (B.GS_Z, B.GL_Z1), (B.GL_Z0, B.GL_Z1)], rd=[(B.GL_R0, B.GL_R0 + B.GL_HEX_H), (B.GL_R0, B.GL_R0 + B.GL_FL_H + B.GL_HEX_H), (B.GL_R0, B.GL_R)]),
     holes=[],
-    notes=[f"孔 Φ{F(B.GS_HOLE)} 通, 孔心在件中心; 内面窝 = 法兰 Φ{F(B.GL_FL_D)} 深 {F(B.GL_FL_H)} + 六角 AF{F(B.GL_HEX_AF)} 再深 {F(B.GL_HEX_H)} (螺母不跟转, 法兰与内面齐平), 到外弧剩 {F(B.GL_WEB)}",
+    notes=[f"孔 Φ{F(B.GS_HOLE)} 通, 孔心离件顶 {F(round(B.GL_Z1 - B.GS_Z, 2))} / 离件底 {F(round(B.GS_Z - B.GL_Z0, 2))} (孔心在管端下 5, 件顶在管端下 0.5)",
+           f"螺母窝 (11-28 法兰朝外): 内面起 六角 AF{F(B.GL_HEX_AF)} 深 {F(B.GL_HEX_H)} + 法兰 Φ{F(B.GL_FL_D)} 再深 {F(B.GL_FL_H)}, 到外弧剩 {F(B.GL_WEB)}",
+           f"两段各开竖槽 (宽 {F(B.GL_HEX_AF)} / {F(B.GL_FL_D)}) 通到件顶; 螺母立着从顶上放入, 平边卡槽壁不跟转, 法兰压外壁",
            f"螺丝: 支承 r{F(B.GS_SEAT)} → 尾 r{F(round(B.GS_TIP, 2))} (不出内面 r{F(B.GL_R0)}), 吃 {F(B.GS_ENG)}",
-           "装配: 顶盖整组先在桌上锁好, 套上玻璃管, 从管子下口伸手进去贴住本件, 外面拧螺丝 (轻拧, 点螺纹胶)"]))
+           "装配: 螺母法兰朝外从件顶放入 → 顶盖整组桌上锁好, 套玻璃管, 手从管下口进去贴住本件, 外面拧螺丝 (轻拧, 点螺纹胶)"]))
 SPECS.append(dict(
     code="glass_top_hub_v1_2", shape=B.glass_top_hub, short="中心堵头 (卡扣)", qty="1", material="PETG (建议; PLA 先试)",
     title=f"中心堵头: 法兰 Φ{F(B.GH_FL_D)} + {B.GH_SLOTS} 爪卡扣穿圆环玻璃 Φ{F(B.GD_ID)} 孔" + (" + 688 轴承窝" if B.GT_BEARING else ""),

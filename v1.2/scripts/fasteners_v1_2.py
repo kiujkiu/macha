@@ -197,17 +197,19 @@ for i, (x, y) in enumerate([] if B.GT_ACR else B.GC_PTS):   # 11-27 亚克力顶
 
 if B.GT_ACR:   # 11-27 亚克力中心: M3x8 超薄头 (Φ7×1.5) 压螺柱端面, 头在 MR105 上方 0.5 随轴转, 盖子顶板下 0.3 (螺柱见 顶部连接 top_stack)
     screw("M3x8 超薄头 玻璃上中心 压螺柱", 0, 0.0, 0.0, B.AC_POST_TOP, 8.0, False, hd=B.AC_HEAD_D, hh=B.AC_HEAD_H, engage=("螺柱 M3 内牙", B.AC_POST_TOP - 8.0, B.AC_POST_TOP))
-# 7c 玻璃上 横锁 (11-25): 8×M3×14 超薄头 径向从外往里 (支承 r102.7), 穿红件外卡 + 玻璃管 Φ5 孔 → 管内弧形件 M3 法兰螺母 (法兰朝轴心 r88.5)
+# 7c 玻璃上 横锁 (11-25): 8×M3×14 超薄头 径向从外往里 (支承 r102.7), 穿红件外卡 + 玻璃管 Φ5 孔 → 管内弧形件 M3 法兰螺母 (11-28 起法兰朝外 r91.3–92.2, upper 同)
 from OCP.gp import gp_Trsf as _GT, gp_Ax1 as _GA, gp_Pnt as _GP, gp_Dir as _GD, gp_Vec as _GV
 def _radial(sh, a, z):    # 局部 z 轴 → 径向 x 轴, 再抬到 Z, 转到角度 a
     r1 = _GT(); r1.SetRotation(_GA(_GP(0, 0, 0), _GD(0, 1, 0)), math.pi / 2); t1 = _GT(); t1.SetTranslation(_GV(0, 0, z))
     return B.xf(B.xf(B.xf(sh, r1), t1), B.rotz(a))
+def _lock_nut():   # 11-28 法兰朝外 ⇒ 倒放, 并绕轴转 30° 让平边朝 ±y 对上竖槽
+    return B.xf(flange_nut_inv(0, 0, B.GL_NUT_R[0]), B.rotz(30)) if B.NUT_FL_OUT else flange_nut(0, 0, B.GL_R0)   # 法兰贴窝外壁
 for i, a in enumerate(B.GS_ANG):
     add(f"M3x{B.GS_L:g} 超薄头 玻璃上横锁 #{i}", _radial(screw_down(0, 0, B.GS_SEAT, B.GS_L, hd=7.0, hh=1.5), a, B.GS_Z), "#C0C0C0")
-    add(f"M3 法兰螺母 玻璃上弧形件 #{i}", _radial(flange_nut(0, 0, B.GL_R0), a, B.GS_Z), "#707070")
+    add(f"M3 法兰螺母 玻璃上弧形件 #{i}", _radial(_lock_nut(), a, B.GS_Z), "#707070")
     # 玻璃下横锁 (11-25): 外卡环 → 玻璃 Φ5 → 玻璃座内卡加厚块 (法兰螺母 r88.5)
     add(f"M3x{B.GS_L:g} 超薄头 玻璃下横锁 #{i}", _radial(screw_down(0, 0, B.GS_SEAT, B.GS_L, hd=7.0, hh=1.5), a, B.GB_Z), "#C0C0C0")
-    add(f"M3 法兰螺母 玻璃下玻璃座内卡 #{i}", _radial(flange_nut(0, 0, B.GL_R0), a, B.GB_Z), "#707070")
+    add(f"M3 法兰螺母 玻璃下玻璃座内卡 #{i}", _radial(_lock_nut(), a, B.GB_Z), "#707070")
 
 # 11 V2 灯板支撑 (11-16 晚 偏心 SCR_ECC + 耳朵脚, led_support_v1_2): 中间 T 件取消;
 #    两端立板耳朵 4×M3×14 内六角 (头支承 = 耳朵顶 Z36) 穿耳朵 + 承载盘 Φ3.4 → 毂盘底 M3×4 铜螺母 (= 外圈锁盘 k=0/3/4/7, 铜螺母在下面外圈循环里一起放, 不重复计);
