@@ -555,7 +555,7 @@ Z_SHR_REF = Z_RIM_TOP                              # 11-18: 玻璃罩 (底圈/�
 if ROTOR_B: Z_RIM_TOP = ROTOR_TOP + 3.0 + 2.8 + 3.2   # 11-18 用户: 转子盘B 承载盘总厚 9 = 外唇/玻纤板 3 + 线圈腔 2.8 + 托盘 3.2 ⇒ 盘顶 Z30.5 (原 32)
 SH_OUT = DISC_D / 2                                # 用户草图 11-11: 外面与底盘外缘齐平 r110
 SPIG_T = 4.0                                       # 用户 11-11 嫌内卡薄: 2.8 → 4.0, 往里加 (内卡 r90.8–94.8, 离承载盘外缘 1.8)
-GL_CLR = 0.2                                       # 玻璃单边间隙
+GL_CLR = 0.5                                       # 玻璃单边间隙 (11-28 用户「内外都放」0.2 → 0.5: 石英拉制管公差大; 内卡 Φ189 / 外卡 Φ201, 径向横锁螺丝居中)
 IN_DEPTH, OUT_DEPTH = 20.0, 16.0                   # 内卡 20, 外卡贴玻璃处 16 (11-25 横锁 10 → 14; 11-28 石英管孔心离端 8 → 10 ⇒ 14 → 16), 斜面往外降
 OUT_FOOT = 3.0                                     # 外卡顶平带 r100.2–103.2 (11-25 横锁: 螺丝头座 r102.7 整圈有料; 原 0 尖顶)
 # 用户 11-13 晚: V2 灯板 (LED_V0.2.0 11-13, 板高 208, LED 在上部); SoC+WiFi 同一平面 = 转接板 (POV3D_V2_BaseBoard 140×80×1.6,
@@ -578,14 +578,14 @@ VIEW_MARGIN = round(Z_LED0 - Z_VIEW0, 2)           # 1.8 (原 10)
 assert VIEW_MARGIN >= 0, f'内卡顶 Z{Z_VIEW0} 挡住最下一行 LED Z{Z_LED0}'
 TAB_T, TAB_W = 3.5, 18.0                           # 耳片厚 / 宽; M6x10 从盘底, 螺母压耳片顶 (z3.5–8.5, 法兰底 9.3)
 NUT_T = 2.4                                        # M3 螺母
-gi, go = GL_OD / 2 - GL_T - GL_CLR, GL_OD / 2 + GL_CLR    # 94.8 / 100.2
-SPIG_IN = gi - SPIG_T                              # 用户 11-12: 墙内面 = 内卡内面 r90.8 一条直线到底 (原 r92 有 1.2 台阶); 控制板最外角 r90.4, 承载盘 r89
+gi, go = GL_OD / 2 - GL_T - GL_CLR, GL_OD / 2 + GL_CLR    # 94.5 / 100.5 (间隙 0.2 时 94.8 / 100.2)
+SPIG_IN = GL_OD / 2 - GL_T - 0.2 - SPIG_T          # 90.8 钉死 (11-28 间隙放大只削内卡外面, 墙内面/下段/转子罩不动)                              # 用户 11-12: 墙内面 = 内卡内面 r90.8 一条直线到底 (原 r92 有 1.2 台阶); 控制板最外角 r90.4, 承载盘 r89
 from OCP.BRepPrimAPI import BRepPrimAPI_MakeCone
 LIP_EDGE = 1.5                                     # 外卡外缘留 1.5 直边 (分体环不出 0.2 薄边), 斜面 ≈41°
 _r1 = SH_OUT + LIP_EDGE * (SH_OUT - go - OUT_FOOT) / (OUT_DEPTH - LIP_EDGE)
 _cone = BRepPrimAPI_MakeCone(gp_Ax2(gp_Pnt(0, 0, Z_G), gp_Dir(0, 0, 1)), _r1, go + OUT_FOOT, OUT_DEPTH).Shape()
 s_ = ann(SPIG_IN, SH_OUT, 0, Z_G)                                              # 实心墙 r92–110
-s_ = fuse(s_, ann(gi - SPIG_T, gi, Z_G, Z_G + IN_DEPTH))                       # 内卡 (z32 以上, 内面比墙内面往里 1.2)
+s_ = fuse(s_, ann(SPIG_IN, gi, Z_G, Z_G + IN_DEPTH))                           # 内卡 (z32 以上, 内面比墙内面往里 1.2)
 s_ = fuse(s_, op(BRepAlgoAPI_Common, ann(go, SH_OUT, Z_G - 1, Z_G + OUT_DEPTH), _cone))   # 外卡 45° 斜顶
 def gbox(x0, y0, z0, x1, y1, z1): return GC.tag(BRepPrimAPI_MakeBox(gp_Pnt(x0, y0, z0), gp_Pnt(x1, y1, z1)).Shape(), 'box', x0, y0, z0, x1, y1, z1)
 # 托台 (用户 11-11 第二版): 角上 M6 三角块厚 5 (螺母压顶面); 8 个定子盘托块单独做, 高到定子盘底 = 线圈环托台高
