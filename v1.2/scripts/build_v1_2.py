@@ -776,11 +776,19 @@ def _xhex_v(z, af, x0, x1):                        # 六角沿 x, 平边朝 ±y 
     return _PR0(_MF0(pg.Wire()).Face(), gp_Vec(x1 - x0, 0, 0)).Shape()
 NUT_FL_OUT = True                                  # 11-28 用户「法兰朝外」: upper + lug 的 M3 法兰螺母法兰朝玻璃 (受力面 = 法兰), 从件顶竖槽立着放入; False = 旧法 (法兰朝轴心从内面塞)
 NUT_ROUND_CB = True                                # 11-28 用户: 圆沉孔 Φ8×3.8 (优先于下面的六角+竖槽); False = 六角+竖槽版
-def _nut_pocket(z, r0, z_top, hole_r1):
+def _xtear(z, d, x0, x1):                          # 水平孔顶部 45° 尖顶 (水滴形) 补块: 与 _xc 圆孔并用 ⇒ 竖着打印免支撑
+    pg = _MP0(); r = d / 2; c = r / math.sqrt(2)
+    for y_, z_ in ((-c, z + c), (0.0, z + r * math.sqrt(2)), (c, z + c), (0.0, z)): pg.Add(gp_Pnt(x0, y_, z_))
+    pg.Close()
+    return _PR0(_MF0(pg.Wire()).Face(), gp_Vec(x1 - x0, 0, 0)).Shape()
+def _nut_pocket(z, r0, z_top, hole_r1, tear=False):
     """横锁 M3 法兰螺母窝 (局部 0° 方向, 内面 r0). NUT_FL_OUT: 六角 r0→r0+HEX_H (内面也开口, 可顶出拆) + 法兰 →+FL_H, 两段各开竖槽到 z_top (宽 AF / Φ)"""
     hole = _xc(z, GS_HOLE, r0 - 1, hole_r1)
     if NUT_ROUND_CB:                               # 11-28 用户「就用我们一直用的那个圆形沉孔」: 内面 Φ8 圆沉孔深 3.8, 螺母法兰朝外塞到底, 无六角/竖槽
-        return fuse(hole, _xc(z, GL_FL_D, r0 - 1, r0 + GL_FL_H + GL_HEX_H))
+        cb = _xc(z, GL_FL_D, r0 - 1, r0 + GL_FL_H + GL_HEX_H)
+        if tear:                                   # 11-28 用户「打印需要支撑, 修成不需要」: upper 竖打, 孔顶 45° 尖顶
+            return fuse(hole, cb, _xtear(z, GS_HOLE, r0 - 1, hole_r1), _xtear(z, GL_FL_D, r0 - 1, r0 + GL_FL_H + GL_HEX_H))
+        return fuse(hole, cb)
     if not NUT_FL_OUT:
         return fuse(hole, _xc(z, GL_FL_D, r0 - 1, r0 + GL_FL_H), _xhex(z, GL_HEX_AF, r0 - 1, r0 + GL_FL_H + GL_HEX_H))
     rh = r0 + GL_HEX_H; rf = rh + GL_FL_H
@@ -798,11 +806,11 @@ def _boss_lo():
     for x, z in ((GL_R0, z0), (91.5, z0 - d), (91.5, z1), (GL_R0, z1)): pg.Add(gp_Pnt(x, -GB_HW, z))
     pg.Close()
     return _PR0(_MF0(pg.Wire()).Face(), gp_Vec(0, 2 * GB_HW, 0)).Shape()
-assert GB_Z + GB_HH <= Z_VIEW0 - 0.5 and GB_Z - GS_CB_D / 2 >= Z_G + TG_H + TG_CLR + 1.0 and GB_Z + GS_CB_D / 2 <= Z_G + OUT_DEPTH - 2.0 and GS_SEAT + 0.4 <= go + OUT_FOOT
+assert GB_Z + GL_FL_D / 2 * math.sqrt(2) <= GB_Z + GB_HH - 0.8 and GB_Z + GB_HH <= Z_VIEW0 - 0.5 and GB_Z - GS_CB_D / 2 >= Z_G + TG_H + TG_CLR + 1.0 and GB_Z + GS_CB_D / 2 <= Z_G + OUT_DEPTH - 2.0 and GS_SEAT + 0.4 <= go + OUT_FOOT
 for _a in GS_ANG:
     _t = rotz(_a)
     clamp_ring = cut(clamp_ring, xf(fuse(_xc(GB_Z, GS_HOLE, 98, 112), _xc(GB_Z, GS_CB_D, GS_SEAT, 112)), _t))
-    shroud_split = cut(fuse(shroud_split, xf(_boss_lo(), _t)), xf(_nut_pocket(GB_Z, GL_R0, Z_VIEW0, gi + 1), _t))   # 11-28 法兰朝外: 竖槽开到内卡顶 Z_VIEW0
+    shroud_split = cut(fuse(shroud_split, xf(_boss_lo(), _t)), xf(_nut_pocket(GB_Z, GL_R0, Z_VIEW0, gi + 1, tear=True), _t))   # 11-28 法兰朝外: 竖槽开到内卡顶 Z_VIEW0
 clamp_ring, shroud_split = clean(clamp_ring), clean(shroud_split)
 LOG['split'] = dict(ring=vol(clamp_ring), shroud=vol(shroud_split))
 # 用户 11-14: 分体下罩太高, 做错要全部重来 ⇒ 在承载盘顶 Z32 横切成上下两段, 8×M3 锁 (上段沉孔往下; (二) 改穿通到下段底面法兰螺母)。

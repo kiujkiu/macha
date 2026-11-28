@@ -265,7 +265,7 @@ def _gb_hole(kind):   # 11-25 玻璃下横锁 H: kind 'in' = 玻璃座内卡加�
     c45, rr = math.cos(math.pi / 4), (B.GL_R0 if kind == "in" else B.GS_SEAT)
     pts = [(rr * math.cos(math.radians(a)), rr * math.sin(math.radians(a))) for a in B.GS_ANG]
     if kind == "in":
-        return dict(tag="H", pts=pts, spec=f"内卡加厚块 ×8 (宽 {F(2 * B.GB_HW)} 高 {F(2 * B.GB_HH)}, 内面 r{F(B.GL_R0)}, 底 45°): Φ{F(B.GS_HOLE)} 径向通 + 内面 Φ{F(B.GL_FL_D)} 圆沉孔 深 {F(B.GL_FL_H + B.GL_HEX_H)}",
+        return dict(tag="H", pts=pts, spec=f"内卡加厚块 ×8 (宽 {F(2 * B.GB_HW)} 高 {F(2 * B.GB_HH)}, 内面 r{F(B.GL_R0)}, 底 45°): Φ{F(B.GS_HOLE)} 径向通 + 内面 Φ{F(B.GL_FL_D)} 圆沉孔 深 {F(B.GL_FL_H + B.GL_HEX_H)} (孔与沉孔顶部 45° 尖顶, 竖打免支撑)",
                     where=f"0+45k°  孔心 Z{F(round(B.GB_Z, 2))} (玻璃下端上 {F(round(B.GB_Z - B.Z_G, 2))}); M3 法兰螺母法兰朝外塞进内面 Φ{F(B.GL_FL_D)} 圆沉孔 (11-28), 到内卡外面剩 {F(round(B.gi - B.GL_R0 - B.GL_FL_H - B.GL_HEX_H, 2))}",
                     det=dict(kind="free", z=(B.GB_Z - 11, B.Z_VIEW0), pt=(91.6 * c45, 91.6 * c45), W=5.0, title="加厚块 H (45° 径向剖, 右 = 外)",
                              zd=[(B.GB_Z - B.GB_HH, B.GB_Z, F(B.GB_HH), 0), (B.GB_Z, B.GB_Z + B.GB_HH, F(B.GB_HH), 0)], ud=[(B.GL_R0 - 91.6, B.GL_R0 + B.GL_FL_H + B.GL_HEX_H - 91.6, F(B.GL_FL_H + B.GL_HEX_H), 0), (B.GL_R0 - 91.6, B.gi - 91.6, F(round(B.gi - B.GL_R0, 2)), 5)]))
