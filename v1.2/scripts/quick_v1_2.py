@@ -11,7 +11,7 @@ V1.2 快速出单件 (甲级小改动用, 11-17 晚): 几何只建 1 遍, 只写
 什么时候不能用 (按 feedback 分级): 动了孔位 / Z 高 / 被多件读的常量 (乙/丙级) 仍要跑 check 或全流程;
 整机 3MF 不会更新, 需要看整机时再跑 export_3mf_v1_2.py。
 """
-import sys, io, time, runpy, shutil, contextlib
+import math, sys, io, time, runpy, shutil, contextlib
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -82,6 +82,11 @@ from OCP.StlAPI import StlAPI_Writer
 from OCP.gp import gp_Trsf, gp_Vec, gp_Ax1, gp_Pnt, gp_Dir
 def stl(sh, f):
     BRepMesh_IncrementalMesh(sh, 0.02, False, 0.2, True); w = StlAPI_Writer(); w.ASCIIMode = False; w.Write(sh, str(f))
+PRINT_POSE = {                                     # 打印姿态 (绕轴转角) → models/<件>/<件>_print.stl, 居中落床
+    'glass_top_ring_v1_2': ('x', 180),                # 翻面: 顶面贴床, 唇先打 (免支撑)
+    'glass_top_lug_v1_2': ('y', -90),                 # 内平面 (螺母沉孔面) 贴床, 外弧朝上
+    'top_cap_v1_2': ('x', 180),                       # 顶面朝下打 (11-27 top_cap.py 原姿态)
+}
 _fx = gp_Trsf(); _fx.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(1, 0, 0)), 3.141592653589793)
 
 for code in args:
@@ -91,6 +96,11 @@ for code in args:
         if code not in NO_MODELS:
             d = B.V12 / 'models' / code; d.mkdir(parents=True, exist_ok=True)
             stl(sh, d / f'{code}.stl'); B.write_doc([(code, sh, '#8A8F98', None, False)], d / f'{code}.step', code)
+            if code in PRINT_POSE:                   # 11-28: models/ 下 _print.stl (分组同步优先拷它) 每次跟着重出, 免得留旧姿态文件
+                ax_, deg = PRINT_POSE[code]; r_ = gp_Trsf()
+                r_.SetRotation(gp_Ax1(gp_Pnt(0, 0, 0), gp_Dir(*{'x': (1, 0, 0), 'y': (0, 1, 0)}[ax_])), math.radians(deg))
+                t = B.xf(sh, r_); bb = B.bbox(t); tt = gp_Trsf(); tt.SetTranslation(gp_Vec(-(bb[0] + bb[3]) / 2, -(bb[1] + bb[4]) / 2, -bb[2]))
+                stl(B.xf(t, tt), d / f'{code}_print.stl')
         if outname:                                  # out/零件 (装配位) + out/打印STL (打印姿态, 落床)
             B.write_doc([(outname, sh, '#8A8F98', None, False)], B.OUT / '零件' / f'{outname}.step', outname)
             t = B.xf(sh, _fx) if flip else sh
