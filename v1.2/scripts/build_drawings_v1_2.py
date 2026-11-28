@@ -353,7 +353,7 @@ SPECS.append(dict(
     orient="内平面 (螺母窝面) 贴床, 外弧朝上, 免支撑",
     sec=dict(ang=0, r0=80.0, auto_dims=False, zd=[(B.GL_Z0, B.GS_Z), (B.GS_Z, B.GL_Z1), (B.GL_Z0, B.GL_Z1)], rd=[(B.GL_R0, B.GL_R0 + B.GL_HEX_H), (B.GL_R0, B.GL_R0 + B.GL_FL_H + B.GL_HEX_H), (B.GL_R0, B.GL_R)]),
     holes=[],
-    notes=[f"孔 Φ{F(B.GS_HOLE)} 通, 孔心离件顶 {F(round(B.GL_Z1 - B.GS_Z, 2))} / 离件底 {F(round(B.GS_Z - B.GL_Z0, 2))} (孔心在管端下 5, 件顶在管端下 0.5)",
+    notes=[f"孔 Φ{F(B.GS_HOLE)} 通, 孔心离件顶 {F(round(B.GL_Z1 - B.GS_Z, 2))} / 离件底 {F(round(B.GS_Z - B.GL_Z0, 2))} (孔心在管端下 {F(round(B.Z_GT - B.GS_Z, 2))}, 件顶在管端下 {F(round(B.Z_GT - B.GL_Z1, 2))})",
            f"螺母窝 (11-28 法兰朝外): 内面起 六角 AF{F(B.GL_HEX_AF)} 深 {F(B.GL_HEX_H)} + 法兰 Φ{F(B.GL_FL_D)} 再深 {F(B.GL_FL_H)}, 到外弧剩 {F(B.GL_WEB)}",
            f"两段各开竖槽 (宽 {F(B.GL_HEX_AF)} / {F(B.GL_FL_D)}) 通到件顶; 螺母立着从顶上放入, 平边卡槽壁不跟转, 法兰压外壁",
            f"螺丝: 支承 r{F(B.GS_SEAT)} → 尾 r{F(round(B.GS_TIP, 2))} (不出内面 r{F(B.GL_R0)}), 吃 {F(B.GS_ENG)}",

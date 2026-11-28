@@ -107,7 +107,7 @@ for z in (Z_LO, Z_HI):                       # 右侧 0° 孔 (剖到) + 正面 
 dim_v(fx + ro + 12, fy, fy + hh, f"{H:g} ±0.3", xe=fx + ro + 1)
 dim_v(fx + ro + 5, fy, fy + Z_LO * S1, f"{Z_LO:g}", xe=fx + ro + 1)
 dim_v(fx + ro + 5, fy + Z_HI * S1, fy + hh, f"{E_HI:g}", xe=fx + ro + 1)
-dim_h(fx - ro, fx + ro, fy + hh + 8, f"Ø{OD:g} ±0.2", ye=fy + hh + 1)
+dim_h(fx - ro, fx + ro, fy + hh + 8, f"Ø{OD:g}", ye=fy + hh + 1)
 dim_h(fx + ri, fx + ro, fy - 7, f"{T:g}", ye=fy - 1)
 ax.text(fx, fy - 16, "主视图 (右半剖 A-A)  1:2", ha="center", fontsize=9)
 
@@ -153,22 +153,20 @@ ax.text(dx, dy - 9 * S4 / 2 - 7, f"局部放大 I  5:1\n孔口两端倒角 C{CH:
 # 技术要求 + 标题栏
 req = [
     "技术要求:",
-    "1. 材质: 透明圆管, 优先 高硼硅玻璃管 (备选 钢化 / 亚克力挤出管, 请分别报价);",
-    "   透光率 ≥ 90 %, 无气泡、划痕、崩边。",
-    f"2. 外径 Ø{OD:g} ±0.2, 壁厚 {T:g} ±0.2 (内径 Ø{ID:g}), 圆度 ≤ 0.3;",
-    "   两端与上下塑料件单边仅留 0.2 间隙, 外径/内径公差做不到请注明实际能力。",
+    "1. 材质: 透明石英玻璃管 (熔融石英), 透光率 ≥ 90 %, 无气泡、气线、划痕、崩边。",
+    f"2. 外径 Ø{OD:g}, 壁厚 {T:g} (内径 Ø{ID:g}), 圆度 ≤ 0.3。两端与上下塑料件单边仅留 0.2 间隙:",
+    "   目标公差 外径 ±0.2 / 壁厚 ±0.2, 请注明实际能做到的公差 (拉制 / 外圆磨削 分别报价)。",
     f"3. 长度 {H:g} ±0.3; 两端面磨平, 与轴线垂直度 ≤ 0.3, 内外棱倒角 C{CH:g}。",
     f"4. 径向通孔 Ø{HOLE:g} +0.2/0 共 {2 * len(ANG)} 个 (穿 M3 螺丝): 下排孔心距下端 {Z_LO:g}, 上排孔心距上端 {E_HI:g},",
-    "   两排各 8 个沿圆周 45° 等分, 上下孔同角度对齐; 孔位 ±0.2, 孔口倒角 C0.5。",
-    f"5. 【注意】上排孔边距上端面仅 {E_HI - HOLE / 2:g} mm, 请确认能否加工不崩边; 不行请反馈最小边距。",
-    "6. 若钢化: 先开孔、磨边再钢化。未注公差 ±0.3。",
-    "7. 询价按 2 / 10 / 50 件分别报价。附 STEP 模型 (glass_tube_v1_2.step)。",
+    f"   孔边距端面 {min(Z_LO, E_HI) - HOLE / 2:g}; 两排各 8 个沿圆周 45° 等分, 上下孔同角度对齐;",
+    "   孔位 ±0.2, 孔口两端倒角 C0.5, 孔壁无裂纹 (建议金刚石钻 / 超声加工)。",
+    "5. 未注公差 ±0.3。询价按 2 / 10 / 50 件分别报价。附 STEP 模型 (glass_tube_v1_2.step)。",
 ]
 ax.text(268, 185, "\n".join(req), fontsize=7.3, va="top", linespacing=1.5)
 tb_x, tb_y = 268, 12
 ax.add_patch(Rectangle((tb_x, tb_y), W - 10 - tb_x, 22, fill=False, lw=LW))
 ax.plot([tb_x, W - 10], [tb_y + 11, tb_y + 11], lw=THIN, color="k")
-ax.text(tb_x + 2, tb_y + 14.5, "POV3D V1.2  侧面透明圆管 (外购, 开孔)", fontsize=10)
+ax.text(tb_x + 2, tb_y + 14.5, "POV3D V1.2  侧面石英玻璃管 (外购, 开孔)", fontsize=10)
 ax.text(tb_x + 2, tb_y + 4, f"{NAME}   Ø{OD:g}×{T:g}×{H:g}   孔 {2 * len(ANG)}×Ø{HOLE:g}   单位 mm   A3   2026-11-28", fontsize=7.5)
 
 try:
