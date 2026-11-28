@@ -682,13 +682,14 @@ SPECS.append(dict(
     code="mr30_seat_v1_2", shape=MW.mr30_split()[0], stl_asm=True, short="MR30 座上件 (电机线接头)", qty="1", material="PETG (建议) / PLA",
     title=f"MR30 座: {F(2 * MW.SEAT_HX)}×{F(MW.Y_OPEN - MW.Y_R)}×{F(MW.SEAT_H)} 坐底盘顶, 夹 MR30-M 公头 (护套 −y 接电机线, 开口 +y 插母头)",
     subtitle=f"坐玻纤板顶 Z0, −x 侧 x{F(MW.MR_XC - MW.SEAT_HX)}…{F(MW.MR_XC + MW.SEAT_HX)} y{F(MW.Y_R)}…{F(MW.Y_OPEN)}; 顶 Z{F(MW.SEAT_H)} = 定子盘底 − 0.5",
-    orient=f"顶面贴床 (槽口朝上), 底片在最上层跨 {F(MW.SHEATH_W)} 架桥, 免支撑", date="2026-11-18",
-    sec=dict(ang=180, r0=44.0, r1=78.0, zd=[(0, MW.SEAT_H, F(MW.SEAT_H))]),
+    orient="顶面贴床 (槽口 / 底面止口台阶朝上), 免支撑", date="2026-11-28",
+    sec=dict(ang=180, r0=44.0, r1=78.0, zd=[(0, MW.SEAT_H, F(MW.SEAT_H)), (MW.FLOOR_T, MW.FLOOR_T + MW.RIM_H, F(MW.RIM_H))]),
     holes=[dict(tag="N", pts=_mr, spec=f"Φ{F(MW.PASS_D)} 通 + 顶面 Φ{F(MW.INS_D)}×{F(MW.INS_H)} 热压 M3×4 铜螺母 (顶齐件顶)",
                 where=xy(_mr) + f"  M3×{F(MW.SCREW_L[0])} 超薄头从打印底盘底面 Φ{F(B.M3_CB_D)}×{F(B.M3_CB_H)} 沉孔往上 (头支承 Z{F(MW.BEAR_Z)}), 尖 Z{F(MW.SEAT_H)} 啮合 4",
                 det=dict(kind="ins", d=MW.PASS_D, D=MW.INS_D, h=MW.INS_H, side="top", z=(0, MW.SEAT_H), pt=_mr[0], ang=90, title="铜螺母孔 N (沿 y 剖)"))],
     notes=[f"槽: 本体段 {F(MW.BODY_W)} 宽 Z{F(MW.Z_BD0)}..{F(MW.Z_BD1)} / 护套段 {F(MW.SHEATH_W)} 宽 Z{F(MW.Z_SH0)}..{F(MW.Z_SH1)}, 零间隙",
-           f"11-18 拆 2 件: 本件 = 上件 Z{F(MW.FLOOR_T)}..{F(MW.SEAT_H)} (顶板 {F(MW.T_TOP)}); 底片另出 mr30_floor (护套段 {F(MW.FLOOR_T)} / 本体段 {F(MW.Z_BD0)}); 装: 下片 → 公头 → 扣本件 → 2×M3",
+           f"11-18 拆 2 件: 本件 = 上件 Z{F(MW.FLOOR_T)}..{F(MW.SEAT_H)} (顶板 {F(MW.T_TOP)}); 底片另出 mr30_floor; 装: 下片 → 公头 → 扣本件 → 2×M3",
+           f"11-28 止口 (同 XT60): 底面四周台阶高 {F(MW.RIM_H)} 扣下片凸台 (左右/开口端宽 {F(MW.RIM_W)}, 后边 {F(MW.REAR_T)}), 水平单边间隙 {F(MW.ASSY_CLR)}, 上下零间隙",
            f"后墙 {F(MW.REAR_T)} 厚, 出线口 {F(2 * MW.SLOT_HW)}×3 长圆 (3×Φ3 电机线并排, 线心 Z{F(MW.PIN_Z)})",
            "插母头: 护套尾面顶后墙; 拔母头: 护套台肩顶槽台阶 (两侧 + 顶 + 底片台阶 0.25)",
            "⚠ 待用户确认: 公头朝向 / 母头外形 / 线径 Φ3"]))
@@ -723,14 +724,15 @@ for _base, _shape, _pts, _L in (("mr30_seat_v1_2", MW.mr30_split(MW.MR_INS_DX_OL
 for _code, _dx, _L, _base_txt in (("mr30_floor_v1_2", MW.MR_INS_DX, MW.SCREW_L[0], "玻纤板版"), ("mr30_floor_v1_2_old", MW.MR_INS_DX_OLD, 12.0, "_old 版 (配旧一体底盘 Φ220×6)")):
     _lo = MW.mr30_split(_dx)[1]; _p = MW.mr_ins(_dx)
     SPECS.append(dict(
-        code=_code, shape=_lo, stl_asm=True, short="MR30 座下片", qty="1", material="PETG (建议) / PLA", date="2026-11-18",
-        title=f"MR30 座下片: {F(2 * MW.SEAT_HX)}×{F(MW.Y_OPEN - MW.Y_R)}×{F(MW.FLOOR_T)} + 本体段垫条 {F(MW.BODY_W)}×{F(MW.BODY_L)}×{F(MW.Z_BD0 - MW.FLOOR_T)}",
+        code=_code, shape=_lo, stl_asm=True, short="MR30 座下片", qty="1", material="PETG (建议) / PLA", date="2026-11-28",
+        title=f"MR30 座下片: {F(2 * MW.SEAT_HX)}×{F(MW.Y_OPEN - MW.Y_R)}×{F(MW.FLOOR_T)} + 四周凸台高 {F(MW.RIM_H)} (总高 {F(MW.FLOOR_T + MW.RIM_H)}) + 本体段垫条 {F(MW.Z_BD0 - MW.FLOOR_T)}",
         subtitle=f"{_base_txt}; 压在 MR30 公头下面, 上件 mr30_seat 扣在上面 (Z{F(MW.FLOOR_T)} 分开)",
-        orient="底面贴床 (垫条朝上)",
-        sec=dict(ang=180, r0=44.0, r1=78.0, zd=[(0, MW.Z_BD0, F(MW.Z_BD0))]),
+        orient="底面贴床 (凸台朝上), 免支撑",
+        sec=dict(ang=180, r0=44.0, r1=78.0, zd=[(0, MW.Z_BD0, F(MW.Z_BD0)), (0, MW.FLOOR_T + MW.RIM_H, F(MW.FLOOR_T + MW.RIM_H))]),
         holes=[dict(tag="N", pts=_p, spec=f"Φ{F(MW.PASS_D)} 通", where=xy(_p) + f"  M3×{F(_L)} 从底盘底面往上穿过本件, 拧进上件铜螺母")],
         notes=[f"护套段底片 {F(MW.FLOOR_T)}; 本体段垫条高 {F(MW.Z_BD0 - MW.FLOOR_T)} (护套比本体单边大 0.25, 保证插头平放)",
-               "装配: 下片放底盘上 → 放 MR30 公头 (护套朝 −y) → 扣上件 → 2×M3 从盘底往上拧紧"]))
+               f"11-28 四周凸台 (同 XT60 止口): 高 {F(MW.RIM_H)}, 左右 / 开口端宽 {F(MW.RIM_W)} (本体槽处断开), 后边 (出线边) 宽 {F(MW.REAR_T)} (出线口处断开); 上件台阶套在外面, 水平单边间隙 {F(MW.ASSY_CLR)}",
+               "装配: 下片放底盘上 → MR30 公头竖直放进凸台框 (护套朝 −y) → 扣上件 → 2×M3 从盘底往上拧紧"]))
 # ---------------- 转子盘B 承载盘单件 rim_ring_v1_2b (rotor_b_v1_2.py; 11-17 夜) —— 只在点名出图时 import (rotor_b 要建整套转子件, 慢) ----------------
 if any("_v1_2b" in a for a in sys.argv[1:]) or (B.ROTOR_B and len(sys.argv) == 1):   # 11-18 整机换成转子盘B 后全量出图也带上
     import io as _io, contextlib as _cl

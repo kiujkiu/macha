@@ -121,13 +121,23 @@ def mr30_seat(dx=MR_INS_DX):
 
 # 11-18 用户: 带底片后公头装不进 (封闭套) ⇒ 拆 2 件: 下片 Z0..1.2 (+ 本体段垫条 0.25 → Z1.45) / 上件 Z1.2..8 (门形罩, 顶面贴床免架桥)
 #   装: 下片 → 放公头 → 扣上件; 2×M3 盘底往上穿下片进上件铜螺母 (长度不变)
-def _pad():
-    return box(MR_XC - BODY_W / 2, Y_STEP, FLOOR_T - 0.01, MR_XC + BODY_W / 2, Y_OPEN, Z_BD0)
+def _pad(g=0.0):                                     # g: 两侧往外长 (11-28: 上件切时 g = ASSY_CLR, 垫条两侧也留 0.1)
+    return box(MR_XC - BODY_W / 2 - g, Y_STEP, FLOOR_T - 0.01, MR_XC + BODY_W / 2 + g, Y_OPEN, Z_BD0)
+# 11-28 用户「MR30上下这两个...下边多一点, 然后能扣上, 和xt60一样, 下边多一些四周的凸台」⇒ 同 xt60_clamp v4.10 止口:
+#   下片四周凸台高 RIM_H 2 (Z1.2..3.2): 左右 / 开口端宽 2 (开口端在本体槽处断开), 后边 (出线边) 宽 = 后墙 REAR_T 2.5, 出线口处断开;
+#   上件底面挖对应台阶, 台阶内面离凸台内面 ASSY_CLR 0.1 (水平), 凸台顶贴台阶顶 (竖直零间隙), 两件合起来外形 = 原整件。
+RIM_W, RIM_H, ASSY_CLR = 2.0, 2.0, 0.1
+def _rim(g=0.0):                                     # g: 内面往里长 (上件切台阶用 g = ASSY_CLR)
+    x0, x1, z0, z1 = MR_XC - SEAT_HX - 1, MR_XC + SEAT_HX + 1, FLOOR_T - 0.01, FLOOR_T + RIM_H
+    return fuse(box(x0, Y_R - 1, z0, MR_XC - SEAT_HX + RIM_W + g, Y_OPEN + 1, z1),          # −x 边
+                box(MR_XC + SEAT_HX - RIM_W - g, Y_R - 1, z0, x1, Y_OPEN + 1, z1),          # +x 边
+                box(x0, Y_OPEN - RIM_W - g, z0, x1, Y_OPEN + 1, z1),                        # 开口端 (本体槽处 = 空, common 后自然断开)
+                box(x0, Y_R - 1, z0, x1, Y_CAPI + g, z1))                                   # 后边 (出线口处 = 空, 自然断开)
 def mr30_split(dx=MR_INS_DX):
     s = mr30_seat(dx)
     cutz = box(MR_XC - SEAT_HX - 1, Y_R - 1, -1, MR_XC + SEAT_HX + 1, Y_OPEN + 1, FLOOR_T)
-    lower = clean(fuse(common(s, cutz), common(s, _pad())))
-    upper = clean(cut(s, cutz, _pad()))
+    lower = clean(fuse(common(s, cutz), common(s, _pad()), common(s, _rim())))
+    upper = clean(cut(s, cutz, _pad(ASSY_CLR), _rim(ASSY_CLR)))
     return upper, lower
 
 def mr30_plug(dx=0.0, dy=0.0, dz=0.0):                # 公头示意 (矩形盒)
@@ -273,6 +283,16 @@ def check(seat, clamp, disc, merged):
     R['tail_stop_mm2'] = round((ivol(sh, seat) + ivol(sh, disc)) / 0.5, 2)                               # 插入方向 (−y) 挡面
     fr = cut(box(MR_XC - SHEATH_W / 2, Y_STEP, Z_SH0, MR_XC + SHEATH_W / 2, Y_STEP + 0.5, Z_SH1), box(MR_XC - BODY_W / 2, Y_STEP - 1, Z_BD0, MR_XC + BODY_W / 2, Y_STEP + 1, Z_BD1))
     R['shoulder_stop_mm2'] = dict(seat=round(ivol(fr, seat) / 0.5, 3), disc=round(ivol(fr, disc) / 0.5, 3))  # 拔出方向 (+y) 台肩
+    # 11-28 上下件止口: 各一整块, 不相交, 公头就位/竖直放入下片不碰; 下片水平挪 < 0.1 不碰上件, 挪 0.15 被卡住 (四个方向)
+    for dx_ in (MR_INS_DX, MR_INS_DX_OLD):
+        up_, lo_ = mr30_split(dx_)
+        assert len(solids(up_)) == 1 and len(solids(lo_)) == 1 and ivol(up_, lo_) < 1e-6
+        assert bbox(lo_)[5] > FLOOR_T + RIM_H - 1e-6 and ivol(plug, up_) < 1e-5 and ivol(plug, lo_) < 1e-5
+        assert sum(ivol(mr30_plug(0, 0, z), lo_) for z in (1, 3, 5)) < 1e-5, '公头放不进下片'
+        for a, b in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            t = gp_Trsf(); t.SetTranslation(gp_Vec(a * (ASSY_CLR - 0.01), b * (ASSY_CLR - 0.01), 0)); assert ivol(xf(lo_, t), up_) < 1e-6, ('止口间隙内就碰', a, b)
+            t = gp_Trsf(); t.SetTranslation(gp_Vec(a * (ASSY_CLR + 0.05), b * (ASSY_CLR + 0.05), 0)); assert ivol(xf(lo_, t), up_) > 1e-2, ('止口没卡住', a, b)
+    R['mr_rim'] = dict(h=RIM_H, w=RIM_W, back_w=REAR_T, clr=ASSY_CLR, floor_top=round(FLOOR_T + RIM_H, 2))
     R['cl_ins_web'] = round(CL_INS_DY - INS_D / 2 - CL_CH_HW, 2)
     R['cl_m6_gap'] = round(min(abs(gx - CL_XC) for gx in (-37.5, -12.5)) - B.M6_D / 2 - CL_HX, 2)
     return R
